@@ -1,69 +1,25 @@
 // api/sheets.js — Vercel Serverless Function
 // Maneja: proxy a Google Sheets + envío de SMS via Twilio
-//
-// v2.3.2 — Fix de payload grande:
-//   - El proxy ahora hace POST al Apps Script (no GET) para soportar payloads >16 KB.
-//   - maxDuration aumentado a 60s (máximo en Vercel Hobby) para imports masivos.
 
 const https = require('https');
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1JiqCtjB3Vu7yHnG2Clh_iMj7CLZt9dGslcBKSslC5sH6OKEQQSYIEwetw/exec';
 
-// ── Config Vercel: extender timeout (Hobby permite hasta 60s) ──
-module.exports.config = {
-  maxDuration: 60,
-};
-
-// ── HTTP helper que SIGUE redirects automáticamente, soporta GET y POST ──
-function httpsRequest(url, options = {}, body = null, redirectCount = 0) {
+// ── HTTP helper con seguimiento de redirects ──
+function httpsGet(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     if (redirectCount > 5) return reject(new Error('Demasiados redirects'));
-
-    const urlObj = new URL(url);
-    const reqOptions = {
-      hostname: urlObj.hostname,
-      path:     urlObj.pathname + urlObj.search,
-      method:   options.method || 'GET',
-      headers:  options.headers || {},
-    };
-
-    const req = https.request(reqOptions, (res) => {
-      // Apps Script suele redirigir 301/302/303 al googleusercontent.com
-      if ([301, 302, 303, 307, 308].includes(res.statusCode)) {
+    https.get(url, (res) => {
+      if ([301, 302, 303].includes(res.statusCode)) {
         const loc = res.headers.location;
         if (!loc) return reject(new Error('Redirect sin location'));
-        // Para 307/308 mantener método; 301/302/303 cambian a GET por convención
-        const newOptions = { ...options };
-        if ([301, 302, 303].includes(res.statusCode)) {
-          newOptions.method = 'GET';
-          body = null; // no reenviar body en redirect a GET
-        }
-        return httpsRequest(loc, newOptions, body, redirectCount + 1).then(resolve).catch(reject);
+        return httpsGet(loc, redirectCount + 1).then(resolve).catch(reject);
       }
       let data = '';
       res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve({ statusCode: res.statusCode, body: data }));
-    });
-    req.on('error', reject);
-    if (body) req.write(body);
-    req.end();
+      res.on('end', () => resolve(data));
+    }).on('error', reject);
   });
-}
-
-// Helper simple para GET (compatibilidad con código viejo)
-function httpsGet(url) {
-  return httpsRequest(url, { method: 'GET' }).then(r => r.body);
-}
-
-// Helper para POST con body (acepta payloads grandes)
-function httpsPost(url, body) {
-  return httpsRequest(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8',
-      'Content-Length': Buffer.byteLength(body),
-    },
-  }, body);
 }
 
 // ── Twilio SMS ──
@@ -238,7 +194,7 @@ module.exports = async function(req, res) {
 
     // ── RESUMEN DIARIO ──
     if (accion === 'resumen_diario') {
-      // Obtener datos de Sheets (payload chico, GET con query funciona)
+      // Obtener datos de Sheets
       const paramsSheets = encodeURIComponent(JSON.stringify({ accion: 'get_resumen_diario' }));
       const urlSheets    = `${APPS_SCRIPT_URL}?data=${paramsSheets}`;
       const textSheets   = await httpsGet(urlSheets);
@@ -272,26 +228,11 @@ _Crunchy Paps App_`;
     }
 
     // ── PROXY A GOOGLE SHEETS ──
-    // FIX v2.3.2: usar POST con body en lugar de GET con query string
-    // para soportar payloads grandes (importación masiva, etc.)
-    // Apps Script acepta el body via e.postData.contents en doPost.
-    const bodyJson = JSON.stringify(payload);
-    const respuesta = await httpsPost(APPS_SCRIPT_URL, bodyJson);
+    const params = encodeURIComponent(JSON.stringify(payload));
+    const url    = `${APPS_SCRIPT_URL}?data=${params}`;
+    const text   = await httpsGet(url);
 
-    // Apps Script devuelve siempre HTTP 200 con JSON dentro (incluso en errores)
-    // Si recibimos algo distinto a JSON parseable, lo propagamos como error visible
-    try {
-      const parsed = JSON.parse(respuesta.body);
-      return res.status(200).json(parsed);
-    } catch(parseErr) {
-      // El backend no devolvió JSON. Probablemente HTML de error de Google.
-      // Devolver respuesta estructurada para que el frontend la muestre legible.
-      const preview = String(respuesta.body || '').slice(0, 200);
-      return res.status(200).json({
-        ok: false,
-        error: `Apps Script devolvió respuesta no-JSON (status ${respuesta.statusCode}). Preview: ${preview}`
-      });
-    }
+    return res.status(200).json(JSON.parse(text));
 
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
