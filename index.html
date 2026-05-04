@@ -7890,7 +7890,7 @@ async function pintarPermisosPorVendedor() {
 
   try {
     // Cargar lista de vendedores
-    const res = await sheetsCall({ accion: 'listar_vendedores' });
+    const res = await sheetsCall({ accion: 'get_vendedores' });
     if (!res.ok) throw new Error(res.error || '');
     _vendedoresParaPermisos = res.vendedores || [];
     const disp = Object.keys(SECCIONES_LABELS);
