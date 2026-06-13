@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/sheets", "destination": "/api/sheets" }
+  ],
+  "crons": [
+    { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" }
+  ]
+}
