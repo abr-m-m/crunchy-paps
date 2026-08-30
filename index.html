@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Crunchy Paps — Pide tus papas</title>
+
+<!-- ═══════ Configuración por entorno (Fase 1c) ═══════
+     Define window.__CP_CONFIG__ con la URL y la llave anon de Supabase que
+     correspondan a ESTE entorno (producción / preview / local), leídas de las
+     variables de entorno de Vercel.
+
+     Es un script clásico a propósito: se ejecuta antes del bloque de tipo
+     "module" que arranca la app (los módulos son diferidos).
+     Si no carga, index.html tiene respaldo y falla en voz alta fuera de
+     producción en vez de escribir en la base real. -->
+<script src="/api/config.js"></script>
+
 <!-- ═══════ GA4 + captura de UTM (R1 medición) ═══════ -->
 <script>
 (function () {
@@ -3328,10 +3340,12 @@ window.entrarConTel = async function() {
   try {
     // v2.11: fetch directo a Supabase (este bloque vanilla no tiene supabaseCall)
     // SUPABASE_URL y SUPABASE_ANON_KEY se exponen desde el bloque module en window.*
-    const supaUrl = window.SUPABASE_URL || 'https://xbyzarzyxiugrucyjwfn.supabase.co';
+    // Fase 1c: sin respaldo escrito a mano. La base la fija el bloque module
+    // según el entorno; si no llegó, no se adivina (hallazgo 16).
+    const supaUrl = window.SUPABASE_URL;
     const supaKey = window.SUPABASE_ANON_KEY;
-    if (!supaKey) {
-      console.log('[BUSCAR VENDEDOR] SUPABASE_ANON_KEY no disponible aún');
+    if (!supaUrl || !supaKey) {
+      console.log('[BUSCAR VENDEDOR] Configuración de Supabase no disponible aún');
       throw new Error('Supabase aún no inicializado');
     }
     const respFetch = await fetch(supaUrl + '/rest/v1/rpc/buscar_vendedor_por_telefono', {
@@ -3454,12 +3468,51 @@ const GOOGLE_MAPS_KEY = 'AIzaSyCrFgvrh7Hk-o2TdtsT3A2oy9956PmioQw';
 // ════════════════════════════════════════════════════════════════
 // SUPABASE — migración progresiva (Fase 1: solo bebidas)
 // ════════════════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://xbyzarzyxiugrucyjwfn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhieXphcnp5eGl1Z3J1Y3lqd2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODczMDYsImV4cCI6MjA5Mzg2MzMwNn0.ehELg2487qC324cve-hgBbuQ4YxjthBwkA4A3XcSslg';
+// ── Configuración por entorno (Fase 1c) ─────────────────────────────────
+// El origen de verdad son las variables de entorno de Vercel, que sirve
+// /api/config.js (cargado en el <head>, antes de este módulo).
+//
+// Ni la URL ni la llave anon son secretos: viajan al navegador por diseño.
+// Lo que protege los datos son las políticas RLS (ACCESOS.md §3.0). El punto
+// de este bloque no es esconderlas, sino que CADA ENTORNO HABLE CON SU BASE:
+// que un preview de Vercel o una sesión local jamás escriban en producción.
+// Eso es el hallazgo 16.
+const CP_PROD_URL  = 'https://xbyzarzyxiugrucyjwfn.supabase.co';
+const CP_PROD_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhieXphcnp5eGl1Z3J1Y3lqd2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODczMDYsImV4cCI6MjA5Mzg2MzMwNn0.ehELg2487qC324cve-hgBbuQ4YxjthBwkA4A3XcSslg';
+const CP_HOSTS_PROD = ['crunchypaps.mx', 'www.crunchypaps.mx'];
+
+const _cpCfg = (typeof window !== 'undefined' && window.__CP_CONFIG__) || {};
+
+// La variable de entorno manda; el hostname es el respaldo si no llegó config.
+const _cpEsProd = _cpCfg.ENTORNO
+  ? _cpCfg.ENTORNO === 'production'
+  : CP_HOSTS_PROD.indexOf(location.hostname) !== -1;
+
+// Escape hatch para desarrollo local sin `vercel dev`. En la consola:
+//   localStorage.setItem('cp_supabase_url',  'https://<ref>.supabase.co');
+//   localStorage.setItem('cp_supabase_anon', '<llave anon>');
+function _cpLocal(k) { try { return localStorage.getItem(k) || ''; } catch (_e) { return ''; } }
+
+const SUPABASE_URL =
+  _cpCfg.SUPABASE_URL || _cpLocal('cp_supabase_url') || (_cpEsProd ? CP_PROD_URL : '');
+const SUPABASE_ANON_KEY =
+  _cpCfg.SUPABASE_ANON_KEY || _cpLocal('cp_supabase_anon') || (_cpEsProd ? CP_PROD_ANON : '');
+
+// Salvaguarda dura: fuera de producción, nunca hablar con la base de producción.
+// Es preferible que un preview falle a la vista y no que escriba datos reales.
+if (!_cpEsProd && SUPABASE_URL === CP_PROD_URL) {
+  console.error('[CP] BLOQUEADO: entorno no productivo apuntando a la base de PRODUCCIÓN.');
+  throw new Error('Configuración inválida: preview/local no puede usar la base de producción.');
+}
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('[CP] Sin configuración de Supabase. Fuera de producción hace falta ' +
+                '/api/config.js (usa `vercel dev`) o el override de localStorage.');
+}
 
 // v2.11: Exponer en window para que el bloque vanilla pueda usarlos
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
+window.CP_ENTORNO = _cpEsProd ? 'produccion' : (_cpCfg.ENTORNO || 'no-produccion');
 
 // GA4: helper seguro para enviar eventos (no-op si gtag no está listo)
 function track(nombre, params) {
@@ -5597,9 +5650,10 @@ setTimeout(() => { if (document.querySelector('.entrega-btn')) setEntrega('coord
 async function cargarVendedoresCheckout() {
   if (_vendedoresCheckoutCache) return _vendedoresCheckoutCache;
   try {
-    const supaUrl = window.SUPABASE_URL || 'https://xbyzarzyxiugrucyjwfn.supabase.co';
+    // Fase 1c: sin respaldo escrito a mano (hallazgo 16).
+    const supaUrl = window.SUPABASE_URL;
     const supaKey = window.SUPABASE_ANON_KEY;
-    if (!supaKey) return [];
+    if (!supaUrl || !supaKey) return [];
     const resp = await fetch(supaUrl + '/rest/v1/rpc/buscar_vendedores', {
       method: 'POST',
       headers: {

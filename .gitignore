@@ -1,0 +1,59 @@
+# ── Secretos ────────────────────────────────────────────────
+# El repo es PÚBLICO. Nada de lo de abajo debe llegar a GitHub.
+.env
+.env.*
+!.env.example
+ACCESOS.md
+*.pem
+*.key
+secrets/
+
+# ── Dependencias y build ────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# ── Herramientas ────────────────────────────────────────────
+.vercel/
+.supabase/
+supabase/.temp/
+.turbo/
+
+# ── Sistema y editor ────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# ── Registros y temporales ──────────────────────────────────
+*.log
+npm-debug.log*
+tmp/
+.cache/
+
+.vercel
+.env*
+
+# Respaldos locales de index.html (no versionar)
+index.html.respaldo-*
+
+# ── Notas internas de trabajo ────────────────────────────────
+# El repo es PÚBLICO. PROGRESO.md detalla vulnerabilidades aún sin corregir
+# (§3.0: 26 tablas con escritura abierta). Publicarlo antes de la Fase 2 sería
+# entregarle el mapa a cualquiera. Vive junto a ACCESOS.md, fuera de git.
+PROGRESO.md
+
+# Volcados del diagnóstico de solo lectura (sin datos personales, pero son
+# notas de trabajo, no código)
+1-*.txt
+2.*.txt
+3.*.txt
+4.*.txt
+5.*.txt
+A-indices.csv
+B-politicas.csv
+Supabase Snippet*.csv
