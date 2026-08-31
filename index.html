@@ -8281,7 +8281,7 @@ async function cargarDashboard() {
   if (!cont) return;
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px 0;"><span class="loader loader-w"></span> Cargando dashboard...</div>';
   try {
-    const res = await supabaseCall('POST', 'rpc/dashboard_resumen', { p_data: {} });
+    const res = await supabaseCall('POST', 'rpc/dashboard_resumen', { p_data: { token: tokenVendedor() } });
     if (res && res.ok && res.data) { _dashData = res.data; pintarDashboard(); }
     else { cont.innerHTML = '<div style="color:var(--rojo);font-size:0.8rem;padding:10px;">No se pudo cargar el dashboard: ' + (res?.error || 'sin respuesta') + '</div>'; }
   } catch(e) {
@@ -8635,7 +8635,7 @@ window.cargarMetricaRegalo = async function(yyyymm) {
   const anio = parseInt(m[0], 10), mes = parseInt(m[1], 10);
   cont.innerHTML = '<div style="color:var(--suave);font-size:0.8rem;">Calculando…</div>';
   try {
-    const r = await supabaseCall('POST', 'rpc/metricas_regalo_mes', { p_anio: anio, p_mes: mes });
+    const r = await supabaseCall('POST', 'rpc/metricas_regalo_mes', { p_anio: anio, p_mes: mes, p_token: tokenVendedor() });
     if (!r || !r.ok) { cont.innerHTML = '<div style="color:var(--rojo);font-size:0.8rem;">No se pudo calcular.</div>'; return; }
     const fmtKg = (n) => (Number(n) || 0).toLocaleString('es-MX', { maximumFractionDigits: 3 }) + ' kg';
     const fmtMx = (n) => '$' + (Number(n) || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 });
@@ -10862,7 +10862,7 @@ async function renderB2B() {
       p_data: { token: tokenVendedor(), limit: 200, offset: 0 }
     })];
     if (esAdmin() && _vendedoresActivos.length === 0) {
-      peticiones.push(supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: {} }));
+      peticiones.push(supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: { token: tokenVendedor() } }));
     }
     const resultados = await Promise.all(peticiones);
     const resC = resultados[0];
@@ -12553,7 +12553,7 @@ async function renderGastos() {
     }));
 
     // Resumen mes via RPC
-    const resR = await supabaseCall('POST', 'rpc/resumen_gastos', { p_data: {} });
+    const resR = await supabaseCall('POST', 'rpc/resumen_gastos', { p_data: { token: tokenVendedor() } });
     if (resR && resR.ok) {
       // Mapear a estructura legacy esperada por pintarResumenGastos
       pintarResumenGastos({
@@ -13187,7 +13187,7 @@ async function cargarPendientesCaja() {
   const cont = document.getElementById('caja-pendientes');
   if (!cont) return;
   try {
-    const res = await supabaseCall('POST', 'rpc/obtener_pendientes_caja');
+    const res = await supabaseCall('POST', 'rpc/obtener_pendientes_caja', { p_token: tokenVendedor() });
     if (!res || !res.ok) {
       cont.innerHTML = '';
       return;
@@ -13953,7 +13953,7 @@ async function pintarPermisosPorVendedor() {
 
   try {
     // Cargar lista de vendedores
-    const res = await supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: {} });
+    const res = await supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: { token: tokenVendedor() } });
     if (!res || !res.ok) throw new Error(res?.error || '');
     _vendedoresParaPermisos = res.vendedores || [];
     const disp = Object.keys(SECCIONES_LABELS);
@@ -14040,7 +14040,7 @@ async function pintarMatrizPermisos() {
   try {
     const [resCfg, resVend] = await Promise.all([
       supabaseCall('POST', 'rpc/get_config_secciones', { p_data: {} }),
-      supabaseCall('POST', 'rpc/obtener_vendedores',   { p_data: {} }),
+      supabaseCall('POST', 'rpc/obtener_vendedores',   { p_data: { token: tokenVendedor() } }),
     ]);
     _configRoles = {};
     if (resCfg && resCfg.ok) (resCfg.configs || []).forEach(c => { _configRoles[c.rol] = c.secciones; });

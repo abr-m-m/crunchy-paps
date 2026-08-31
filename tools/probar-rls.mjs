@@ -94,22 +94,21 @@ agregar('D. RPCs (deben funcionar)', 'rpc/validar_vendedor_pin',
     { p_data: { telefono: '5500000001', pin: '1234' } }),
   (r) => r.estado === 200 && r.datos && typeof r.datos.ok === 'boolean');
 
-agregar('D. RPCs (deben funcionar)', 'rpc/obtener_vendedores',
-  () => pedir('POST', 'rpc/obtener_vendedores', { p_data: {} }),
-  (r) => r.estado === 200);
+// OJO: `obtener_vendedores` y `dashboard_resumen` YA NO van aquí. Desde que
+// exigen sesión (grupo H) devuelven HTTP 200 con ok:false, así que comprobar
+// solo el código de estado pasaría siempre — un caso que nunca falla no prueba
+// nada. Su verificación real vive en el grupo H, que sí mira `ok`.
 
-agregar('D. RPCs (deben funcionar)', 'rpc/get_estado_tienda',
+agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/get_estado_tienda',
   () => pedir('POST', 'rpc/get_estado_tienda', { p_telefono: '5510000001' }),
-  (r) => r.estado === 200);
+  (r) => r.estado === 200 && r.datos && r.datos.ok !== false);
 
-agregar('D. RPCs (deben funcionar)', 'rpc/dashboard_resumen',
-  () => pedir('POST', 'rpc/dashboard_resumen', { p_data: {} }),
-  (r) => r.estado === 200);
-
-// obtener_cliente_con_stats lee `clientes`, que sigue abierta (Etapa B). Se
-// prueba igual para que, cuando se cierre, sepamos de inmediato si el RPC
-// dejó de funcionar.
-agregar('D. RPCs (deben funcionar)', 'rpc/obtener_cliente_con_stats',
+// ⚠️ HUECO CONOCIDO: `obtener_cliente_con_stats` entrega el historial de
+// compras de cualquiera que conozca un teléfono, sin credencial. La tabla
+// `clientes` ya está cerrada, pero este RPC la lee como DEFINER. Cerrarlo
+// necesita sesión de CLIENTE (OTP), que todavía no existe. Se prueba para
+// dejar constancia de que el hueco sigue ahí.
+agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/obtener_cliente_con_stats  [HUECO CONOCIDO]',
   () => pedir('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: '5510000001' }),
   (r) => r.estado === 200);
 
@@ -205,6 +204,50 @@ agregar('G. clientes (Etapa B)', 'sesiones_vendedor cerrada a anon',
 agregar('G. clientes (Etapa B)', 'resolver_sesion_vendedor no invocable',
   () => pedir('POST', 'rpc/resolver_sesion_vendedor', { p_token: 'x'.repeat(64) }),
   (r) => r.estado === 401 || r.estado === 404);
+
+// ── H. RPCs de finanzas y personal: exigen sesión (hallazgo 19) ────────────
+// Eran el agujero que anulaba la Etapa A: la tabla `vendedores` quedó cerrada
+// pero obtener_vendedores seguía entregando el padrón con correos.
+const sinSesion = (r) => r.estado === 200 && r.datos && r.datos.ok === false;
+
+for (const [nombre, cuerpo] of [
+  ['dashboard_resumen',       { p_data: {} }],
+  ['resumen_gastos',          { p_data: {} }],
+  ['reporte_cobros',          { p_data: {} }],
+  ['obtener_vendedores',      { p_data: {} }],
+  ['obtener_pendientes_caja', {}],
+  ['metricas_regalo_mes',     { p_anio: 2026, p_mes: 8 }],
+]) {
+  agregar('H. Finanzas/personal SIN sesión (deben negar)', `rpc/${nombre}`,
+    () => pedir('POST', `rpc/${nombre}`, cuerpo), sinSesion);
+}
+
+// Las funciones _interno guardan la lógica original y no deben ser alcanzables.
+for (const f of ['dashboard_resumen_interno', 'obtener_vendedores_interno',
+                 'reporte_cobros_interno', 'resumen_gastos_interno']) {
+  agregar('H. Finanzas/personal SIN sesión (deben negar)', `rpc/${f} (interna)`,
+    () => pedir('POST', `rpc/${f}`, { p_data: {} }),
+    (r) => r.estado === 401 || r.estado === 404);
+}
+
+// Y con sesión válida deben seguir devolviendo lo de siempre.
+agregar('H. Finanzas/personal SIN sesión (deben negar)', 'con sesión: los 6 responden ok',
+  async () => {
+    const t = await entrar('5500000001');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const res = await Promise.all([
+      pedir('POST', 'rpc/dashboard_resumen',       { p_data: { token: t } }),
+      pedir('POST', 'rpc/resumen_gastos',          { p_data: { token: t } }),
+      pedir('POST', 'rpc/reporte_cobros',          { p_data: { token: t } }),
+      pedir('POST', 'rpc/obtener_vendedores',      { p_data: { token: t } }),
+      pedir('POST', 'rpc/obtener_pendientes_caja', { p_token: t }),
+      pedir('POST', 'rpc/metricas_regalo_mes',     { p_anio: 2026, p_mes: 8, p_token: t }),
+    ]);
+    const malos = res.filter((r) => !(r.estado === 200 && r.datos?.ok === true)).length;
+    return { estado: 200, datos: { malos }, malos };
+  },
+  (r) => r.malos === 0,
+  true);
 
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
