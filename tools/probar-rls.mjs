@@ -264,6 +264,35 @@ for (const [tel, perfil, dash, gast, cob, vend] of MATRIZ) {
     true);
 }
 
+// ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
+// Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
+// ninguna cuenta real. Lo que distingue una base parcheada de una vulnerable es
+// el MENSAJE:
+//   "Vendedor no encontrado"  -> VULNERABLE: llegó a intentar el UPDATE sin
+//                                pedir credencial. Con un id real habría
+//                                cambiado el PIN.
+//   "PIN actual incorrecto"   -> parcheada: pide el PIN actual antes de nada.
+// Por eso sirve igual en staging y en producción.
+agregar('J. cambiar_pin_vendedor (hallazgo 20)', 'exige el PIN actual [sonda inocua]',
+  () => pedir('POST', 'rpc/cambiar_pin_vendedor',
+    { p_data: { idVendedor: 999999, pinNuevo: '123456' } }),
+  (r) => r.estado === 200 && r.datos &&
+         /PIN actual incorrecto|Sesión inválida/.test(r.datos.error || ''));
+
+// Y el ataque completo contra una cuenta real, solo en staging.
+agregar('J. cambiar_pin_vendedor (hallazgo 20)', 'no se puede secuestrar la cuenta 5',
+  async () => {
+    const r = await pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { idVendedor: 5, pinNuevo: '9999' } });
+    // Comprobar que el PIN original sigue sirviendo: si el ataque hubiera
+    // funcionado, este login fallaría.
+    const login = await pedir('POST', 'rpc/validar_vendedor_pin',
+      { p_data: { telefono: '5500000005', pin: '1234' } });
+    return { estado: 200, datos: r.datos, intacto: login.datos?.ok === true };
+  },
+  (r) => r.datos?.ok !== true && r.intacto === true,
+  true);
+
 // mis_secciones deriva del token: no se pueden pedir los permisos de otro.
 agregar('I. Permisos por sección', 'mis_secciones sin token no revela nada',
   () => pedir('POST', 'rpc/mis_secciones', { p_token: 'a'.repeat(64) }),
