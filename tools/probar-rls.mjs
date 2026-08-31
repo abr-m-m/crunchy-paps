@@ -230,6 +230,45 @@ for (const f of ['dashboard_resumen_interno', 'obtener_vendedores_interno',
     (r) => r.estado === 401 || r.estado === 404);
 }
 
+// ── I. Permisos por sección: cada perfil ve lo suyo y nada más ─────────────
+// El modelo de permisos (config_secciones + vendedores.secciones) existía pero
+// solo se aplicaba en el navegador: esconder un botón no es un permiso.
+// Estos casos comprueban que ahora lo aplica el servidor.
+//
+// Perfiles del seed:  1 Admin (dueño) · 2 Mostrador · 3 Vendedor
+//                     4 Administrador2 = SOCIO con finanzas PARCIALES
+const MATRIZ = [
+  // telefono,       perfil,               dashboard, gastos, cobros, vendedores
+  ['5500000001', 'Admin (dueño)',            true,  true,  true,  true],
+  ['5500000002', 'Mostrador',                false, true,  true,  true],
+  ['5500000003', 'Vendedor',                 false, false, false, false],
+  ['5500000004', 'Socio (administrador2)',   true,  true,  false, true],
+];
+
+for (const [tel, perfil, dash, gast, cob, vend] of MATRIZ) {
+  agregar('I. Permisos por sección', `${perfil}`,
+    async () => {
+      const t = await entrar(tel);
+      if (!t) return { estado: 0, datos: 'sin token' };
+      const [d, g, c, v] = await Promise.all([
+        pedir('POST', 'rpc/dashboard_resumen',  { p_data: { token: t } }),
+        pedir('POST', 'rpc/resumen_gastos',     { p_data: { token: t } }),
+        pedir('POST', 'rpc/reporte_cobros',     { p_data: { token: t } }),
+        pedir('POST', 'rpc/obtener_vendedores', { p_data: { token: t } }),
+      ]);
+      const real = [d, g, c, v].map((r) => r.datos?.ok === true);
+      return { estado: 200, datos: { esperado: [dash, gast, cob, vend], real }, real };
+    },
+    (r) => r.real && r.real[0] === dash && r.real[1] === gast &&
+           r.real[2] === cob && r.real[3] === vend,
+    true);
+}
+
+// mis_secciones deriva del token: no se pueden pedir los permisos de otro.
+agregar('I. Permisos por sección', 'mis_secciones sin token no revela nada',
+  () => pedir('POST', 'rpc/mis_secciones', { p_token: 'a'.repeat(64) }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
 // Y con sesión válida deben seguir devolviendo lo de siempre.
 agregar('H. Finanzas/personal SIN sesión (deben negar)', 'con sesión: los 6 responden ok',
   async () => {

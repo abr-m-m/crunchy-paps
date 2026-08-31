@@ -241,6 +241,26 @@ from (select d.id_orden, sum(d.subtotal) as suma
       from public.ordenes_detalle d group by d.id_orden) t
 where t.id_orden = o.id;
 
+-- -- PERMISOS POR SECCION -----------------------------------------------
+-- Copia de la configuracion REAL de produccion (30 ago 2026), para que las
+-- pruebas de permisos midan el comportamiento de verdad y no un invento.
+insert into public.config_secciones (rol, secciones) values
+  ('administrador',  array['catalogo','pedidos','premia','b2b','produccion','prospeccion','caja','gastos','jornadas','productos','cupones','cuenta']),
+  ('administrador2', array['catalogo','pedidos','premia','b2b','produccion','prospeccion','caja','gastos','jornadas','productos','cupones','cuenta']),
+  ('consumidor',     array['catalogo','pedidos','premia','cuenta']),
+  ('mostrador',      array['catalogo','pedidos','premia','b2b','produccion','caja','gastos','cuenta']),
+  ('vendedor',       array['catalogo','pedidos','prospeccion','jornadas','cuenta'])
+on conflict (rol) do update set secciones = excluded.secciones;
+
+-- Perfiles de prueba. El vendedor 4 es un SOCIO con acceso PARCIAL a finanzas:
+-- ve el dashboard y los gastos, pero NO los cobros. Es el escenario que motivo
+-- todo este trabajo, asi que conviene que quede fijado en el seed.
+update public.vendedores set rol = 'Administrador2',
+       secciones = array['catalogo','pedidos','b2b','gastos','resumen','cuenta']
+ where id = 4;
+-- El vendedor 3 se queda sin override: usa las secciones de su rol.
+update public.vendedores set secciones = null where id = 3;
+
 -- -- RESUMEN ------------------------------------------------------------
 select 'vendedores' as tabla, count(*) as filas from public.vendedores
 union all select 'productos',         count(*) from public.productos

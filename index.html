@@ -13786,17 +13786,18 @@ const NAV_ITEM_POR_SECCION = {
 async function aplicarPermisosNavbar() {
   // Cargar permisos del usuario actual
   try {
-    const rolDetectado = esVendedor ? (vendedorInfo?.rol || 'vendedor').toLowerCase() : 'consumidor';
-    const res = await supabaseCall('POST', 'rpc/get_secciones_usuario', {
-      p_data: {
-        idVendedor: esVendedor ? (vendedorInfo?.id || '') : '',
-        rol: rolDetectado,
-      }
-    });
+    // Etapa B: se pregunta "¿qué puedo ver YO?", derivado del token, en vez de
+    // "¿qué puede ver el vendedor N?". `get_secciones_usuario` recibía
+    // idVendedor como parámetro, así que cualquiera podía consultar los
+    // permisos de cualquiera. El consumidor no tiene sesión: usa sus defaults.
+    const res = esVendedor
+      ? await supabaseCall('POST', 'rpc/mis_secciones', { p_token: tokenVendedor() })
+      : { ok: true, secciones: ['catalogo','premia','pedidos','cuenta'] };
     if (res && res.ok) {
       _seccionesPermitidas = res.secciones || [];
     } else {
-      // Fallback: defaults seguros
+      // Fallback: defaults seguros. Ojo — esto es cosmético: aunque aquí se
+      // muestre de más, el servidor niega los RPCs que no correspondan.
       _seccionesPermitidas = esVendedor
         ? ['catalogo','pedidos','prospeccion','gastos','cuenta']
         : ['catalogo','premia','pedidos','cuenta'];
