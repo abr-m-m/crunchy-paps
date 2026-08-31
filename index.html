@@ -7051,6 +7051,22 @@ function sesionExpirada(res) {
 }
 
 async function supabaseCall(method, path, body) {
+  // Etapa B: inyectar el token de sesión en las llamadas que usan la
+  // convención `p_data`. Se hace aquí y no en cada punto de llamada porque son
+  // más de 30, y treinta ediciones a mano es donde se cuela el olvido.
+  //
+  // Solo se toca `p_data`: añadir una clave a un objeto JSON es inofensivo para
+  // los RPCs que no la leen. Lo que NO se puede hacer aquí es añadir un
+  // parámetro suelto como `p_token`, porque cambiaría la firma y PostgREST no
+  // encontraría la función. Los tres RPCs con argumentos posicionales lo pasan
+  // explícitamente en su propia llamada.
+  if (body && typeof body === 'object' &&
+      body.p_data && typeof body.p_data === 'object' && !Array.isArray(body.p_data)) {
+    const _tk = tokenVendedor();
+    if (_tk && body.p_data.token === undefined) {
+      body = { ...body, p_data: { ...body.p_data, token: _tk } };
+    }
+  }
   const t0 = (typeof PERF !== 'undefined' && PERF.enabled) ? performance.now() : 0;
   const url = SUPABASE_URL + '/rest/v1/' + path;
   const opts = {
@@ -9178,6 +9194,7 @@ window.reasignarVendedor = async function(idCliente, idVendedor, nombreVendedor)
       p_id_cliente: Number(idCliente),
       p_id_vendedor: idV,
       p_nombre_vendedor: nomV,
+      p_token: tokenVendedor(),
     });
     if (!res || !res.ok) { alert('Error: ' + (res?.error || 'Sin respuesta')); return; }
     mostrarToast('✅ Vendedor reasignado');
@@ -9196,6 +9213,7 @@ window.aprobarB2B = async function(idCliente, tipo) {
       p_id_cliente: Number(idCliente),
       p_aprobar: true,
       p_actor: vendedorInfo?.nombre || 'admin',
+      p_token: tokenVendedor(),
     });
     if (res && res.ok) {
       mostrarToast('✅ Cliente aprobado');
@@ -9222,7 +9240,7 @@ window.rechazarB2B = async function(idCliente) {
     if (res && res.ok) {
       // Y aprobado_b2b = false
       await supabaseCall('POST', 'rpc/aprobar_cliente_b2b', {
-        p_id_cliente: Number(idCliente), p_aprobar: false, p_actor: vendedorInfo?.nombre || 'admin'
+        p_id_cliente: Number(idCliente), p_aprobar: false, p_actor: vendedorInfo?.nombre || 'admin', p_token: tokenVendedor()
       });
       mostrarToast('Cliente movido a consumidor');
       _b2bClientes = _b2bClientes.filter(x => x.id != idCliente);
@@ -9243,7 +9261,7 @@ window.revocarB2B = async function(idCliente) {
     });
     if (res && res.ok) {
       await supabaseCall('POST', 'rpc/aprobar_cliente_b2b', {
-        p_id_cliente: Number(idCliente), p_aprobar: false, p_actor: vendedorInfo?.nombre || 'admin'
+        p_id_cliente: Number(idCliente), p_aprobar: false, p_actor: vendedorInfo?.nombre || 'admin', p_token: tokenVendedor()
       });
       mostrarToast('Aprobación revocada');
       const c = _b2bClientes.find(x => x.id == idCliente);
@@ -10172,7 +10190,7 @@ window.guardarReasignacionLote = async function(idOrden, consecutivo) {
   if (!idLote) return;
   if (!confirm(`¿Mover TODOS los kg del pedido ${consecutivo || idOrden} al lote ${idLote}?\nLos kilos vendidos de ambos lotes se recalculan.`)) return;
   try {
-    const r = await supabaseCall('POST', 'rpc/reasignar_lote_pedido', { p_id_orden: idOrden, p_id_lote: idLote });
+    const r = await supabaseCall('POST', 'rpc/reasignar_lote_pedido', { p_id_orden: idOrden, p_id_lote: idLote, p_token: tokenVendedor() });
     if (r && r.ok) {
       mostrarToast(`✅ ${r.lineas} línea(s) · ${Number(r.kg).toFixed(2)} kg → ${idLote}`);
       const cont = document.getElementById('reasignar-lote-' + idOrden);

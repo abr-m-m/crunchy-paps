@@ -213,7 +213,6 @@ const sinSesion = (r) => r.estado === 200 && r.datos && r.datos.ok === false;
 for (const [nombre, cuerpo] of [
   ['dashboard_resumen',       { p_data: {} }],
   ['resumen_gastos',          { p_data: {} }],
-  ['reporte_cobros',          { p_data: {} }],
   ['obtener_vendedores',      { p_data: {} }],
   ['obtener_pendientes_caja', {}],
   ['metricas_regalo_mes',     { p_anio: 2026, p_mes: 8 }],
@@ -223,6 +222,12 @@ for (const [nombre, cuerpo] of [
 }
 
 // Las funciones _interno guardan la lógica original y no deben ser alcanzables.
+// reporte_cobros no la usa la app: se retiró de la API (hallazgo 22), así que
+// responde 401 y no 'ok:false'. Se comprueba como retirada, no como protegida.
+agregar('H. Finanzas/personal SIN sesión (deben negar)', 'rpc/reporte_cobros (retirada de la API)',
+  () => pedir('POST', 'rpc/reporte_cobros', { p_data: {} }),
+  (r) => r.estado === 401 || r.estado === 404);
+
 for (const f of ['dashboard_resumen_interno', 'obtener_vendedores_interno',
                  'reporte_cobros_interno', 'resumen_gastos_interno']) {
   agregar('H. Finanzas/personal SIN sesión (deben negar)', `rpc/${f} (interna)`,
@@ -238,7 +243,7 @@ for (const f of ['dashboard_resumen_interno', 'obtener_vendedores_interno',
 // Perfiles del seed:  1 Admin (dueño) · 2 Mostrador · 3 Vendedor
 //                     4 Administrador2 = SOCIO con finanzas PARCIALES
 const MATRIZ = [
-  // telefono,       perfil,               dashboard, gastos, cobros, vendedores
+  // telefono,       perfil,               dashboard, gastos, caja,   vendedores
   ['5500000001', 'Admin (dueño)',            true,  true,  true,  true],
   ['5500000002', 'Mostrador',                false, true,  true,  true],
   ['5500000003', 'Vendedor',                 false, false, false, false],
@@ -253,7 +258,7 @@ for (const [tel, perfil, dash, gast, cob, vend] of MATRIZ) {
       const [d, g, c, v] = await Promise.all([
         pedir('POST', 'rpc/dashboard_resumen',  { p_data: { token: t } }),
         pedir('POST', 'rpc/resumen_gastos',     { p_data: { token: t } }),
-        pedir('POST', 'rpc/reporte_cobros',     { p_data: { token: t } }),
+        pedir('POST', 'rpc/obtener_pendientes_caja', { p_token: t }),
         pedir('POST', 'rpc/obtener_vendedores', { p_data: { token: t } }),
       ]);
       const real = [d, g, c, v].map((r) => r.datos?.ok === true);
@@ -263,6 +268,74 @@ for (const [tel, perfil, dash, gast, cob, vend] of MATRIZ) {
            r.real[2] === cob && r.real[3] === vend,
     true);
 }
+
+// ── K. Mutaciones de personal: exigen sesión y sección (hallazgo 22) ───────
+// La auditoría encontró 32 funciones que escribían sin comprobar nada. Las 10
+// sin uso se retiraron de la API; estas 22 las usa la app y llevan envoltura.
+const MUTACIONES = [
+  'set_secciones_vendedor', 'set_config_secciones', 'set_cuota_vendedor',
+  'set_lealtad_config', 'set_mayoreo_config', 'aprobar_gasto', 'rechazar_gasto',
+  'abrir_caja_dia', 'cerrar_caja_dia', 'registrar_movimiento_caja',
+  'confirmar_caja_pedido', 'actualizar_estatus_pedido',
+  'corregir_metodo_pago_pedido', 'actualizar_tipo_cliente', 'registrar_lote',
+  'registrar_produccion_sabor', 'importar_prospectos_bulk',
+  'convertir_prospecto_a_cliente', 'registrar_prospecto_desde_interno',
+];
+agregar('K. Mutaciones sin sesión (deben negar)', `las ${MUTACIONES.length} con p_data`,
+  async () => {
+    const res = await Promise.all(MUTACIONES.map((f) =>
+      pedir('POST', `rpc/${f}`, { p_data: {} })));
+    const permisivas = res
+      .map((r, i) => (r.datos?.ok !== false ? MUTACIONES[i] : null))
+      .filter(Boolean);
+    return { estado: 200, datos: { permisivas }, permisivas };
+  },
+  (r) => r.permisivas && r.permisivas.length === 0);
+
+agregar('K. Mutaciones sin sesión (deben negar)', 'las 3 con argumentos posicionales',
+  async () => {
+    const res = await Promise.all([
+      pedir('POST', 'rpc/aprobar_cliente_b2b', { p_id_cliente: 1, p_aprobar: true }),
+      pedir('POST', 'rpc/reasignar_lote_pedido', { p_id_orden: 1, p_id_lote: 'X' }),
+      pedir('POST', 'rpc/reasignar_vendedor_cliente',
+        { p_id_cliente: 1, p_id_vendedor: 1, p_nombre_vendedor: 'X' }),
+    ]);
+    const malas = res.filter((r) => r.datos?.ok !== false).length;
+    return { estado: 200, datos: res.map((r) => r.datos), malas };
+  },
+  (r) => r.malas === 0);
+
+// Las 10 sin uso deben haber desaparecido de la API.
+agregar('K. Mutaciones sin sesión (deben negar)', 'las 10 sin uso, fuera de la API',
+  async () => {
+    const fs = ['agregar_punto', 'agregar_movimiento_lealtad', 'canjear_premio',
+                'crear_caja_vendedor', 'registrar_entrega_vendedor',
+                'buscar_cliente_telefono', 'obtener_cajas_vendedores',
+                'get_cuota_vendedor', 'obtener_vendedor_por_cp'];
+    const res = await Promise.all(fs.map((f) => pedir('POST', `rpc/${f}`, { p_data: {} })));
+    // No alcanzable = 401 (permiso retirado) o 404 (ninguna firma encaja).
+    // Son dos negativas distintas y ambas valen; exigir solo 404 daba un
+    // falso rojo en las que sí estaban revocadas.
+    const vivas = res.map((r, i) => (![401, 404].includes(r.estado) ? fs[i] : null)).filter(Boolean);
+    return { estado: 200, datos: { vivas }, vivas };
+  },
+  (r) => r.vivas && r.vivas.length === 0);
+
+// ESCALADA DE PRIVILEGIOS: nadie que no sea dueño puede concederse secciones.
+agregar('K. Mutaciones sin sesión (deben negar)', 'un vendedor no puede concederse secciones',
+  async () => {
+    const t = await entrar('5500000003');            // Vendedor puro
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const intento = await pedir('POST', 'rpc/set_secciones_vendedor',
+      { p_data: { token: t, idVendedor: 3, secciones: ['caja', 'gastos', 'resumen'] } });
+    const despues = await pedir('POST', 'rpc/mis_secciones', { p_token: t });
+    const secs = despues.datos?.secciones || [];
+    return { estado: 200, datos: intento.datos,
+             bloqueado: intento.datos?.ok === false,
+             limpio: !secs.includes('caja') && !secs.includes('resumen') };
+  },
+  (r) => r.bloqueado === true && r.limpio === true,
+  true);
 
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
@@ -299,14 +372,13 @@ agregar('I. Permisos por sección', 'mis_secciones sin token no revela nada',
   (r) => r.estado === 200 && r.datos && r.datos.ok === false);
 
 // Y con sesión válida deben seguir devolviendo lo de siempre.
-agregar('H. Finanzas/personal SIN sesión (deben negar)', 'con sesión: los 6 responden ok',
+agregar('H. Finanzas/personal SIN sesión (deben negar)', 'con sesión: los 5 en uso responden ok',
   async () => {
     const t = await entrar('5500000001');
     if (!t) return { estado: 0, datos: 'sin token' };
     const res = await Promise.all([
       pedir('POST', 'rpc/dashboard_resumen',       { p_data: { token: t } }),
       pedir('POST', 'rpc/resumen_gastos',          { p_data: { token: t } }),
-      pedir('POST', 'rpc/reporte_cobros',          { p_data: { token: t } }),
       pedir('POST', 'rpc/obtener_vendedores',      { p_data: { token: t } }),
       pedir('POST', 'rpc/obtener_pendientes_caja', { p_token: t }),
       pedir('POST', 'rpc/metricas_regalo_mes',     { p_anio: 2026, p_mes: 8, p_token: t }),

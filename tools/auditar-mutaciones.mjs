@@ -14,6 +14,13 @@
 // una mutación abierta: cualquiera con la llave anon la ejecuta. Así se
 // encontró el hallazgo 20 (cambiar_pin_vendedor).
 //
+// ⚠️ LIMITACIÓN: lee un ARCHIVO de esquema, no la base viva. Después de
+// aplicar migraciones, el reporte queda desactualizado hasta que se haga un
+// `supabase db pull` nuevo. Para el estado real de los permisos, la consulta
+// autorizada es:
+//   select proname, has_function_privilege('anon', oid, 'execute')
+//     from pg_proc where pronamespace = 'public'::regnamespace;
+//
 // Uso:  node tools/auditar-mutaciones.mjs [ruta/al/esquema.sql]
 
 import { readFileSync } from 'node:fs';
