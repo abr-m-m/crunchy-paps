@@ -5022,9 +5022,13 @@ window.validarTelClienteVsVendedor = function(el) {
 
 window.abrirCarrito = function() {
   renderDrawer();
-  // "Tarjeta terminal" solo en punto de venta (vendedor/mostrador); el consumidor web no la ve
+  // "Tarjeta terminal" SOLO para el perfil Mostrador: es quien tiene la
+  // terminal física delante. Antes se mostraba a cualquier vendedor, y un
+  // vendedor en ruta no puede cobrar con ella.
   const _bt = document.getElementById('pago-terminal');
-  if (_bt) _bt.style.display = esVendedor ? '' : 'none';
+  const _esMostrador = esVendedor &&
+    String(vendedorInfo?.rol || '').toLowerCase().trim() === 'mostrador';
+  if (_bt) _bt.style.display = _esMostrador ? '' : 'none';
   document.getElementById('drawer').classList.add('open');
   document.getElementById('overlay').classList.add('visible');
   setTimeout(initMaps, 300);
