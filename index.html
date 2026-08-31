@@ -4290,6 +4290,25 @@ function restaurarSesion() {
     carrito       = s.carrito       || {};
     modoVenta     = s.modoVenta     || 'pieza';
     canalVenta    = s.canalVenta    || 'consumidor';
+
+    // Etapa B: una sesión de vendedor guardada ANTES del despliegue no tiene
+    // token. Sin token, el servidor niega todo el panel y la persona ve
+    // "No autorizado" sin entender por qué. Se descarta y se pide entrar de
+    // nuevo, que es un trámite de diez segundos.
+    // También cubre el caso normal de un token vencido (12 h).
+    if (esVendedor && !(vendedorInfo && vendedorInfo.token)) {
+      limpiarSesion();
+      tipoCliente = ''; esVendedor = false; vendedorInfo = null;
+      telefonoVerif = ''; clienteActual = null;
+      return false;
+    }
+    if (vendedorInfo && vendedorInfo.tokenExpira &&
+        Date.now() > new Date(vendedorInfo.tokenExpira).getTime()) {
+      limpiarSesion();
+      tipoCliente = ''; esVendedor = false; vendedorInfo = null;
+      telefonoVerif = ''; clienteActual = null;
+      return false;
+    }
     return true;
   } catch(e) { return false; }
 }

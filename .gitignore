@@ -46,6 +46,7 @@ index.html.respaldo-*
 # (§3.0: 26 tablas con escritura abierta). Publicarlo antes de la Fase 2 sería
 # entregarle el mapa a cualquiera. Vive junto a ACCESOS.md, fuera de git.
 PROGRESO.md
+DESPLIEGUE.md
 
 # Volcados del diagnóstico de solo lectura (sin datos personales, pero son
 # notas de trabajo, no código)
