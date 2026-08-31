@@ -128,10 +128,83 @@ agregar('E. Regresión de triggers', 'PATCH ordenes (dispara escritura en caja_m
   true);
 
 // ── F. Lo que sigue abierto (Etapa B) — se mide, no se celebra ─────────────
-for (const t of ['clientes', 'ordenes', 'prospectos']) {
+// Accesible = HTTP 200. Una tabla vacía responde 200 con [] y sigue estando
+// ABIERTA: contar filas confundiría "sin datos" con "cerrada".
+for (const t of ['ordenes', 'prospectos', 'ordenes_detalle', 'gastos']) {
   agregar('F. Aún ABIERTO — pendiente Etapa B', `GET ${t}`,
-    () => pedir('GET', `${t}?select=*&limit=1`), abierto);
+    () => pedir('GET', `${t}?select=*&limit=1`), (r) => r.estado === 200);
 }
+
+// ── G. clientes: cerrado, y accesible solo con sesión de vendedor ──────────
+// Estos casos ABREN SESIÓN (escriben en sesiones_vendedor) y dependen de los
+// vendedores ficticios del seed con PIN 1234. Por eso se marcan como
+// escritura: no corren en --solo-lectura ni contra producción.
+agregar('G. clientes (Etapa B)', 'GET clientes directo',
+  () => pedir('GET', 'clientes?select=*&limit=1'), cerrado);
+
+agregar('G. clientes (Etapa B)', 'obtener_clientes SIN token',
+  () => pedir('POST', 'rpc/obtener_clientes', { p_data: {} }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+agregar('G. clientes (Etapa B)', 'obtener_clientes con token INVENTADO',
+  () => pedir('POST', 'rpc/obtener_clientes', { p_data: { token: 'f'.repeat(64) } }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+async function entrar(telefono) {
+  const r = await pedir('POST', 'rpc/validar_vendedor_pin',
+    { p_data: { telefono, pin: '1234' } });
+  return (r.datos && r.datos.token) || null;
+}
+
+agregar('G. clientes (Etapa B)', 'admin ve TODOS los clientes',
+  async () => {
+    const t = await entrar('5500000001');           // vendedor 1 = Admin
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/obtener_clientes', { p_data: { token: t, limit: 5 } });
+  },
+  (r) => r.estado === 200 && r.datos && r.datos.ok === true && r.datos.total > 100,
+  true);
+
+agregar('G. clientes (Etapa B)', 'vendedor ve SOLO los suyos',
+  async () => {
+    const t = await entrar('5500000003');           // vendedor 3 = Vendedor
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const r = await pedir('POST', 'rpc/obtener_clientes', { p_data: { token: t, limit: 200 } });
+    // La comprobación de fondo: ninguna fila puede ser de otro vendedor.
+    const ajenos = (r.datos?.clientes || []).filter((c) => c.id_vendedor !== 3).length;
+    return { ...r, ajenos };
+  },
+  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.total > 0 &&
+         r.datos.total < 100 && r.ajenos === 0,
+  true);
+
+agregar('G. clientes (Etapa B)', 'vendedor NO alcanza cliente ajeno',
+  async () => {
+    const t = await entrar('5500000003');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    // El cliente 300 es del vendedor 7 (seed: id_vendedor = 1 + i % 7).
+    return pedir('POST', 'rpc/obtener_telefono_cliente',
+      { p_data: { token: t, idCliente: 300 } });
+  },
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false,
+  true);
+
+agregar('G. clientes (Etapa B)', 'token revocado deja de servir',
+  async () => {
+    const t = await entrar('5500000001');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    await pedir('POST', 'rpc/cerrar_sesion_vendedor', { p_data: { token: t } });
+    return pedir('POST', 'rpc/obtener_clientes', { p_data: { token: t } });
+  },
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false,
+  true);
+
+agregar('G. clientes (Etapa B)', 'sesiones_vendedor cerrada a anon',
+  () => pedir('GET', 'sesiones_vendedor?select=*&limit=1'), cerrado);
+
+agregar('G. clientes (Etapa B)', 'resolver_sesion_vendedor no invocable',
+  () => pedir('POST', 'rpc/resolver_sesion_vendedor', { p_token: 'x'.repeat(64) }),
+  (r) => r.estado === 401 || r.estado === 404);
 
 // ── Ejecución ──────────────────────────────────────────────────────────────
 

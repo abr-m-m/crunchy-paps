@@ -7037,6 +7037,19 @@ async function sheetsCall(payload) {
 // ════════════════════════════════════════════════════════════════
 // SUPABASE helper — Fase 1 migración (solo bebidas por ahora)
 // ════════════════════════════════════════════════════════════════
+// Etapa B: token de sesión del vendedor. Los RPCs protegidos lo exigen; sin él
+// la base responde "Sesión inválida o expirada" y no devuelve datos.
+function tokenVendedor() {
+  return (vendedorInfo && vendedorInfo.token) ? vendedorInfo.token : '';
+}
+
+// Un RPC protegido devuelve { ok:false, error:'Sesión inválida o expirada' }
+// cuando el token venció (12 h) o se revocó. En ese caso hay que volver a
+// entrar: no tiene sentido reintentar.
+function sesionExpirada(res) {
+  return res && res.ok === false && /Sesión inválida o expirada/.test(res.error || '');
+}
+
 async function supabaseCall(method, path, body) {
   const t0 = (typeof PERF !== 'undefined' && PERF.enabled) ? performance.now() : 0;
   const url = SUPABASE_URL + '/rest/v1/' + path;
@@ -7179,6 +7192,11 @@ window.verificarPIN = async function() {
         rol: v.rol,
         direccionPuntoVenta: v.direccionPuntoVenta,
         cpPuntoVenta: v.cpPuntoVenta,
+        // Etapa B: token de sesión emitido por el servidor. Es la credencial
+        // real; `rol` de aquí arriba es solo para pintar la interfaz. Quien
+        // decide qué puede ver este vendedor es la base, no el navegador.
+        token: res.token || '',
+        tokenExpira: res.expiraEn || null,
       };
       tipoCliente  = 'vendedor';
       telefonoVerif = window._telVendedor;
@@ -7793,6 +7811,13 @@ window.aplicarCanje = function() {
 // ══════════════════════════════════
 window.cerrarSesion = function() {
   if (!confirm('¿Deseas cerrar sesión?')) return;
+  // Etapa B: revocar el token en el servidor. Sin esto, salir del navegador no
+  // invalida nada: el token seguiría sirviendo hasta expirar (12 h).
+  // Sin await a propósito — cerrar sesión no debe quedarse esperando a la red.
+  const _tok = tokenVendedor();
+  if (_tok) {
+    try { supabaseCall('POST', 'rpc/cerrar_sesion_vendedor', { p_data: { token: _tok } }); } catch (_e) {}
+  }
   // Resetear estado
   tipoCliente=''; esVendedor=false; vendedorInfo=null;
   telefonoVerif=''; clienteActual=null; vendedorAsig=null;
@@ -9525,13 +9550,18 @@ window.buscarCliente = async function(q) {
   _buscarTimer = setTimeout(async () => {
     resultados.innerHTML = '<div style="color:var(--suave);font-size:0.78rem;padding:6px;">Buscando...</div>';
     try {
-      // v2.8: buscar cliente via Supabase (búsqueda LIKE en nombre o telefono)
-      const safeQ = encodeURIComponent(q);
-      const filtroNombre = `nombre.ilike.*${safeQ}*`;
-      const filtroTel = `telefono.ilike.*${safeQ}*`;
-      const arr = await supabaseCall('GET',
-        `clientes?or=(${filtroNombre},${filtroTel})&select=*&limit=10`
-      );
+      // Etapa B: antes esto era `clientes?or=(...)&select=*` directo a la tabla,
+      // que cualquiera con la llave anon podía repetir para cosechar el padrón.
+      // Ahora va por RPC con sesión: el servidor acota a los clientes del
+      // vendedor (o a todos, si es admin).
+      const resB = await supabaseCall('POST', 'rpc/buscar_clientes', {
+        p_data: { token: tokenVendedor(), q }
+      });
+      if (sesionExpirada(resB)) {
+        resultados.innerHTML = '<div style="color:var(--rojo);font-size:0.78rem;padding:6px;">Tu sesión expiró. Vuelve a entrar.</div>';
+        return;
+      }
+      const arr = (resB && resB.ok) ? resB.clientes : null;
       if (!Array.isArray(arr) || arr.length === 0) {
         resultados.innerHTML = '<div style="color:#555;font-size:0.78rem;padding:6px;">Sin resultados — registra como nuevo cliente</div>';
         return;
@@ -9974,8 +10004,12 @@ window.confirmarPedidoWpp = async function(idOrden) {
   // Respaldo: si el pedido no trae teléfono, buscarlo en el cliente
   if (!tel && p.idCliente) {
     try {
-      const c = await supabaseCall('GET', `clientes?id=eq.${p.idCliente}&select=telefono`);
-      if (Array.isArray(c) && c[0] && c[0].telefono) tel = String(c[0].telefono).replace(/\D/g, '');
+      // Etapa B: por RPC con sesión. Antes era `clientes?id=eq.N&select=telefono`,
+      // que se podía recorrer en bucle para cosechar la agenda completa.
+      const c = await supabaseCall('POST', 'rpc/obtener_telefono_cliente', {
+        p_data: { token: tokenVendedor(), idCliente: p.idCliente }
+      });
+      if (c && c.ok && c.telefono) tel = String(c.telefono).replace(/\D/g, '');
     } catch(e) {}
   }
   if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); return; }
@@ -9995,8 +10029,12 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
   let tel = String(p.telefono || '').replace(/\D/g, '');
   if (!tel && p.idCliente) {
     try {
-      const c = await supabaseCall('GET', `clientes?id=eq.${p.idCliente}&select=telefono`);
-      if (Array.isArray(c) && c[0] && c[0].telefono) tel = String(c[0].telefono).replace(/\D/g, '');
+      // Etapa B: por RPC con sesión. Antes era `clientes?id=eq.N&select=telefono`,
+      // que se podía recorrer en bucle para cosechar la agenda completa.
+      const c = await supabaseCall('POST', 'rpc/obtener_telefono_cliente', {
+        p_data: { token: tokenVendedor(), idCliente: p.idCliente }
+      });
+      if (c && c.ok && c.telefono) tel = String(c.telefono).replace(/\D/g, '');
     } catch(e) {}
   }
   if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); return; }
@@ -10815,26 +10853,36 @@ async function renderB2B() {
   lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader loader-w"></span> Cargando clientes...</div>';
 
   try {
-    // v2.8: cargar clientes desde Supabase
-    let queryClientes = 'clientes?select=*&order=fecha_creacion.desc';
-    if (esVendedor && !esAdmin()) {
-      queryClientes = `clientes?id_vendedor=eq.${vendedorInfo.id}&select=*&order=fecha_creacion.desc`;
-    }
-
-    // Cargar clientes + (si admin) vendedores en paralelo
-    const peticiones = [supabaseCall('GET', queryClientes)];
+    // Etapa B: antes era `clientes?select=*` sin límite, y el filtro por
+    // vendedor lo decidía ESTE archivo — es decir, el navegador. Cualquiera
+    // podía borrar esa condición en DevTools y ver el padrón completo.
+    // Ahora el alcance lo impone el servidor a partir del token: admin ve
+    // todos, vendedor ve solo los suyos. El navegador ya no elige.
+    const peticiones = [supabaseCall('POST', 'rpc/obtener_clientes', {
+      p_data: { token: tokenVendedor(), limit: 200, offset: 0 }
+    })];
     if (esAdmin() && _vendedoresActivos.length === 0) {
       peticiones.push(supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: {} }));
     }
     const resultados = await Promise.all(peticiones);
-    const arr = resultados[0];
+    const resC = resultados[0];
     if (resultados[1] && resultados[1].ok) {
       _vendedoresActivos = resultados[1].vendedores || [];
     }
 
-    if (!Array.isArray(arr)) {
+    if (sesionExpirada(resC)) {
+      lista.innerHTML = '<div style="color:var(--rojo);padding:12px;">Tu sesión expiró. Vuelve a entrar para ver tus clientes.</div>';
+      return;
+    }
+    if (!resC || !resC.ok || !Array.isArray(resC.clientes)) {
       lista.innerHTML = '<div style="color:var(--rojo);padding:12px;">Error: respuesta inválida</div>';
       return;
+    }
+    const arr = resC.clientes;
+    // El RPC pagina (tope 200). Si hay más, decirlo en vez de perder filas en
+    // silencio. La paginación de la interfaz queda pendiente.
+    if (typeof resC.total === 'number' && resC.total > arr.length) {
+      console.warn('[CP] Mostrando ' + arr.length + ' de ' + resC.total + ' clientes.');
     }
 
     // Para cada cliente B2B necesitamos totalCompras: hacemos 1 query agregada a ordenes
