@@ -58,3 +58,7 @@ DESPLIEGUE.md
 A-indices.csv
 B-politicas.csv
 Supabase Snippet*.csv
+
+# Respaldos de la base: contienen DATOS PERSONALES de clientes reales.
+# Nunca al repo publico.
+respaldos/
