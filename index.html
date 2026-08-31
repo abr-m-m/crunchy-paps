@@ -10595,12 +10595,12 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
   patch['actualizado_por'] = vendedorInfo?.nombre || 'Vendedor';
 
   try {
-    // Buscar por consecutivo o id numérico
-    const idNum = !isNaN(Number(idOrden)) ? Number(idOrden) : 0;
-    const filtro = idNum > 0 ? `id=eq.${idNum}` : `consecutivo=eq.${encodeURIComponent(idOrden)}`;
-    const res = await supabaseCall('PATCH', `ordenes?${filtro}`, patch);
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    // Etapa B: por RPC con sesión. El RPC acepta id o consecutivo, y solo deja
+    // tocar columnas de una lista blanca — `total` no está en ella.
+    const res = await supabaseCall('POST', 'rpc/actualizar_campos_pedido', {
+      p_data: { idOrden: String(idOrden), campos: patch }
+    });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('✅ Fecha actualizada');
 
     if (_pedidoActual) {
@@ -10668,15 +10668,16 @@ window.marcarEstatus = async function(idOrden, campo, valor) {
   try {
     // Si hay método nuevo, primero corregirlo
     if (metodoSeleccionado) {
-      // Actualizar tipo_pago en el pedido vía PATCH directo a ordenes
-      const idP = isNaN(Number(idOrden)) ? null : Number(idOrden);
-      const filtro = idP ? `id=eq.${idP}` : `consecutivo=eq.${encodeURIComponent(idOrden)}`;
+      // Actualizar tipo_pago en el pedido (Etapa B: por RPC, no PATCH directo)
       const metodoId = metodoSeleccionado === 'Efectivo' ? 1
                      : metodoSeleccionado === 'Transferencia' ? 2
                      : metodoSeleccionado === 'Tarjeta' ? 3 : 0;
-      await supabaseCall('PATCH', `ordenes?${filtro}`, {
-        tipo_pago: metodoSeleccionado,
-        tipo_pago_id: metodoId,
+      // Etapa B: por RPC con sesión (antes era PATCH directo a `ordenes`).
+      await supabaseCall('POST', 'rpc/actualizar_campos_pedido', {
+        p_data: {
+          idOrden: String(idOrden),
+          campos: { tipo_pago: metodoSeleccionado, tipo_pago_id: metodoId }
+        }
       });
     }
 
@@ -11823,10 +11824,11 @@ window.guardarNuevoProspecto = async function() {
       fecha_visita:      new Date().toISOString(),
       estatus:           'contactado',
     };
-    const res = await supabaseCall('POST', 'prospectos', payload);
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) {
-      alert('Error: ' + item.message);
+    // Etapa B: por RPC con sesión. El id del vendedor lo pone el servidor a
+    // partir del token, no el navegador: nadie registra prospectos a nombre de otro.
+    const res = await supabaseCall('POST', 'rpc/crear_prospecto', { p_data: payload });
+    if (!res || !res.ok) {
+      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
       return;
     }
     mostrarToast('✅ Prospecto registrado');
@@ -12046,18 +12048,18 @@ window.accionRegistrarVisita = async function(id) {
     const cur = await supabaseCall('GET', `prospectos?id=eq.${id}&select=num_visitas`);
     const numVisitasActual = (Array.isArray(cur) && cur[0]) ? (Number(cur[0].num_visitas) || 0) : 0;
 
+    // Etapa B: `id_vendedor` y `nombre_vendedor` ya no se mandan desde aquí —
+    // los pone el servidor a partir del token, que es la única fuente fiable de
+    // quién hizo la visita. Además no están en la lista blanca del RPC.
     const payload = {
       estatus: 'contactado',
       num_visitas: numVisitasActual + 1,
       fecha_visita: new Date().toISOString(),
-      id_vendedor: vendedorInfo?.id || null,
-      nombre_vendedor: vendedorInfo?.nombre || '',
     };
     if (nota && nota.trim()) payload.notas = nota;
 
-    const res = await supabaseCall('PATCH', `prospectos?id=eq.${id}`, payload);
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: payload } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('✅ Visita registrada');
     cerrarDetalleProspecto();
     renderProspeccion();
@@ -12110,13 +12112,12 @@ window.accionDescartarProspecto = async function(id) {
   const motivo = prompt('Motivo del descarte (cerró, no le interesa, etc.):', '');
   if (!motivo) return;
   try {
-    const res = await supabaseCall('PATCH', `prospectos?id=eq.${id}`, {
+    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: {
       estatus: 'descartado',
       motivo_descarte: motivo,
       fecha_descarte: new Date().toISOString(),
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    } } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('🚫 Descartado');
     cerrarDetalleProspecto();
     renderProspeccion();
@@ -12126,13 +12127,12 @@ window.accionDescartarProspecto = async function(id) {
 window.accionReactivarProspecto = async function(id) {
   if (!confirm('¿Reactivar este prospecto?')) return;
   try {
-    const res = await supabaseCall('PATCH', `prospectos?id=eq.${id}`, {
+    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: {
       estatus: 'pendiente',
       motivo_descarte: null,
       fecha_descarte: null,
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    } } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('↩️ Reactivado');
     cerrarDetalleProspecto();
     renderProspeccion();

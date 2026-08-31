@@ -117,13 +117,24 @@ agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/obtener_cliente_
 // que escriben en caja_movimientos — la tabla que acabamos de cerrar. Si los
 // triggers no fueran SECURITY DEFINER, esto fallaría. Es LA prueba de la
 // Etapa A.
-agregar('E. Regresión de triggers', 'PATCH ordenes (dispara escritura en caja_movimientos)',
+// Antes este caso hacía `PATCH ordenes` directo. Desde que se revocó UPDATE a
+// anon (Etapa B), ese camino ya no existe: ahora la actualización pasa por
+// rpc/actualizar_campos_pedido con sesión. La INTENCIÓN del caso no cambia —
+// comprobar que los triggers siguen pudiendo escribir en caja_movimientos —,
+// solo el camino por el que se llega.
+agregar('E. Regresión de triggers', 'actualizar pedido dispara escritura en caja_movimientos',
   async () => {
-    const pend = await pedir('GET', 'ordenes?estatus_pago=eq.Pendiente&select=id&limit=1');
-    if (!Array.isArray(pend.datos) || !pend.datos.length) return { estado: 0, datos: 'sin órdenes pendientes' };
-    return pedir('PATCH', `ordenes?id=eq.${pend.datos[0].id}`, { estatus_pago: 'Pagado' });
+    const t = await entrar('5500000001');          // Admin: tiene la sección `pedidos`
+    if (!t) return { estado: 0, datos: 'sin token' };
+    // Cualquier UPDATE sobre `ordenes` dispara trg_caja_mov_pedido,
+    // trg_caja_confirmar_pedido, trg_otorgar_puntos y trg_ordenes_reconciliar.
+    // Si alguno no fuera SECURITY DEFINER, la actualización entera fallaría.
+    return pedir('POST', 'rpc/actualizar_campos_pedido', {
+      p_data: { token: t, idOrden: '1',
+                campos: { fecha_pago: new Date().toISOString(), actualizado_por: 'prueba-rls' } }
+    });
   },
-  (r) => r.estado >= 200 && r.estado < 300,
+  (r) => r.datos?.ok === true,
   true);
 
 // ── F. Lo que sigue abierto (Etapa B) — se mide, no se celebra ─────────────
@@ -335,6 +346,60 @@ agregar('K. Mutaciones sin sesión (deben negar)', 'un vendedor no puede concede
              limpio: !secs.includes('caja') && !secs.includes('resumen') };
   },
   (r) => r.bloqueado === true && r.limpio === true,
+  true);
+
+// ── L. ordenes y prospectos: escrituras cerradas ───────────────────────────
+// Producción no tiene respaldos automáticos (plan gratuito). Que `anon` pudiera
+// BORRAR órdenes y prospectos era el riesgo irreversible del proyecto.
+agregar('L. ordenes/prospectos (Etapa B)', 'DELETE bloqueado en 9 tablas',
+  async () => {
+    const ts = ['ordenes', 'ordenes_detalle', 'prospectos', 'lotes_produccion',
+                'productos', 'jornadas', 'cupones', 'produccion_diaria',
+                'productos_bebidas'];
+    const res = await Promise.all(ts.map((t) => pedir('DELETE', `${t}?id=eq.999999`)));
+    const abiertas = res.map((r, i) => (r.estado < 400 ? ts[i] : null)).filter(Boolean);
+    return { estado: 200, datos: { abiertas }, abiertas };
+  },
+  (r) => r.abiertas && r.abiertas.length === 0);
+
+agregar('L. ordenes/prospectos (Etapa B)', 'no se puede alterar el total de un pedido',
+  () => pedir('PATCH', 'ordenes?id=eq.1', { total: 1 }),
+  (r) => r.estado >= 400);
+
+agregar('L. ordenes/prospectos (Etapa B)', 'no se pueden insertar prospectos directo',
+  () => pedir('POST', 'prospectos', { nombre_negocio: 'intruso' }),
+  (r) => r.estado >= 400);
+
+for (const f of ['actualizar_campos_pedido', 'crear_prospecto', 'actualizar_prospecto']) {
+  agregar('L. ordenes/prospectos (Etapa B)', `rpc/${f} sin sesión`,
+    () => pedir('POST', `rpc/${f}`, { p_data: { idOrden: '1', id: 1, campos: {} } }),
+    (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+}
+
+// La lista blanca importa tanto como la sesión: ni un admin debe poder cambiar
+// el importe de un pedido por esta vía.
+agregar('L. ordenes/prospectos (Etapa B)', 'ni con sesión de admin se toca el total',
+  async () => {
+    const t = await entrar('5500000001');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/actualizar_campos_pedido',
+      { p_data: { token: t, idOrden: '1', campos: { total: 1 } } });
+  },
+  (r) => r.datos?.ok === false && /Campo no permitido/.test(r.datos?.error || ''),
+  true);
+
+// El vendedor de un prospecto lo fija el servidor desde el token, no el payload.
+agregar('L. ordenes/prospectos (Etapa B)', 'el vendedor sale de la sesión, no del payload',
+  async () => {
+    const t = await entrar('5500000003');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const r = await pedir('POST', 'rpc/crear_prospecto', {
+      p_data: { token: t, nombre_negocio: 'Prueba automatizada',
+                tipo_negocio: 'abarrotes', id_vendedor: 99, nombre_vendedor: 'Falso' }
+    });
+    return { estado: 200, datos: r.datos, creado: r.datos?.ok === true };
+  },
+  (r) => r.creado === true,
   true);
 
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
