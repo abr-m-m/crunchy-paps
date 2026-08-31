@@ -4291,23 +4291,31 @@ function restaurarSesion() {
     modoVenta     = s.modoVenta     || 'pieza';
     canalVenta    = s.canalVenta    || 'consumidor';
 
-    // Etapa B: una sesión de vendedor guardada ANTES del despliegue no tiene
-    // token. Sin token, el servidor niega todo el panel y la persona ve
-    // "No autorizado" sin entender por qué. Se descarta y se pide entrar de
-    // nuevo, que es un trámite de diez segundos.
-    // También cubre el caso normal de un token vencido (12 h).
-    if (esVendedor && !(vendedorInfo && vendedorInfo.token)) {
-      limpiarSesion();
-      tipoCliente = ''; esVendedor = false; vendedorInfo = null;
-      telefonoVerif = ''; clienteActual = null;
-      return false;
-    }
-    if (vendedorInfo && vendedorInfo.tokenExpira &&
-        Date.now() > new Date(vendedorInfo.tokenExpira).getTime()) {
-      limpiarSesion();
-      tipoCliente = ''; esVendedor = false; vendedorInfo = null;
-      telefonoVerif = ''; clienteActual = null;
-      return false;
+    // Etapa B: aquí conviven DOS sesiones con vidas y costes distintos.
+    //
+    //   1. Identidad de CLIENTE (telefonoVerif): se verifica por OTP, dura 60
+    //      días a propósito, y rehacerla CUESTA UN SMS de Twilio.
+    //   2. Privilegio de VENDEDOR (vendedorInfo.token): dura 12 h por
+    //      seguridad, y rehacerlo es gratis — teclear un PIN de 4 dígitos.
+    //
+    // Cuando cae el privilegio de vendedor, se cae SOLO eso. Borrar también la
+    // identidad del cliente obligaría a un OTP nuevo y a pagar un SMS por algo
+    // que no lo necesita. (La primera versión de esta guardia lo hacía, y era
+    // un error: colapsaba los 60 días a 12 horas y con cargo.)
+    const _tokenVendedorInvalido =
+      esVendedor && (
+        !(vendedorInfo && vendedorInfo.token) ||
+        (vendedorInfo.tokenExpira &&
+         Date.now() > new Date(vendedorInfo.tokenExpira).getTime())
+      );
+
+    if (_tokenVendedorInvalido) {
+      esVendedor   = false;
+      vendedorInfo = null;
+      // `telefonoVerif`, `tipoCliente`, `clienteActual`, `puntos` y `carrito`
+      // se conservan: siguen siendo válidos y no dependen del PIN.
+      if (tipoCliente === 'vendedor') tipoCliente = 'consumidor';
+      guardarSesion();   // persistir la sesión ya sin la parte de vendedor
     }
     return true;
   } catch(e) { return false; }
@@ -5939,6 +5947,11 @@ window.buscarCP = async function(cp) {
   const st=document.getElementById('cp-status');
   const col=document.getElementById('f-colonia');
   const info=document.getElementById('cp-info');
+  // Recordar la colonia ya elegida ANTES de vaciar el desplegable. Repoblarlo
+  // la borraba, así que quien ya la había puesto tenía que volver a elegirla
+  // cada vez que tocaba la dirección o usaba la ubicación. Bug anterior a la
+  // Etapa B: `buscarCP` reconstruía las opciones sin restaurar la selección.
+  const _coloniaPrevia = (col.value || '').trim();
   col.innerHTML='<option value="">Colonia *</option>'; col.style.color='#444';
   info.style.display='none'; st.textContent='';
   if (cp.length<5) return;
@@ -5955,6 +5968,15 @@ window.buscarCP = async function(cp) {
         const o=document.createElement('option');
         o.value=o.textContent=p['place name']; col.appendChild(o);
       });
+      // Devolver la selección previa si sigue estando entre las opciones del
+      // CP nuevo. Si el CP cambió y esa colonia ya no aplica, se queda vacío,
+      // que es lo correcto.
+      if (_coloniaPrevia) {
+        const objetivo = _coloniaPrevia.toLowerCase();
+        for (let i = 0; i < col.options.length; i++) {
+          if (col.options[i].value.toLowerCase() === objetivo) { col.selectedIndex = i; break; }
+        }
+      }
       col.style.color='var(--blanco)';
       st.style.color='#4caf50'; st.textContent=`✓ ${places.length} colonia${places.length>1?'s':''}`;
       document.getElementById('cp-mun').textContent=places[0]['place name'];
