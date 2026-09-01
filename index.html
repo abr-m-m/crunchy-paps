@@ -1652,6 +1652,45 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
         🔐 Permisos de secciones
       </button>
 
+      <!-- Cambiar mi PIN (solo personal). Hasta hoy no existía esta pantalla:
+           cambiar un PIN requería SQL, así que no había forma de rotarlo si
+           alguien lo compartía o dejaba el equipo. -->
+      <div id="cuenta-pin-wrap" style="display:none;background:var(--gris);border-radius:14px;padding:16px;margin-top:4px;">
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔑 Mi PIN de acceso</div>
+
+        <button id="pin-abrir" onclick="abrirCambioPin()" style="
+          background:transparent;border:2px solid var(--gris3);border-radius:12px;
+          padding:12px;width:100%;font-family:'Inter',sans-serif;
+          font-weight:800;font-size:0.86rem;color:var(--blanco);cursor:pointer;">
+          Cambiar mi PIN
+        </button>
+
+        <div id="pin-form" style="display:none;margin-top:12px;">
+          <input class="inp" id="pin-actual" type="password" inputmode="numeric" autocomplete="current-password"
+                 placeholder="PIN actual" maxlength="10" style="margin-bottom:8px;">
+          <input class="inp" id="pin-nuevo" type="password" inputmode="numeric" autocomplete="new-password"
+                 placeholder="PIN nuevo (mínimo 4 dígitos)" maxlength="10" style="margin-bottom:8px;">
+          <input class="inp" id="pin-nuevo2" type="password" inputmode="numeric" autocomplete="new-password"
+                 placeholder="Repetir PIN nuevo" maxlength="10" style="margin-bottom:8px;">
+          <div id="pin-msg" style="font-size:0.76rem;margin-bottom:8px;min-height:1em;"></div>
+          <div style="display:flex;gap:8px;">
+            <button id="pin-guardar" onclick="guardarPinPropio()" style="
+              flex:1;background:var(--amarillo);border:none;border-radius:12px;padding:12px;
+              font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:var(--negro);cursor:pointer;">
+              Guardar
+            </button>
+            <button onclick="cerrarCambioPin()" style="
+              flex:0 0 auto;background:transparent;border:2px solid #333;border-radius:12px;padding:12px 16px;
+              font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:#555;cursor:pointer;">
+              Cancelar
+            </button>
+          </div>
+          <div style="font-size:0.72rem;color:var(--suave);margin-top:8px;line-height:1.4;">
+            Al cambiarlo se cerrarán tus sesiones abiertas en otros dispositivos.
+          </div>
+        </div>
+      </div>
+
       <!-- Cerrar sesión -->
       <button onclick="cerrarSesion()" style="
         background:transparent;border:2px solid #333;border-radius:14px;
@@ -7891,10 +7930,93 @@ window.cerrarSesion = function() {
   ir('s-welcome');
 };
 
+// ══════════════════════════════════
+// CAMBIO DE PIN (personal)
+// ══════════════════════════════════
+// Hasta hoy no existía esta pantalla: `cambiar_pin_vendedor` estaba en la base
+// pero index.html no la llamaba, así que rotar un PIN requería SQL. Eso dejaba
+// sin salida el caso más común de todos: alguien comparte su PIN, o deja el
+// equipo, y hay que cambiarlo el mismo día.
+
+window.abrirCambioPin = function() {
+  const f = document.getElementById('pin-form');
+  const b = document.getElementById('pin-abrir');
+  if (!f) return;
+  ['pin-actual','pin-nuevo','pin-nuevo2'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  const m = document.getElementById('pin-msg'); if (m) m.textContent = '';
+  f.style.display = '';
+  if (b) b.style.display = 'none';
+  const primero = document.getElementById('pin-actual');
+  if (primero) primero.focus();
+};
+
+window.cerrarCambioPin = function() {
+  const f = document.getElementById('pin-form');
+  const b = document.getElementById('pin-abrir');
+  if (f) f.style.display = 'none';
+  if (b) b.style.display = '';
+  // No dejar los PIN escritos en el DOM después de cerrar.
+  ['pin-actual','pin-nuevo','pin-nuevo2'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  const m = document.getElementById('pin-msg'); if (m) m.textContent = '';
+};
+
+window.guardarPinPropio = async function() {
+  const msg = document.getElementById('pin-msg');
+  const btn = document.getElementById('pin-guardar');
+  const val = (id) => (document.getElementById(id)?.value || '').trim();
+  const actual = val('pin-actual'), nuevo = val('pin-nuevo'), nuevo2 = val('pin-nuevo2');
+  const err = (t) => { msg.style.color = 'var(--rojo)'; msg.textContent = t; };
+
+  // Validación en el navegador solo para dar mejor mensaje: el servidor vuelve
+  // a comprobarlo todo, incluido el PIN actual contra el hash.
+  if (!actual || !nuevo || !nuevo2) return err('Completa los tres campos.');
+  if (nuevo !== nuevo2)             return err('El PIN nuevo no coincide.');
+  if (!/^\d{4,}$/.test(nuevo))      return err('El PIN debe ser de al menos 4 dígitos, solo números.');
+  if (nuevo === actual)             return err('El PIN nuevo debe ser distinto del actual.');
+
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  msg.textContent = '';
+  try {
+    const res = await supabaseCall('POST', 'rpc/cambiar_pin_vendedor', {
+      p_data: { token: tokenVendedor(), pinActual: actual, pinNuevo: nuevo }
+    });
+    if (res && res.ok) {
+      msg.style.color = '#4caf50';
+      msg.textContent = '✓ PIN actualizado. Vuelve a entrar con el nuevo.';
+      // El servidor revoca TODAS las sesiones de esta persona al cambiar el
+      // PIN — incluida ésta. Si no lo hiciéramos, cambiar el PIN por sospecha
+      // de que alguien lo conoce no serviría: su sesión seguiría viva.
+      // Se limpia solo la parte de vendedor; `telefonoVerif` se conserva para
+      // no gastar un SMS de OTP.
+      esVendedor = false; vendedorInfo = null;
+      if (tipoCliente === 'vendedor') tipoCliente = 'consumidor';
+      guardarSesion();
+      setTimeout(() => { try { location.reload(); } catch (_e) {} }, 1800);
+    } else {
+      err((res && res.error) || 'No se pudo cambiar el PIN.');
+      btn.disabled = false; btn.textContent = 'Guardar';
+    }
+  } catch (e) {
+    err('Error de conexión.');
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+};
+
 window.renderCuenta = function() {
   if (!telefonoVerif) return;
   const tel = telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/, '+52 $1 $2 $3');
   document.getElementById('cuenta-tel').textContent = tel;
+
+  // El cambio de PIN solo aplica al personal: el cliente entra por OTP y no
+  // tiene PIN. Se oculta el formulario por si quedó abierto de una visita
+  // anterior a la pantalla.
+  const _pinWrap = document.getElementById('cuenta-pin-wrap');
+  if (_pinWrap) _pinWrap.style.display = (esVendedor && vendedorInfo) ? '' : 'none';
+  cerrarCambioPin();
 
   if (esVendedor && vendedorInfo) {
     // Para vendedor mostrar siempre sus propios datos
@@ -14163,11 +14285,67 @@ async function pintarMatrizPermisos() {
           <tbody>${filaAdmin}${filasVend}</tbody>
         </table>
       </div>
-      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.85rem;color:var(--negro);cursor:pointer;">💾 Guardar todo</button>`;
+      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.85rem;color:var(--negro);cursor:pointer;">💾 Guardar todo</button>
+
+      <!-- Restablecer el PIN de otra persona. Va aparte de la matriz para no
+           tocar su layout de celdas fijas, y porque es una acción de otro tipo:
+           la matriz se guarda en bloque, esto es puntual y con confirmación. -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gris3);">
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🔑 Restablecer PIN</div>
+        <div style="font-size:0.74rem;color:var(--suave);margin-bottom:10px;line-height:1.4;">
+          Para cuando alguien lo olvida, lo comparte o deja el equipo. Se cierran de inmediato sus sesiones abiertas.
+        </div>
+        <select class="inp" id="pmr-vendedor" style="margin-bottom:8px;">
+          <option value="">¿A quién?</option>
+          ${vendedores.map(v => `<option value="${v.id}">${v.nombre} — ${v.rol || 'Vendedor'}</option>`).join('')}
+        </select>
+        <input class="inp" id="pmr-pin" type="password" inputmode="numeric" autocomplete="new-password"
+               placeholder="PIN nuevo (mínimo 4 dígitos)" maxlength="10" style="margin-bottom:8px;">
+        <div id="pmr-msg" style="font-size:0.76rem;margin-bottom:8px;min-height:1em;"></div>
+        <button onclick="restablecerPinVendedor(this)" style="width:100%;background:transparent;border:2px solid var(--gris3);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--blanco);cursor:pointer;">
+          Restablecer PIN
+        </button>
+      </div>`;
   } catch(e) {
     cont.innerHTML = `<div style="color:var(--rojo);">Error: ${e.message}</div>`;
   }
 }
+
+// Restablecer el PIN de OTRA persona. El servidor exige rol dueño (admin /
+// administrador exactos), así que un socio administrador2 no puede usarlo
+// aunque llegue a ver esta pantalla.
+window.restablecerPinVendedor = async function(btn) {
+  const msg = document.getElementById('pmr-msg');
+  const sel = document.getElementById('pmr-vendedor');
+  const inp = document.getElementById('pmr-pin');
+  const err = (t) => { msg.style.color = 'var(--rojo)'; msg.textContent = t; };
+
+  const idVendedor = sel && sel.value;
+  const nuevo = (inp && inp.value || '').trim();
+  if (!idVendedor)             return err('Elige a quién.');
+  if (!/^\d{4,}$/.test(nuevo)) return err('El PIN debe ser de al menos 4 dígitos, solo números.');
+
+  const nombre = sel.options[sel.selectedIndex].textContent.split(' — ')[0];
+  if (!confirm(`¿Restablecer el PIN de ${nombre}?\n\nSe cerrarán sus sesiones abiertas y tendrá que entrar con el PIN nuevo.`)) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Restableciendo...'; }
+  msg.textContent = '';
+  try {
+    const res = await supabaseCall('POST', 'rpc/cambiar_pin_vendedor', {
+      p_data: { token: tokenVendedor(), idVendedor: Number(idVendedor), pinNuevo: nuevo }
+    });
+    if (res && res.ok) {
+      msg.style.color = '#4caf50';
+      msg.textContent = `✓ PIN de ${nombre} restablecido. Comunícaselo por un canal seguro.`;
+      inp.value = ''; sel.value = '';
+    } else {
+      err((res && res.error) || 'No se pudo restablecer.');
+    }
+  } catch (e) {
+    err('Error de conexión.');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Restablecer PIN'; }
+};
 
 window.guardarMatrizPermisos = async function(btn) {
   const checks = document.querySelectorAll('.pm-chk-matriz');

@@ -437,6 +437,77 @@ agregar('M. Límite de intentos de PIN', 'registrar_fallo_pin no invocable',
   () => pedir('POST', 'rpc/registrar_fallo_pin', { p_telefono: '5500000001' }),
   (r) => r.estado === 401 || r.estado === 404);
 
+// ── N. Cambio y restablecimiento de PIN ────────────────────────────────────
+// La pantalla es nueva; el RPC ya existía protegido. Lo que se comprueba aquí
+// es la autorización, que es donde un error se paga caro: quien pueda
+// restablecer PINes ajenos puede suplantar a cualquiera.
+agregar('N. Cambio de PIN', 'sin sesión no se cambia nada',
+  () => pedir('POST', 'rpc/cambiar_pin_vendedor',
+    { p_data: { idVendedor: 1, pinNuevo: '999999' } }),
+  (r) => r.estado === 200 && r.datos?.ok === false);
+
+agregar('N. Cambio de PIN', 'el PIN actual equivocado no pasa',
+  async () => {
+    const t = await entrar('5500000005');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { token: t, pinActual: '0000', pinNuevo: '999999' } });
+  },
+  (r) => r.datos?.ok === false && /PIN actual incorrecto/.test(r.datos?.error || ''),
+  true);
+
+agregar('N. Cambio de PIN', 'un vendedor no restablece el de otro',
+  async () => {
+    const t = await entrar('5500000005');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { token: t, idVendedor: 7, pinNuevo: '999999' } });
+  },
+  (r) => r.datos?.ok === false && /No autorizado/.test(r.datos?.error || ''),
+  true);
+
+agregar('N. Cambio de PIN', 'un socio administrador2 tampoco',
+  async () => {
+    const t = await entrar('5500000004');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { token: t, idVendedor: 7, pinNuevo: '999999' } });
+  },
+  (r) => r.datos?.ok === false && /No autorizado/.test(r.datos?.error || ''),
+  true);
+
+// Ciclo completo del dueño: restablece, comprueba que el PIN nuevo entra, que
+// el token anterior murió, y deja el PIN como estaba.
+agregar('N. Cambio de PIN', 'el dueño restablece y revoca sesiones',
+  async () => {
+    const admin = await entrar('5500000001');
+    if (!admin) return { estado: 0, datos: 'sin token admin' };
+    const tokenVictima = await entrar('5500000007');
+
+    const reset = await pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { token: admin, idVendedor: 7, pinNuevo: '778899' } });
+
+    const conNuevo = await pedir('POST', 'rpc/validar_vendedor_pin',
+      { p_data: { telefono: '5500000007', pin: '778899' } });
+
+    // El token que tenía la víctima antes del cambio debe estar muerto.
+    const viejo = await pedir('POST', 'rpc/obtener_clientes',
+      { p_data: { token: tokenVictima } });
+
+    // Restaurar para no dejar staging alterado.
+    const vuelta = await pedir('POST', 'rpc/cambiar_pin_vendedor',
+      { p_data: { token: admin, idVendedor: 7, pinNuevo: '1234' } });
+
+    return { estado: 200,
+             datos: { reset: reset.datos, restaurado: vuelta.datos?.ok },
+             ok: reset.datos?.ok === true &&
+                 conNuevo.datos?.ok === true &&
+                 viejo.datos?.ok === false &&
+                 vuelta.datos?.ok === true };
+  },
+  (r) => r.ok === true,
+  true);
+
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
 // ninguna cuenta real. Lo que distingue una base parcheada de una vulnerable es
