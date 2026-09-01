@@ -587,6 +587,45 @@ agregar('P. Bombeo de SMS', 'registrar_envio_otp no invocable por anon',
 agregar('P. Bombeo de SMS', 'envios_otp cerrada a anon',
   () => pedir('GET', 'envios_otp?select=*&limit=1'), cerrado);
 
+
+// ── Q. Políticas anuladas por una política `true` al lado ──────────────────
+// productos, productos_bebidas y cupones tenían una política acotada
+// (activo = true) Y otra permisiva (true) a la vez. En Postgres las permisivas
+// se combinan con OR, así que la segunda anulaba la primera: el acotado estaba
+// escrito pero no hacía nada. Es de los fallos que mejor aspecto tienen en una
+// revisión rápida.
+agregar('Q. Políticas anuladas', 'cupones cerrada (contiene los códigos)',
+  () => pedir('GET', 'cupones?select=*&limit=1'), cerrado);
+
+agregar('Q. Políticas anuladas', 'productos: anon NO ve los desactivados',
+  async () => {
+    const r = await pedir('GET', 'productos?select=id,activo&limit=200');
+    const inactivos = Array.isArray(r.datos)
+      ? r.datos.filter((x) => x.activo === false).length : -1;
+    return { estado: r.estado, datos: { visibles: r.datos?.length, inactivos }, inactivos };
+  },
+  (r) => r.estado === 200 && r.inactivos === 0);
+
+agregar('Q. Políticas anuladas', 'productos_bebidas: anon NO ve las desactivadas',
+  async () => {
+    const r = await pedir('GET', 'productos_bebidas?select=id,activo&limit=200');
+    const inactivos = Array.isArray(r.datos)
+      ? r.datos.filter((x) => x.activo === false).length : -1;
+    return { estado: r.estado, datos: { inactivos }, inactivos };
+  },
+  (r) => r.estado === 200 && r.inactivos === 0);
+
+for (const f of ['obtener_cupones', 'obtener_catalogo_admin', 'buscar_bebida_por_codigo']) {
+  agregar('Q. Políticas anuladas', `rpc/${f} sin sesión`,
+    () => pedir('POST', `rpc/${f}`, { p_data: {} }),
+    (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+}
+
+// El catálogo del cliente TIENE que seguir cargando: es lo primero que ve.
+agregar('Q. Políticas anuladas', 'el catálogo del cliente sigue cargando',
+  () => pedir('GET', 'productos?select=*&activo=eq.true&limit=5'),
+  (r) => r.estado === 200 && Array.isArray(r.datos) && r.datos.length > 0);
+
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
 // ninguna cuenta real. Lo que distingue una base parcheada de una vulnerable es

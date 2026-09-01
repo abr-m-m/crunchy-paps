@@ -15163,10 +15163,11 @@ async function cargarListaProductos() {
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader loader-w"></span></div>';
   try {
     // v2.7.5: ambos desde Supabase
-    const [papasResp, bebidasResp] = await Promise.all([
-      supabaseCall('GET', 'productos?select=*&order=sabor.asc,presentacion.asc'),
-      supabaseCall('GET', 'productos_bebidas?select=*&order=id.asc'),
-    ]);
+    // El cliente solo ve `activo = true` por política; el panel necesita ver
+    // también los desactivados para poder reactivarlos, así que va por RPC.
+    const _rcat = await supabaseCall('POST', 'rpc/obtener_catalogo_admin', { p_data: {} });
+    const papasResp   = (_rcat && _rcat.ok) ? _rcat.productos : [];
+    const bebidasResp = (_rcat && _rcat.ok) ? _rcat.bebidas   : [];
 
     // Bebidas con formato esperado
     _productosLista = (Array.isArray(bebidasResp) ? bebidasResp : []).map(b => ({
@@ -15538,8 +15539,9 @@ async function procesarCodigoEscaneado(codigo) {
   // Contexto 'productos': verificar si ya existe en BD; si no, abrir form pre-llenado
   try {
     // Buscar en Supabase por código de barras
-    const existSupa = await supabaseCall('GET', `productos_bebidas?codigo_barras=eq.${encodeURIComponent(codigo)}&select=*`);
-    if (Array.isArray(existSupa) && existSupa.length > 0) {
+    const _rb = await supabaseCall('POST', 'rpc/buscar_bebida_por_codigo', { p_data: { codigo } });
+    const existSupa = (_rb && _rb.ok && Array.isArray(_rb.bebidas)) ? _rb.bebidas : [];
+    if (existSupa.length > 0) {
       mostrarToast('Producto ya existe — abriendo edición');
       editarProducto(existSupa[0].id);
     } else {
@@ -15583,8 +15585,12 @@ async function cargarCupones() {
   const cont = document.getElementById('cup-lista');
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader loader-w"></span></div>';
   try {
-    const res = await supabaseCall('GET', 'cupones?select=*&order=fecha_creacion.desc');
-    _cuponesLista = (Array.isArray(res) ? res : []).map(c => ({
+    // `cupones` está cerrada a anon: contiene los CÓDIGOS de descuento y se
+    // podía leer entera porque una política `true` anulaba el filtro
+    // `activo = true`. El panel la lee por RPC con sesión.
+    const _rc = await supabaseCall('POST', 'rpc/obtener_cupones', { p_data: {} });
+    const res = (_rc && _rc.ok && Array.isArray(_rc.cupones)) ? _rc.cupones : [];
+    _cuponesLista = res.map(c => ({
       id: c.id,
       codigo: c.codigo,
       descripcion: c.descripcion,
