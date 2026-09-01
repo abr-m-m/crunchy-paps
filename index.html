@@ -3592,6 +3592,11 @@ auth.languageCode = 'es';
 let tipoCliente    = window._tipoCliente || '';
 let esVendedor     = false;
 let vendedorInfo   = null;   // { id, nombre, rol }
+// Token de sesión de CLIENTE, emitido al verificar el OTP. Es la única
+// prueba de que quien pide datos controla ese teléfono. Dura 60 días, como
+// la sesión: renovarlo cuesta un SMS.
+let clienteToken   = '';
+let clienteTokenExp = null;
 let telefonoVerif  = '';
 let clienteActual  = null;
 let vendedorAsig   = null;
@@ -3799,11 +3804,16 @@ window.verificarCodigo = async function() {
     }
 
     msg.className='msg ok'; msg.textContent='✓ Número verificado';
+    // El token lo emite el servidor tras comprobar el código; el navegador
+    // solo lo guarda. Puede venir null si la emisión falló: entonces se
+    // entra igual, pero sin poder consultar datos propios.
+    clienteToken    = dataVerif.token || '';
+    clienteTokenExp = dataVerif.expiraEn || null;
     track('login', { method: 'otp' });
 
     try {
       // 1. Verificar si es cliente ya registrado (Supabase RPC)
-      const resC = await supabaseCall('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: telefonoVerif });
+      const resC = await supabaseCall('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: telefonoVerif, p_token: tokenParaConsultaCliente() });
 
       if (resC && resC.ok && resC.existe) {
         // Cliente conocido → usar su tipo guardado
@@ -4303,6 +4313,7 @@ function guardarSesion() {
   try {
     const datos = {
       tipoCliente, telefonoVerif, esVendedor,
+      clienteToken, clienteTokenExp,
       vendedorInfo: vendedorInfo || null,
       clienteActual: clienteActual || null,
       puntos, carrito, modoVenta, canalVenta,
@@ -4324,6 +4335,8 @@ function restaurarSesion() {
     telefonoVerif = s.telefonoVerif || '';
     esVendedor    = s.esVendedor    || false;
     vendedorInfo  = s.vendedorInfo  || null;
+    clienteToken    = s.clienteToken    || '';
+    clienteTokenExp = s.clienteTokenExp || null;
     clienteActual = s.clienteActual || null;
     puntos        = s.puntos        || 0;
     carrito       = s.carrito       || {};
@@ -6364,7 +6377,7 @@ async function cargarDatosCliente() {
     vendedorAsig = null;
 
     // Historial cliente (Supabase RPC)
-    const rc = await supabaseCall('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: telefonoVerif });
+    const rc = await supabaseCall('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: telefonoVerif, p_token: tokenParaConsultaCliente() });
     if (rc.ok && rc.existe) {
       clienteActual = rc.cliente;
       gaSetUser(clienteActual.id);
@@ -7123,6 +7136,16 @@ async function sheetsCall(payload) {
 // ════════════════════════════════════════════════════════════════
 // Etapa B: token de sesión del vendedor. Los RPCs protegidos lo exigen; sin él
 // la base responde "Sesión inválida o expirada" y no devuelve datos.
+// Token de cliente. Para los RPCs que aceptan ambos, manda el de vendedor
+// cuando lo hay: un vendedor consultando a un cliente debe identificarse
+// como vendedor, no como el cliente que además pueda ser.
+function tokenCliente() {
+  return clienteToken || '';
+}
+function tokenParaConsultaCliente() {
+  return esVendedor ? tokenVendedor() : tokenCliente();
+}
+
 function tokenVendedor() {
   return (vendedorInfo && vendedorInfo.token) ? vendedorInfo.token : '';
 }
@@ -8368,8 +8391,12 @@ async function pintarRegalosCliente() {
   const lista = document.getElementById('pedidos-lista');
   if (!lista || !clienteActual?.id || Number(clienteActual.id) === 999999) return;
   try {
-    const regs = await supabaseCall('GET',
-      `ordenes?id_cliente=eq.${clienteActual.id}&tipo_interno=in.(sampling,regalo,bonificacion)&estatus_pedido=neq.Cancelado&select=id,consecutivo,fecha_orden,tipo_interno,ordenes_detalle(kg_descontado_lote)&order=fecha_orden.desc`);
+    // Etapa B: el cliente sale de SU token. Antes el filtro `id_cliente` lo
+    // ponía el navegador, así que cualquiera veía los regalos de cualquiera.
+    const _rg = await supabaseCall('POST', 'rpc/obtener_regalos_cliente', {
+      p_data: { token: tokenParaConsultaCliente(), idCliente: clienteActual.id }
+    });
+    const regs = (_rg && _rg.ok && Array.isArray(_rg.regalos)) ? _rg.regalos : [];
     if (!Array.isArray(regs) || regs.length === 0) return;
     const lbl = { sampling:'🎁 Sampling', regalo:'🎀 Regalo', bonificacion:'➕ Bonificación' };
     let html = `<div style="margin-top:18px;margin-bottom:8px;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">🎁 Regalos recibidos</div>`;
@@ -8902,8 +8929,9 @@ window.renderKardexLote = async function(idLote) {
   // ── Vista transversal: TODOS los lotes (cada pedido con su lote asignado) ──
   if (idLote === '__todos__') {
     try {
-      const det = await supabaseCall('GET',
-        'ordenes_detalle?select=kg_descontado_lote,id_lote_descontado,ordenes(consecutivo,fecha_orden,tipo_interno,estatus_pedido)&kg_descontado_lote=gt.0&order=id.desc&limit=400');
+      // Etapa B: el join embebido lo hace ahora el RPC, con sesión.
+      const _rk = await supabaseCall('POST', 'rpc/obtener_kardex_lotes', { p_data: { limit: 400 } });
+      const det = (_rk && _rk.ok && Array.isArray(_rk.movimientos)) ? _rk.movimientos : [];
       const porPedido = {};
       (det || []).forEach(d => {
         const o = d.ordenes || {};
@@ -8940,14 +8968,15 @@ window.renderKardexLote = async function(idLote) {
     const disponible = (lote.kilos_disponibles != null) ? Number(lote.kilos_disponibles) : (producido - vendido);
 
     // 2) Líneas que consumen del lote (estado actual)
-    const det = await supabaseCall('GET', `ordenes_detalle?id_lote_descontado=eq.${encodeURIComponent(idLote)}&kg_descontado_lote=gt.0&select=id_orden,consecutivo_orden,sabor,presentacion,cantidad,kg_descontado_lote`);
-    const lineas = Array.isArray(det) ? det : [];
+    const _rk = await supabaseCall('POST', 'rpc/obtener_kardex_lotes', { p_data: { idLote } });
+    const lineas = (_rk && _rk.ok && Array.isArray(_rk.movimientos)) ? _rk.movimientos : [];
 
     // 3) Datos de los pedidos asociados
     const idsOrden = [...new Set(lineas.map(l => l.id_orden).filter(v => v != null))];
     const mapaOrden = {};
     if (idsOrden.length) {
-      const ords = await supabaseCall('GET', `ordenes?id=in.(${idsOrden.join(',')})&select=id,consecutivo,nombre_cliente,fecha_orden,estatus_pedido,tipo_interno`);
+      const _ro = await supabaseCall('POST', 'rpc/obtener_pedidos', { p_data: { ids: idsOrden } });
+      const ords = (_ro && _ro.ok && Array.isArray(_ro.pedidos)) ? _ro.pedidos : [];
       if (Array.isArray(ords)) ords.forEach(o => { mapaOrden[o.id] = o; });
     }
 
@@ -9216,7 +9245,8 @@ async function renderResumen() {
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:30px 0;"><span class="loader loader-w"></span> Cargando resumen...</div>';
   if (stats) stats.innerHTML = '';
   try {
-    const ordenes = await supabaseCall('GET', 'ordenes?select=*&order=fecha_orden.desc&limit=200');
+    const _ri = await supabaseCall('POST', 'rpc/obtener_pedidos', { p_data: { limit: 200 } });
+    const ordenes = (_ri && _ri.ok && Array.isArray(_ri.pedidos)) ? _ri.pedidos : [];
     if (!Array.isArray(ordenes)) { cont.innerHTML = '<div style="color:var(--rojo);padding:16px;">Error al cargar pedidos</div>'; return; }
 
     // Piezas y sabores por orden (suma desde ordenes_detalle)
@@ -9225,7 +9255,8 @@ async function renderResumen() {
     _resumenSabores = {};
     if (ids.length) {
       try {
-        const det = await supabaseCall('GET', `ordenes_detalle?select=id_orden,sabor,cantidad,subtotal&id_orden=in.(${ids.join(',')})`);
+        const _rd = await supabaseCall('POST', 'rpc/obtener_detalle_pedidos', { p_data: { ids } });
+        const det = (_rd && _rd.ok) ? _rd.detalle : null;
         if (Array.isArray(det)) det.forEach(d => {
           pzasPorOrden[d.id_orden] = (pzasPorOrden[d.id_orden] || 0) + (Number(d.cantidad) || 0);
           const sab = (d.sabor || '—').trim() || '—';
@@ -9921,12 +9952,11 @@ async function renderPedidosVendedor() {
   try {
     // v2.8: pedidos del vendedor + cliente desde Supabase
     // Admin ve todos los pedidos, vendedor solo los suyos
-    const verTodo = esAdmin && esAdmin();
-    let queryStr = 'ordenes?select=*&order=fecha_orden.desc&limit=200';
-    if (!verTodo) {
-      queryStr = `ordenes?id_vendedor=eq.${vendedorInfo.id}&select=*&order=fecha_orden.desc&limit=200`;
-    }
-    const arr = await supabaseCall('GET', queryStr);
+    // Etapa B: el alcance lo impone el SERVIDOR a partir del token — admin ve
+    // todos, vendedor solo los suyos. Antes lo decidía este archivo, y bastaba
+    // con borrar un `if` en DevTools para verlos todos.
+    const _rl = await supabaseCall('POST', 'rpc/obtener_pedidos', { p_data: { limit: 200 } });
+    const arr = (_rl && _rl.ok) ? _rl.pedidos : null;
     if (!Array.isArray(arr)) {
       lista.innerHTML = '<div style="text-align:center;color:var(--rojo);padding:20px;">Error: respuesta inválida</div>';
       return;
@@ -10233,7 +10263,8 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
   // Traer el detalle del pedido (sabores/presentaciones)
   let lineas = [];
   try {
-    const det = await supabaseCall('GET', `ordenes_detalle?id_orden=eq.${idOrden}&select=sabor,presentacion,cantidad,subtotal&order=id.asc`);
+    const _rd = await supabaseCall('POST', 'rpc/obtener_detalle_pedidos', { p_data: { ids: [idOrden] } });
+    const det = (_rd && _rd.ok) ? _rd.detalle : null;
     if (Array.isArray(det)) lineas = det;
   } catch(e) {}
 
@@ -10329,7 +10360,8 @@ window.abrirReasignarLote = async function(idOrden, consecutivo) {
   cont.innerHTML = '<div style="font-size:0.76rem;color:var(--suave);">Cargando lotes…</div>';
   try {
     const [detalle, lotes] = await Promise.all([
-      supabaseCall('GET', `ordenes_detalle?id_orden=eq.${idOrden}&select=id_lote_descontado,kg_descontado_lote`),
+      supabaseCall('POST', 'rpc/obtener_detalle_pedidos', { p_data: { ids: [idOrden] } })
+        .then(r => (r && r.ok) ? r.detalle : []),
       supabaseCall('GET', `lotes_produccion?select=id_lote,fecha,kilos_disponibles,estatus&order=fecha.desc&limit=12`)
     ]);
     const lineas = (detalle || []).filter(d => Number(d.kg_descontado_lote) > 0);
@@ -10423,10 +10455,12 @@ window.verDetallePedido = async function(idOrden) {
 
   try {
     // v2.8: detalle desde Supabase — orden + líneas en 2 queries paralelas
-    const [ordArr, detArr] = await Promise.all([
-      supabaseCall('GET', `ordenes?or=(consecutivo.eq.${idOrden},id.eq.${isNaN(Number(idOrden))?0:Number(idOrden)})&select=*&limit=1`),
-      supabaseCall('GET', `ordenes_detalle?consecutivo_orden=eq.${idOrden}&select=*&order=id.asc`),
-    ]);
+    // Etapa B: un solo RPC trae el pedido y su detalle. Antes eran dos
+    // consultas en paralelo que había que unir a mano, con el riesgo de que
+    // llegara una y no la otra.
+    const _rp = await supabaseCall('POST', 'rpc/obtener_pedido', { p_data: { ref: String(idOrden) } });
+    const ordArr = (_rp && _rp.ok && _rp.pedido) ? [_rp.pedido] : [];
+    const detArr = (_rp && _rp.ok && Array.isArray(_rp.detalle)) ? _rp.detalle : [];
     if (!Array.isArray(ordArr) || ordArr.length === 0) {
       document.getElementById('dp-contenido').innerHTML =
         '<div style="text-align:center;color:var(--rojo);padding:30px;">Pedido no encontrado</div>';
@@ -10451,7 +10485,8 @@ window.verDetallePedido = async function(idOrden) {
     let detalles = Array.isArray(detArr) ? detArr : [];
     if (detalles.length === 0) {
       // Fallback por id_orden numérico
-      const detArr2 = await supabaseCall('GET', `ordenes_detalle?id_orden=eq.${o.id}&select=*&order=id.asc`);
+      const _rd2 = await supabaseCall('POST', 'rpc/obtener_detalle_pedidos', { p_data: { ids: [o.id] } });
+      const detArr2 = (_rd2 && _rd2.ok) ? _rd2.detalle : [];
       detalles = Array.isArray(detArr2) ? detArr2 : [];
     }
     const lineas = detalles.map(d => ({
@@ -11076,22 +11111,17 @@ async function renderB2B() {
       console.warn('[CP] Mostrando ' + arr.length + ' de ' + resC.total + ' clientes.');
     }
 
-    // Para cada cliente B2B necesitamos totalCompras: hacemos 1 query agregada a ordenes
-    // que regresa totales por cliente
+    // Total de compras por cliente.
+    // Etapa B: la suma la hace Postgres y viaja solo el resultado. Antes se
+    // traían TODAS las filas de `ordenes` de esos clientes para que el
+    // navegador las recorriera: más datos personales en el cliente, más
+    // tráfico, y la misma cuenta.
     let totales = {};
     if (arr.length > 0) {
-      const ids = arr.map(c => c.id).join(',');
-      const ordArr = await supabaseCall('GET',
-        `ordenes?id_cliente=in.(${ids})&estatus_pedido=neq.Cancelado&tipo_interno=is.null&select=id_cliente,total`
-      );
-      if (Array.isArray(ordArr)) {
-        ordArr.forEach(o => {
-          const cid = o.id_cliente;
-          if (!totales[cid]) totales[cid] = { total: 0, num: 0 };
-          totales[cid].total += Number(o.total) || 0;
-          totales[cid].num++;
-        });
-      }
+      const _rt = await supabaseCall('POST', 'rpc/obtener_totales_clientes', {
+        p_data: { ids: arr.map(c => c.id) }
+      });
+      if (_rt && _rt.ok && _rt.totales) totales = _rt.totales;
     }
 
     // Mapear clientes al formato esperado por el frontend
@@ -11342,7 +11372,8 @@ async function renderProspeccion() {
   if (lista) lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px 0;"><span class="loader loader-w"></span> Cargando prospectos...</div>';
 
   try {
-    const arr = await supabaseCall('GET', 'prospectos?select=*&order=score.desc,fecha_creacion.desc');
+    const _rpr = await supabaseCall('POST', 'rpc/obtener_prospectos', { p_data: { limit: 2000 } });
+    const arr = (_rpr && _rpr.ok) ? _rpr.prospectos : null;
     if (!Array.isArray(arr)) {
       if (lista) lista.innerHTML = '<div style="color:var(--rojo);padding:14px;">Error: respuesta inválida</div>';
       return;
@@ -12195,23 +12226,23 @@ window.accionRegistrarVisita = async function(id) {
   const nota = prompt('Notas de la visita (opcional):', '');
   if (nota === null) return; // canceló
   try {
-    // v2.7.5: actualizar prospecto en Supabase
-    // Incrementamos num_visitas y marcamos como contactado
-    // Primero leemos el num_visitas actual
-    const cur = await supabaseCall('GET', `prospectos?id=eq.${id}&select=num_visitas`);
-    const numVisitasActual = (Array.isArray(cur) && cur[0]) ? (Number(cur[0].num_visitas) || 0) : 0;
-
-    // Etapa B: `id_vendedor` y `nombre_vendedor` ya no se mandan desde aquí —
-    // los pone el servidor a partir del token, que es la única fuente fiable de
-    // quién hizo la visita. Además no están en la lista blanca del RPC.
+    // Etapa B: el contador lo incrementa Postgres con `incrementarVisitas`.
+    // Antes esto leía num_visitas, le sumaba 1 y escribía el resultado. Era la
+    // última lectura directa a `prospectos` —la que impedía cerrar la tabla— y
+    // además una condición de carrera: dos visitas registradas a la vez leían
+    // el mismo valor y una se perdía.
+    //
+    // `id_vendedor` y `nombre_vendedor` tampoco se mandan: los pone el servidor
+    // desde el token, la única fuente fiable de quién hizo la visita.
     const payload = {
       estatus: 'contactado',
-      num_visitas: numVisitasActual + 1,
       fecha_visita: new Date().toISOString(),
     };
     if (nota && nota.trim()) payload.notas = nota;
 
-    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: payload } });
+    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', {
+      p_data: { id, campos: payload, incrementarVisitas: true }
+    });
     if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('✅ Visita registrada');
     cerrarDetalleProspecto();

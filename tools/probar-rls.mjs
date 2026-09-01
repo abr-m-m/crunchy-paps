@@ -140,7 +140,7 @@ agregar('E. Regresión de triggers', 'actualizar pedido dispara escritura en caj
 // ── F. Lo que sigue abierto (Etapa B) — se mide, no se celebra ─────────────
 // Accesible = HTTP 200. Una tabla vacía responde 200 con [] y sigue estando
 // ABIERTA: contar filas confundiría "sin datos" con "cerrada".
-for (const t of ['ordenes', 'prospectos', 'ordenes_detalle', 'gastos']) {
+for (const t of ['gastos', 'jornadas', 'lotes_produccion', 'produccion_diaria']) {
   agregar('F. Aún ABIERTO — pendiente Etapa B', `GET ${t}`,
     () => pedir('GET', `${t}?select=*&limit=1`), (r) => r.estado === 200);
 }
@@ -519,6 +519,60 @@ agregar('N. Cambio de PIN', 'el dueño restablece y revoca sesiones',
   },
   (r) => r.ok === true,
   true);
+
+
+// ── O. Cierre del §3.0: ordenes, ordenes_detalle y prospectos ──────────────
+// `ordenes` lleva nombre, teléfono y dirección de cada cliente;
+// `prospectos` son 1.132 negocios con geolocalización. Esto es lo que la
+// LFPDPPP obliga a proteger, y era lo último que quedaba abierto.
+for (const t of ['ordenes', 'ordenes_detalle', 'prospectos']) {
+  agregar('O. Datos personales cerrados (§3.0)', `GET ${t} directo`,
+    () => pedir('GET', `${t}?select=*&limit=1`), cerrado);
+}
+
+for (const f of ['obtener_pedidos', 'obtener_pedido', 'obtener_detalle_pedidos',
+                 'obtener_kardex_lotes', 'obtener_totales_clientes',
+                 'obtener_prospectos', 'obtener_regalos_cliente']) {
+  agregar('O. Datos personales cerrados (§3.0)', `rpc/${f} sin sesión`,
+    () => pedir('POST', `rpc/${f}`, { p_data: {} }),
+    (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+}
+
+// El alcance por rol es la mitad del trabajo: no basta con exigir sesión si
+// cualquier vendedor ve los pedidos de todos.
+agregar('O. Datos personales cerrados (§3.0)', 'cada vendedor ve solo lo suyo',
+  async () => {
+    const admin = await entrar('5500000001');
+    const vend  = await entrar('5500000003');
+    if (!admin || !vend) return { estado: 0, datos: 'sin tokens' };
+    const [pa, pv, ra, rv] = await Promise.all([
+      pedir('POST', 'rpc/obtener_pedidos',   { p_data: { token: admin, limit: 1 } }),
+      pedir('POST', 'rpc/obtener_pedidos',   { p_data: { token: vend,  limit: 1 } }),
+      pedir('POST', 'rpc/obtener_prospectos',{ p_data: { token: admin, limit: 1 } }),
+      pedir('POST', 'rpc/obtener_prospectos',{ p_data: { token: vend,  limit: 1 } }),
+    ]);
+    return { estado: 200,
+             datos: { pedidosAdmin: pa.datos?.total, pedidosVend: pv.datos?.total,
+                      prospAdmin: ra.datos?.total,   prospVend: rv.datos?.total },
+             ok: pa.datos?.total > pv.datos?.total && ra.datos?.total > rv.datos?.total };
+  },
+  (r) => r.ok === true,
+  true);
+
+// obtener_cliente_con_stats: el hueco que llevaba días en la lista.
+agregar('O. Datos personales cerrados (§3.0)', 'historial de compras ya no sale con solo el teléfono',
+  () => pedir('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: '5510000001' }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+// La emisión de sesiones de cliente NO puede estar al alcance de anon: si lo
+// estuviera, cualquiera se emitiría una para el teléfono que quisiera y todo
+// lo demás sería decorativo.
+agregar('O. Datos personales cerrados (§3.0)', 'anon no puede emitirse sesión de cliente',
+  () => pedir('POST', 'rpc/emitir_sesion_cliente', { p_telefono: '5510000001' }),
+  (r) => r.estado === 401 || r.estado === 404);
+
+agregar('O. Datos personales cerrados (§3.0)', 'sesiones_cliente cerrada a anon',
+  () => pedir('GET', 'sesiones_cliente?select=*&limit=1'), cerrado);
 
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca

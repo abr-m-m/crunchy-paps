@@ -6,6 +6,33 @@ const https = require('https');
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1JiqCtjB3Vu7yHnG2Clh_iMj7CLZt9dGslcBKSslC5sH6OKEQQSYIEwetw/exec';
 
+// ── Supabase (service_role) ─────────────────────────────────────────────────
+// Necesario para emitir la sesión de cliente tras verificar el OTP por SMS.
+// `emitir_sesion_cliente` no es invocable con la llave anon: solo con
+// service_role. Ambas variables ya existen en el entorno de Vercel.
+const SUPA_URL = process.env.SUPABASE_URL;
+const SUPA_SR  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+async function emitirSesionCliente(telefono) {
+  if (!SUPA_URL || !SUPA_SR) return null;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/emitir_sesion_cliente', {
+      method: 'POST',
+      headers: {
+        apikey: SUPA_SR,
+        Authorization: 'Bearer ' + SUPA_SR,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_telefono: telefono }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (d && d.ok) ? d : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 // ── HTTP helper con seguimiento de redirects ──
 function httpsGet(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
@@ -197,7 +224,17 @@ module.exports = async function(req, res) {
         return res.status(200).json({ ok: false, error: 'Código incorrecto.' });
       }
       otpStore.delete(telefono);
-      return res.status(200).json({ ok: true, verificado: true });
+
+      // Emitir la sesión de cliente: es el único punto donde queda acreditado
+      // que alguien controla ese teléfono. Si falla, se responde verificado
+      // igualmente — el código era correcto y negar el acceso por un fallo
+      // ajeno al cliente sería peor. Sin token verá menos, no lo de otros.
+      const _sesion = await emitirSesionCliente(telefono);
+      return res.status(200).json({
+        ok: true, verificado: true,
+        token:    _sesion ? _sesion.token    : null,
+        expiraEn: _sesion ? _sesion.expiraEn : null,
+      });
     }
 
     // ── ENVIAR WHATSAPP (soporta múltiples destinos en TWILIO_WHATSAPP_TO con comas) ──

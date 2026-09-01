@@ -139,7 +139,30 @@ module.exports = async (req, res) => {
         res.status(200).json({ ok: true, verificado: false, error: 'Código incorrecto' }); return;
       }
       await supa(`otp_codigos?id=eq.${row.id}`, 'PATCH', { usado: true });
-      res.status(200).json({ ok: true, verificado: true });
+
+      // ── Emitir la sesión de cliente ───────────────────────────────────────
+      // Este es el único punto del sistema donde queda acreditado que alguien
+      // controla ese teléfono. Hasta ahora el navegador solo recibía
+      // { verificado: true } y después mandaba el teléfono como parámetro en
+      // cada consulta, así que cualquiera podía pedir los datos de cualquiera.
+      //
+      // `emitir_sesion_cliente` NO es invocable con la llave anon: solo con
+      // service_role, que es lo que tiene esta función. Por eso el token se
+      // emite aquí y no en el navegador.
+      let sesion = null;
+      try {
+        const r = await supa('rpc/emitir_sesion_cliente', 'POST', { p_telefono: telefono });
+        if (r.ok && r.data && r.data.ok) sesion = r.data;
+      } catch (_e) { /* sin token: se responde verificado igualmente */ }
+
+      // Se responde verificado aunque el token falle. El código OTP era
+      // correcto, y negar el acceso por un fallo que no es del cliente sería
+      // peor: sin token verá menos cosas, no cosas de otros.
+      res.status(200).json({
+        ok: true, verificado: true,
+        token:    sesion ? sesion.token    : null,
+        expiraEn: sesion ? sesion.expiraEn : null,
+      });
       return;
     }
 
