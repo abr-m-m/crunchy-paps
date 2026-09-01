@@ -1669,7 +1669,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
           <input class="inp" id="pin-actual" type="password" inputmode="numeric" autocomplete="current-password"
                  placeholder="PIN actual" maxlength="10" style="margin-bottom:8px;">
           <input class="inp" id="pin-nuevo" type="password" inputmode="numeric" autocomplete="new-password"
-                 placeholder="PIN nuevo (mínimo 4 dígitos)" maxlength="10" style="margin-bottom:8px;">
+                 placeholder="PIN nuevo (mínimo 6 dígitos)" maxlength="10" style="margin-bottom:8px;">
           <input class="inp" id="pin-nuevo2" type="password" inputmode="numeric" autocomplete="new-password"
                  placeholder="Repetir PIN nuevo" maxlength="10" style="margin-bottom:8px;">
           <div id="pin-msg" style="font-size:0.76rem;margin-bottom:8px;min-height:1em;"></div>
@@ -7975,7 +7975,12 @@ window.guardarPinPropio = async function() {
   // a comprobarlo todo, incluido el PIN actual contra el hash.
   if (!actual || !nuevo || !nuevo2) return err('Completa los tres campos.');
   if (nuevo !== nuevo2)             return err('El PIN nuevo no coincide.');
-  if (!/^\d{4,}$/.test(nuevo))      return err('El PIN debe ser de al menos 4 dígitos, solo números.');
+  if (!/^\d{6,}$/.test(nuevo))      return err('El PIN debe ser de al menos 6 dígitos, solo números.');
+  // Mismas reglas que aplica el servidor, comprobadas aquí para avisar antes
+  // de enviar. El servidor manda: esto es solo cortesía.
+  if (/^(.)\1+$/.test(nuevo)) return err('El PIN no puede ser un mismo dígito repetido.');
+  if (['123456','654321','123123','112233','121212','098765'].includes(nuevo))
+    return err('Ese PIN es demasiado común. Elige otro.');
   if (nuevo === actual)             return err('El PIN nuevo debe ser distinto del actual.');
 
   btn.disabled = true; btn.textContent = 'Guardando...';
@@ -14300,7 +14305,7 @@ async function pintarMatrizPermisos() {
           ${vendedores.map(v => `<option value="${v.id}">${v.nombre} — ${v.rol || 'Vendedor'}</option>`).join('')}
         </select>
         <input class="inp" id="pmr-pin" type="password" inputmode="numeric" autocomplete="new-password"
-               placeholder="PIN nuevo (mínimo 4 dígitos)" maxlength="10" style="margin-bottom:8px;">
+               placeholder="PIN nuevo (mínimo 6 dígitos)" maxlength="10" style="margin-bottom:8px;">
         <div id="pmr-msg" style="font-size:0.76rem;margin-bottom:8px;min-height:1em;"></div>
         <button onclick="restablecerPinVendedor(this)" style="width:100%;background:transparent;border:2px solid var(--gris3);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--blanco);cursor:pointer;">
           Restablecer PIN
@@ -14323,7 +14328,12 @@ window.restablecerPinVendedor = async function(btn) {
   const idVendedor = sel && sel.value;
   const nuevo = (inp && inp.value || '').trim();
   if (!idVendedor)             return err('Elige a quién.');
-  if (!/^\d{4,}$/.test(nuevo)) return err('El PIN debe ser de al menos 4 dígitos, solo números.');
+  if (!/^\d{6,}$/.test(nuevo)) return err('El PIN debe ser de al menos 6 dígitos, solo números.');
+  // Mismas reglas que aplica el servidor, comprobadas aquí para avisar antes
+  // de enviar. El servidor manda: esto es solo cortesía.
+  if (/^(.)\1+$/.test(nuevo)) return err('El PIN no puede ser un mismo dígito repetido.');
+  if (['123456','654321','123123','112233','121212','098765'].includes(nuevo))
+    return err('Ese PIN es demasiado común. Elige otro.');
 
   const nombre = sel.options[sel.selectedIndex].textContent.split(' — ')[0];
   if (!confirm(`¿Restablecer el PIN de ${nombre}?\n\nSe cerrarán sus sesiones abiertas y tendrá que entrar con el PIN nuevo.`)) return;

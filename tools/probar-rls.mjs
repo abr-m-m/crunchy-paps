@@ -160,6 +160,18 @@ agregar('G. clientes (Etapa B)', 'obtener_clientes con token INVENTADO',
   () => pedir('POST', 'rpc/obtener_clientes', { p_data: { token: 'f'.repeat(64) } }),
   (r) => r.estado === 200 && r.datos && r.datos.ok === false);
 
+// El vendedor 7 es el fixture de PIN largo: desde que el mínimo son 6
+// dígitos, ya no se puede restaurar a 1234 por RPC. Los demás conservan el PIN
+// de 4 dígitos a propósito — reproducen los de producción y comprueban que
+// SIGUEN sirviendo para entrar, que es lo que evita dejar al equipo fuera.
+const PIN_LARGO = '748261';
+
+async function entrarCon(telefono, pin) {
+  const r = await pedir('POST', 'rpc/validar_vendedor_pin',
+    { p_data: { telefono, pin } });
+  return (r.datos && r.datos.token) || null;
+}
+
 async function entrar(telefono) {
   const r = await pedir('POST', 'rpc/validar_vendedor_pin',
     { p_data: { telefono, pin: '1234' } });
@@ -451,7 +463,7 @@ agregar('N. Cambio de PIN', 'el PIN actual equivocado no pasa',
     const t = await entrar('5500000005');
     if (!t) return { estado: 0, datos: 'sin token' };
     return pedir('POST', 'rpc/cambiar_pin_vendedor',
-      { p_data: { token: t, pinActual: '0000', pinNuevo: '999999' } });
+      { p_data: { token: t, pinActual: '0000', pinNuevo: '748261' } });
   },
   (r) => r.datos?.ok === false && /PIN actual incorrecto/.test(r.datos?.error || ''),
   true);
@@ -482,7 +494,7 @@ agregar('N. Cambio de PIN', 'el dueño restablece y revoca sesiones',
   async () => {
     const admin = await entrar('5500000001');
     if (!admin) return { estado: 0, datos: 'sin token admin' };
-    const tokenVictima = await entrar('5500000007');
+    const tokenVictima = await entrarCon('5500000007', PIN_LARGO);
 
     const reset = await pedir('POST', 'rpc/cambiar_pin_vendedor',
       { p_data: { token: admin, idVendedor: 7, pinNuevo: '778899' } });
@@ -496,7 +508,7 @@ agregar('N. Cambio de PIN', 'el dueño restablece y revoca sesiones',
 
     // Restaurar para no dejar staging alterado.
     const vuelta = await pedir('POST', 'rpc/cambiar_pin_vendedor',
-      { p_data: { token: admin, idVendedor: 7, pinNuevo: '1234' } });
+      { p_data: { token: admin, idVendedor: 7, pinNuevo: PIN_LARGO } });
 
     return { estado: 200,
              datos: { reset: reset.datos, restaurado: vuelta.datos?.ok },

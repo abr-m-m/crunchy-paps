@@ -241,6 +241,14 @@ from (select d.id_orden, sum(d.subtotal) as suma
       from public.ordenes_detalle d group by d.id_orden) t
 where t.id_orden = o.id;
 
+-- El vendedor 7 lleva un PIN de 6 digitos: desde 20260902010000 el minimo
+-- son 6, asi que hace falta un fixture largo para probar el cambio de PIN.
+-- Los otros siete conservan 1234 A PROPOSITO: reproducen los PIN de 4 digitos
+-- que existen en produccion y comprueban que siguen sirviendo para entrar.
+update public.vendedores
+   set pin_hash = extensions.crypt('748261', extensions.gen_salt('bf', 6))
+ where id = 7;
+
 -- -- PERMISOS POR SECCION -----------------------------------------------
 -- Copia de la configuracion REAL de produccion (30 ago 2026), para que las
 -- pruebas de permisos midan el comportamiento de verdad y no un invento.
