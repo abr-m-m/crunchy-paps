@@ -402,6 +402,41 @@ agregar('L. ordenes/prospectos (Etapa B)', 'el vendedor sale de la sesión, no d
   (r) => r.creado === true,
   true);
 
+// ── M. Fuerza bruta contra el PIN ──────────────────────────────────────────
+// El PIN son 4 dígitos: 10.000 combinaciones. Desde la Etapa B emite un token
+// que abre finanzas y el padrón de clientes, así que dejarlo sin freno era
+// dejar la puerta principal entornada.
+//
+// Se usa un teléfono ALEATORIO INEXISTENTE por dos motivos: no deja bloqueado a
+// ningún vendedor real, y evita que la escalada de bloqueos (15→30→60…) haga
+// fallar la prueba en ejecuciones sucesivas.
+agregar('M. Límite de intentos de PIN', 'bloquea tras 5 fallos',
+  async () => {
+    const tel = '55' + String(Date.now()).slice(-8);
+    const fallar = (pin) => pedir('POST', 'rpc/validar_vendedor_pin',
+      { p_data: { telefono: tel, pin } });
+
+    const previos = [];
+    for (let i = 1; i <= 5; i++) previos.push(await fallar('000' + i));
+    const sexto = await fallar('0006');
+
+    // Los cinco primeros NO deben bloquear; el sexto sí.
+    const algunoBloqueadoAntes = previos.some((r) => r.datos?.bloqueado === true);
+    return { estado: 200, datos: sexto.datos,
+             algunoBloqueadoAntes, bloqueadoAlSexto: sexto.datos?.bloqueado === true };
+  },
+  (r) => r.algunoBloqueadoAntes === false && r.bloqueadoAlSexto === true,
+  true);
+
+// La tabla de control no debe ser visible ni tocable desde fuera: revela qué
+// teléfonos se están atacando y permitiría borrar los bloqueos.
+agregar('M. Límite de intentos de PIN', 'intentos_pin cerrada a anon',
+  () => pedir('GET', 'intentos_pin?select=*&limit=1'), cerrado);
+
+agregar('M. Límite de intentos de PIN', 'registrar_fallo_pin no invocable',
+  () => pedir('POST', 'rpc/registrar_fallo_pin', { p_telefono: '5500000001' }),
+  (r) => r.estado === 401 || r.estado === 404);
+
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
 // ninguna cuenta real. Lo que distingue una base parcheada de una vulnerable es
