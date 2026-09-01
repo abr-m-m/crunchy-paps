@@ -136,13 +136,41 @@ agregar('E. Regresión de triggers', 'actualizar pedido dispara escritura en caj
   (r) => r.datos?.ok === true,
   true);
 
-// ── F. Lo que sigue abierto (Etapa B) — se mide, no se celebra ─────────────
-// Accesible = HTTP 200. Una tabla vacía responde 200 con [] y sigue estando
-// ABIERTA: contar filas confundiría "sin datos" con "cerrada".
-for (const t of ['gastos', 'jornadas', 'lotes_produccion', 'produccion_diaria']) {
-  agregar('F. Aún ABIERTO — pendiente Etapa B', `GET ${t}`,
-    () => pedir('GET', `${t}?select=*&limit=1`), (r) => r.estado === 200);
+// ── S. Tablas de negocio: cerradas ─────────────────────────────────────────
+// Las últimas seis. No llevan datos de clientes, pero sí la operación completa:
+// gastos, producción, inventario y quién trabajó cuándo. Y `gastos` tenía
+// DELETE abierto: sin respaldos automáticos, borrar contabilidad no se deshace.
+//
+// Este grupo SUSTITUYE al antiguo "F. Aún ABIERTO", que comprobaba lo contrario
+// —que estas tablas respondieran 200— y quedó obsoleto al cerrarlas.
+for (const t of ['gastos', 'gastos_insumos', 'jornadas', 'lotes_produccion',
+                 'produccion_diaria', 'stock_terminado']) {
+  agregar('S. Tablas de negocio', `GET ${t}`,
+    () => pedir('GET', `${t}?select=*&limit=1`), cerrado);
 }
+
+agregar('S. Tablas de negocio', 'no se puede borrar contabilidad',
+  () => pedir('DELETE', 'gastos?id=eq.999999'), (r) => r.estado >= 400);
+
+for (const f of ['obtener_gastos', 'guardar_gasto', 'eliminar_gasto',
+                 'registrar_gasto_insumo', 'obtener_jornadas', 'guardar_jornada',
+                 'obtener_lotes', 'actualizar_lote', 'obtener_produccion',
+                 'actualizar_produccion', 'obtener_stock_lote', 'reemplazar_stock_lote']) {
+  agregar('S. Tablas de negocio', `rpc/${f} sin sesión`,
+    () => pedir('POST', `rpc/${f}`, { p_data: { id: 1, idLote: 'X' } }),
+    (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+}
+
+// Eliminar gastos es del dueño: un vendedor con la sección `gastos` puede
+// registrarlos y editarlos, pero no borrarlos.
+agregar('S. Tablas de negocio', 'un vendedor no borra gastos',
+  async () => {
+    const t = await entrar('5500000002');   // Mostrador: tiene la sección gastos
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/eliminar_gasto', { p_data: { token: t, id: 999999 } });
+  },
+  (r) => r.datos?.ok === false && /administrador/i.test(r.datos?.error || ''),
+  true);
 
 // ── G. clientes: cerrado, y accesible solo con sesión de vendedor ──────────
 // Estos casos ABREN SESIÓN (escriben en sesiones_vendedor) y dependen de los

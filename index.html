@@ -7654,7 +7654,8 @@ async function renderProduccion() {
 
     // Mostrar lotes activos
     try {
-      const lotesArr = await supabaseCall('GET', 'lotes_produccion?select=*&order=fecha.desc&limit=50');
+      const _rl1 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { limit: 50 } });
+      const lotesArr = (_rl1 && _rl1.ok) ? _rl1.lotes : [];
       const lotesEl = document.getElementById('lotes-lista');
       if (lotesEl) {
         if (!Array.isArray(lotesArr) || lotesArr.length === 0) {
@@ -7740,7 +7741,8 @@ async function renderProduccion() {
     // v2.9: Próxima producción desde produccion_diaria
     try {
       const hoy = new Date().toISOString().slice(0,10);
-      const proxArr = await supabaseCall('GET', `produccion_diaria?fecha_siguiente=gt.${hoy}&activo=eq.true&select=fecha_siguiente&order=fecha_siguiente.asc&limit=1`);
+      const _rp1 = await supabaseCall('POST', 'rpc/obtener_produccion', { p_data: { proximaFecha: true } });
+      const proxArr = (_rp1 && _rp1.ok) ? _rp1.filas : [];
       if (Array.isArray(proxArr) && proxArr.length > 0 && proxArr[0].fecha_siguiente) {
         const fp = new Date(proxArr[0].fecha_siguiente + 'T12:00:00');
         fechaEl.textContent = 'Próxima: ' + fp.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
@@ -7857,7 +7859,8 @@ window.guardarInventario = async function() {
     const updates = [];
     for (const a of actualizaciones) {
       // Obtener registros activos del sabor
-      const filas = await supabaseCall('GET', `produccion_diaria?sabor=eq.${encodeURIComponent(a.sabor)}&activo=eq.true&select=id,kilos_producidos,kilos_vendidos&order=fecha_produccion.desc`);
+      const _rp2 = await supabaseCall('POST', 'rpc/obtener_produccion', { p_data: { sabor: a.sabor } });
+      const filas = (_rp2 && _rp2.ok) ? _rp2.filas : [];
       if (Array.isArray(filas) && filas.length > 0) {
         // Calcular nuevo kilos_vendidos para que disponibles = a.kilosDisponibles
         // Estrategia simple: ajustar el registro más reciente
@@ -7865,8 +7868,8 @@ window.guardarInventario = async function() {
         const kilosProd = Number(fila.kilos_producidos) || 0;
         const nuevoVendido = Math.max(0, kilosProd - a.kilosDisponibles);
         updates.push(
-          supabaseCall('PATCH', `produccion_diaria?id=eq.${fila.id}`, {
-            kilos_vendidos: nuevoVendido
+          supabaseCall('POST', 'rpc/actualizar_produccion', {
+            p_data: { id: fila.id, campos: { kilos_vendidos: nuevoVendido } }
           })
         );
       } else {
@@ -7898,8 +7901,10 @@ window.guardarFechaProduccion = async function() {
   if (!fecha) { alert('Selecciona una fecha'); return; }
   try {
     // v2.9: actualizar fecha_siguiente en todos los sabores activos
-    await supabaseCall('PATCH', 'produccion_diaria?activo=eq.true', {
-      fecha_siguiente: fecha,
+    // Actualiza TODAS las filas activas: el RPC lo hace explícito con
+    // `todasActivas`, en vez de un filtro en la URL.
+    await supabaseCall('POST', 'rpc/actualizar_produccion', {
+      p_data: { todasActivas: true, campos: { fecha_siguiente: fecha } }
     });
     mostrarToast('✅ Fecha guardada');
     renderProduccion();
@@ -8903,7 +8908,8 @@ window.cargarMetricaRegalo = async function(yyyymm) {
 
 async function cargarKardexLotes() {
   try {
-    const arr = await supabaseCall('GET', 'lotes_produccion?select=id_lote,estatus,kilos_disponibles,fecha&order=fecha.desc');
+    const _rl2 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { limit: 500 } });
+    const arr = (_rl2 && _rl2.ok) ? _rl2.lotes : [];
     const sel = document.getElementById('kardex-lote-select');
     if (!sel || !Array.isArray(arr)) return;
     const prev = sel.value;
@@ -8960,7 +8966,8 @@ window.renderKardexLote = async function(idLote) {
   }
   try {
     // 1) Datos del lote
-    const loteArr = await supabaseCall('GET', `lotes_produccion?id_lote=eq.${encodeURIComponent(idLote)}&select=id_lote,kilos_totales,kilos_vendidos,kilos_disponibles,fecha,estatus&limit=1`);
+    const _rl3 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { idLote } });
+    const loteArr = (_rl3 && _rl3.ok) ? _rl3.lotes : [];
     const lote = Array.isArray(loteArr) ? loteArr[0] : null;
     if (!lote) { cont.innerHTML = '<div style="color:var(--rojo);font-size:0.82rem;">No se encontró el lote.</div>'; return; }
     const producido = Number(lote.kilos_totales) || 0;
@@ -9084,7 +9091,8 @@ async function renderResumenInventario(elId, incluirLote) {
   if (!cont) return;
   cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;">Cargando inventario…</div>';
   try {
-    const arrL = await supabaseCall('GET', 'lotes_produccion?estatus=eq.Activo&select=*&order=fecha.desc&limit=1');
+    const _rl4 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { soloActivos: true, limit: 1 } });
+    const arrL = (_rl4 && _rl4.ok) ? _rl4.lotes : [];
     if (!Array.isArray(arrL) || arrL.length === 0) {
       cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
       return;
@@ -9097,7 +9105,8 @@ async function renderResumenInventario(elId, incluirLote) {
     const colP = pct>80?'var(--rojo)':pct>50?'var(--amarillo)':'#4caf50';
 
     // Último conteo físico de este lote
-    const st = await supabaseCall('GET', `stock_terminado?id_lote=eq.${encodeURIComponent(idLote)}&select=sabor,presentacion,piezas,gramos_unitarios,fecha`);
+    const _rs1 = await supabaseCall('POST', 'rpc/obtener_stock_lote', { p_data: { idLote } });
+    const st = (_rs1 && _rs1.ok) ? _rs1.stock : [];
     const msDia = 86400000;
     const PRES = ['100g','250g','500g','1kg'];
     let fisicoHTML, _totG = 0, _dias = null, _hayConteo = false;
@@ -9175,7 +9184,8 @@ async function cargarResumenProduccion() {
   if (!cont) return;
   cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;">Cargando producción…</div>';
   try {
-    const arr = await supabaseCall('GET', 'lotes_produccion?estatus=eq.Activo&select=*&order=fecha.desc&limit=1');
+    const _rl5 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { soloActivos: true, limit: 1 } });
+    const arr = (_rl5 && _rl5.ok) ? _rl5.lotes : [];
     if (!Array.isArray(arr) || arr.length === 0) {
       cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
       return;
@@ -9516,11 +9526,10 @@ window.editarLote = async function(idLote, kilosTotales, kilosDisponibles) {
 
   try {
     // v2.9: PATCH lotes_produccion por id_lote
-    const res = await supabaseCall('PATCH', `lotes_produccion?id_lote=eq.${encodeURIComponent(idLote)}`, {
+    const res = await supabaseCall('POST', 'rpc/actualizar_lote', { p_data: { idLote, campos: {
       kilos_totales: kilos
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { mostrarToast('Error: ' + item.message); return; }
+    } } });
+    if (!res || !res.ok) { mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast(`✅ ${idLote} actualizado a ${kilos}kg`);
     renderProduccion();
   } catch(e) { mostrarToast('Error: ' + e.message); }
@@ -9530,11 +9539,10 @@ window.editarNotasLote = async function(idLote, notasActuales) {
   const nuevasNotas = prompt(`Comentario para ${idLote}:`, notasActuales || '');
   if (nuevasNotas === null) return;
   try {
-    const res = await supabaseCall('PATCH', `lotes_produccion?id_lote=eq.${encodeURIComponent(idLote)}`, {
+    const res = await supabaseCall('POST', 'rpc/actualizar_lote', { p_data: { idLote, campos: {
       notas: nuevasNotas
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { mostrarToast('Error: ' + item.message); return; }
+    } } });
+    if (!res || !res.ok) { mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('✅ Comentario guardado');
     renderProduccion();
   } catch(e) { mostrarToast('Error: ' + e.message); }
@@ -9543,12 +9551,11 @@ window.editarNotasLote = async function(idLote, notasActuales) {
 window.cerrarLote = async function(idLote) {
   if (!confirm(`¿Cerrar el lote ${idLote}? Quedará marcado como Agotado.`)) return;
   try {
-    const res = await supabaseCall('PATCH', `lotes_produccion?id_lote=eq.${encodeURIComponent(idLote)}`, {
+    const res = await supabaseCall('POST', 'rpc/actualizar_lote', { p_data: { idLote, campos: {
       estatus: 'Cerrado',
       fecha_cierre: new Date().toISOString(),
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { mostrarToast('Error: ' + item.message); return; }
+    } } });
+    if (!res || !res.ok) { mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast(`Lote ${idLote} cerrado`);
     renderProduccion();
   } catch(e) { mostrarToast('Error: ' + e.message); }
@@ -9568,7 +9575,8 @@ const SABORES_INV = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Q
 
 async function cargarLotesEnSelect() {
   try {
-    const arr = await supabaseCall('GET', 'lotes_produccion?estatus=eq.Activo&select=id_lote,kilos_disponibles&order=fecha.desc');
+    const _rl6 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { soloActivos: true, limit: 500 } });
+    const arr = (_rl6 && _rl6.ok) ? _rl6.lotes : [];
     const sel = document.getElementById('inv-lote-select');
     if (!sel || !Array.isArray(arr)) return;
     sel.innerHTML = '<option value="">Selecciona lote...</option>';
@@ -9611,7 +9619,8 @@ async function renderGridInventarioFisico(idLote) {
 
   // Cargar conteo previo guardado para este lote (si existe)
   try {
-    const prev = await supabaseCall('GET', `stock_terminado?id_lote=eq.${encodeURIComponent(idLote)}&select=sabor,presentacion,piezas`);
+    const _rs2 = await supabaseCall('POST', 'rpc/obtener_stock_lote', { p_data: { idLote } });
+    const prev = (_rs2 && _rs2.ok) ? _rs2.stock : [];
     if (Array.isArray(prev) && prev.length) {
       prev.forEach(r => {
         const el = document.getElementById(`if-${String(r.sabor).replace(/\s/g,'_')}-${r.presentacion}`);
@@ -9660,16 +9669,24 @@ window.guardarInventarioFisico = async function() {
   if (!items.length) { alert('Ingresa al menos una pieza'); return; }
 
   try {
-    // Snapshot: reemplaza el conteo previo de este lote por el actual
-    await supabaseCall('DELETE', `stock_terminado?id_lote=eq.${encodeURIComponent(idLote)}`);
-    const res = await supabaseCall('POST', 'stock_terminado', items);
-    if (!Array.isArray(res)) {
+    // Snapshot: reemplaza el conteo previo por el actual. Antes eran DELETE y
+    // POST en dos llamadas: si la segunda fallaba, el lote se quedaba SIN
+    // stock porque el borrado ya había ocurrido. El RPC lo hace en una sola
+    // transacción.
+    const res = await supabaseCall('POST', 'rpc/reemplazar_stock_lote', {
+      p_data: { idLote, items }
+    });
+    if (!res || !res.ok) {
       mostrarToast('❌ No se guardó: ' + (res?.message || res?.hint || 'verifica que exista la tabla stock_terminado'));
       return;
     }
-    // Verificación: releer de la BD para confirmar que sí quedó guardado
-    const check = await supabaseCall('GET', `stock_terminado?id_lote=eq.${encodeURIComponent(idLote)}&select=id`);
-    const n = Array.isArray(check) ? check.length : res.length;
+    // Verificación: releer de la BD para confirmar que sí quedó guardado.
+    // Se relee de verdad en vez de creerle al contador que devuelve el RPC:
+    // la pregunta que responde esta comprobación es "¿está en la base?", y esa
+    // solo la contesta una lectura.
+    const _rs3 = await supabaseCall('POST', 'rpc/obtener_stock_lote', { p_data: { idLote } });
+    const check = (_rs3 && _rs3.ok && Array.isArray(_rs3.stock)) ? _rs3.stock : null;
+    const n = Array.isArray(check) ? check.length : (res.insertados || 0);
     if (n > 0) {
       mostrarToast(`✅ Guardado en stock_terminado: ${n} línea${n!==1?'s':''}`);
     } else {
@@ -10362,7 +10379,8 @@ window.abrirReasignarLote = async function(idOrden, consecutivo) {
     const [detalle, lotes] = await Promise.all([
       supabaseCall('POST', 'rpc/obtener_detalle_pedidos', { p_data: { ids: [idOrden] } })
         .then(r => (r && r.ok) ? r.detalle : []),
-      supabaseCall('GET', `lotes_produccion?select=id_lote,fecha,kilos_disponibles,estatus&order=fecha.desc&limit=12`)
+      supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { limit: 12 } })
+        .then(r => (r && r.ok) ? r.lotes : []),
     ]);
     const lineas = (detalle || []).filter(d => Number(d.kg_descontado_lote) > 0);
     if (!lineas.length) {
@@ -12732,12 +12750,10 @@ async function renderGastos() {
   if (lista) lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:30px 0;"><span class="loader loader-w"></span> Cargando...</div>';
 
   try {
-    // v2.9: gastos desde Supabase
-    let queryStr = 'gastos?select=*&order=fecha.desc&limit=200';
-    if (!(esAdmin && esAdmin()) && vendedorInfo?.id) {
-      queryStr = `gastos?id_vendedor=eq.${vendedorInfo.id}&select=*&order=fecha.desc&limit=200`;
-    }
-    const arr = await supabaseCall('GET', queryStr);
+    // El alcance lo impone el servidor: admin ve todos los gastos, vendedor
+    // los suyos. Antes lo decidía este `if`, que se podía borrar en DevTools.
+    const _rg = await supabaseCall('POST', 'rpc/obtener_gastos', { p_data: { limit: 200 } });
+    const arr = (_rg && _rg.ok) ? _rg.gastos : null;
     if (!Array.isArray(arr)) {
       if (lista) lista.innerHTML = '<div style="color:var(--rojo);padding:14px;">Error: respuesta inválida</div>';
       return;
@@ -13030,16 +13046,13 @@ window.guardarGasto = async function() {
       estatus: 'pendiente',
     };
 
-    let res, idGasto;
-    if (_editandoGasto) {
-      res = await supabaseCall('PATCH', `gastos?id=eq.${_editandoGasto}`, payload);
-      idGasto = _editandoGasto;
-    } else {
-      res = await supabaseCall('POST', 'gastos', payload);
-      const item = Array.isArray(res) ? res[0] : res;
-      idGasto = item?.id;
-    }
-    const itemCheck = Array.isArray(res) ? res[0] : res;
+    // Alta y edición por el mismo RPC. El id del vendedor lo pone el
+    // servidor desde el token: nadie registra gastos a nombre de otro.
+    const res = await supabaseCall('POST', 'rpc/guardar_gasto', {
+      p_data: { id: _editandoGasto || null, campos: payload }
+    });
+    const idGasto = (res && res.ok) ? res.id : null;
+    const itemCheck = (res && res.ok) ? null : { message: (res && res.error) || 'Sin respuesta', code: 'RPC' };
     if (itemCheck && itemCheck.message && itemCheck.code) {
       alert('Error: ' + itemCheck.message);
       btn.disabled = false; btn.textContent = 'Guardar gasto';
@@ -13050,13 +13063,15 @@ window.guardarGasto = async function() {
     const cantidad = Number(document.getElementById('ng-cantidad').value) || 0;
     if (idGasto && cantidad > 0 && sub) {
       try {
-        await supabaseCall('POST', 'gastos_insumos', {
-          id_gasto: idGasto,
-          insumo: sub,
-          unidad: (GASTOS_METRICAS_FRONT[sub]?.unidad || ''),
-          cantidad,
-          precio_unitario: cantidad > 0 ? (monto / cantidad) : 0,
-          subtotal: monto,
+        await supabaseCall('POST', 'rpc/registrar_gasto_insumo', {
+          p_data: { campos: {
+            id_gasto: idGasto,
+            insumo: sub,
+            unidad: (GASTOS_METRICAS_FRONT[sub]?.unidad || ''),
+            cantidad,
+            precio_unitario: cantidad > 0 ? (monto / cantidad) : 0,
+            subtotal: monto,
+          } }
         });
       } catch(e) {}
     }
@@ -13076,8 +13091,8 @@ window.guardarGasto = async function() {
           mostrarToast('⚠️ Gasto guardado pero ticket falló: ' + resTicket.error);
         } else if (resTicket.ticketUrl) {
           // Actualizar URL del ticket en el gasto
-          await supabaseCall('PATCH', `gastos?id=eq.${idGasto}`, {
-            ticket_url: resTicket.ticketUrl
+          await supabaseCall('POST', 'rpc/guardar_gasto', {
+            p_data: { id: idGasto, campos: { ticket_url: resTicket.ticketUrl } }
           });
         }
       } catch(e) {
@@ -13260,9 +13275,10 @@ window.editarGastoUI = function(id) {
 window.eliminarGastoUI = async function(id) {
   if (!confirm('¿Eliminar este gasto?\n\nEsta acción no se puede deshacer.')) return;
   try {
-    const res = await supabaseCall('DELETE', `gastos?id=eq.${id}`);
-    // DELETE puede regresar array vacío o el objeto borrado
-    if (res && res.message && res.code) { alert('Error: ' + res.message); return; }
+    // Borrar contabilidad no se deshace sin respaldos, así que el RPC lo
+    // reserva al rol dueño.
+    const res = await supabaseCall('POST', 'rpc/eliminar_gasto', { p_data: { id } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('🗑️ Eliminado');
     cerrarDetalleGasto();
     renderGastos();
@@ -14429,7 +14445,9 @@ async function renderJornadas() {
   // Verificar jornada abierta — desde Supabase
   try {
     const idV = vendedorInfo?.id || 0;
-    const arrAbierta = await supabaseCall('GET', `jornadas?select=*&id_vendedor=eq.${idV}&estatus=eq.abierta&limit=1`);
+    const _rja = await supabaseCall('POST', 'rpc/obtener_jornadas',
+      { p_data: { soloAbierta: true, limit: 1 } });
+    const arrAbierta = (_rja && _rja.ok && Array.isArray(_rja.jornadas)) ? _rja.jornadas : [];
     if (Array.isArray(arrAbierta) && arrAbierta.length > 0) {
       const j = arrAbierta[0];
       _jornadaAbierta = {
@@ -14452,11 +14470,9 @@ async function renderJornadas() {
     if (esAdmin && esAdmin()) await pintarReporteAdmin();
 
     // Historial
-    let queryStr = 'jornadas?select=*&order=fecha.desc,hora_inicio.desc&limit=50';
-    if (!(esAdmin && esAdmin()) && vendedorInfo?.id) {
-      queryStr = `jornadas?select=*&id_vendedor=eq.${vendedorInfo.id}&order=fecha.desc,hora_inicio.desc&limit=50`;
-    }
-    const arrJ = await supabaseCall('GET', queryStr);
+    // Alcance decidido por el servidor a partir del token.
+    const _rj = await supabaseCall('POST', 'rpc/obtener_jornadas', { p_data: { limit: 50 } });
+    const arrJ = (_rj && _rj.ok) ? _rj.jornadas : null;
     if (Array.isArray(arrJ)) {
       _jornadas = arrJ.map(j => ({
         id:               j.id,
@@ -14531,7 +14547,9 @@ async function pintarReporteAdmin() {
     const ahora = new Date();
     const mesIni = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString().slice(0,10);
     const mesFin = new Date(ahora.getFullYear(), ahora.getMonth()+1, 0).toISOString().slice(0,10);
-    const arr = await supabaseCall('GET', `jornadas?select=*&fecha=gte.${mesIni}&fecha=lte.${mesFin}&order=fecha.desc&limit=500`);
+    const _rjm = await supabaseCall('POST', 'rpc/obtener_jornadas',
+      { p_data: { desde: mesIni, hasta: mesFin, limit: 500 } });
+    const arr = (_rjm && _rjm.ok) ? _rjm.jornadas : null;
     if (!Array.isArray(arr) || arr.length === 0) { cont.innerHTML = ''; return; }
 
     // Agregar por vendedor
@@ -14720,9 +14738,9 @@ window.confirmarIniciarJornada = async function() {
       notas_inicio: notas || null,
       estatus: 'abierta',
     };
-    const res = await supabaseCall('POST', 'jornadas', payload);
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    // El vendedor sale del token: nadie ficha por otro.
+    const res = await supabaseCall('POST', 'rpc/guardar_jornada', { p_data: { campos: payload } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast(dentroPlanta ? '✅ Jornada iniciada en planta' : '⚠️ Iniciada FUERA de planta');
     cerrarIniciarJornada();
     renderJornadas();
@@ -14792,9 +14810,9 @@ window.confirmarCerrarJornada = async function() {
       duracion_minutos: duracionMin,
       estatus: 'cerrada',
     };
-    const res = await supabaseCall('PATCH', `jornadas?id=eq.${_jornadaAbierta.id}`, payload);
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    const res = await supabaseCall('POST', 'rpc/guardar_jornada',
+      { p_data: { id: _jornadaAbierta.id, campos: payload } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('🏁 Jornada cerrada');
     cerrarCerrarJornada();
     renderJornadas();
@@ -14816,12 +14834,14 @@ window.actualizarActividades = async function() {
   const actividades = Array.from(checks).map(c => c.value);
   const notas = document.getElementById('cj-notas').value.trim();
   try {
-    const res = await supabaseCall('PATCH', `jornadas?id=eq.${_jornadaAbierta.id}`, {
-      actividades: actividades.length > 0 ? actividades : null,
-      notas_inicio: notas || null,
-    });
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) { alert('Error: ' + item.message); return; }
+    const res = await supabaseCall('POST', 'rpc/guardar_jornada', { p_data: {
+      id: _jornadaAbierta.id,
+      campos: {
+        actividades: actividades.length > 0 ? actividades : null,
+        notas_inicio: notas || null,
+      }
+    } });
+    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
     mostrarToast('✅ Actualizado');
     cerrarCerrarJornada();
     // Restaurar onclick original para próxima vez
