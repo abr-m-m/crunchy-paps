@@ -103,14 +103,13 @@ agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/get_estado_tiend
   () => pedir('POST', 'rpc/get_estado_tienda', { p_telefono: '5510000001' }),
   (r) => r.estado === 200 && r.datos && r.datos.ok !== false);
 
-// ⚠️ HUECO CONOCIDO: `obtener_cliente_con_stats` entrega el historial de
-// compras de cualquiera que conozca un teléfono, sin credencial. La tabla
-// `clientes` ya está cerrada, pero este RPC la lee como DEFINER. Cerrarlo
-// necesita sesión de CLIENTE (OTP), que todavía no existe. Se prueba para
-// dejar constancia de que el hueco sigue ahí.
-agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/obtener_cliente_con_stats  [HUECO CONOCIDO]',
+// CERRADO el 2 sep 2026 con la sesión de cliente. La comprobación real vive
+// ahora en el grupo O, que verifica que NO devuelve datos sin token. Aquí solo
+// se confirma que la función sigue existiendo y respondiendo: si desapareciera,
+// el login dejaría de reconocer a un cliente que vuelve.
+agregar('D. RPCs abiertos a propósito (deben funcionar)', 'rpc/obtener_cliente_con_stats responde',
   () => pedir('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: '5510000001' }),
-  (r) => r.estado === 200);
+  (r) => r.estado === 200 && r.datos && typeof r.datos.ok === 'boolean');
 
 // ── E. Regresión: el camino de triggers sigue vivo ─────────────────────────
 // PATCH sobre ordenes dispara trg_caja_mov_pedido y trg_caja_confirmar_pedido,
