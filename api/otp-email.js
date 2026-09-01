@@ -77,14 +77,22 @@ module.exports = async (req, res) => {
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
         res.status(400).json({ ok: false, error: 'Correo inválido' }); return;
       }
-      // Anti-spam simple: no permitir reenvío si hay un código creado hace < 30s
-      const reciente = await supa(
-        `otp_codigos?telefono=eq.${encodeURIComponent(telefono)}&usado=eq.false&creado=gt.${new Date(Date.now() - 30000).toISOString()}&select=id`,
-        'GET'
-      );
-      if (Array.isArray(reciente.data) && reciente.data.length) {
-        res.status(429).json({ ok: false, error: 'Espera unos segundos antes de pedir otro código' }); return;
-      }
+      // Límite de envíos. Sustituye al anti-spam de 30 s que había aquí: aquel
+      // funcionaba (vivía en la base, no en memoria) pero solo miraba ESTE
+      // teléfono, y sin tope global. Quien manda una vez a mil correos no lo
+      // notaba. `registrar_envio_otp` aplica ambos límites y es el mismo
+      // control que usa el canal SMS.
+      //
+      // Si la comprobación falla por red, se deja pasar: dejar sin código a un
+      // cliente legítimo por una caída interna es peor que un correo de más.
+      try {
+        const lim = await supa('rpc/registrar_envio_otp', 'POST',
+          { p_telefono: telefono, p_canal: 'email' });
+        if (lim.ok && lim.data && lim.data.ok === false) {
+          res.status(429).json({ ok: false, error: lim.data.error || 'Demasiados intentos' });
+          return;
+        }
+      } catch (_e) { /* sin control: se continúa */ }
       // Invalidar códigos previos no usados de este teléfono
       await supa(`otp_codigos?telefono=eq.${encodeURIComponent(telefono)}&usado=eq.false`, 'PATCH', { usado: true });
 

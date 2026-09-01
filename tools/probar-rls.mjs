@@ -573,6 +573,20 @@ agregar('O. Datos personales cerrados (§3.0)', 'anon no puede emitirse sesión 
 agregar('O. Datos personales cerrados (§3.0)', 'sesiones_cliente cerrada a anon',
   () => pedir('GET', 'sesiones_cliente?select=*&limit=1'), cerrado);
 
+
+// ── P. Bombeo de SMS (hallazgos 02/15) ─────────────────────────────────────
+// El límite de envíos vivía en un Map en memoria de una función serverless, así
+// que se reiniciaba con cada arranque en frío: nunca llegó a aplicarse. Ahora
+// vive en Postgres, con un tope por teléfono y otro GLOBAL — el global es el
+// que acota la factura, porque quien ataca manda una vez a mil números, no mil
+// veces al mismo.
+agregar('P. Bombeo de SMS', 'registrar_envio_otp no invocable por anon',
+  () => pedir('POST', 'rpc/registrar_envio_otp', { p_telefono: '5599887766' }),
+  (r) => r.estado === 401 || r.estado === 404);
+
+agregar('P. Bombeo de SMS', 'envios_otp cerrada a anon',
+  () => pedir('GET', 'envios_otp?select=*&limit=1'), cerrado);
+
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca
 // ninguna cuenta real. Lo que distingue una base parcheada de una vulnerable es

@@ -13,6 +13,36 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1Jiq
 const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_SR  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// ¿Se puede mandar un OTP a este número ahora mismo?
+// El control vive en Postgres, no aquí: `otpStore` es un Map en memoria y en
+// serverless se reinicia con cada arranque en frío, así que su límite de 3
+// envíos nunca llegó a existir. Además hay un tope GLOBAL, que es el que de
+// verdad acota la factura: limitar por teléfono no estorba a quien manda una
+// vez a mil números distintos.
+//
+// Si la comprobación falla por un problema de red, se deja pasar: dejar sin
+// código a un cliente legítimo por una caída interna es peor que un SMS de
+// más. El tope global sigue puesto para el caso sostenido.
+async function puedeEnviarOtp(telefono, canal) {
+  if (!SUPA_URL || !SUPA_SR) return { ok: true };
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/registrar_envio_otp', {
+      method: 'POST',
+      headers: {
+        apikey: SUPA_SR,
+        Authorization: 'Bearer ' + SUPA_SR,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_telefono: telefono, p_canal: canal || 'sms' }),
+    });
+    if (!r.ok) return { ok: true };
+    const d = await r.json();
+    return d || { ok: true };
+  } catch (_e) {
+    return { ok: true };
+  }
+}
+
 async function emitirSesionCliente(telefono) {
   if (!SUPA_URL || !SUPA_SR) return null;
   try {
@@ -184,18 +214,28 @@ module.exports = async function(req, res) {
       if (!telefono || telefono.length < 10) {
         return res.status(200).json({ ok: false, error: 'Número inválido' });
       }
-      const entry = otpStore.get(telefono);
-      if (entry && entry.intentosEnvio >= 3 && Date.now() < entry.bloqueadoHasta) {
-        const mins = Math.ceil((entry.bloqueadoHasta - Date.now()) / 60000);
-        return res.status(200).json({ ok: false, error: `Demasiados intentos. Espera ${mins} minuto(s).` });
+      // El límite REAL vive en Postgres. El bloque de otpStore que había aquí
+      // no llegaba a aplicarse nunca: el Map se reinicia en cada arranque en
+      // frío y cada instancia tiene el suyo.
+      const _limite = await puedeEnviarOtp(telefono, 'sms');
+      if (!_limite.ok) {
+        return res.status(200).json({ ok: false, error: _limite.error || 'Demasiados intentos.' });
       }
+
       const codigo = generarOTP();
+      // `otpStore` sigue guardando el CÓDIGO para verificarlo después. Se le
+      // quitan `intentosEnvio` y `bloqueadoHasta`: contar envíos en memoria no
+      // servía de nada y mantenerlos daría la falsa impresión de que sí.
+      //
+      // ⚠️ Guardar el código en memoria SIGUE siendo frágil por el mismo motivo
+      // (arranques en frío, varias instancias): un usuario puede recibir el SMS
+      // y que la verificación caiga en otra instancia que no lo conoce. El
+      // arreglo es mover el código a la tabla `otp_codigos`, como ya hace
+      // api/otp-email.js. Queda pendiente — hallazgos 02/15.
       otpStore.set(telefono, {
         codigo,
         expira: Date.now() + 10 * 60 * 1000,
         intentosVerif: 0,
-        intentosEnvio: (entry?.intentosEnvio || 0) + 1,
-        bloqueadoHasta: (entry?.intentosEnvio || 0) >= 2 ? Date.now() + 5 * 60 * 1000 : 0,
       });
       const numero  = `+52${telefono}`;
       const mensaje = `Tu código Crunchy Paps: ${codigo}. Válido 10 min. No lo compartas.`;
