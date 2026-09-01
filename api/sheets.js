@@ -5,7 +5,21 @@
 const https  = require('https');
 const crypto = require('crypto');
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1JiqCtjB3Vu7yHnG2Clh_iMj7CLZt9dGslcBKSslC5sH6OKEQQSYIEwetw/exec';
+// ── Apps Script (backend heredado: insumos, consumibles, tickets, copy) ─────
+// La URL estaba escrita aquí, y este repo es PÚBLICO. Las URLs /exec de Apps
+// Script NO llevan autenticación propia: quien la tenga puede invocar todo lo
+// que el script exponga —insumos, consumibles, subir tickets, guardar_copy—
+// saltándose este proxy. `guardar_copy` cambia textos que ven los clientes.
+//
+// ⚠️ MOVERLA AQUÍ NO CIERRA LA FUGA. La URL lleva meses en el historial de git
+// de un repo público: cualquiera la saca de un commit viejo. Lo único que la
+// cierra es REDESPLEGAR el Apps Script como versión nueva, que genera otra URL,
+// y poner esa en SHEETS_URL. Esto solo deja el terreno listo para esa rotación.
+//
+// Se manda además APPS_SCRIPT_TOKEN si está definido. Hoy el script lo ignora;
+// cuando se le añada la comprobación, la URL dejará de ser la única cerradura.
+const APPS_SCRIPT_URL   = process.env.SHEETS_URL;
+const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || '';
 
 // ── Supabase (service_role) ─────────────────────────────────────────────────
 // Necesario para emitir la sesión de cliente tras verificar el OTP por SMS.
@@ -358,7 +372,24 @@ module.exports = async function(req, res) {
     }
 
     // ── PROXY A GOOGLE SHEETS (cualquier otra accion) ──
-    const params = encodeURIComponent(JSON.stringify(payload));
+    // Falla en voz alta si falta la variable. Antes la URL estaba escrita en el
+    // archivo, así que esto no podía ocurrir; ahora, si alguien despliega sin
+    // configurar SHEETS_URL, es mejor un error claro que una petición a
+    // "undefined?data=..." y una respuesta incomprensible.
+    if (!APPS_SCRIPT_URL) {
+      console.error('[sheets.js] falta la variable de entorno SHEETS_URL');
+      return res.status(500).json({
+        ok: false,
+        error: 'Backend de hojas no configurado (falta SHEETS_URL en el entorno)'
+      });
+    }
+
+    // El token viaja dentro del payload: el Apps Script recibe todo en `data`.
+    // Mientras el script no lo compruebe, es un campo más que ignora.
+    const _payloadProxy = APPS_SCRIPT_TOKEN
+      ? { ...payload, _token: APPS_SCRIPT_TOKEN }
+      : payload;
+    const params = encodeURIComponent(JSON.stringify(_payloadProxy));
     const url    = `${APPS_SCRIPT_URL}?data=${params}`;
     const text   = await httpsGet(url);
     try {

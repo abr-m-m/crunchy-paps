@@ -3499,7 +3499,10 @@ const FB = {
   messagingSenderId:"382389823869",
   appId:"1:382389823869:web:0ab944e8c8ab38a4c8c414"
 };
-const SHEETS_URL  = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1JiqCtjB3Vu7yHnG2Clh_iMj7CLZt9dGslcBKSslC5sH6OKEQQSYIEwetw/exec';
+// SHEETS_URL se eliminó de aquí: era código muerto (una sola aparición en
+// todo el archivo) y publicaba la URL /exec del Apps Script en un repo
+// público. La usa el backend, no el navegador: vive en api/sheets.js, ahora
+// desde variable de entorno. Ver ACCESOS.md §3.4.
 const WHATSAPP_NUM        = '525573654109'; // Crunchy Paps (negocio)
 const WHATSAPP_BODEGA     = '525573654109'; // Mismo número (bodega)
 const GOOGLE_MAPS_KEY = 'AIzaSyCrFgvrh7Hk-o2TdtsT3A2oy9956PmioQw';
