@@ -597,23 +597,27 @@ agregar('P. Bombeo de SMS', 'envios_otp cerrada a anon',
 agregar('Q. Políticas anuladas', 'cupones cerrada (contiene los códigos)',
   () => pedir('GET', 'cupones?select=*&limit=1'), cerrado);
 
-agregar('Q. Políticas anuladas', 'productos: anon NO ve los desactivados',
+// OJO: esta aserción cambió el 5 sep con la decisión de separar agotado de
+// descontinuado. Antes comprobaba que anon no viera NINGÚN desactivado; ahora
+// los agotados SÍ deben verse (la app los pinta "No disponible") y lo que debe
+// desaparecer es lo descontinuado.
+agregar('Q. Políticas anuladas', 'productos: anon NO ve los descontinuados',
   async () => {
-    const r = await pedir('GET', 'productos?select=id,activo&limit=200');
-    const inactivos = Array.isArray(r.datos)
-      ? r.datos.filter((x) => x.activo === false).length : -1;
-    return { estado: r.estado, datos: { visibles: r.datos?.length, inactivos }, inactivos };
+    const r = await pedir('GET', 'productos?select=id,descontinuado&limit=200');
+    const desc = Array.isArray(r.datos)
+      ? r.datos.filter((x) => x.descontinuado === true).length : -1;
+    return { estado: r.estado, datos: { visibles: r.datos?.length, descontinuados: desc }, desc };
   },
-  (r) => r.estado === 200 && r.inactivos === 0);
+  (r) => r.estado === 200 && r.desc === 0);
 
-agregar('Q. Políticas anuladas', 'productos_bebidas: anon NO ve las desactivadas',
+agregar('Q. Políticas anuladas', 'productos_bebidas: anon NO ve las descontinuadas',
   async () => {
-    const r = await pedir('GET', 'productos_bebidas?select=id,activo&limit=200');
-    const inactivos = Array.isArray(r.datos)
-      ? r.datos.filter((x) => x.activo === false).length : -1;
-    return { estado: r.estado, datos: { inactivos }, inactivos };
+    const r = await pedir('GET', 'productos_bebidas?select=id,descontinuado&limit=200');
+    const desc = Array.isArray(r.datos)
+      ? r.datos.filter((x) => x.descontinuado === true).length : -1;
+    return { estado: r.estado, datos: { descontinuados: desc }, desc };
   },
-  (r) => r.estado === 200 && r.inactivos === 0);
+  (r) => r.estado === 200 && r.desc === 0);
 
 for (const f of ['obtener_cupones', 'obtener_catalogo_admin', 'buscar_bebida_por_codigo']) {
   agregar('Q. Políticas anuladas', `rpc/${f} sin sesión`,
@@ -625,6 +629,52 @@ for (const f of ['obtener_cupones', 'obtener_catalogo_admin', 'buscar_bebida_por
 agregar('Q. Políticas anuladas', 'el catálogo del cliente sigue cargando',
   () => pedir('GET', 'productos?select=*&activo=eq.true&limit=5'),
   (r) => r.estado === 200 && Array.isArray(r.datos) && r.datos.length > 0);
+
+
+// ── R. Catálogo y cupones: escritura cerrada ───────────────────────────────
+// Con la llave publicada se podía hacer PATCH a `productos` (HTTP 204
+// verificado): poner precio_consumidor = 1 en todo el catálogo. Y POST a
+// `cupones`: crearse un descuento del 100% y usarlo. Lo segundo es peor,
+// porque no hace falta que nadie note un cambio de precios.
+agregar('R. Catálogo y cupones', 'no se pueden cambiar los precios',
+  () => pedir('PATCH', 'productos?id=eq.1', { precio_consumidor: 1 }),
+  (r) => r.estado >= 400);
+
+agregar('R. Catálogo y cupones', 'no se puede crear un cupón',
+  () => pedir('POST', 'cupones', { codigo: 'GRATIS100', tipo: 'descuento_pct', valor: 100, activo: true }),
+  (r) => r.estado >= 400);
+
+agregar('R. Catálogo y cupones', 'no se pueden crear bebidas',
+  () => pedir('POST', 'productos_bebidas', { nombre: 'intruso', tipo_bebida: 'x' }),
+  (r) => r.estado >= 400);
+
+for (const f of ['actualizar_producto', 'guardar_bebida', 'guardar_cupon']) {
+  agregar('R. Catálogo y cupones', `rpc/${f} sin sesión`,
+    () => pedir('POST', `rpc/${f}`, { p_data: { id: 1, campos: {} } }),
+    (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+}
+
+// Agotado y descontinuado son cosas distintas, y esa distinción es la que pidió
+// Abraham: lo agotado se ve como "No disponible", lo descontinuado desaparece.
+agregar('R. Catálogo y cupones', 'agotado se ve; descontinuado desaparece',
+  async () => {
+    const t = await entrar('5500000001');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const set = (id, campos) => pedir('POST', 'rpc/actualizar_producto', { p_data: { token: t, id, campos } });
+
+    await set(2, { activo: false, descontinuado: false });   // agotado
+    await set(3, { activo: true,  descontinuado: true  });   // descontinuado
+    const r = await pedir('GET', 'productos?select=id,activo&id=in.(2,3)');
+    const ids = (r.datos || []).map((x) => x.id);
+    const agotadoVisible       = ids.includes(2);
+    const descontinuadoOculto  = !ids.includes(3);
+
+    await set(2, { activo: true, descontinuado: false });    // dejar como estaba
+    await set(3, { activo: true, descontinuado: false });
+    return { estado: 200, datos: { ids }, agotadoVisible, descontinuadoOculto };
+  },
+  (r) => r.agotadoVisible === true && r.descontinuadoOculto === true,
+  true);
 
 // ── J. Hallazgo 20: toma de control por cambiar_pin_vendedor ───────────────
 // Sonda NO destructiva: se usa un idVendedor inexistente, así que no se toca

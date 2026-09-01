@@ -82,8 +82,13 @@ from (values
   (9,'Queso','Bolsa 50g',      50,  39.00, true),
   (10,'Queso','Bolsa 100g',   100,  66.00, true),
   (11,'Mixto','Bolsa 500g',   500, 255.00, true),
-  (12,'Descontinuado','Bolsa 50g', 50, 30.00, false)
+  (12,'Descontinuado','Bolsa 50g', 50, 30.00, false)  -- se marca descontinuado abajo
 ) as p(i, sabor, pres, gr, base, act);
+
+-- El producto 12 se llama "Descontinuado": que lo esté de verdad. Sirve de
+-- fixture para comprobar que lo descontinuado NO llega al cliente, mientras que
+-- lo agotado (activo=false, descontinuado=false) sí se ve como "No disponible".
+update public.productos set descontinuado = true where sabor = 'Descontinuado';
 
 -- -- PRODUCTOS BEBIDAS (6) -----------------------------------------------
 insert into public.productos_bebidas

@@ -15251,11 +15251,14 @@ window.togglePapa = async function(id, nuevoActivo, el) {
     knob.style.left = '3px'; knob.style.right = '';
   }
   try {
-    // v2.7.5: actualizar via Supabase
-    const res = await supabaseCall('PATCH', `productos?id=eq.${id}`, { activo: nuevoActivo });
-    const updated = Array.isArray(res) ? res[0] : res;
-    if (updated && updated.message && updated.code) {
-      alert('Error: ' + updated.message);
+    // `productos` está cerrada a anon: con la llave publicada se podían
+    // cambiar los PRECIOS de todo el catálogo. Ahora va por RPC con sesión y
+    // lista blanca de columnas.
+    const res = await supabaseCall('POST', 'rpc/actualizar_producto', {
+      p_data: { id, campos: { activo: nuevoActivo } }
+    });
+    if (!res || !res.ok) {
+      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
       el.checked = !nuevoActivo;
       togglePapa(id, !nuevoActivo, el);
       return;
@@ -15388,17 +15391,13 @@ window.guardarProducto = async function() {
   };
 
   try {
-    let res;
-    if (_editandoProducto) {
-      // UPDATE
-      res = await supabaseCall('PATCH', 'productos_bebidas?id=eq.' + _editandoProducto.id, payload);
-    } else {
-      // INSERT
-      res = await supabaseCall('POST', 'productos_bebidas', payload);
-    }
-    // Si la respuesta es un array (POST/PATCH con return=representation), tomar el primer elemento
-    const created = Array.isArray(res) ? res[0] : res;
-    if (created && created.message && created.code) {
+    // Alta y edición por el mismo RPC: el panel usa el mismo formulario para
+    // las dos cosas, y así hay una sola puerta que proteger.
+    const res = await supabaseCall('POST', 'rpc/guardar_bebida', {
+      p_data: { id: _editandoProducto ? _editandoProducto.id : null, campos: payload }
+    });
+    const created = res;
+    if (!res || !res.ok) {
       // Es un error de Supabase (ej. {message: "...", code: "..."})
       alert('Error Supabase: ' + created.message);
       return;
@@ -15414,11 +15413,14 @@ window.eliminarBebidaActual = async function() {
   if (!_editandoProducto) return;
   if (!confirm(`¿Eliminar "${_editandoProducto.nombre}" del catálogo?\n\nQuedará marcada como inactiva.`)) return;
   try {
-    // Soft-delete: solo marcar activo = false (no borrar fila)
-    const res = await supabaseCall('PATCH', 'productos_bebidas?id=eq.' + _editandoProducto.id, { activo: false });
-    const updated = Array.isArray(res) ? res[0] : res;
-    if (updated && updated.message && updated.code) {
-      alert('Error Supabase: ' + updated.message);
+    // "Eliminar del catálogo" es DESCONTINUAR, no agotar: el producto debe
+    // desaparecer para el cliente, no quedarse visible como "No disponible".
+    // Esa distinción es justo la que separa `descontinuado` de `activo`.
+    const res = await supabaseCall('POST', 'rpc/guardar_bebida', {
+      p_data: { id: _editandoProducto.id, campos: { descontinuado: true, activo: false } }
+    });
+    if (!res || !res.ok) {
+      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
       return;
     }
     cacheClear(CACHE_KEYS.CATALOGO);
@@ -15731,15 +15733,13 @@ window.guardarCupon = async function() {
   };
 
   try {
-    let res;
-    if (_editandoCupon) {
-      res = await supabaseCall('PATCH', `cupones?id=eq.${_editandoCupon.id}`, payload);
-    } else {
-      res = await supabaseCall('POST', 'cupones', payload);
-    }
-    const item = Array.isArray(res) ? res[0] : res;
-    if (item && item.message && item.code) {
-      alert('Error: ' + item.message);
+    // `cupones` está cerrada a anon: escribir aquí era poder crearse un
+    // descuento del 100% y usarlo.
+    const res = await supabaseCall('POST', 'rpc/guardar_cupon', {
+      p_data: { id: _editandoCupon ? _editandoCupon.id : null, campos: payload }
+    });
+    if (!res || !res.ok) {
+      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
       return;
     }
     mostrarToast(_editandoCupon ? '✅ Cupón actualizado' : '✅ Cupón creado');
