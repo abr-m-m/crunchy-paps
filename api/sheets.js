@@ -2,7 +2,8 @@
 // Maneja: proxy a Google Sheets + envío de SMS/WhatsApp via Twilio
 // Cambios v2: parseo robusto de body, logs informativos, manejo de errores
 
-const https = require('https');
+const https  = require('https');
+const crypto = require('crypto');
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrXmjKr_Bp1JiqCtjB3Vu7yHnG2Clh_iMj7CLZt9dGslcBKSslC5sH6OKEQQSYIEwetw/exec';
 
@@ -165,10 +166,43 @@ function sendWhatsApp(to, body) {
   });
 }
 
-// ── OTP Store en memoria ──
-const otpStore = new Map();
+// ── OTP: código en la BASE, no en memoria ───────────────────────────────────
+// Antes vivía en un Map en memoria. En serverless eso significaba que un
+// usuario podía recibir el SMS y que la verificación cayera en OTRA instancia
+// que no conocía el código — un "código incorrecto" sin explicación. Ahora se
+// guarda en `otp_codigos`, exactamente como ya hacía api/otp-email.js.
+//
+// Del código solo se guarda su SHA-256 con el teléfono como sal, así que leer
+// la tabla no permite iniciar sesión como nadie.
+const CODE_TTL_MIN = 10;   // minutos de vigencia
+const MAX_INTENTOS = 5;    // intentos de verificación por código
+
+function hashCode(code, tel) {
+  return crypto.createHash('sha256').update(code + '|' + tel).digest('hex');
+}
+
+// §3.8: era Math.random(), que NO es criptográficamente seguro. Para un código
+// de acceso hay que usar el generador criptográfico: Math.random() es
+// predecible si se conocen suficientes salidas anteriores.
 function generarOTP() {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 1000000));
+}
+
+// Helper REST con service_role, igual que el de api/otp-email.js.
+async function supa(path, method, body) {
+  const r = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      apikey: SUPA_SR,
+      Authorization: 'Bearer ' + SUPA_SR,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const txt = await r.text();
+  let data; try { data = JSON.parse(txt); } catch { data = txt; }
+  return { ok: r.ok, status: r.status, data };
 }
 
 // ── Parseo robusto del body (Vercel a veces no lo parsea) ──
@@ -223,20 +257,27 @@ module.exports = async function(req, res) {
       }
 
       const codigo = generarOTP();
-      // `otpStore` sigue guardando el CÓDIGO para verificarlo después. Se le
-      // quitan `intentosEnvio` y `bloqueadoHasta`: contar envíos en memoria no
-      // servía de nada y mantenerlos daría la falsa impresión de que sí.
-      //
-      // ⚠️ Guardar el código en memoria SIGUE siendo frágil por el mismo motivo
-      // (arranques en frío, varias instancias): un usuario puede recibir el SMS
-      // y que la verificación caiga en otra instancia que no lo conoce. El
-      // arreglo es mover el código a la tabla `otp_codigos`, como ya hace
-      // api/otp-email.js. Queda pendiente — hallazgos 02/15.
-      otpStore.set(telefono, {
-        codigo,
-        expira: Date.now() + 10 * 60 * 1000,
-        intentosVerif: 0,
+
+      // Invalidar códigos previos no usados: pedir uno nuevo debe anular el
+      // anterior, o convivirían dos válidos a la vez.
+      await supa(`otp_codigos?telefono=eq.${encodeURIComponent(telefono)}&usado=eq.false`,
+                 'PATCH', { usado: true });
+
+      const ins = await supa('otp_codigos', 'POST', {
+        telefono,
+        codigo_hash: hashCode(codigo, telefono),
+        expira_en: new Date(Date.now() + CODE_TTL_MIN * 60000).toISOString(),
+        usado: false,
+        intentos: 0,
       });
+
+      // Si no se pudo registrar, NO se manda el SMS: mandarlo sin poder
+      // verificarlo después es gastar un mensaje para nada y dejar al cliente
+      // esperando un código que no va a servir.
+      if (!ins.ok) {
+        return res.status(500).json({ ok: false, error: 'No se pudo registrar el código' });
+      }
+
       const numero  = `+52${telefono}`;
       const mensaje = `Tu código Crunchy Paps: ${codigo}. Válido 10 min. No lo compartas.`;
       await sendTwilioSMS(numero, mensaje);
@@ -247,23 +288,34 @@ module.exports = async function(req, res) {
     if (accion === 'verificar_otp') {
       const telefono = String(payload.telefono || '').replace(/\D/g, '');
       const codigo   = String(payload.codigo || '').trim();
-      const entry = otpStore.get(telefono);
-      if (!entry) {
+      if (!/^\d{6}$/.test(codigo)) {
+        return res.status(200).json({ ok: false, error: 'Código inválido.' });
+      }
+
+      // El código vive en la base, así que da igual qué instancia atienda esta
+      // petición. Antes, con el Map en memoria, un cliente podía recibir el SMS
+      // desde una instancia y verificar contra otra que no lo conocía.
+      const q = await supa(
+        `otp_codigos?telefono=eq.${encodeURIComponent(telefono)}&usado=eq.false&order=creado.desc&limit=1`,
+        'GET'
+      );
+      const row = Array.isArray(q.data) && q.data[0];
+      if (!row) {
         return res.status(200).json({ ok: false, error: 'Código expirado. Solicita uno nuevo.' });
       }
-      if (Date.now() > entry.expira) {
-        otpStore.delete(telefono);
+      if (new Date(row.expira_en).getTime() < Date.now()) {
         return res.status(200).json({ ok: false, error: 'Código expirado. Solicita uno nuevo.' });
       }
-      entry.intentosVerif++;
-      if (entry.intentosVerif > 5) {
-        otpStore.delete(telefono);
+      if ((row.intentos || 0) >= MAX_INTENTOS) {
         return res.status(200).json({ ok: false, error: 'Demasiados intentos. Solicita un nuevo código.' });
       }
-      if (entry.codigo !== codigo) {
+      if (row.codigo_hash !== hashCode(codigo, telefono)) {
+        // El contador se guarda en la base: en memoria se reiniciaba solo y el
+        // límite de 5 intentos no llegaba a aplicarse.
+        await supa(`otp_codigos?id=eq.${row.id}`, 'PATCH', { intentos: (row.intentos || 0) + 1 });
         return res.status(200).json({ ok: false, error: 'Código incorrecto.' });
       }
-      otpStore.delete(telefono);
+      await supa(`otp_codigos?id=eq.${row.id}`, 'PATCH', { usado: true });
 
       // Emitir la sesión de cliente: es el único punto donde queda acreditado
       // que alguien controla ese teléfono. Si falla, se responde verificado

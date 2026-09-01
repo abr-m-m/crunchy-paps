@@ -96,7 +96,9 @@ module.exports = async (req, res) => {
       // Invalidar códigos previos no usados de este teléfono
       await supa(`otp_codigos?telefono=eq.${encodeURIComponent(telefono)}&usado=eq.false`, 'PATCH', { usado: true });
 
-      const code = '' + Math.floor(100000 + Math.random() * 900000);
+      // §3.8: era Math.random(), que NO es criptográficamente seguro para un
+      // código de acceso. crypto.randomInt sí lo es.
+      const code = String(crypto.randomInt(100000, 1000000));
       const ins = await supa('otp_codigos', 'POST', {
         telefono,
         email,
