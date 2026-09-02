@@ -756,6 +756,67 @@ agregar('H. Finanzas/personal SIN sesión (deben negar)', 'con sesión: los 5 en
   (r) => r.malos === 0,
   true);
 
+// ── T. Insumos y consumibles fuera de Sheets (fase 2) ──────────────────────
+// Antes vivían en Google Sheets detrás de /api/sheets, que no pedía credencial
+// alguna. Ahora son RPCs con sesión y sección `produccion`.
+
+agregar('T. Insumos (fase 2)', 'insumos_estado no se lee sin RPC',
+  () => pedir('GET', 'insumos_estado?select=*&limit=1'),
+  // 401 = privilegio denegado, 404 = ni siquiera existe para anon. Un 200 con
+  // cero filas NO cuenta como cerrada: la tabla puede estar simplemente vacía.
+  (r) => r.estado === 401 || r.estado === 404);
+
+agregar('T. Insumos (fase 2)', 'obtener_insumos_estado sin token no da valores',
+  () => pedir('POST', 'rpc/obtener_insumos_estado', { p_data: { grupo: 'insumos' } }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+agregar('T. Insumos (fase 2)', 'guardar_insumos_estado sin token no escribe',
+  () => pedir('POST', 'rpc/guardar_insumos_estado',
+    { p_data: { grupo: 'insumos', valores: { gas_pct: 1 } } }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+agregar('T. Insumos (fase 2)', 'registrar_uso_insumo sin token no escribe',
+  () => pedir('POST', 'rpc/registrar_uso_insumo',
+    { p_data: { tipo: 'aceite', cantidad: 1 } }),
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+agregar('T. Insumos (fase 2)', 'Vendedor NO tiene la sección produccion',
+  async () => {
+    const t = await entrarCon('5500000007', '748261');   // vendedor 7, rol Vendedor
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/obtener_insumos_estado', { p_data: { token: t } });
+  },
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+
+agregar('T. Insumos (fase 2)', 'Mostrador SÍ lee y escribe',
+  async () => {
+    const t = await entrar('5500000002');                // vendedor 2, rol Mostrador
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const g = await pedir('POST', 'rpc/guardar_insumos_estado',
+      { p_data: { token: t, grupo: 'insumos', valores: { gas_pct: 77 } } });
+    const l = await pedir('POST', 'rpc/obtener_insumos_estado',
+      { p_data: { token: t, grupo: 'insumos' } });
+    return { estado: 200, datos: { g: g.datos, l: l.datos } };
+  },
+  // Se comprueba el valor que vuelve, no solo que responda 200: si el guardado
+  // no llegara a la tabla, un 200 seguiría pareciendo un éxito.
+  (r) => r.datos?.g?.ok === true && r.datos?.l?.ok === true &&
+         r.datos.l.valores?.gas_pct === 77);
+
+agregar('T. Insumos (fase 2)', 'el vendedor del uso sale del token, no del payload',
+  async () => {
+    const t = await entrar('5500000002');                // Beto Prueba Lara
+    if (!t) return { estado: 0, datos: 'sin token' };
+    await pedir('POST', 'rpc/registrar_uso_insumo',
+      { p_data: { token: t, tipo: 'sal', cantidad: 1,
+                  vendedor: 'NOMBRE FALSO', fecha: '1999-01-01T00:00:00Z' } });
+    const h = await pedir('POST', 'rpc/obtener_uso_insumo',
+      { p_data: { token: t, tipo: 'sal', limite: 1 } });
+    return { estado: 200, datos: h.datos };
+  },
+  (r) => r.datos?.ok === true && r.datos.registros?.[0]?.vendedor === 'Beto Prueba Lara' &&
+         new Date(r.datos.registros[0].fecha).getFullYear() > 2020);
+
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
 console.log(`\nProbando RLS contra ${URL_BASE}${SOLO_LECTURA ? '   [solo lectura]' : ''}\n`);

@@ -7416,9 +7416,10 @@ function initGridInsumos() {
 async function cargarInsumos() {
   initGridInsumos();
   try {
-    const res = await sheetsCall({ accion:'get_insumos' });
-    if (!res.ok || !res.insumos) return;
-    const ins = res.insumos;
+    const res = await supabaseCall('POST', 'rpc/obtener_insumos_estado',
+      { p_data: { grupo: 'insumos' } });
+    if (!res || !res.ok || !res.valores) return;
+    const ins = res.valores;
     // Llenar campos
     if (ins.aceite_galones !== undefined) document.getElementById('ins-aceite-galones').value = ins.aceite_galones;
     if (ins.aceite_calidad) document.getElementById('ins-aceite-calidad').value = ins.aceite_calidad;
@@ -7475,28 +7476,28 @@ window.registrarUsoInsumo = async function() {
   if (!tipo || !cantidad) { mostrarToast('Selecciona insumo y cantidad'); return; }
 
   try {
-    const res = await sheetsCall({
-      accion: 'registrar_uso_insumo',
-      tipo, cantidad,
-      fecha: new Date().toISOString(),
-      vendedor: vendedorInfo?.nombre || telefonoVerif,
-    });
-    if (res.ok) {
+    // Ya no se manda ni la fecha ni el vendedor: el servidor toma quién
+    // registra del token y la hora de su propio reloj. Ninguno de los dos
+    // era comprobable viniendo del navegador.
+    const res = await supabaseCall('POST', 'rpc/registrar_uso_insumo',
+      { p_data: { tipo, cantidad } });
+    if (res && res.ok) {
       mostrarToast('✅ Uso registrado');
       document.getElementById('uso-insumo-cantidad').value = '';
       // Actualizar mini historial
       cargarUsoHistorialMini(tipo);
     } else {
-      mostrarToast('Error: ' + (res.error||''));
+      mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta'));
     }
   } catch(e) { mostrarToast('Error: ' + e.message); }
 };
 
 async function cargarUsoHistorialMini(tipo) {
   try {
-    const res = await sheetsCall({ accion:'get_uso_insumo', tipo, limite:3 });
+    const res = await supabaseCall('POST', 'rpc/obtener_uso_insumo',
+      { p_data: { tipo, limite: 3 } });
     const el  = document.getElementById('uso-historial-mini');
-    if (!el || !res.ok || !res.registros?.length) return;
+    if (!el || !res || !res.ok || !res.registros?.length) return;
     el.innerHTML = res.registros.map(r =>
       `<div>${new Date(r.fecha).toLocaleDateString('es-MX',{day:'numeric',month:'short'})} — ${r.tipo}: ${r.cantidad} (${r.vendedor})</div>`
     ).join('');
@@ -7505,7 +7506,6 @@ async function cargarUsoHistorialMini(tipo) {
 
 window.guardarInsumos = async function() {
   const data = {
-    accion: 'guardar_insumos',
     aceite_galones: parseFloat(document.getElementById('ins-aceite-galones').value)||0,
     aceite_calidad: document.getElementById('ins-aceite-calidad').value,
     aceite_min:     parseFloat(document.getElementById('ins-aceite-min').value)||0,
@@ -7529,9 +7529,10 @@ window.guardarInsumos = async function() {
   });
 
   try {
-    const res = await sheetsCall(data);
-    if (res.ok) { mostrarToast('✅ Insumos guardados'); mostrarAlertasInsumos(data); }
-    else mostrarToast('Error: ' + (res.error||''));
+    const res = await supabaseCall('POST', 'rpc/guardar_insumos_estado',
+      { p_data: { grupo: 'insumos', valores: data } });
+    if (res && res.ok) { mostrarToast('✅ Insumos guardados'); mostrarAlertasInsumos(data); }
+    else mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta'));
   } catch(e) { mostrarToast('Error: ' + e.message); }
 };
 
@@ -7565,25 +7566,28 @@ function initGridConsumibles() {
 async function cargarConsumibles() {
   initGridConsumibles();
   try {
-    const res = await sheetsCall({ accion:'get_consumibles' });
-    if (!res.ok || !res.consumibles) return;
+    const res = await supabaseCall('POST', 'rpc/obtener_insumos_estado',
+      { p_data: { grupo: 'consumibles' } });
+    if (!res || !res.ok || !res.valores) return;
+    const cons = res.valores;
     CONSUMIBLES_LIST.forEach(c => {
-      if (res.consumibles[c.id+'_qty'] !== undefined) document.getElementById('cons-'+c.id+'-qty').value = res.consumibles[c.id+'_qty'];
-      if (res.consumibles[c.id+'_min'] !== undefined) document.getElementById('cons-'+c.id+'-min').value = res.consumibles[c.id+'_min'];
+      if (cons[c.id+'_qty'] !== undefined) document.getElementById('cons-'+c.id+'-qty').value = cons[c.id+'_qty'];
+      if (cons[c.id+'_min'] !== undefined) document.getElementById('cons-'+c.id+'-min').value = cons[c.id+'_min'];
     });
   } catch(e) {}
 }
 
 window.guardarConsumibles = async function() {
-  const data = { accion:'guardar_consumibles' };
+  const data = {};
   CONSUMIBLES_LIST.forEach(c => {
     data[c.id+'_qty'] = parseInt(document.getElementById('cons-'+c.id+'-qty')?.value)||0;
     data[c.id+'_min'] = parseInt(document.getElementById('cons-'+c.id+'-min')?.value)||0;
   });
   try {
-    const res = await sheetsCall(data);
-    if (res.ok) mostrarToast('✅ Consumibles guardados');
-    else mostrarToast('Error: ' + (res.error||''));
+    const res = await supabaseCall('POST', 'rpc/guardar_insumos_estado',
+      { p_data: { grupo: 'consumibles', valores: data } });
+    if (res && res.ok) mostrarToast('✅ Consumibles guardados');
+    else mostrarToast('Error: ' + ((res && res.error) || 'Sin respuesta'));
   } catch(e) { mostrarToast('Error: ' + e.message); }
 };
 

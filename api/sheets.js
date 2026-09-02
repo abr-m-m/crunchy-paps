@@ -25,12 +25,6 @@ const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || '';
 // negra: una acción nueva en el Apps Script queda cerrada por omisión en
 // vez de abierta por olvido.
 const SECCION_POR_ACCION = {
-  get_insumos:             'produccion',
-  guardar_insumos:         'produccion',
-  registrar_uso_insumo:    'produccion',
-  get_uso_insumo:          'produccion',
-  get_consumibles:         'produccion',
-  guardar_consumibles:     'produccion',
   subir_ticket:            'gastos',
   lookup_producto_externo: 'productos',
   resumen_diario:          'caja',
