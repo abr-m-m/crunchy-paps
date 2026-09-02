@@ -871,23 +871,47 @@ agregar('V. Payload real del front', 'crear gasto con los campos del formulario'
   },
   (r) => r.estado === 200 && r.datos?.ok === true && r.datos.creado === true);
 
-agregar('V. Payload real del front', 'iniciar jornada con los campos del formulario',
+// La primera versión de este caso usaba a Beto (Mostrador), que NO tiene la
+// sección jornadas, y solo comprobaba que el error no dijera "Campo no
+// permitido". Pasaba con "No autorizado" sin ejecutar una línea del insert, y
+// dejó pasar un fallo de tipos que rompía abrir jornada en producción. Ahora
+// usa un rol con la sección y recorre el ciclo entero.
+agregar('V. Payload real del front', 'abrir y cerrar jornada (ciclo completo)',
   async () => {
-    const t = await entrar('5500000002');
+    const t = await entrarCon('5500000007', '748261');   // Vendedor: sí tiene jornadas
     if (!t) return { estado: 0, datos: 'sin token' };
-    return pedir('POST', 'rpc/guardar_jornada', { p_data: { token: t, campos: {
+    const abrir = await pedir('POST', 'rpc/guardar_jornada', { p_data: { token: t, campos: {
       fecha: new Date().toISOString().slice(0, 10),
       hora_inicio: new Date().toISOString(),
       coords_entrada: '19.4,-99.1',
       en_planta_entrada: true,
-      actividades: null,
+      actividades: ['Producción', 'Reparto'],
       notas_inicio: 'Prueba de payload real',
       estatus: 'abierta',
     } } });
+    if (!abrir.datos?.ok) return { estado: 200, datos: { paso: 'abrir', r: abrir.datos } };
+
+    const ver = await pedir('POST', 'rpc/obtener_jornadas',
+      { p_data: { token: t, soloAbierta: true, limit: 1 } });
+    const j = ver.datos?.jornadas?.[0];
+
+    const cerrar = await pedir('POST', 'rpc/guardar_jornada', { p_data: { token: t, id: abrir.datos.id, campos: {
+      hora_cierre: new Date().toISOString(),
+      coords_salida: '19.4,-99.1',
+      en_planta_salida: false,
+      actividades: ['Producción', 'Reparto', 'Limpieza'],
+      notas_cierre: 'cierre',
+      duracion_minutos: 480,
+      estatus: 'cerrada',
+    } } });
+    return { estado: 200, datos: { abrir: abrir.datos, actividades: j?.actividades, cerrar: cerrar.datos } };
   },
-  // Puede fallar por reglas de negocio (ya hay una jornada abierta), pero NUNCA
-  // por un campo rechazado: eso sería el fallo que estos casos vigilan.
-  (r) => r.estado === 200 && !String(r.datos?.error || '').includes('Campo no permitido'));
+  // Se mira el CONTENIDO, no el estado: que abra, que cierre, y que
+  // `actividades` vuelva como arreglo de verdad y no como la cadena JSON.
+  (r) => r.datos?.abrir?.ok === true &&
+         r.datos?.cerrar?.ok === true &&
+         Array.isArray(r.datos?.actividades) &&
+         r.datos.actividades.length === 2);
 
 agregar('V. Payload real del front', 'el gasto queda a nombre del de la sesión',
   async () => {
