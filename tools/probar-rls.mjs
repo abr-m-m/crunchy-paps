@@ -793,7 +793,8 @@ agregar('T. Insumos (fase 2)', 'Vendedor NO tiene la sección produccion',
     if (!t) return { estado: 0, datos: 'sin token' };
     return pedir('POST', 'rpc/obtener_insumos_estado', { p_data: { token: t } });
   },
-  (r) => r.estado === 200 && r.datos && r.datos.ok === false);
+  (r) => r.estado === 200 && r.datos && r.datos.ok === false,
+  true);
 
 agregar('T. Insumos (fase 2)', 'Mostrador SÍ lee y escribe',
   async () => {
@@ -808,7 +809,8 @@ agregar('T. Insumos (fase 2)', 'Mostrador SÍ lee y escribe',
   // Se comprueba el valor que vuelve, no solo que responda 200: si el guardado
   // no llegara a la tabla, un 200 seguiría pareciendo un éxito.
   (r) => r.datos?.g?.ok === true && r.datos?.l?.ok === true &&
-         r.datos.l.valores?.gas_pct === 77);
+         r.datos.l.valores?.gas_pct === 77,
+  true);
 
 agregar('T. Insumos (fase 2)', 'el vendedor del uso sale del token, no del payload',
   async () => {
@@ -822,7 +824,8 @@ agregar('T. Insumos (fase 2)', 'el vendedor del uso sale del token, no del paylo
     return { estado: 200, datos: h.datos };
   },
   (r) => r.datos?.ok === true && r.datos.registros?.[0]?.vendedor === 'Beto Prueba Lara' &&
-         new Date(r.datos.registros[0].fecha).getFullYear() > 2020);
+         new Date(r.datos.registros[0].fecha).getFullYear() > 2020,
+  true);
 
 // ── U. Tickets de gasto en Storage (fase 4) ────────────────────────────────
 // El bucket es privado y solo se llega por URL firmada, que emite /api/ticket
@@ -840,7 +843,8 @@ agregar('U. Tickets (fase 4)', 'ni siquiera con una sesión de admin válida',
     return pedir('POST', 'rpc/autorizar_ticket_gasto', { p_data: { token: t, idGasto: 1 } });
   },
   // Es de service_role: el navegador no debe poder firmar nada por su cuenta.
-  (r) => r.estado === 401 || r.estado === 404);
+  (r) => r.estado === 401 || r.estado === 404,
+  true);
 
 agregar('U. Tickets (fase 4)', 'el bucket no es público',
   () => pedir('GET', '../storage/v1/object/public/tickets/gastos/1/prueba.jpg'),
@@ -876,7 +880,8 @@ agregar('V. Payload real del front', 'crear gasto con los campos del formulario'
       estatus: 'pendiente',
     } } });
   },
-  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.creado === true);
+  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.creado === true,
+  true);
 
 // La primera versión de este caso usaba a Beto (Mostrador), que NO tiene la
 // sección jornadas, y solo comprobaba que el error no dijera "Campo no
@@ -918,7 +923,8 @@ agregar('V. Payload real del front', 'abrir y cerrar jornada (ciclo completo)',
   (r) => r.datos?.abrir?.ok === true &&
          r.datos?.cerrar?.ok === true &&
          Array.isArray(r.datos?.actividades) &&
-         r.datos.actividades.length === 2);
+         r.datos.actividades.length === 2,
+  true);
 
 agregar('V. Payload real del front', 'el gasto queda a nombre del de la sesión',
   async () => {
@@ -933,7 +939,8 @@ agregar('V. Payload real del front', 'el gasto queda a nombre del de la sesión'
     const mio = (l.datos?.gastos || []).find((x) => x.id === g.datos?.id);
     return { estado: 200, datos: { nombre: mio?.nombre_vendedor } };
   },
-  (r) => r.datos?.nombre === 'Beto Prueba Lara');
+  (r) => r.datos?.nombre === 'Beto Prueba Lara',
+  true);
 
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
