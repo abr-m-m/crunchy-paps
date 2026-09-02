@@ -817,6 +817,28 @@ agregar('T. Insumos (fase 2)', 'el vendedor del uso sale del token, no del paylo
   (r) => r.datos?.ok === true && r.datos.registros?.[0]?.vendedor === 'Beto Prueba Lara' &&
          new Date(r.datos.registros[0].fecha).getFullYear() > 2020);
 
+// ── U. Tickets de gasto en Storage (fase 4) ────────────────────────────────
+// El bucket es privado y solo se llega por URL firmada, que emite /api/ticket
+// con la llave de servicio tras comprobar sesión, sección y propiedad.
+
+agregar('U. Tickets (fase 4)', 'autorizar_ticket_gasto no la puede llamar anon',
+  () => pedir('POST', 'rpc/autorizar_ticket_gasto', { p_data: { idGasto: 1 } }),
+  // 401 = privilegio revocado, 404 = PostgREST no la expone a este rol.
+  (r) => r.estado === 401 || r.estado === 404);
+
+agregar('U. Tickets (fase 4)', 'ni siquiera con una sesión de admin válida',
+  async () => {
+    const t = await entrar('5500000001');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/autorizar_ticket_gasto', { p_data: { token: t, idGasto: 1 } });
+  },
+  // Es de service_role: el navegador no debe poder firmar nada por su cuenta.
+  (r) => r.estado === 401 || r.estado === 404);
+
+agregar('U. Tickets (fase 4)', 'el bucket no es público',
+  () => pedir('GET', '../storage/v1/object/public/tickets/gastos/1/prueba.jpg'),
+  (r) => r.estado !== 200);
+
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
 console.log(`\nProbando RLS contra ${URL_BASE}${SOLO_LECTURA ? '   [solo lectura]' : ''}\n`);

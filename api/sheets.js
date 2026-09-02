@@ -5,27 +5,10 @@
 const https  = require('https');
 const crypto = require('crypto');
 
-// ── Apps Script (backend heredado: insumos, consumibles, tickets, copy) ─────
-// La URL estaba escrita aquí, y este repo es PÚBLICO. Las URLs /exec de Apps
-// Script NO llevan autenticación propia: quien la tenga puede invocar todo lo
-// que el script exponga —insumos, consumibles, subir tickets, guardar_copy—
-// saltándose este proxy. `guardar_copy` cambia textos que ven los clientes.
-//
-// ⚠️ MOVERLA AQUÍ NO CIERRA LA FUGA. La URL lleva meses en el historial de git
-// de un repo público: cualquiera la saca de un commit viejo. Lo único que la
-// cierra es REDESPLEGAR el Apps Script como versión nueva, que genera otra URL,
-// y poner esa en SHEETS_URL. Esto solo deja el terreno listo para esa rotación.
-//
-// Se manda además APPS_SCRIPT_TOKEN si está definido. Hoy el script lo ignora;
-// cuando se le añada la comprobación, la URL dejará de ser la única cerradura.
-const APPS_SCRIPT_URL   = process.env.SHEETS_URL;
-const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || '';
-
 // Qué sección de permisos exige cada acción. Es lista blanca, no lista
 // negra: una acción nueva en el Apps Script queda cerrada por omisión en
 // vez de abierta por olvido.
 const SECCION_POR_ACCION = {
-  subir_ticket:            'gastos',
   lookup_producto_externo: 'productos',
 };
 
@@ -84,23 +67,6 @@ async function emitirSesionCliente(telefono) {
   } catch (_e) {
     return null;
   }
-}
-
-// ── HTTP helper con seguimiento de redirects ──
-function httpsGet(url, redirectCount = 0) {
-  return new Promise((resolve, reject) => {
-    if (redirectCount > 5) return reject(new Error('Demasiados redirects'));
-    https.get(url, (res) => {
-      if ([301, 302, 303].includes(res.statusCode)) {
-        const loc = res.headers.location;
-        if (!loc) return reject(new Error('Redirect sin location'));
-        return httpsGet(loc, redirectCount + 1).then(resolve).catch(reject);
-      }
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
-    }).on('error', reject);
-  });
 }
 
 // ── Twilio SMS ──
@@ -450,37 +416,11 @@ module.exports = async function(req, res) {
       return res.status(200).json(await lookupProductoExterno(payload.codigo_barras));
     }
 
-    // ── PROXY A GOOGLE SHEETS (cualquier otra accion) ──
-    // Falla en voz alta si falta la variable. Antes la URL estaba escrita en el
-    // archivo, así que esto no podía ocurrir; ahora, si alguien despliega sin
-    // configurar SHEETS_URL, es mejor un error claro que una petición a
-    // "undefined?data=..." y una respuesta incomprensible.
-    if (!APPS_SCRIPT_URL) {
-      console.error('[sheets.js] falta la variable de entorno SHEETS_URL');
-      return res.status(500).json({
-        ok: false,
-        error: 'Backend de hojas no configurado (falta SHEETS_URL en el entorno)'
-      });
-    }
-
-    // El token viaja dentro del payload: el Apps Script recibe todo en `data`.
-    // Mientras el script no lo compruebe, es un campo más que ignora.
-    const _payloadProxy = APPS_SCRIPT_TOKEN
-      ? { ...payload, _token: APPS_SCRIPT_TOKEN }
-      : payload;
-    const params = encodeURIComponent(JSON.stringify(_payloadProxy));
-    const url    = `${APPS_SCRIPT_URL}?data=${params}`;
-    const text   = await httpsGet(url);
-    try {
-      return res.status(200).json(JSON.parse(text));
-    } catch(e) {
-      console.error('[sheets.js] respuesta no-JSON de Apps Script:', text.slice(0, 200));
-      return res.status(500).json({
-        ok: false,
-        error: 'Apps Script devolvió respuesta inválida',
-        primeros200: text.slice(0, 200)
-      });
-    }
+    // Ya no hay proxy a Google Apps Script. Cada acción se atiende arriba, y
+    // la lista blanca rechaza lo que no reconoce, así que llegar hasta aquí
+    // significa que alguien añadió una acción a la lista y olvidó su manejador.
+    console.error('[sheets.js] accion en la lista blanca sin manejador:', accion);
+    return res.status(500).json({ ok: false, error: 'Acción no implementada' });
 
   } catch (err) {
     console.error('[sheets.js] error general:', err.message);

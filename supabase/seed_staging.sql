@@ -286,3 +286,12 @@ union all select 'lotes_produccion',  count(*) from public.lotes_produccion
 union all select 'ordenes',           count(*) from public.ordenes
 union all select 'ordenes_detalle',   count(*) from public.ordenes_detalle
 order by 1;
+
+-- ── Gastos para probar la propiedad de los tickets (fase 4) ────────────────
+-- La regla es: admin ve todos, un no-admin solo los suyos. Para comprobarla
+-- hacen falta dos gastos de dueños distintos, y que ninguno sea del admin.
+insert into public.gastos (fecha, categoria, subcategoria, descripcion, monto,
+                           id_vendedor, nombre_vendedor, ticket_url)
+values (current_date, 'Insumos', 'Aceite', 'Gasto de prueba de Beto',  500, 2, 'Beto Prueba Lara',  'gastos/1/falso.jpg'),
+       (current_date, 'Insumos', 'Gas',    'Gasto de prueba de Diego', 300, 4, 'Diego Muestra Vega', null)
+on conflict do nothing;

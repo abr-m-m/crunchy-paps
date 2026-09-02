@@ -7142,6 +7142,43 @@ async function sheetsCall(payload) {
   }
 }
 
+// ── TICKETS DE GASTO ───────────────────────────────────────────────────────
+// /api/ticket no recibe archivos: solo firma permisos de corta vida contra
+// Supabase Storage. El archivo viaja del navegador directo al bucket.
+async function ticketCall(payload) {
+  const _tk = (typeof tokenVendedor === 'function') ? tokenVendedor() : null;
+  if (_tk && payload && payload.token === undefined) {
+    payload = { ...payload, token: _tk };
+  }
+  try {
+    const res = await fetch('/api/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// El bucket es privado, así que no hay una URL fija que poner en el href: se
+// pide una firmada al hacer clic y se abre.
+window.abrirTicket = async function(ev, idGasto) {
+  if (ev) ev.preventDefault();
+  // La pestaña se abre ANTES del await: si se abriera después, el navegador lo
+  // trataría como una ventana emergente y la bloquearía.
+  const tab = window.open('', '_blank');
+  const r = await ticketCall({ accion: 'firmar_descarga', idGasto });
+  if (r && r.ok && r.url) {
+    if (tab) tab.location.href = r.url;
+    else window.location.href = r.url;
+  } else {
+    if (tab) tab.close();
+    mostrarToast('No se pudo abrir el ticket: ' + ((r && r.error) || 'sin respuesta'));
+  }
+};
+
 // ════════════════════════════════════════════════════════════════
 // SUPABASE helper — Fase 1 migración (solo bebidas por ahora)
 // ════════════════════════════════════════════════════════════════
@@ -12652,8 +12689,12 @@ window.probarImportUnaFila = async function() {
 let _gastos = [];
 let _gastoFiltro = 'todos';
 let _editandoGasto = null;
-let _ticketBase64 = null;
-let _ticketFileName = '';
+// Se guarda el File tal cual. Antes se convertía a base64 para mandarlo
+// dentro de un JSON, y eso infla el tamaño un 33%: los 5 MB del selector se
+// volvían ~6.7 MB, por encima del límite de cuerpo de una función
+// serverless. Era el "bug del proxy >16KB" del comentario viejo. Ahora el
+// archivo sube directo a Storage y no pasa por Vercel.
+let _ticketArchivo = null;
 let _ticketMimeType = '';
 
 const SUBCATEGORIAS_GASTOS = {
@@ -12901,8 +12942,7 @@ function pintarListaGastos() {
 // ──────────────────────────────────────────
 window.abrirNuevoGasto = function() {
   _editandoGasto = null;
-  _ticketBase64 = null;
-  _ticketFileName = '';
+  _ticketArchivo = null;
   _ticketMimeType = '';
 
   // Reset form
@@ -12948,35 +12988,37 @@ window.actualizarSubcategorias = function() {
   sel.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
 };
 
-// Listener para captura de ticket (file → base64)
+// Listener para captura de ticket. Ya no se lee el archivo: basta con
+// quedarse la referencia y subirlo tal cual al guardar el gasto.
+const TICKET_TIPOS_OK = ['image/jpeg','image/png','image/webp','image/heic','application/pdf'];
+
 document.addEventListener('change', function(e) {
   if (e.target && e.target.id === 'ng-ticket-file') {
     const file = e.target.files[0];
+    const prev = document.getElementById('ng-ticket-preview');
     if (!file) {
-      _ticketBase64 = null;
-      document.getElementById('ng-ticket-preview').style.display = 'none';
+      _ticketArchivo = null;
+      prev.style.display = 'none';
       return;
     }
-    // Límite 5MB
+    // Mismo límite que el bucket, para avisar aquí en vez de fallar al subir.
     if (file.size > 5 * 1024 * 1024) {
       alert('La imagen no debe exceder 5MB.');
       e.target.value = '';
-      _ticketBase64 = null;
+      _ticketArchivo = null;
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      // Quitar el prefijo "data:image/jpeg;base64,"
-      const result = evt.target.result;
-      const base64 = result.split(',')[1];
-      _ticketBase64 = base64;
-      _ticketFileName = file.name;
-      _ticketMimeType = file.type || 'image/jpeg';
-      const prev = document.getElementById('ng-ticket-preview');
-      prev.textContent = `✅ ${file.name} (${(file.size/1024).toFixed(1)} KB) — se subirá al guardar`;
-      prev.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    const tipo = file.type || 'image/jpeg';
+    if (!TICKET_TIPOS_OK.includes(tipo)) {
+      alert('Formato no admitido. Usa JPG, PNG, WEBP, HEIC o PDF.');
+      e.target.value = '';
+      _ticketArchivo = null;
+      return;
+    }
+    _ticketArchivo  = file;
+    _ticketMimeType = tipo;
+    prev.textContent = `✅ ${file.name} (${(file.size/1024).toFixed(1)} KB) — se subirá al guardar`;
+    prev.style.display = 'block';
   }
 });
 
@@ -13049,23 +13091,30 @@ window.guardarGasto = async function() {
       } catch(e) {}
     }
 
-    // Si hay ticket pendiente de subir (Apps Script sigue manejando esto, bug del proxy >16KB)
-    if (_ticketBase64 && idGasto) {
+    // El archivo va del navegador DIRECTO a Supabase Storage con una URL
+    // firmada. No pasa por Vercel, así que el límite de cuerpo que obligaba a
+    // usar Apps Script ya no aplica.
+    if (_ticketArchivo && idGasto) {
       btn.textContent = 'Subiendo foto...';
       try {
-        const resTicket = await sheetsCall({
-          accion: 'subir_ticket',
+        const permiso = await ticketCall({
+          accion: 'firmar_subida',
           idGasto,
-          fileName: _ticketFileName,
           mimeType: _ticketMimeType,
-          base64Data: _ticketBase64,
         });
-        if (!resTicket.ok) {
-          mostrarToast('⚠️ Gasto guardado pero ticket falló: ' + resTicket.error);
-        } else if (resTicket.ticketUrl) {
-          // Actualizar URL del ticket en el gasto
+        if (!permiso.ok) {
+          mostrarToast('⚠️ Gasto guardado pero ticket falló: ' + (permiso.error||''));
+        } else {
+          const subida = await fetch(permiso.url, {
+            method: 'PUT',
+            headers: { 'Content-Type': _ticketMimeType },
+            body: _ticketArchivo,
+          });
+          if (!subida.ok) throw new Error('HTTP ' + subida.status);
+          // Se guarda la RUTA dentro del bucket, no una URL: las firmadas
+          // caducan, así que se firma de nuevo cada vez que alguien mira.
           await supabaseCall('POST', 'rpc/guardar_gasto', {
-            p_data: { id: idGasto, campos: { ticket_url: resTicket.ticketUrl } }
+            p_data: { id: idGasto, campos: { ticket_url: permiso.ruta } }
           });
         }
       } catch(e) {
@@ -13145,7 +13194,7 @@ window.verDetalleGasto = function(id) {
 
     ${g.tieneTicket && g.ticketUrl ? `
       <div style="margin-bottom:10px;">
-        <a href="${g.ticketUrl}" target="_blank" style="display:block;background:#0d2d0d;border:1px solid #2a5a2a;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:#4caf50;text-decoration:none;font-size:0.84rem;">
+        <a href="#" onclick="abrirTicket(event, ${'${g.id}'})" style="display:block;background:#0d2d0d;border:1px solid #2a5a2a;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:#4caf50;text-decoration:none;font-size:0.84rem;">
           📷 Ver foto del ticket
         </a>
       </div>
