@@ -27,8 +27,6 @@ const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || '';
 const SECCION_POR_ACCION = {
   subir_ticket:            'gastos',
   lookup_producto_externo: 'productos',
-  resumen_diario:          'caja',
-  enviar_whatsapp:         'caja',
 };
 
 // ── Supabase (service_role) ─────────────────────────────────────────────────
@@ -147,6 +145,12 @@ function sendTwilioSMS(to, body) {
 }
 
 // ── Twilio WhatsApp ──
+// SIN LLAMADORES a propósito. El endpoint que lo usaba (accion enviar_whatsapp)
+// se retiró: no lo invocaba nadie en el repo y mandaba WhatsApp por la cuenta de
+// Twilio a cualquier número que le pasaran, sin credencial. Se conserva el
+// helper porque es la pieza que hará falta si algún día se quiere el resumen
+// diario automático, que hoy se comparte a mano desde copiarResumenDia().
+// eslint-disable-next-line no-unused-vars
 function sendWhatsApp(to, body) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken  = process.env.TWILIO_AUTH_TOKEN;
@@ -440,34 +444,6 @@ module.exports = async function(req, res) {
 
     // El token no sigue hacia Apps Script: no tiene por qué verlo.
     delete payload.token;
-
-    // ── ENVIAR WHATSAPP (soporta múltiples destinos en TWILIO_WHATSAPP_TO con comas) ──
-    if (accion === 'enviar_whatsapp') {
-      const body = payload.body;
-      if (!body) return res.status(400).json({ ok: false, error: 'Falta body del mensaje' });
-
-      const to = payload.to || process.env.TWILIO_WHATSAPP_TO;
-      if (!to) return res.status(400).json({ ok: false, error: 'Falta destino (to o TWILIO_WHATSAPP_TO)' });
-
-      const destinos = String(to).split(',').map(s => s.trim()).filter(Boolean);
-      const resultados = [];
-      for (const dest of destinos) {
-        try {
-          const r = await sendWhatsApp(dest, body);
-          resultados.push({ to: dest, ok: true, sid: r.sid });
-          console.log('[whatsapp] enviado a', dest, 'sid:', r.sid);
-        } catch(e) {
-          resultados.push({ to: dest, ok: false, error: e.message });
-          console.error('[whatsapp] error a', dest, ':', e.message);
-        }
-      }
-      const okCount = resultados.filter(r => r.ok).length;
-      return res.status(200).json({
-        ok: okCount > 0,
-        msg: `WhatsApp: ${okCount}/${destinos.length} enviados`,
-        resultados
-      });
-    }
 
     // ── LOOKUP DE PRODUCTO POR CÓDIGO DE BARRAS ──
     if (accion === 'lookup_producto_externo') {

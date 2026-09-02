@@ -9500,29 +9500,6 @@ window.revocarB2B = async function(idCliente) {
 };
 
 
-window.enviarResumenWhatsApp = async function(btnEl) {
-  const btn = btnEl;
-  const originalHTML = btn.innerHTML;
-  btn.textContent = 'Enviando...';
-  btn.disabled = true;
-  try {
-    // Iba por fetch directo y se saltaba la inyección del token.
-    const data = await sheetsCall({ accion: 'resumen_diario' });
-    console.log('Respuesta resumen:', data);
-    if (data.ok) {
-      alert('✅ Resumen enviado por WhatsApp');
-    } else {
-      alert('Error: ' + (data.error||'Sin respuesta'));
-    }
-  } catch(e) {
-    alert('Error: ' + e.message);
-    console.error('Error resumen:', e);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalHTML;
-  }
-};
-
 // ══════════════════════════════════
 // EDICIÓN DE LOTES
 // ══════════════════════════════════
