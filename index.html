@@ -3520,7 +3520,10 @@ const GOOGLE_MAPS_KEY = 'AIzaSyCrFgvrh7Hk-o2TdtsT3A2oy9956PmioQw';
 // que un preview de Vercel o una sesión local jamás escriban en producción.
 // Eso es el hallazgo 16.
 const CP_PROD_URL  = 'https://xbyzarzyxiugrucyjwfn.supabase.co';
-const CP_PROD_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhieXphcnp5eGl1Z3J1Y3lqd2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODczMDYsImV4cCI6MjA5Mzg2MzMwNn0.ehELg2487qC324cve-hgBbuQ4YxjthBwkA4A3XcSslg';
+// Llave PUBLISHABLE, no la anon legacy. Supabase borra las anon/service_role
+  // a finales de 2026: lo que siga con ellas deja de funcionar. Las dos
+  // conviven mientras tanto, así que el cambio no tiene ventana de corte.
+  const CP_PROD_ANON = 'sb_publishable_8-OwEr5hYTWdNWBG-wpshQ_SVHmH3W5';
 const CP_HOSTS_PROD = ['crunchypaps.mx', 'www.crunchypaps.mx'];
 
 const _cpCfg = (typeof window !== 'undefined' && window.__CP_CONFIG__) || {};

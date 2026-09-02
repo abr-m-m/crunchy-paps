@@ -6,13 +6,20 @@
 // lo que un atacante con la llave pública realmente consigue.
 //
 // Uso:
-//   SUPABASE_URL=https://<ref>.supabase.co SUPABASE_ANON_KEY=<llave> \
+//   SUPABASE_URL=https://<ref>.supabase.co SUPABASE_KEY=<llave> \
 //     node tools/probar-rls.mjs
+//
+// La llave puede ser la `sb_publishable_…` o la `anon` legacy: las dos
+// conviven y se comportan igual. Supabase borra las legacy a finales de
+// 2026, así que lo correcto ya es pasar la publishable.
 //
 // Sale con código 1 si algún caso falla.
 
 const URL_BASE = process.env.SUPABASE_URL;
-const ANON = process.env.SUPABASE_ANON_KEY;
+// SUPABASE_ANON_KEY se sigue admitiendo para no romper lo que ya lo usa.
+const ANON = process.env.SUPABASE_KEY
+  || process.env.SUPABASE_PUBLISHABLE_KEY
+  || process.env.SUPABASE_ANON_KEY;
 
 const args = process.argv.slice(2);
 const VERBOSO = args.includes('-v');
@@ -21,7 +28,7 @@ const VERBOSO = args.includes('-v');
 const SOLO_LECTURA = args.includes('--solo-lectura');
 
 if (!URL_BASE || !ANON) {
-  console.error('Faltan SUPABASE_URL y/o SUPABASE_ANON_KEY en el entorno.');
+  console.error('Faltan SUPABASE_URL y/o SUPABASE_KEY en el entorno.');
   process.exit(1);
 }
 if (URL_BASE.includes('xbyzarzyxiugrucyjwfn') && !SOLO_LECTURA) {
