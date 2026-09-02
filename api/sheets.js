@@ -21,6 +21,24 @@ const crypto = require('crypto');
 const APPS_SCRIPT_URL   = process.env.SHEETS_URL;
 const APPS_SCRIPT_TOKEN = process.env.APPS_SCRIPT_TOKEN || '';
 
+// Qué sección de permisos exige cada acción. Es lista blanca, no lista
+// negra: una acción nueva en el Apps Script queda cerrada por omisión en
+// vez de abierta por olvido.
+const SECCION_POR_ACCION = {
+  get_insumos:             'produccion',
+  guardar_insumos:         'produccion',
+  registrar_uso_insumo:    'produccion',
+  get_uso_insumo:          'produccion',
+  get_consumibles:         'produccion',
+  guardar_consumibles:     'produccion',
+  subir_ticket:            'gastos',
+  importar_prospectos:     'prospeccion',
+  actualizar_prospecto:    'prospeccion',
+  lookup_producto_externo: 'productos',
+  resumen_diario:          'caja',
+  enviar_whatsapp:         'caja',
+};
+
 // ── Supabase (service_role) ─────────────────────────────────────────────────
 // Necesario para emitir la sesión de cliente tras verificar el OTP por SMS.
 // `emitir_sesion_cliente` no es invocable con la llave anon: solo con
@@ -342,6 +360,39 @@ module.exports = async function(req, res) {
         expiraEn: _sesion ? _sesion.expiraEn : null,
       });
     }
+
+    // ── AUTORIZACIÓN ────────────────────────────────────────────────────
+    // Todo lo que sigue exige sesión. Enviar y verificar OTP quedan arriba,
+    // sin credencial, porque son justamente los que la emiten.
+    const seccionRequerida = SECCION_POR_ACCION[accion];
+    if (!seccionRequerida) {
+      console.warn('[sheets.js] accion no permitida:', accion);
+      return res.status(403).json({ ok: false, error: 'Acción no permitida' });
+    }
+
+    const _token = typeof payload.token === 'string' ? payload.token : '';
+    if (!_token) {
+      return res.status(401).json({ ok: false, error: 'Sesión requerida' });
+    }
+
+    let _sesion = null;
+    try {
+      const rs = await supa('rpc/sesion_exige_seccion', 'POST',
+        { p_token: _token, p_seccion: seccionRequerida });
+      // Devuelve cero filas tanto si el token no sirve como si el rol no
+      // tiene la sección. No distingue: quien llama no aprende cuál falló.
+      if (rs.ok && Array.isArray(rs.data) && rs.data.length) _sesion = rs.data[0];
+    } catch (e) {
+      console.error('[sheets.js] error validando sesion:', e.message);
+      return res.status(500).json({ ok: false, error: 'No se pudo validar la sesión' });
+    }
+    if (!_sesion) {
+      return res.status(403).json({ ok: false, error: 'Sin permiso para esta acción' });
+    }
+    console.log('[sheets.js] autorizado:', accion, '-> vendedor', _sesion.id_vendedor, _sesion.rol);
+
+    // El token no sigue hacia Apps Script: no tiene por qué verlo.
+    delete payload.token;
 
     // ── ENVIAR WHATSAPP (soporta múltiples destinos en TWILIO_WHATSAPP_TO con comas) ──
     if (accion === 'enviar_whatsapp') {

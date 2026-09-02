@@ -7110,6 +7110,14 @@ function perfEndNav(handle) {
 
 async function sheetsCall(payload) {
   const accion = payload?.accion || 'desconocida';
+  // /api/sheets era el único backend que no pedía credencial alguna: bastaba
+  // un POST desde cualquier parte para escribir inventario o inyectar
+  // prospectos. Ahora viaja el token de sesión y el servidor comprueba la
+  // sección antes de tocar nada.
+  const _tk = (typeof tokenVendedor === 'function') ? tokenVendedor() : null;
+  if (_tk && payload && typeof payload === 'object' && payload.token === undefined) {
+    payload = { ...payload, token: _tk };
+  }
   const t0 = (typeof PERF !== 'undefined' && PERF.enabled) ? performance.now() : 0;
   try {
     const res = await fetch('/api/sheets', {
@@ -9494,12 +9502,8 @@ window.enviarResumenWhatsApp = async function(btnEl) {
   btn.textContent = 'Enviando...';
   btn.disabled = true;
   try {
-    const res = await fetch('/api/sheets', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ accion:'resumen_diario' })
-    });
-    const data = await res.json();
+    // Iba por fetch directo y se saltaba la inyección del token.
+    const data = await sheetsCall({ accion: 'resumen_diario' });
     console.log('Respuesta resumen:', data);
     if (data.ok) {
       alert('✅ Resumen enviado por WhatsApp');
