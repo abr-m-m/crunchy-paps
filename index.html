@@ -3926,22 +3926,19 @@ window.elegirTipoNuevo = async function(tipo) {
     // Se registrará al confirmar su primer pedido
     setTimeout(irAlCatalogo, 200);
   } else {
-    // Tienda o Restaurante → registrar con tipo real + pendiente de aprobación
-    const tipoLabel = tipo === 'tienda' ? 'Tienda / Abarrotes' : 'Restaurante';
-    try {
-      // v2.8: registrar via Supabase RPC registrar_o_actualizar_cliente
-      await supabaseCall('POST', 'rpc/registrar_o_actualizar_cliente', {
-        p_data: {
-          telefono: telefonoVerif,
-          nombre: '',
-          tipo: tipoLabel,
-          tipoId: tipo === 'tienda' ? 3 : 2,
-          aprobadoB2B: false,
-        }
-      });
-    } catch(e) { console.log('Error registro B2B:', e); }
-
-    // Opción 3: NO ve catálogo. Primero captura sus datos mínimos.
+    // Tienda o Restaurante → NO se registra nada todavía.
+    //
+    // Antes se creaba aquí la fila con solo el teléfono y el tipo, y después se
+    // pedían los datos. Quien abandonaba el formulario dejaba una solicitud B2B
+    // sin nombre, sin dirección y sin coordenadas: así aparecieron los clientes
+    // 53 y 54 en producción. Si se aprueban, queda una tienda sin dirección de
+    // entrega, y eso se descubre el día del reparto.
+    //
+    // El alta la hace guardarDatosTienda(), que ya exige nombre y dirección y
+    // resuelve la ubicación por tres vías: el pin del mapa, la geocodificación
+    // de la dirección escrita y el GPS como respaldo. Registrar antes no
+    // aportaba nada — ese mismo RPC se vuelve a llamar con los datos completos
+    // al guardar el formulario.
     mostrarFormDatosTienda();
   }
 };
