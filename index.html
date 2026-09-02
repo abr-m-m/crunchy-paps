@@ -13056,8 +13056,8 @@ window.guardarGasto = async function() {
       // legacy: factura va a notas (campo factura no existe en BD nueva, lo mantenemos así)
       notas: notas || (factura ? `Factura: ${factura}` : null),
       tiene_factura: !!factura,
-      id_vendedor: vendedorInfo?.id || null,
-      nombre_vendedor: vendedorInfo?.nombre || '',
+      // id_vendedor y nombre_vendedor NO van aquí: los pone guardar_gasto
+      // desde el token, y su lista blanca los rechaza si llegan del cliente.
       estatus: 'pendiente',
     };
 
@@ -14750,8 +14750,7 @@ window.confirmarIniciarJornada = async function() {
     const dentroPlanta = distancia <= 100;
 
     const payload = {
-      id_vendedor: vendedorInfo?.id || null,
-      nombre_vendedor: vendedorInfo?.nombre || '',
+      // Igual que en gastos: el vendedor sale del token en guardar_jornada.
       fecha: new Date().toISOString().slice(0, 10),
       hora_inicio: new Date().toISOString(),
       coords_entrada: lat && lng ? `${lat},${lng}` : null,

@@ -839,6 +839,71 @@ agregar('U. Tickets (fase 4)', 'el bucket no es público',
   () => pedir('GET', '../storage/v1/object/public/tickets/gastos/1/prueba.jpg'),
   (r) => r.estado !== 200);
 
+// ── V. El payload REAL del navegador contra la lista blanca ────────────────
+// Estos casos existen por un fallo concreto: al pasar gastos y jornadas a RPC
+// con sesión se quitó id_vendedor de la lista blanca —correcto, lo pone el
+// servidor desde el token— pero se dejó en el payload del navegador. Guardar un
+// gasto llevaba semanas fallando en producción con "Campo no permitido:
+// id_vendedor", y ninguna prueba lo vio porque todas mandaban payloads mínimos
+// escritos a mano en vez del que manda la app.
+//
+// La regla que se saca de aquí: probar con los campos que el front envía de
+// verdad, no con los que uno recuerda que envía.
+
+agregar('V. Payload real del front', 'crear gasto con los campos del formulario',
+  async () => {
+    const t = await entrar('5500000002');            // Mostrador: tiene la sección gastos
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/guardar_gasto', { p_data: { token: t, campos: {
+      fecha: new Date().toISOString().slice(0, 10),
+      categoria: 'Insumos',
+      subcategoria: 'Aceite',
+      descripcion: 'Prueba de payload real',
+      monto: 123.45,
+      moneda: 'MXN',
+      metodo_pago: 'Efectivo',
+      fuente_dinero: 'Caja',
+      proveedor: null,
+      notas: null,
+      tiene_factura: false,
+      estatus: 'pendiente',
+    } } });
+  },
+  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.creado === true);
+
+agregar('V. Payload real del front', 'iniciar jornada con los campos del formulario',
+  async () => {
+    const t = await entrar('5500000002');
+    if (!t) return { estado: 0, datos: 'sin token' };
+    return pedir('POST', 'rpc/guardar_jornada', { p_data: { token: t, campos: {
+      fecha: new Date().toISOString().slice(0, 10),
+      hora_inicio: new Date().toISOString(),
+      coords_entrada: '19.4,-99.1',
+      en_planta_entrada: true,
+      actividades: null,
+      notas_inicio: 'Prueba de payload real',
+      estatus: 'abierta',
+    } } });
+  },
+  // Puede fallar por reglas de negocio (ya hay una jornada abierta), pero NUNCA
+  // por un campo rechazado: eso sería el fallo que estos casos vigilan.
+  (r) => r.estado === 200 && !String(r.datos?.error || '').includes('Campo no permitido'));
+
+agregar('V. Payload real del front', 'el gasto queda a nombre del de la sesión',
+  async () => {
+    const t = await entrar('5500000002');            // Beto Prueba Lara
+    if (!t) return { estado: 0, datos: 'sin token' };
+    const g = await pedir('POST', 'rpc/guardar_gasto', { p_data: { token: t, campos: {
+      fecha: new Date().toISOString().slice(0, 10),
+      categoria: 'Insumos', subcategoria: 'Gas',
+      descripcion: 'Prueba de autoría', monto: 1, metodo_pago: 'Efectivo',
+    } } });
+    const l = await pedir('POST', 'rpc/obtener_gastos', { p_data: { token: t, limit: 200 } });
+    const mio = (l.datos?.gastos || []).find((x) => x.id === g.datos?.id);
+    return { estado: 200, datos: { nombre: mio?.nombre_vendedor } };
+  },
+  (r) => r.datos?.nombre === 'Beto Prueba Lara');
+
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
 console.log(`\nProbando RLS contra ${URL_BASE}${SOLO_LECTURA ? '   [solo lectura]' : ''}\n`);
