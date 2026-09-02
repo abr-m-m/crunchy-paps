@@ -62,3 +62,11 @@ Supabase Snippet*.csv
 # Respaldos de la base: contienen DATOS PERSONALES de clientes reales.
 # Nunca al repo publico.
 respaldos/
+
+# CLAUDE.md — 722 líneas de documentación interna: arquitectura, decisiones y
+# casos de diagnóstico con clientes citados por nombre. Entró al repo por
+# descuido en 3534dcb, el mismo commit que creó este .gitignore para proteger
+# ACCESOS.md, PROGRESO.md y DESPLIEGUE.md. Se aplicó el criterio a tres
+# archivos y se olvidó el cuarto.
+# Sigue en la carpeta local; solo deja de publicarse.
+CLAUDE.md
