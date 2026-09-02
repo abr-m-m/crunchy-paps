@@ -12275,21 +12275,6 @@ window.accionRegistrarVisita = async function(id) {
   } catch(e) { alert('Error: ' + e.message); }
 };
 
-// Helper: invoca actualizar_prospecto.
-// El backend lee data.accion (subaccion) DENTRO del endpoint, pero a nivel raíz ya
-// usamos 'accion' para el dispatcher. Por eso el frontend manda accion='actualizar_prospecto'
-// y el backend usa data.accion también — funciona porque el dispatcher revisa primero
-// y luego pasa 'data' completo al endpoint, que sigue viendo accion='actualizar_prospecto'.
-// Para evitar la colisión, refactorizamos: el frontend manda 'accion_sub' y el backend
-// lo lee con preferencia sobre 'accion'.
-async function sheetsCallActualizarProspecto(payload) {
-  const body = Object.assign({}, payload, {
-    accion: 'actualizar_prospecto',
-    accion_sub: payload.subAccion,  // backend lo prefiere sobre 'accion'
-  });
-  return await sheetsCall(body);
-}
-
 window.accionConvertirCliente = async function(id) {
   const p = _prospectos.find(x => String(x.id) === String(id));
   if (!p) return;
@@ -12561,7 +12546,7 @@ window.confirmarImportacion = async function() {
   console.log('[ImportProspectos] Muestra primer prospecto:', _prosCSVPendientes[0]);
   // Probar serialización completa antes de enviar
   try {
-    const testJson = JSON.stringify({ accion:'importar_prospectos', prospectos: _prosCSVPendientes });
+    const testJson = JSON.stringify({ p_data: { prospectos: _prosCSVPendientes } });
     console.log('[ImportProspectos] Tamaño total JSON:', testJson.length, 'bytes');
     if (testJson.length > 5_000_000) {
       resultadoEl.innerHTML = `<div style="color:var(--rojo);">❌ Payload demasiado grande (${(testJson.length/1024/1024).toFixed(1)} MB). Divide tu CSV en varios archivos más pequeños.</div>`;

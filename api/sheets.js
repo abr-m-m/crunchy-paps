@@ -32,8 +32,6 @@ const SECCION_POR_ACCION = {
   get_consumibles:         'produccion',
   guardar_consumibles:     'produccion',
   subir_ticket:            'gastos',
-  importar_prospectos:     'prospeccion',
-  actualizar_prospecto:    'prospeccion',
   lookup_producto_externo: 'productos',
   resumen_diario:          'caja',
   enviar_whatsapp:         'caja',
@@ -237,6 +235,61 @@ async function supa(path, method, body) {
   return { ok: r.ok, status: r.status, data };
 }
 
+// ── Open Food Facts ─────────────────────────────────────────────────────────
+// Esto daba la vuelta por Apps Script sin ninguna razón: es una API pública de
+// solo lectura. Se llama directo y se acaba el rodeo.
+async function lookupProductoExterno(codigoBarras) {
+  // El código se interpola en la RUTA de la URL, así que se reduce a dígitos
+  // antes de tocarla.
+  const codigo = String(codigoBarras || '').replace(/D/g, '');
+  if (codigo.length < 8 || codigo.length > 14) {
+    return { ok: false, error: 'Código de barras inválido' };
+  }
+
+  const campos = 'product_name,product_name_es,brands,image_front_url,image_url';
+  const url = `https://world.openfoodfacts.org/api/v2/product/${codigo}.json?fields=${campos}`;
+
+  const ctrl   = new AbortController();
+  const alarma = setTimeout(() => ctrl.abort(), 8000);
+  let json;
+  try {
+    const r = await fetch(url, {
+      signal: ctrl.signal,
+      headers: {
+        // Open Food Facts pide identificarse; sin User-Agent propio responde 403.
+        'User-Agent': 'CrunchyPaps/1.0 (https://crunchypaps.mx)',
+        Accept: 'application/json',
+      },
+    });
+    if (!r.ok) return { ok: true, encontrado: false };
+    json = await r.json();
+  } catch (e) {
+    // Que la base externa no conteste no es un fallo de la app: el usuario
+    // captura el producto a mano, que es el camino de siempre.
+    console.warn('[sheets.js] Open Food Facts no respondió:', e.message);
+    return { ok: true, encontrado: false };
+  } finally {
+    clearTimeout(alarma);
+  }
+
+  const prod = json && json.product;
+  if (!prod || json.status !== 1) return { ok: true, encontrado: false };
+
+  const nombre = String(prod.product_name_es || prod.product_name || '').trim();
+  if (!nombre) return { ok: true, encontrado: false };
+  const marca = String(prod.brands || '').split(',')[0].trim();
+
+  return {
+    ok: true,
+    encontrado: true,
+    producto: {
+      nombre: (marca && !nombre.toLowerCase().includes(marca.toLowerCase()))
+        ? `${marca} ${nombre}` : nombre,
+      imagen_url: prod.image_front_url || prod.image_url || '',
+    },
+  };
+}
+
 // ── Parseo robusto del body (Vercel a veces no lo parsea) ──
 function parseBody(req) {
   return new Promise((resolve) => {
@@ -420,6 +473,11 @@ module.exports = async function(req, res) {
         msg: `WhatsApp: ${okCount}/${destinos.length} enviados`,
         resultados
       });
+    }
+
+    // ── LOOKUP DE PRODUCTO POR CÓDIGO DE BARRAS ──
+    if (accion === 'lookup_producto_externo') {
+      return res.status(200).json(await lookupProductoExterno(payload.codigo_barras));
     }
 
     // ── PROXY A GOOGLE SHEETS (cualquier otra accion) ──
