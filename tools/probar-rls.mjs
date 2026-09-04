@@ -942,6 +942,103 @@ agregar('V. Payload real del front', 'el gasto queda a nombre del de la sesión'
   (r) => r.datos?.nombre === 'Beto Prueba Lara',
   true);
 
+// ── W. Eventos de navegación en lote (PLAN.md §3.3) ────────────────────────
+// El RPC plural lo ejecuta `anon`, igual que el singular, y escribe hasta 50
+// filas por petición. Lo que se comprueba aquí es lo que el diseño prometió:
+// que el tope existe en el SERVIDOR, que `msAtras` se respeta —y que un
+// `msAtras` absurdo no envenena la tabla ni tumba el lote—, y que la tabla
+// sigue sin poder leerse con la llave pública.
+//
+// `desde`/`hasta` vienen en la respuesta del propio RPC porque
+// `eventos_navegacion` no se puede leer desde fuera: es la única forma de
+// medir el instante reconstruido sin abrir un camino de lectura.
+
+const evLote = (eventos) =>
+  pedir('POST', 'rpc/registrar_eventos', { p_data: { eventos } });
+
+agregar('W. Eventos en lote', 'lote de 3: entran los 3',
+  () => evLote([
+    { sessionId: 'prueba-rls', evento: 'view_item',      msAtras: 3000, path: '/a' },
+    { sessionId: 'prueba-rls', evento: 'add_to_cart',    msAtras: 1000, path: '/b' },
+    { sessionId: 'prueba-rls', evento: 'begin_checkout', msAtras: 0,    path: '/c' },
+  ]),
+  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.insertados === 3,
+  true);
+
+// El corazón de §3.3: si los tres entraran con now(), el embudo mentiría sobre
+// los tiempos. Con msAtras 3000/1000/0 el hueco entre el primero y el último
+// tiene que ser de ~3 s, no de cero.
+agregar('W. Eventos en lote', 'msAtras conserva el hueco (~3 s)',
+  () => evLote([
+    { sessionId: 'prueba-rls', evento: 'view_item',      msAtras: 3000 },
+    { sessionId: 'prueba-rls', evento: 'begin_checkout', msAtras: 0 },
+  ]),
+  (r) => {
+    if (r.datos?.ok !== true) return false;
+    const ms = new Date(r.datos.hasta) - new Date(r.datos.desde);
+    return ms > 2500 && ms < 3500;
+  },
+  true);
+
+agregar('W. Eventos en lote', 'tope de 50: un lote de 51 se rechaza',
+  () => evLote(Array.from({ length: 51 }, (_v, i) =>
+    ({ sessionId: 'prueba-rls', evento: 'abuso_' + i }))),
+  (r) => r.estado === 200 && r.datos?.ok === false,
+  true);
+
+agregar('W. Eventos en lote', 'lote de 50 exactos: sí entra',
+  () => evLote(Array.from({ length: 50 }, (_v, i) =>
+    ({ sessionId: 'prueba-rls', evento: 'tope_' + i }))),
+  (r) => r.datos?.ok === true && r.datos.insertados === 50,
+  true);
+
+// Un msAtras absurdo no debe reventar el lote ni escribir fechas de fantasía:
+// cae en now(). Se mandan los cuatro sabores de basura a la vez.
+agregar('W. Eventos en lote', 'msAtras absurdo cae en now(), sin romper',
+  () => evLote([
+    { sessionId: 'prueba-rls', evento: 'basura_gigante',  msAtras: 99999999999 },
+    { sessionId: 'prueba-rls', evento: 'basura_negativa', msAtras: -5000 },
+    { sessionId: 'prueba-rls', evento: 'basura_texto',    msAtras: 'abc' },
+    { sessionId: 'prueba-rls', evento: 'basura_nula',     msAtras: null },
+  ]),
+  // Los cuatro entran y comparten instante: hueco cero entre el primero y el último.
+  (r) => r.datos?.ok === true && r.datos.insertados === 4 &&
+         new Date(r.datos.hasta) - new Date(r.datos.desde) === 0,
+  true);
+
+agregar('W. Eventos en lote', 'evento sin nombre se descarta, el resto entra',
+  () => evLote([
+    { sessionId: 'prueba-rls', evento: '' },
+    { sessionId: 'prueba-rls' },
+    { sessionId: 'prueba-rls', evento: 'sobreviviente' },
+  ]),
+  (r) => r.datos?.ok === true && r.datos.insertados === 1,
+  true);
+
+agregar('W. Eventos en lote', 'eventos que no es arreglo se rechaza',
+  () => pedir('POST', 'rpc/registrar_eventos', { p_data: { eventos: 'no soy arreglo' } }),
+  (r) => r.datos?.ok === false,
+  true);
+
+// Regresión que no se puede perder: service-worker.js deja teléfonos con la
+// versión vieja durante días. Si el singular muriera, esos dejan de registrar.
+agregar('W. Eventos en lote', 'el RPC singular sigue vivo (versión cacheada)',
+  () => pedir('POST', 'rpc/registrar_evento',
+    { p_data: { sessionId: 'prueba-rls', evento: 'singular_vivo', path: '/viejo' } }),
+  (r) => r.estado === 200 && r.datos?.ok === true,
+  true);
+
+// Sonda inocua: con el arreglo vacío el RPC sale ANTES del insert, así que
+// comprueba que la función existe y responde sin escribir una sola fila. Es el
+// único caso del grupo que corre en --solo-lectura, y por tanto el que verifica
+// §3.3 contra producción.
+agregar('W. Eventos en lote', 'el RPC existe y responde [sonda inocua]',
+  () => evLote([]),
+  (r) => r.estado === 200 && r.datos?.ok === true && r.datos.insertados === 0);
+
+agregar('W. Eventos en lote', 'eventos_navegacion sigue cerrada a lectura',
+  () => pedir('GET', 'eventos_navegacion?select=*&limit=1'), cerrado);
+
 // ── Ejecución ──────────────────────────────────────────────────────────────
 
 console.log(`\nProbando RLS contra ${URL_BASE}${SOLO_LECTURA ? '   [solo lectura]' : ''}\n`);

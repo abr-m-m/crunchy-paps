@@ -3570,13 +3570,68 @@ window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 window.CP_ENTORNO = _cpEsProd ? 'produccion' : (_cpCfg.ENTORNO || 'no-produccion');
 
+// ══════════════════════════════════════════════════════════════════
+// Cola de eventos de navegación (PLAN.md §3.3)
+// ══════════════════════════════════════════════════════════════════
+// Antes cada evento era una petición HTTP; `registrar_evento` era el RPC más
+// usado de la app (3,757 llamadas). Ahora se acumulan y se descargan en lote.
+//
+// La cola vive SOLO en memoria — decisión de Abraham, 4 sep 2026. No se guarda
+// navegación en el teléfono del cliente, y a cambio se acepta perder el lote
+// pendiente si el navegador se cae de golpe: segundos de eventos. La pérdida
+// no es nueva, track() ya se tragaba los errores en silencio; cambia de forma,
+// de evento suelto a lote.
+//
+// Cada evento se apunta con su instante local y viaja con `msAtras` (el
+// desfase en milisegundos, no la fecha del reloj del teléfono); el servidor
+// reconstruye `now() - msAtras`. Así los huecos del embudo son exactos aunque
+// el reloj del cliente esté mal puesto. Ver la migración
+// 20260911000000_eventos_en_lote.sql.
+const EV_LOTE_MAX  = 20;     // descarga al llegar a este tamaño
+const EV_ESPERA_MS = 5000;   // ...o a los 5 s del primero en cola
+const EV_TOPE_RPC  = 50;     // el servidor rechaza lotes mayores
+let _evCola  = [];
+let _evTimer = null;
+
+function _evProgramar() {
+  if (_evTimer) return;
+  try { _evTimer = setTimeout(_evDescargar, EV_ESPERA_MS); } catch (_e) {}
+}
+
+function _evDescargar() {
+  if (_evTimer) { try { clearTimeout(_evTimer); } catch (_e) {} _evTimer = null; }
+  if (!_evCola.length) return;
+  var lote = _evCola.splice(0, EV_TOPE_RPC);
+  if (_evCola.length) _evProgramar();     // lo que sobró va en el siguiente
+  var ahora = Date.now();
+  var eventos = lote.map(function (x) {
+    x.ev.msAtras = Math.max(0, ahora - x.t);
+    return x.ev;
+  });
+  try {
+    // keepalive: la petición sobrevive al cierre de la pestaña.
+    supabaseCall('POST', 'rpc/registrar_eventos', { p_data: { eventos: eventos } },
+                 { keepalive: true }).catch(function () {});
+  } catch (_e) {}
+}
+
+// Cuarto momento de descarga: la pestaña se oculta (cambiar de app, bloquear
+// el teléfono, cerrar). Es el que salva las sesiones que terminan sin compra.
+try {
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') _evDescargar();
+  });
+} catch (_e) {}
+
 // GA4: helper seguro para enviar eventos (no-op si gtag no está listo)
 function track(nombre, params) {
+  // GA4 no cambia: sigue disparando evento por evento. Solo se agrupa la
+  // escritura de primera parte a Supabase.
   try { if (typeof window.gtag === 'function') window.gtag('event', nombre, params || {}); } catch (_e) {}
   // Dual-write first-party a Supabase (fire-and-forget; nunca bloquea ni rompe la app)
   try {
     var _g = function (k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } };
-    supabaseCall('POST', 'rpc/registrar_evento', { p_data: {
+    _evCola.push({ t: Date.now(), ev: {
       sessionId:   _g('cp_sid'),
       idCliente:   (clienteActual && clienteActual.id) ? clienteActual.id : null,
       evento:      nombre,
@@ -3585,7 +3640,10 @@ function track(nombre, params) {
       utmMedium:   _g('utm_medium'),
       utmCampaign: _g('utm_campaign'),
       path:        location.pathname + location.search
-    } }).catch(function () {});
+    } });
+    // `purchase` cierra el embudo y es el que más duele perder: sale ya.
+    if (nombre === 'purchase' || _evCola.length >= EV_LOTE_MAX) _evDescargar();
+    else _evProgramar();
   } catch (_e) {}
 }
 
@@ -7226,7 +7284,7 @@ function sesionExpirada(res) {
   return res && res.ok === false && /Sesión inválida o expirada/.test(res.error || '');
 }
 
-async function supabaseCall(method, path, body) {
+async function supabaseCall(method, path, body, opciones) {
   // Etapa B: inyectar el token de sesión en las llamadas que usan la
   // convención `p_data`. Se hace aquí y no en cada punto de llamada porque son
   // más de 30, y treinta ediciones a mano es donde se cuela el olvido.
@@ -7255,6 +7313,10 @@ async function supabaseCall(method, path, body) {
     },
   };
   if (body) opts.body = JSON.stringify(body);
+  // `keepalive` deja que la petición sobreviva al cierre de la pestaña. Lo usa
+  // la descarga de eventos (PLAN.md §3.3); `sendBeacon` no sirve para esto
+  // porque no admite cabeceras propias y Supabase exige `apikey`.
+  if (opciones && opciones.keepalive) opts.keepalive = true;
   try {
     const res = await fetch(url, opts);
     const data = await res.json();
