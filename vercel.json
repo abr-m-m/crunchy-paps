@@ -4,5 +4,10 @@
   ],
   "crons": [
     { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" }
-  ]
+  ],
+  "functions": {
+    "api/recordatorios-pago.js": {
+      "maxDuration": 60
+    }
+  }
 }
