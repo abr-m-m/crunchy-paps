@@ -70,3 +70,9 @@ respaldos/
 # archivos y se olvidó el cuarto.
 # Sigue en la carpeta local; solo deja de publicarse.
 CLAUDE.md
+
+# PLAN.md — plan de trabajo. Enumera hallazgos de seguridad AÚN ABIERTOS
+# (llave de Maps sin restricción, llaves legacy vivas, PIN de 4 dígitos,
+# respaldos sin cifrar). Mismo criterio que PROGRESO.md: el repo es público.
+# Se respalda al repo privado con `node tools/respaldar-docs.mjs`.
+PLAN.md

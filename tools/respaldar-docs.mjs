@@ -17,7 +17,7 @@ import { join } from 'node:path';
 
 const ORIGEN  = 'C:\\Proyectos\\crunchy-paps';
 const DESTINO = 'C:\\Proyectos\\crunchy-paps-docs';
-const DOCS    = ['PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
+const DOCS    = ['PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
 
 const soloRevisar = process.argv.includes('--revisar');
 
