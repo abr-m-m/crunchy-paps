@@ -65,7 +65,11 @@ if (!cambios.length) { console.log('\n  Todo al día. Nada que respaldar.'); pro
 if (soloRevisar)     { console.log(`\n  ${cambios.length} archivo(s) cambiarían. Corre sin --revisar para subirlos.`); process.exit(0); }
 
 git('add', '-A');
-const fecha = new Date().toISOString().slice(0, 10);
+// Fecha LOCAL (CDMX), no UTC. `toISOString()` fechaba los respaldos hechos de
+// noche en el día siguiente: así nacieron los "Respaldo 2026-09-02" de commits
+// del 1 de septiembre, y de ahí los encabezados equivocados de PROGRESO.md.
+const d = new Date();
+const fecha = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 git('-c', 'user.email=abraham.mmora@gmail.com', '-c', 'user.name=Abraham',
     'commit', '-q', '-m', `Respaldo ${fecha}: ${cambios.join(', ')}`);
 execFileSync('git', ['push', '-q'], { cwd: DESTINO, stdio: 'inherit' });
