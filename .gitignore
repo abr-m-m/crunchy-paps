@@ -76,3 +76,9 @@ CLAUDE.md
 # respaldos sin cifrar). Mismo criterio que PROGRESO.md: el repo es público.
 # Se respalda al repo privado con `node tools/respaldar-docs.mjs`.
 PLAN.md
+
+# .claude/ — configuración de agentes de Claude Code. El agente altas-b2b
+# describe los criterios internos de aprobación de clientes B2B y las señales
+# que levantan sospecha de un registro falso. Sin credenciales, pero es
+# operativa interna y el repo es público. Se respalda al repo privado.
+.claude/

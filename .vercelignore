@@ -1,0 +1,41 @@
+# Qué NO se sube a un despliegue de Vercel.
+#
+# `vercel deploy` sube archivos LOCALES, no lo que está versionado. Sin este
+# archivo la CLI cae de vuelta a .gitignore, que hoy alcanza — pero depender de
+# ese comportamiento implícito es apostar los secretos a una semántica que puede
+# cambiar. Aquí queda explícito.
+
+# ── Datos personales y secretos ─────────────────────────────
+# respaldos/ tiene los volcados de producción (1,122 teléfonos reales) y
+# volcados de variables de entorno con llaves. Nunca sale de esta máquina.
+respaldos/
+*.env
+.env*
+ACCESOS.md
+
+# ── Documentación interna ───────────────────────────────────
+PLAN.md
+PROGRESO.md
+DESPLIEGUE.md
+CLAUDE.md
+.claude/
+
+# ── Herramientas y base de datos: no son parte del sitio ────
+tools/
+supabase/
+
+# ── Volcados del diagnóstico ────────────────────────────────
+*.csv
+1-*.txt
+2.*.txt
+3.*.txt
+4.*.txt
+5.*.txt
+
+# ── Respaldos locales de index.html ─────────────────────────
+index.html.respaldo-*
+
+# ── Ruido ───────────────────────────────────────────────────
+node_modules/
+.git/
+.vercel/

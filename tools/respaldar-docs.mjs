@@ -13,11 +13,11 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 const ORIGEN  = 'C:\\Proyectos\\crunchy-paps';
 const DESTINO = 'C:\\Proyectos\\crunchy-paps-docs';
-const DOCS    = ['PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
+const DOCS    = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
 
 const soloRevisar = process.argv.includes('--revisar');
 
@@ -48,17 +48,17 @@ let copiados = 0;
 const cambios = [];
 for (const doc of DOCS) {
   const origen = join(ORIGEN, doc);
-  if (!existsSync(origen)) { console.log(`  ${doc.padEnd(16)} no está en el origen, se omite`); continue; }
+  if (!existsSync(origen)) { console.log(`  ${doc.padEnd(30)} no está en el origen, se omite`); continue; }
   const nuevo = readFileSync(origen);
   const destino = join(DESTINO, doc);
   const viejo = existsSync(destino) ? readFileSync(destino) : null;
-  if (viejo && viejo.equals(nuevo)) { console.log(`  ${doc.padEnd(16)} sin cambios`); continue; }
+  if (viejo && viejo.equals(nuevo)) { console.log(`  ${doc.padEnd(30)} sin cambios`); continue; }
   const lineas = nuevo.toString('utf8').split('\n').length;
   const antes  = viejo ? viejo.toString('utf8').split('\n').length : 0;
   const delta  = viejo ? (lineas - antes >= 0 ? '+' : '') + (lineas - antes) : 'nuevo';
   cambios.push(`${doc} (${delta} líneas)`);
-  console.log(`  ${doc.padEnd(16)} ${delta} líneas`);
-  if (!soloRevisar) { writeFileSync(destino, nuevo); copiados++; }
+  console.log(`  ${doc.padEnd(30)} ${delta} líneas`);
+  if (!soloRevisar) { mkdirSync(dirname(destino), { recursive: true }); writeFileSync(destino, nuevo); copiados++; }
 }
 
 if (!cambios.length) { console.log('\n  Todo al día. Nada que respaldar.'); process.exit(0); }
