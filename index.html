@@ -3453,7 +3453,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <span style="color:var(--amarillo);font-weight:800;">🔧 Performance</span>
     <div>
       <button onclick="perfClear()" style="background:transparent;border:1px solid #555;border-radius:4px;color:#aaa;padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
-      <button onclick="document.getElementById('perf-monitor').style.display='none'" style="background:transparent;border:none;color:#888;font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
+      <button onclick="perfHide()" style="background:transparent;border:none;color:#888;font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
     </div>
   </div>
   <div id="perf-log" style="max-height:240px;overflow-y:auto;line-height:1.5;"></div>
@@ -3532,14 +3532,6 @@ window.entrarConTel = async function() {
     if (vend) {
       // Es vendedor → pantalla PIN
       window._telVendedor = tel;
-      window._vendedorInfo = {
-        id: vend.id,
-        nombre: vend.nombre,
-        telefono: vend.telefono,
-        rol: vend.rol,
-        direccionPuntoVenta: vend.direccionPuntoVenta,
-        cpPuntoVenta: vend.cpPuntoVenta,
-      };
       const lbl = document.getElementById('pin-nombre-label');
       if (lbl) {
         lbl.textContent = 'Hola, ' + vend.nombre.split(' ')[0] + ' — Ingresa tu PIN';
@@ -3568,14 +3560,6 @@ window.entrarConTel = async function() {
   if (nb) nb.style.display='none';
 };
 
-window.elegirTipo = function(tipo) {
-  window._tipoCliente = tipo;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-otp').classList.add('active');
-  // Ocultar navbar al ir a OTP
-  const nb = document.getElementById('navbar');
-  if (nb) nb.style.display='none';
-};
 window.ir = function(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -3583,14 +3567,6 @@ window.ir = function(id) {
 
 // Versión interna que preserva la navbar
 window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen'];
-window.irSeccion = function(id) {
-  navSections.forEach(s => {
-    const el = document.getElementById(s);
-    if (el) el.classList.remove('active');
-  });
-  const target = document.getElementById(id);
-  if (target) target.classList.add('active');
-};
 
 
 
@@ -3832,12 +3808,6 @@ window.ir = function(id) {
   document.getElementById(id).classList.add('active');
 };
 
-window.elegirTipo = function(tipo) {
-  tipoCliente = tipo;
-  window._tipoCliente = tipo;
-  ir('s-otp');
-};
-
 // Entrada de INVITADO. Esta función llevaba meses en el archivo sin un solo
 // llamador —quedó huérfana cuando la Sesión 21 quitó «comprar como consumidor»
 // de la pantalla de espera—, y es exactamente lo que hacía falta para abrir la
@@ -3864,16 +3834,6 @@ window.usarComoConsumidor = function() {
   tipoCliente = 'consumidor';
   window._tipoCliente = 'consumidor';
   esVendedor = false;
-  irAlCatalogo();
-};
-
-window.notificarYEntrar = function() {
-  // Abrir WhatsApp para notificar al equipo si hay URL pendiente
-  if (window._wppNotificacionB2B) {
-    window.open(window._wppNotificacionB2B, '_blank');
-    window._wppNotificacionB2B = null;
-  }
-  tipoCliente = 'consumidor';
   irAlCatalogo();
 };
 
@@ -4097,12 +4057,6 @@ window.volverTel = function() {
   [0,1,2,3,4,5].forEach(i=>{ document.getElementById(`d${i}`).value=''; });
 };
 
-function mostrarPendiente() {
-  document.getElementById('pend-tipo').textContent = tipoCliente==='tienda' ? 'tienda / abarrotes' : (tipoCliente==='mayorista' ? 'negocio mayorista' : 'restaurante');
-  document.getElementById('pend-tel').textContent = `+52 ${telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/,'$1 $2 $3')}`;
-  ir('s-pendiente');
-}
-
 // ══════════════════════════════════
 // CATÁLOGO
 // ══════════════════════════════════
@@ -4143,11 +4097,6 @@ window.elegirTipoNuevo = async function(tipo) {
 // ══════════════════════════════════
 // B2B — Captura obligatoria de datos de tienda + gating (Opción 3)
 // ══════════════════════════════════
-function esTipoB2B(t) {
-  const s = String(t || '').toLowerCase();
-  return s.includes('tienda') || s.includes('abarrotes') || s.includes('restaurante');
-}
-
 function mostrarFormDatosTienda() {
   window._dtCoords = null;     // ubicación de ENTREGA (la que ajusta el tendero)
   window._dtGpsCoords = null;  // GPS de validación (silencioso)
@@ -4485,12 +4434,14 @@ window.guardarDatosTienda = async function() {
     return;
   }
 
-  // Notificación al equipo (link WhatsApp con datos + pin para validar)
-  try {
-    const mapsLine = coords ? `\nMaps: https://www.google.com/maps?q=${coords.lat},${coords.lng}` : '\n📍 Ubicación pendiente de capturar en sitio';
-    const nota = `🏪 *TIENDA POR VALIDAR*\n${negocio}\nTel: +52${telefonoVerif}\n${dir}, ${colonia} ${cp}${mapsLine}`;
-    window._wppNotificacionB2B = `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(nota)}`;
-  } catch(_e) {}
+  // NO se avisa al equipo de un alta B2B nueva. Aquí se armaba un enlace de
+  // WhatsApp («🏪 TIENDA POR VALIDAR») que se guardaba en
+  // window._wppNotificacionB2B, y su ÚNICO lector —notificarYEntrar()— quedó
+  // huérfano cuando la Sesión 21 rehizo la pantalla de espera. Desde entonces
+  // la tienda veía «validando tu tienda» y nadie se enteraba.
+  // Se retira el enlace en vez de dejarlo fingiendo: el aviso de verdad tiene
+  // que salir del servidor, no del teléfono del propio cliente.
+  // Ver cambios/2026-09-06-funciones-huerfanas.md
 
   // Pantalla de validación (Opción 3)
   const pt = document.getElementById('pend-tipo'); if (pt) pt.textContent = tipoCliente === 'restaurante' ? 'restaurante' : (tipoCliente === 'mayorista' ? 'negocio mayorista' : 'tienda');
@@ -8167,61 +8118,6 @@ window.registrarNuevoLote = async function() {
     }
   } catch(e) {
     mostrarToast('Error: ' + e.message);
-  }
-};
-
-window.guardarInventario = async function() {
-  const btn = event.target;
-  btn.textContent = 'Guardando...';
-  btn.disabled = true;
-
-  // Por ahora actualizar localmente y mostrar instrucción
-  // TODO: agregar acción update_inventario en Apps Script
-  const actualizaciones = _inventarioActual.map((s, idx) => ({
-    sabor: s.sabor,
-    kilosDisponibles: parseFloat(document.getElementById('inv-' + idx)?.value) || 0
-  }));
-
-  try {
-    // v2.9: actualizar kilos_disponibles en cada fila de produccion_diaria por sabor
-    // Como la vista es agregada, actualizamos el último registro activo por sabor
-    const updates = [];
-    for (const a of actualizaciones) {
-      // Obtener registros activos del sabor
-      const _rp2 = await supabaseCall('POST', 'rpc/obtener_produccion', { p_data: { sabor: a.sabor } });
-      const filas = (_rp2 && _rp2.ok) ? _rp2.filas : [];
-      if (Array.isArray(filas) && filas.length > 0) {
-        // Calcular nuevo kilos_vendidos para que disponibles = a.kilosDisponibles
-        // Estrategia simple: ajustar el registro más reciente
-        const fila = filas[0];
-        const kilosProd = Number(fila.kilos_producidos) || 0;
-        const nuevoVendido = Math.max(0, kilosProd - a.kilosDisponibles);
-        updates.push(
-          supabaseCall('POST', 'rpc/actualizar_produccion', {
-            p_data: { id: fila.id, campos: { kilos_vendidos: nuevoVendido } }
-          })
-        );
-      } else {
-        // No hay registro: crear uno nuevo con esos kilos
-        updates.push(
-          supabaseCall('POST', 'rpc/registrar_produccion_sabor', {
-            p_data: {
-              sabor: a.sabor,
-              kilos: a.kilosDisponibles,
-              fechaProduccion: new Date().toISOString().slice(0, 10),
-            }
-          })
-        );
-      }
-    }
-    await Promise.all(updates);
-    mostrarToast('✅ Inventario guardado');
-    renderProduccion();
-  } catch(e) {
-    mostrarToast('Error: ' + e.message);
-  } finally {
-    btn.textContent = '💾 Guardar inventario';
-    btn.disabled = false;
   }
 };
 
@@ -15701,13 +15597,6 @@ function cargarQuagga() {
   });
 }
 
-window.abrirProductos = function() {
-  if (typeof navegar === 'function') navegar('productos');
-};
-window.cerrarProductos = function() {
-  if (typeof navegar === 'function') navegar('inicio');
-};
-
 let _productosLista = [];
 let _papasLista = [];
 
@@ -16128,13 +16017,6 @@ async function procesarCodigoEscaneado(codigo) {
 // ══════════════════════════════════════════════════════════════════
 let _cuponesLista = [];
 let _editandoCupon = null;
-
-window.abrirCupones = function() {
-  if (typeof navegar === 'function') navegar('cupones');
-};
-window.cerrarCupones = function() {
-  if (typeof navegar === 'function') navegar('inicio');
-};
 
 async function cargarCupones() {
   const cont = document.getElementById('cup-lista');
