@@ -23,17 +23,26 @@ const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCES
 // Se recorre en vez de enumerarse, porque una lista fija habría que acordarse de
 // actualizar en cada cambio nuevo — y lo que hay que acordarse de hacer, no se
 // hace. Si la carpeta no existe todavía, no pasa nada.
-const CAMBIOS = 'cambios';
-const listarCambios = () => {
-  const dir = join(ORIGEN, CAMBIOS);
+//
+// `supabase/auditorias/` se añadió el 6 sep 2026 por la misma razón: la primera
+// auditoría dejó su SQL y sus CSV de resultados —con nombres de clientes— fuera
+// del repo público (bien) y también fuera del respaldo (mal), o sea existiendo
+// solo en este disco, que es exactamente lo que este guion vino a evitar.
+const CARPETAS = [
+  { ruta: 'cambios',              ext: ['.md'] },
+  { ruta: 'supabase/auditorias',  ext: ['.sql', '.csv'] },
+];
+
+const listarCarpeta = ({ ruta, ext }) => {
+  const dir = join(ORIGEN, ruta);
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((n) => n.endsWith('.md'))
+    .filter((n) => ext.some((e) => n.endsWith(e)))
     .sort()
-    .map((n) => `${CAMBIOS}/${n}`);
+    .map((n) => `${ruta}/${n}`);
 };
 
-const DOCS = [...FIJOS, ...listarCambios()];
+const DOCS = [...FIJOS, ...CARPETAS.flatMap(listarCarpeta)];
 
 const soloRevisar = process.argv.includes('--revisar');
 

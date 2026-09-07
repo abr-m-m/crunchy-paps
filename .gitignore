@@ -77,6 +77,13 @@ CLAUDE.md
 # privado con `node tools/respaldar-docs.mjs`, que recorre la carpeta entera.
 cambios/
 
+# supabase/auditorias/ — consultas de auditoría y SUS RESULTADOS. Los CSV llevan
+# nombres de clientes y de vendedores, importes y códigos de cupón: datos
+# comerciales reales, y el repo es PÚBLICO. Añadido el 6 sep 2026, cuando la
+# primera auditoría los dejó sin rastrear a un `git add -A` de distancia.
+# Se respaldan al repo privado igual que `cambios/`, recorriendo la carpeta.
+supabase/auditorias/
+
 # PLAN.md — plan de trabajo. Enumera hallazgos de seguridad AÚN ABIERTOS
 # (llave de Maps sin restricción, llaves legacy vivas, PIN de 4 dígitos,
 # respaldos sin cifrar). Mismo criterio que PROGRESO.md: el repo es público.
