@@ -84,6 +84,16 @@ cambios/
 # Se respaldan al repo privado igual que `cambios/`, recorriendo la carpeta.
 supabase/auditorias/
 
+# supabase/functions/ — las Edge Functions se administran en el DASHBOARD de
+# Supabase, no en el repo (CLAUDE.md §2). Lo que hay aquí es una copia local que
+# se bajó el 5 sep 2026 para leer qué hacía `crear-checkout` mientras se cerraba
+# el agujero del precio: una copia de referencia, no el origen de verdad.
+# Versionarla crearía un SEGUNDO origen que se desincroniza en silencio — esta
+# ya tenía un día de antigüedad al ignorarla. Decisión de Abraham, 6 sep 2026.
+# Si algún día conviene versionarlas, el camino es al revés: que el repo sea el
+# origen y se despliegue con `supabase functions deploy`, no guardar copias.
+supabase/functions/
+
 # PLAN.md — plan de trabajo. Enumera hallazgos de seguridad AÚN ABIERTOS
 # (llave de Maps sin restricción, llaves legacy vivas, PIN de 4 dígitos,
 # respaldos sin cifrar). Mismo criterio que PROGRESO.md: el repo es público.
