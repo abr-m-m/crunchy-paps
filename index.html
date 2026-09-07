@@ -1089,7 +1089,6 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
           <input class="inp" id="inp-tel" type="tel" maxlength="10" placeholder="55 1234 5678"
             inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,''); mostrarConfirmTel(this.value)">
         </div>
-        <div id="recaptcha-container"></div>
 
         <!-- Confirmación del número antes de enviar -->
         <div id="confirm-tel-wrap" style="display:none;width:100%;background:var(--gris2);border-radius:12px;padding:14px;text-align:center;">
@@ -3462,7 +3461,8 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
 <!-- Script no-module para funciones críticas que deben funcionar SIEMPRE -->
 <script>
-// Estas funciones funcionan incluso si Firebase falla
+// Viven en un <script> clásico, fuera del módulo, para que sigan
+// funcionando aunque el módulo falle al cargar.
 window._tipoCliente = '';
 
 window.mostrarConfirmTel = function(val) {
@@ -3575,9 +3575,6 @@ window.elegirTipo = function(tipo) {
   // Ocultar navbar al ir a OTP
   const nb = document.getElementById('navbar');
   if (nb) nb.style.display='none';
-  // Intentar inicializar recaptcha si el módulo está listo
-  if (window._initRecaptcha) window._initRecaptcha();
-  else setTimeout(function(){ if(window._initRecaptcha) window._initRecaptcha(); }, 1000);
 };
 window.ir = function(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -3603,23 +3600,16 @@ window.onerror = function(msg, src, line) {
 };
 </script>
 
-<!-- Firebase -->
+<!-- Módulo principal: aquí viven casi todas las funciones de la app.
+     Firebase se retiró el 6 sep 2026: se descargaban ~150 KB de gstatic.com en
+     cada visita para un SDK que no se usaba. El OTP lo manda Twilio (o Resend)
+     desde /api/sheets, y siempre fue así.
+     Ver cambios/2026-09-06-quitar-firebase.md -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ══════════════════════════════════
 // CONFIG
 // ══════════════════════════════════
-const FB = {
-  apiKey:"AIzaSyBjBZR8blkNAWinWcIqH6CZZuiLo4BhSOs",
-  authDomain:"crunchy-paps.firebaseapp.com",
-  projectId:"crunchy-paps",
-  storageBucket:"crunchy-paps.firebasestorage.app",
-  messagingSenderId:"382389823869",
-  appId:"1:382389823869:web:0ab944e8c8ab38a4c8c414"
-};
 // SHEETS_URL se eliminó de aquí: era código muerto (una sola aparición en
 // todo el archivo) y publicaba la URL /exec del Apps Script en un repo
 // público. La usa el backend, no el navegador: vive en api/sheets.js, ahora
@@ -3795,9 +3785,6 @@ function gaSetUser(id) {
 // Cuando conectes Sheets esto se consulta dinámicamente
 const B2B_APROBADOS = {};
 
-const app  = initializeApp(FB);
-const auth = getAuth(app);
-auth.languageCode = 'es';
 
 // ══════════════════════════════════
 // ESTADO
@@ -3827,8 +3814,6 @@ let saborActivo    = '';
 let presentacionActiva = '';   // filtro por presentación (papas); '' = todas
 let detalleKey = null;         // producto abierto en el detalle
 let modoVenta      = 'pieza'; // 'pieza' | 'granel'
-let confirmRes     = null;
-let recaptchaVer   = null;
 let mapsListo      = false;
 let dirCoords      = null;
 let wppUrlPend     = null;
@@ -3851,7 +3836,6 @@ window.elegirTipo = function(tipo) {
   tipoCliente = tipo;
   window._tipoCliente = tipo;
   ir('s-otp');
-  setTimeout(initRecaptcha, 400);
 };
 
 // Entrada de INVITADO. Esta función llevaba meses en el archivo sin un solo
@@ -3896,24 +3880,6 @@ window.notificarYEntrar = function() {
 // ══════════════════════════════════
 // OTP
 // ══════════════════════════════════
-function initRecaptcha() {
-  try {
-    const container = document.getElementById('recaptcha-container');
-    if (!container) return; // No inicializar si el elemento no existe
-    if (recaptchaVer) {
-      try { recaptchaVer.clear(); } catch(e2) {}
-      recaptchaVer = null;
-    }
-    recaptchaVer = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible',
-      callback: () => {}
-    });
-  } catch(e) {
-    console.log('Recaptcha init error:', e.message);
-    recaptchaVer = null;
-  }
-}
-window._initRecaptcha = initRecaptcha;
 
 window.enviarSMS = async function() {
   const tel = document.getElementById('inp-tel').value.trim();
@@ -4696,7 +4662,7 @@ async function irAlCatalogo() {
 
 // ══════════════════════════════════
 // RESTAURAR SESIÓN AL CARGAR
-// Se ejecuta cuando el módulo Firebase está listo
+// Se ejecuta al cargar el módulo
 // ══════════════════════════════════
 async function intentarRestaurarSesion() {
   if (!restaurarSesion()) return;
@@ -8319,7 +8285,7 @@ window.cerrarSesion = function() {
   // Resetear estado
   tipoCliente=''; esVendedor=false; vendedorInfo=null;
   telefonoVerif=''; clienteActual=null; vendedorAsig=null;
-  puntos=0; carrito={}; confirmRes=null; recaptchaVer=null;
+  puntos=0; carrito={};
   actualizarBadge();
   // Ocultar navbar
   document.getElementById('navbar').style.display='none';
