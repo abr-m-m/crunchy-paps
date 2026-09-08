@@ -663,6 +663,17 @@ select.inp { appearance: none; cursor: pointer; }
   line-height:1.5; white-space:pre-line; margin-bottom:20px;
 }
 .aviso .btn-primary { padding:16px; }
+/* confirmar(): dos botones lado a lado. El de cancelar es neutro; en una accion
+   peligrosa (borrar, cerrar caja) el de aceptar se pinta rojo. */
+.aviso-botones { display:grid; grid-template-columns:1fr; gap:10px; }
+.aviso-botones.dos { grid-template-columns:1fr 1fr; }
+.aviso-cancelar {
+  background:var(--gris2); border:1px solid var(--gris3); border-radius:12px;
+  padding:16px; color:var(--blanco); font-family:'Inter',sans-serif;
+  font-weight:700; font-size:1rem; cursor:pointer; width:100%;
+}
+.aviso.peligro .btn-primary { background:var(--rojo); color:#fff; }
+.aviso.peligro .btn-primary:hover { background:#c81d22; }
 @media (min-width:560px) {
   .aviso { left:50%; right:auto; transform:translate(-50%,100%);
            width:460px; border-radius:20px; bottom:auto; top:50%;
@@ -3498,7 +3509,10 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
      aria-labelledby="aviso-titulo" aria-describedby="aviso-cuerpo" hidden>
   <div class="aviso-titulo" id="aviso-titulo"></div>
   <div class="aviso-cuerpo" id="aviso-cuerpo"></div>
-  <button class="btn-primary" id="aviso-ok" type="button">Entendido</button>
+  <div class="aviso-botones" id="aviso-botones">
+    <button class="aviso-cancelar" id="aviso-cancelar" type="button" hidden>Cancelar</button>
+    <button class="btn-primary" id="aviso-ok" type="button">Entendido</button>
+  </div>
 </div>
 
 <!-- v2.7.3: PERFORMANCE MONITOR (admin only) -->
@@ -5279,58 +5293,81 @@ function mostrarToast(mensaje) {
 // si un mensaje se puede ignorar, es un toast, no un aviso.
 const SALTO = String.fromCharCode(10);
 let _avisoCerrarActual = null;
-window.avisar = function(opciones) {
+let _avisoApertura = 0;   // cuenta aperturas: el cierre viejo no oculta al cuadro nuevo
+// Un solo cuadro para dos usos: avisar() -un boton, resuelve al cerrarse- y
+// confirmar() -dos botones, resuelve true/false-. Escape y tocar fuera valen
+// «cancelar» en los dos: el cuadro nunca acepta nada por accidente.
+function _abrirDialogo(opciones, conCancelar) {
   const o = opciones || {};
   return new Promise(function(resolver) {
     // Si ya habia uno abierto se cierra primero, para no apilar dos cajas ni
     // dejar dos promesas colgando.
     if (_avisoCerrarActual) { try { _avisoCerrarActual(); } catch (_e) {} }
 
-    const fondo  = document.getElementById('aviso-fondo');
-    const caja   = document.getElementById('aviso');
-    const boton  = document.getElementById('aviso-ok');
-    const titulo = document.getElementById('aviso-titulo');
-    const cuerpo = document.getElementById('aviso-cuerpo');
+    const fondo    = document.getElementById('aviso-fondo');
+    const caja     = document.getElementById('aviso');
+    const boton    = document.getElementById('aviso-ok');
+    const cancelar = document.getElementById('aviso-cancelar');
+    const botones  = document.getElementById('aviso-botones');
+    const titulo   = document.getElementById('aviso-titulo');
+    const cuerpo   = document.getElementById('aviso-cuerpo');
     // Si el marcado no esta (una version cacheada por el service worker, por
-    // ejemplo), no se pierde el mensaje: se cae a alert() antes que callarlo.
-    if (!fondo || !caja || !boton) {
-      try { alert(`${o.titulo||''}
+    // ejemplo), no se pierde la pregunta: se cae a los nativos antes que callar.
+    if (!fondo || !caja || !boton || (conCancelar && !cancelar)) {
+      const texto = `${o.titulo||''}
 
-${o.cuerpo||''}`.trim()); } catch (_e) {}
-      resolver(); return;
+${o.cuerpo||''}`.trim();
+      let r = true;
+      try { if (conCancelar) r = confirm(texto); else alert(texto); } catch (_e) {}
+      resolver(conCancelar ? !!r : undefined); return;
     }
 
     // textContent y no innerHTML: el cuerpo lleva texto que viene del servidor
     // -nombre de producto, mensaje de error- y no debe poder inyectar marcado.
-    titulo.textContent = o.titulo || 'Aviso';
+    titulo.textContent = o.titulo || (conCancelar ? '¿Seguro?' : 'Aviso');
     cuerpo.textContent = o.cuerpo || '';
-    boton.textContent  = o.boton  || 'Entendido';
+    cuerpo.hidden = !o.cuerpo;
+    boton.textContent = o.boton || o.aceptar || (conCancelar ? 'Aceptar' : 'Entendido');
+    if (cancelar) { cancelar.textContent = o.cancelar || 'Cancelar'; cancelar.hidden = !conCancelar; }
+    if (botones) botones.classList.toggle('dos', !!conCancelar);
+    caja.classList.toggle('peligro', !!(conCancelar && o.peligroso));
 
     const teniaFoco = document.activeElement;
+    const miApertura = ++_avisoApertura;
     caja.hidden = false;
+    let resultado = false;
 
     function cerrar() {
       fondo.classList.remove('visible');
       caja.classList.remove('open');
-      boton.removeEventListener('click', cerrar);
+      boton.removeEventListener('click', aceptar);
+      if (cancelar) cancelar.removeEventListener('click', cerrar);
       fondo.removeEventListener('click', cerrar);
       document.removeEventListener('keydown', porTecla);
       // El marcado se vuelve a ocultar cuando termina la transicion, no antes,
       // para que no desaparezca de golpe.
-      setTimeout(function(){ if (!caja.classList.contains('open')) caja.hidden = true; }, 320);
+      // Solo si nadie abrio otro cuadro mientras tanto: si no, este temporizador
+      // escondia al recien abierto (visto con la pestaña en segundo plano).
+      setTimeout(function(){ if (_avisoApertura === miApertura) caja.hidden = true; }, 320);
       try { if (teniaFoco && teniaFoco.focus) teniaFoco.focus(); } catch (_e) {}
       _avisoCerrarActual = null;
-      resolver();
+      resolver(conCancelar ? resultado : undefined);
     }
+    function aceptar() { resultado = true; cerrar(); }
     function porTecla(e) {
       if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
-      // Trampa de foco: sin esto el tabulador se pasea por el formulario que
-      // hay debajo, que es justo lo que el aviso esta tapando.
-      if (e.key === 'Tab') { e.preventDefault(); try { boton.focus(); } catch (_e) {} }
+      // Trampa de foco: con dos botones el tabulador alterna entre ellos; con
+      // uno se queda. Sin esto se pasearia por el formulario que hay debajo.
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const alterno = (conCancelar && cancelar && document.activeElement === boton) ? cancelar : boton;
+        try { alterno.focus(); } catch (_e) {}
+      }
     }
 
     _avisoCerrarActual = cerrar;
-    boton.addEventListener('click', cerrar);
+    boton.addEventListener('click', aceptar);
+    if (cancelar) cancelar.addEventListener('click', cerrar);
     fondo.addEventListener('click', cerrar);
     document.addEventListener('keydown', porTecla);
 
@@ -5338,10 +5375,14 @@ ${o.cuerpo||''}`.trim()); } catch (_e) {}
     requestAnimationFrame(function(){
       fondo.classList.add('visible');
       caja.classList.add('open');
-      setTimeout(function(){ try { boton.focus(); } catch (_e) {} }, 60);
+      // En una accion peligrosa el foco arranca en «cancelar»: Enter no borra nada.
+      const primero = (conCancelar && o.peligroso && cancelar) ? cancelar : boton;
+      setTimeout(function(){ try { primero.focus(); } catch (_e) {} }, 60);
     });
   });
-};
+}
+window.avisar    = function(opciones) { return _abrirDialogo(opciones, false); };
+window.confirmar = function(opciones) { return _abrirDialogo(opciones, true); };
 
 // #3: aviso inmediato si el vendedor pone su propio número como teléfono del cliente
 // #4: renumeración dinámica de los encabezados de sección (omite las ocultas)
@@ -8228,7 +8269,7 @@ async function renderProduccion() {
 
 // v2.9: helper para inicializar sabores en producción cuando la BD está vacía
 window.inicializarSaboresProduccion = async function() {
-  if (!confirm('¿Crear los 7 sabores en producción con 0kg cada uno?')) return;
+  if (!(await confirmar({ titulo: '🥔 Crear los 7 sabores', cuerpo: 'Se crean en producción con 0 kg cada uno.', aceptar: 'Crear' }))) return;
   const SABORES_DEFAULT = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
   const fechaHoy = new Date().toISOString().slice(0,10);
   try {
@@ -8241,7 +8282,7 @@ window.inicializarSaboresProduccion = async function() {
     mostrarToast('✅ Sabores inicializados');
     renderProduccion();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudieron crear los sabores', cuerpo: e.message });
   }
 };
 
@@ -8282,7 +8323,7 @@ window.registrarNuevoLote = async function() {
   // Guardia anti-toneladas: un lote artesanal no pesa cientos de kilos
   if (kilos > 200) {
     const sugerido = (kilos / 1000).toFixed(3);
-    if (!confirm(`⚠️ Capturaste ${kilos} kg (${(kilos/1000).toFixed(1)} toneladas).\n¿Quisiste decir ${sugerido} kg?\n\nAceptar = guardar ${kilos} kg tal cual\nCancelar = corregir el número`)) {
+    if (!(await confirmar({ titulo: '⚠️ ¿Toneladas?', cuerpo: `Capturaste ${kilos} kg (${(kilos/1000).toFixed(1)} toneladas).` + SALTO + `¿Quisiste decir ${sugerido} kg?`, aceptar: `Guardar ${kilos} kg tal cual`, cancelar: 'Corregir el número', peligroso: true }))) {
       return;
     }
   }
@@ -8352,8 +8393,8 @@ window.aplicarCanje = function() {
 // ══════════════════════════════════
 // NAVBAR Y NAVEGACIÓN
 // ══════════════════════════════════
-window.cerrarSesion = function() {
-  if (!confirm('¿Deseas cerrar sesión?')) return;
+window.cerrarSesion = async function() {
+  if (!(await confirmar({ titulo: '¿Cerrar sesión?', aceptar: 'Cerrar sesión' }))) return;
   // Etapa B: revocar el token en el servidor. Sin esto, salir del navegador no
   // invalida nada: el token seguiría sirviendo hasta expirar (12 h).
   // Sin await a propósito — cerrar sesión no debe quedarse esperando a la red.
@@ -9319,7 +9360,7 @@ window.cargarRecordatoriosPago = async function() {
 };
 
 window.enviarRecordatorioUno = async function(folio, btn) {
-  if (!confirm(`¿Enviar recordatorio de pago del pedido ${folio}?`)) return;
+  if (!(await confirmar({ titulo: '💸 Enviar recordatorio de pago', cuerpo: `Pedido ${folio}. Se manda un SMS al cliente.`, aceptar: 'Enviar' }))) return;
   const secret = cronSecret(); if (!secret) return;
   const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Enviando…';
   try {
@@ -9334,7 +9375,7 @@ window.enviarRecordatorioUno = async function(folio, btn) {
 };
 
 window.enviarRecordatoriosTodos = async function(n) {
-  if (!confirm(`¿Enviar recordatorio de pago a los ${n} pedidos pendientes con teléfono?`)) return;
+  if (!(await confirmar({ titulo: '💸 Enviar recordatorios de pago', cuerpo: `A los ${n} pedidos pendientes con teléfono. Un SMS por pedido.`, aceptar: `Enviar ${n}`, peligroso: true }))) return;
   const secret = cronSecret(); if (!secret) return;
   mostrarToast('Enviando recordatorios…');
   try {
@@ -9378,7 +9419,7 @@ window.guardarCopyRecordatorio = async function(btn) {
   const plantilla = (txt.value || '').trim();
   if (!plantilla) { if (msg) msg.textContent = 'El mensaje no puede quedar vacío.'; return; }
   if (!/\{folio\}/.test(plantilla) || !/\{link\}/.test(plantilla)) {
-    if (!confirm('El mensaje no incluye {folio} o {link}. ¿Guardar de todos modos?')) return;
+    if (!(await confirmar({ titulo: '✏️ Faltan marcadores', cuerpo: 'El mensaje no incluye {folio} o {link}.', aceptar: 'Guardar de todos modos' }))) return;
   }
   const secret = cronSecret(); if (!secret) return;
   const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
@@ -10052,14 +10093,14 @@ window.reasignarVendedor = async function(idCliente, idVendedor, nombreVendedor)
       p_nombre_vendedor: nomV,
       p_token: tokenVendedor(),
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo actualizar la ficha B2B', cuerpo: (res?.error || 'Sin respuesta') }); return; }
     mostrarToast('✅ Vendedor reasignado');
     const cli = _b2bClientes.find(c => String(c.id) === String(idCliente));
     if (cli) {
       cli.idVendedor = idV;
       cli.vendedor   = nomV;
     }
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo actualizar la ficha B2B', cuerpo: e.message }); }
 };
 
 window.aprobarB2B = async function(idCliente, tipo) {
@@ -10077,13 +10118,13 @@ window.aprobarB2B = async function(idCliente, tipo) {
       if (c) c.aprobadoB2B = true;
       renderB2BLista();
     } else {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') });
+      avisar({ titulo: '⚠️ No se pudo actualizar la ficha B2B', cuerpo: (res?.error || '') });
     }
   } catch(e) { mostrarToast('Error: ' + e.message); }
 };
 
 window.rechazarB2B = async function(idCliente) {
-  if (!confirm('¿Rechazar y cambiar a consumidor?')) return;
+  if (!(await confirmar({ titulo: '¿Rechazar la solicitud B2B?', cuerpo: 'El cliente pasa a consumidor.', aceptar: 'Rechazar', peligroso: true }))) return;
   try {
     // Cambiar tipo a Consumidor + des-aprobar
     const res = await supabaseCall('POST', 'rpc/actualizar_tipo_cliente', {
@@ -10106,7 +10147,7 @@ window.rechazarB2B = async function(idCliente) {
 };
 
 window.revocarB2B = async function(idCliente) {
-  if (!confirm('¿Revocar aprobación B2B?')) return;
+  if (!(await confirmar({ titulo: '¿Revocar la aprobación B2B?', cuerpo: 'La tienda deja de ver precios de mayoreo.', aceptar: 'Revocar', peligroso: true }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/actualizar_tipo_cliente', {
       p_data: {
@@ -10165,7 +10206,7 @@ window.editarNotasLote = async function(idLote, notasActuales) {
 };
 
 window.cerrarLote = async function(idLote) {
-  if (!confirm(`¿Cerrar el lote ${idLote}? Quedará marcado como Agotado.`)) return;
+  if (!(await confirmar({ titulo: `📦 ¿Cerrar el lote ${idLote}?`, cuerpo: 'Quedará marcado como Agotado.', aceptar: 'Cerrar lote', peligroso: true }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/actualizar_lote', { p_data: { idLote, campos: {
       estatus: 'Cerrado',
@@ -10389,7 +10430,7 @@ window.buscarCliente = async function(q) {
 
   // v2.7.1: si el usuario borra el texto Y había cliente seleccionado, limpiar todo
   if ((!q || q.length === 0) && clienteActual) {
-    if (confirm('¿Quitar cliente seleccionado y limpiar formulario?')) {
+    if (await confirmar({ titulo: '¿Quitar el cliente seleccionado?', cuerpo: 'Se limpia el formulario.', aceptar: 'Quitar' })) {
       limpiarBusqueda();
     } else {
       // Restaurar el nombre en el buscador para que no se pierda el contexto
@@ -11026,7 +11067,7 @@ window.guardarReasignacionLote = async function(idOrden, consecutivo) {
   const sel = document.getElementById('sel-lote-' + idOrden);
   const idLote = sel ? sel.value : '';
   if (!idLote) return;
-  if (!confirm(`¿Mover TODOS los kg del pedido ${consecutivo || idOrden} al lote ${idLote}?\nLos kilos vendidos de ambos lotes se recalculan.`)) return;
+  if (!(await confirmar({ titulo: '📦 Mover el pedido de lote', cuerpo: `TODOS los kg del pedido ${consecutivo || idOrden} pasan al lote ${idLote}.` + SALTO + 'Los kilos vendidos de ambos lotes se recalculan.', aceptar: 'Mover', peligroso: true }))) return;
   try {
     const r = await supabaseCall('POST', 'rpc/reasignar_lote_pedido', { p_id_orden: idOrden, p_id_lote: idLote, p_token: tokenVendedor() });
     if (r && r.ok) {
@@ -11036,7 +11077,7 @@ window.guardarReasignacionLote = async function(idOrden, consecutivo) {
     } else {
       avisar({ titulo: 'No se pudo reasignar el lote', cuerpo: (r && r.error) || 'error desconocido' });
     }
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo reasignar el lote', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -11069,9 +11110,9 @@ window.abrirSetCuota = async function() {
       mostrarToast('✅ Cuota actualizada');
       renderPedidosVendedor(); // refrescar
     } else {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo guardar la cuota', cuerpo: (res?.error || 'Sin respuesta') });
     }
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo guardar la cuota', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -11422,7 +11463,7 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
     const res = await supabaseCall('POST', 'rpc/actualizar_campos_pedido', {
       p_data: { idOrden: String(idOrden), campos: patch }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo cambiar la fecha del pedido', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Fecha actualizada');
 
     if (_pedidoActual) {
@@ -11430,7 +11471,7 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
       if (campo === 'fechaEntrega')     _pedidoActual.orden.fecha_entrega      = fechaObj;
       if (campo === 'fechaEntregaReal') _pedidoActual.orden.fecha_entrega_real = fechaObj;
     }
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo cambiar la fecha del pedido', cuerpo: e.message }); }
 };
 
 // Helper: pregunta método de pago con modal simple
@@ -11475,7 +11516,7 @@ function preguntarMetodoPago(metodoActual) {
 
 window.marcarEstatus = async function(idOrden, campo, valor) {
   // Confirmar solo cuando se cancela un pedido
-  if (valor === 'Cancelado' && !confirm('¿Cancelar este pedido?\n\nSi ya estaba confirmado, los kg descontados se DEVOLVERÁN al inventario del lote.')) return;
+  if (valor === 'Cancelado' && !(await confirmar({ titulo: '¿Cancelar este pedido?', cuerpo: 'Si ya estaba confirmado, los kg descontados se DEVOLVERÁN al inventario del lote.', aceptar: 'Cancelar pedido', cancelar: 'No, volver', peligroso: true }))) return;
 
   // SIEMPRE preguntar método de pago al marcar como Pagado
   // (incluso si ya hay uno definido — el vendedor confirma o lo cambia)
@@ -11512,7 +11553,7 @@ window.marcarEstatus = async function(idOrden, campo, valor) {
     if (campo === 'estatusPago')   data.estatusPago = valor;
 
     const res = await supabaseCall('POST', 'rpc/actualizar_estatus_pedido', { p_data: data });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo cambiar el estatus del pedido', cuerpo: (res?.error || 'Sin respuesta') }); return; }
     mostrarToast('✅ ' + (campo === 'estatusPago' ? 'Pago' : 'Estatus') + ': ' + valor);
 
     // Actualizar localmente
@@ -11537,7 +11578,7 @@ window.marcarEstatus = async function(idOrden, campo, valor) {
     if (esVendedor && document.getElementById('s-pedidos').classList.contains('active')) {
       renderPedidosVendedor();
     }
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo cambiar el estatus del pedido', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -12646,13 +12687,13 @@ window.guardarNuevoProspecto = async function() {
     // partir del token, no el navegador: nadie registra prospectos a nombre de otro.
     const res = await supabaseCall('POST', 'rpc/crear_prospecto', { p_data: payload });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo guardar el prospecto', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Prospecto registrado');
     cerrarNuevoProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo guardar el prospecto', cuerpo: e.message }); }
 };
 
 // ──────────────────────────────────────────
@@ -12877,17 +12918,17 @@ window.accionRegistrarVisita = async function(id) {
     const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', {
       p_data: { id, campos: payload, incrementarVisitas: true }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo registrar la visita', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Visita registrada');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo registrar la visita', cuerpo: e.message }); }
 };
 
 window.accionConvertirCliente = async function(id) {
   const p = _prospectos.find(x => String(x.id) === String(id));
   if (!p) return;
-  if (!confirm(`Convertir "${p.nombre}" a cliente?\n\nSe creará en la lista de clientes B2B.`)) return;
+  if (!(await confirmar({ titulo: `Convertir "${p.nombre}" a cliente`, cuerpo: 'Se creará en la lista de clientes B2B.', aceptar: 'Convertir' }))) return;
 
   // Pedir datos faltantes mínimos
   let telefono = p.telefono;
@@ -12904,11 +12945,11 @@ window.accionConvertirCliente = async function(id) {
         nombreVendedor: vendedorInfo?.nombre || '',
       }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo convertir el prospecto', cuerpo: (res?.error||'') }); return; }
     mostrarToast('🎯 Convertido a cliente');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo convertir el prospecto', cuerpo: e.message }); }
 };
 
 window.accionDescartarProspecto = async function(id) {
@@ -12920,26 +12961,26 @@ window.accionDescartarProspecto = async function(id) {
       motivo_descarte: motivo,
       fecha_descarte: new Date().toISOString(),
     } } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo descartar el prospecto', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🚫 Descartado');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo descartar el prospecto', cuerpo: e.message }); }
 };
 
 window.accionReactivarProspecto = async function(id) {
-  if (!confirm('¿Reactivar este prospecto?')) return;
+  if (!(await confirmar({ titulo: '¿Reactivar este prospecto?', aceptar: 'Reactivar' }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: {
       estatus: 'pendiente',
       motivo_descarte: null,
       fecha_descarte: null,
     } } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo reactivar el prospecto', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('↩️ Reactivado');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo reactivar el prospecto', cuerpo: e.message }); }
 };
 
 // ──────────────────────────────────────────
@@ -13660,7 +13701,7 @@ window.guardarGasto = async function() {
     const idGasto = (res && res.ok) ? res.id : null;
     const itemCheck = (res && res.ok) ? null : { message: (res && res.error) || 'Sin respuesta', code: 'RPC' };
     if (itemCheck && itemCheck.message && itemCheck.code) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: itemCheck.message });
+      avisar({ titulo: '⚠️ No se pudo guardar el gasto', cuerpo: itemCheck.message });
       btn.disabled = false; btn.textContent = 'Guardar gasto';
       return;
     }
@@ -13717,7 +13758,7 @@ window.guardarGasto = async function() {
     cerrarNuevoGasto();
     renderGastos();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo guardar el gasto', cuerpo: e.message });
     btn.disabled = false; btn.textContent = 'Guardar gasto';
   }
 };
@@ -13823,7 +13864,7 @@ document.addEventListener('click', e => {
 });
 
 window.aprobarGastoUI = async function(id) {
-  if (!confirm('¿Aprobar este gasto?')) return;
+  if (!(await confirmar({ titulo: '¿Aprobar este gasto?', aceptar: 'Aprobar' }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/aprobar_gasto', {
       p_data: {
@@ -13831,11 +13872,11 @@ window.aprobarGastoUI = async function(id) {
         aprobadoPor: vendedorInfo?.nombre || 'Admin',
       }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo aprobar el gasto', cuerpo: (res?.error || '') }); return; }
     mostrarToast('✅ Aprobado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo aprobar el gasto', cuerpo: e.message }); }
 };
 
 window.rechazarGastoUI = async function(id) {
@@ -13849,11 +13890,11 @@ window.rechazarGastoUI = async function(id) {
         aprobadoPor: vendedorInfo?.nombre || 'Admin',
       }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo rechazar el gasto', cuerpo: (res?.error || '') }); return; }
     mostrarToast('🚫 Rechazado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo rechazar el gasto', cuerpo: e.message }); }
 };
 
 window.editarGastoUI = function(id) {
@@ -13886,16 +13927,16 @@ window.editarGastoUI = function(id) {
 };
 
 window.eliminarGastoUI = async function(id) {
-  if (!confirm('¿Eliminar este gasto?\n\nEsta acción no se puede deshacer.')) return;
+  if (!(await confirmar({ titulo: '🗑️ ¿Eliminar este gasto?', cuerpo: 'Esta acción no se puede deshacer.', aceptar: 'Eliminar', peligroso: true }))) return;
   try {
     // Borrar contabilidad no se deshace sin respaldos, así que el RPC lo
     // reserva al rol dueño.
     const res = await supabaseCall('POST', 'rpc/eliminar_gasto', { p_data: { id } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo eliminar el gasto', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🗑️ Eliminado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo eliminar el gasto', cuerpo: e.message }); }
 };
 
 
@@ -14337,14 +14378,14 @@ window.confirmarApertura = async function() {
       }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo abrir la caja', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Caja abierta');
     cerrarAperturaCaja();
     renderCaja();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo abrir la caja', cuerpo: e.message });
   } finally {
     btn.disabled = false; btn.textContent = '🔓 Abrir caja';
   }
@@ -14402,7 +14443,7 @@ window.confirmarCierre = async function() {
   const declarado = parseFloat(document.getElementById('ci-saldo').value) || 0;
   const notas = document.getElementById('ci-notas').value.trim();
   if (declarado < 0) { mostrarToast('⚠️ El saldo no puede ser negativo'); return; }
-  if (!confirm('¿Confirmas el cierre de caja? Esta acción no se puede deshacer.')) return;
+  if (!(await confirmar({ titulo: '🔒 ¿Confirmas el cierre de caja?', cuerpo: 'Esta acción no se puede deshacer.', aceptar: 'Cerrar caja', peligroso: true }))) return;
 
   const btn = document.getElementById('ci-btn');
   btn.disabled = true; btn.textContent = 'Cerrando...';
@@ -14417,14 +14458,14 @@ window.confirmarCierre = async function() {
       }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo cerrar la caja', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast(`✅ Cerrada. ${res.diferencia === 0 ? 'Cuadrado.' : 'Diferencia: $' + Number(res.diferencia).toFixed(2)}`);
     cerrarCierreCaja();
     renderCaja();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo cerrar la caja', cuerpo: e.message });
   } finally {
     // Garantizar que el botón vuelva a su estado original SIEMPRE
     btn.disabled = false; btn.textContent = '🔒 Cerrar caja';
@@ -14519,7 +14560,7 @@ window.confirmarMovCaja = async function() {
       }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo registrar el movimiento de caja', cuerpo: (res?.error || 'Sin respuesta') });
       btn.disabled = false; btn.textContent = 'Registrar movimiento';
       return;
     }
@@ -14527,7 +14568,7 @@ window.confirmarMovCaja = async function() {
     cerrarMovCaja();
     renderCaja();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo registrar el movimiento de caja', cuerpo: e.message });
     btn.disabled = false; btn.textContent = 'Registrar movimiento';
   } finally {
     // Garantizar restauración del botón en cualquier caso
@@ -14573,14 +14614,14 @@ window.ejecutarConfirmarPedido = async function() {
       }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo confirmar el pedido', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Pedido confirmado en caja');
     cerrarAccionesPendiente();
     renderCaja();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo confirmar el pedido', cuerpo: e.message });
   } finally {
     btn.disabled = false; btn.textContent = '✓ Confirmar (entró en caja/banco)';
   }
@@ -14590,7 +14631,7 @@ window.ejecutarCorregirMetodo = async function() {
   if (!_accionPendActual) return;
   const nuevoMet = document.getElementById('ap-nuevo-metodo').value;
   if (!nuevoMet) { mostrarToast('⚠️ Selecciona método correcto'); return; }
-  if (!confirm(`¿Cambiar método de pago de ${_accionPendActual.consec} a ${nuevoMet}?`)) return;
+  if (!(await confirmar({ titulo: '💳 Cambiar método de pago', cuerpo: `${_accionPendActual.consec} pasa a ${nuevoMet}.`, aceptar: 'Cambiar' }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/corregir_metodo_pago_pedido', {
       p_data: {
@@ -14600,14 +14641,14 @@ window.ejecutarCorregirMetodo = async function() {
       }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo cambiar el método de pago', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Método corregido a ' + nuevoMet);
     cerrarAccionesPendiente();
     renderCaja();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo cambiar el método de pago', cuerpo: e.message });
   }
 };
 
@@ -14793,9 +14834,9 @@ window.guardarPermisosRol = async function(rol) {
     const res = await supabaseCall('POST', 'rpc/set_config_secciones', {
       p_data: { rol, secciones }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudieron guardar los permisos del rol', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Permisos de ' + rol + ' guardados');
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudieron guardar los permisos del rol', cuerpo: e.message }); }
 };
 
 async function pintarPermisosPorVendedor() {
@@ -14847,22 +14888,22 @@ window.guardarPermisosVendedor = async function(idVendedor) {
     const res = await supabaseCall('POST', 'rpc/set_secciones_vendedor', {
       p_data: { idVendedor, secciones }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudieron guardar los permisos del vendedor', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Permisos guardados');
     pintarPermisosPorVendedor();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudieron guardar los permisos del vendedor', cuerpo: e.message }); }
 };
 
 window.quitarOverrideVendedor = async function(idVendedor) {
-  if (!confirm('¿Quitar override y usar la config por rol?')) return;
+  if (!(await confirmar({ titulo: '¿Quitar el override?', cuerpo: 'El vendedor vuelve a la configuración de su rol.', aceptar: 'Quitar' }))) return;
   try {
     const res = await supabaseCall('POST', 'rpc/set_secciones_vendedor', {
       p_data: { idVendedor, secciones: [] }
     });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo quitar el override', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Override quitado');
     pintarPermisosPorVendedor();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo quitar el override', cuerpo: e.message }); }
 };
 
 // Resolver qué secciones ve realmente un vendedor (mismo criterio que aplicarPermisosNavbar)
@@ -14996,7 +15037,7 @@ window.restablecerPinVendedor = async function(btn) {
     return err('Ese PIN es demasiado común. Elige otro.');
 
   const nombre = sel.options[sel.selectedIndex].textContent.split(' — ')[0];
-  if (!confirm(`¿Restablecer el PIN de ${nombre}?\n\nSe cerrarán sus sesiones abiertas y tendrá que entrar con el PIN nuevo.`)) return;
+  if (!(await confirmar({ titulo: `🔑 ¿Restablecer el PIN de ${nombre}?`, cuerpo: 'Se cerrarán sus sesiones abiertas y tendrá que entrar con el PIN nuevo.', aceptar: 'Restablecer', peligroso: true }))) return;
 
   if (btn) { btn.disabled = true; btn.textContent = 'Restableciendo...'; }
   msg.textContent = '';
@@ -15037,7 +15078,7 @@ window.guardarMatrizPermisos = async function(btn) {
     else { mostrarToast('✅ Permisos guardados (' + ids.length + ' vendedores)'); }
     pintarMatrizPermisos();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudieron guardar los permisos', cuerpo: e.message });
     if (btn) { btn.textContent = '💾 Guardar todo'; btn.disabled = false; }
   }
 };
@@ -15325,12 +15366,12 @@ function distanciaMetros(lat1, lng1, lat2, lng2) {
 
 window.confirmarIniciarJornada = async function() {
   if (!_coordsJornada) {
-    if (!confirm('Sin GPS confirmado. ¿Continuar de todos modos?')) return;
+    if (!(await confirmar({ titulo: '📡 Sin GPS confirmado', cuerpo: '¿Continuar de todos modos?', aceptar: 'Continuar' }))) return;
   }
   const checks = document.querySelectorAll('.ij-act-chk:checked');
   const actividades = Array.from(checks).map(c => c.value);
   if (actividades.length === 0) {
-    if (!confirm('No seleccionaste actividades. ¿Continuar?')) return;
+    if (!(await confirmar({ titulo: '📋 Sin actividades', cuerpo: 'No seleccionaste actividades. ¿Continuar?', aceptar: 'Continuar' }))) return;
   }
   const notas = document.getElementById('ij-notas').value.trim();
 
@@ -15352,11 +15393,11 @@ window.confirmarIniciarJornada = async function() {
     };
     // El vendedor sale del token: nadie ficha por otro.
     const res = await supabaseCall('POST', 'rpc/guardar_jornada', { p_data: { campos: payload } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo iniciar la jornada', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast(dentroPlanta ? '✅ Jornada iniciada en planta' : '⚠️ Iniciada FUERA de planta');
     cerrarIniciarJornada();
     renderJornadas();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo iniciar la jornada', cuerpo: e.message }); }
 };
 
 // ──── Cerrar jornada ────
@@ -15424,11 +15465,11 @@ window.confirmarCerrarJornada = async function() {
     };
     const res = await supabaseCall('POST', 'rpc/guardar_jornada',
       { p_data: { id: _jornadaAbierta.id, campos: payload } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudo cerrar la jornada', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🏁 Jornada cerrada');
     cerrarCerrarJornada();
     renderJornadas();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo cerrar la jornada', cuerpo: e.message }); }
 };
 
 // ──── Editar actividades durante la jornada ────
@@ -15453,14 +15494,14 @@ window.actualizarActividades = async function() {
         notas_inicio: notas || null,
       }
     } });
-    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ No se pudieron guardar las actividades', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Actualizado');
     cerrarCerrarJornada();
     // Restaurar onclick original para próxima vez
     document.querySelector('#drawer-cerrar-jornada button[onclick="actualizarActividades()"]').setAttribute('onclick','confirmarCerrarJornada()');
     document.querySelector('#drawer-cerrar-jornada button[onclick="confirmarCerrarJornada()"]').textContent = '🏁 Cerrar jornada';
     renderJornadas();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudieron guardar las actividades', cuerpo: e.message }); }
 };
 
 // ──── Detalle jornada ────
@@ -15883,7 +15924,7 @@ window.togglePapa = async function(id, nuevoActivo, el) {
       p_data: { id, campos: { activo: nuevoActivo } }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo activar o desactivar el producto', cuerpo: ((res && res.error) || 'Sin respuesta') });
       el.checked = !nuevoActivo;
       togglePapa(id, !nuevoActivo, el);
       return;
@@ -15895,7 +15936,7 @@ window.togglePapa = async function(id, nuevoActivo, el) {
     if (p) p.activo = nuevoActivo;
     pintarListaProductos();
   } catch(e) {
-    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
+    avisar({ titulo: '⚠️ No se pudo activar o desactivar el producto', cuerpo: e.message });
     el.checked = !nuevoActivo;
   }
 };
@@ -16024,19 +16065,19 @@ window.guardarProducto = async function() {
     const created = res;
     if (!res || !res.ok) {
       // Es un error de Supabase (ej. {message: "...", code: "..."})
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: created.message });
+      avisar({ titulo: '⚠️ No se pudo guardar el producto', cuerpo: created.message });
       return;
     }
     cacheClear(CACHE_KEYS.CATALOGO);
     mostrarToast(_editandoProducto ? '✅ Bebida actualizada' : '✅ Bebida creada');
     cerrarProdForm();
     cargarListaProductos();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo guardar el producto', cuerpo: e.message }); }
 };
 
 window.eliminarBebidaActual = async function() {
   if (!_editandoProducto) return;
-  if (!confirm(`¿Eliminar "${_editandoProducto.nombre}" del catálogo?\n\nQuedará marcada como inactiva.`)) return;
+  if (!(await confirmar({ titulo: `🗑️ ¿Eliminar "${_editandoProducto.nombre}"?`, cuerpo: 'Quedará marcada como inactiva en el catálogo.', aceptar: 'Eliminar', peligroso: true }))) return;
   try {
     // "Eliminar del catálogo" es DESCONTINUAR, no agotar: el producto debe
     // desaparecer para el cliente, no quedarse visible como "No disponible".
@@ -16045,14 +16086,14 @@ window.eliminarBebidaActual = async function() {
       p_data: { id: _editandoProducto.id, campos: { descontinuado: true, activo: false } }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo eliminar el producto', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     cacheClear(CACHE_KEYS.CATALOGO);
     mostrarToast('✅ Bebida eliminada');
     cerrarProdForm();
     cargarListaProductos();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo eliminar el producto', cuerpo: e.message }); }
 };
 
 // ──── Escáner código de barras ────
@@ -16357,13 +16398,13 @@ window.guardarCupon = async function() {
       p_data: { id: _editandoCupon ? _editandoCupon.id : null, campos: payload }
     });
     if (!res || !res.ok) {
-      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
+      avisar({ titulo: '⚠️ No se pudo guardar el cupón', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     mostrarToast(_editandoCupon ? '✅ Cupón actualizado' : '✅ Cupón creado');
     cerrarCupForm();
     cargarCupones();
-  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
+  } catch(e) { avisar({ titulo: '⚠️ No se pudo guardar el cupón', cuerpo: e.message }); }
 };
 
 
