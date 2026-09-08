@@ -97,7 +97,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <!-- QuaggaJS para lector de código de barras (carga bajo demanda al abrir escáner) -->
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --amarillo: #FFD200;
@@ -190,7 +190,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:4px 10px; border-radius:50px; margin-bottom:10px;
 }
 .banner-h {
-  font-family:'Bebas Neue',sans-serif;
+  font-family:'Archivo',sans-serif;
   font-size:clamp(2.2rem,8vw,3.5rem);
   color:var(--blanco); letter-spacing:3px; line-height:1;
   text-shadow:0 2px 12px rgba(0,0,0,0.6);
@@ -199,7 +199,7 @@ select.inp { appearance: none; cursor: pointer; }
 .banner-slogan { font-size:0.88rem; font-weight:700; color:rgba(255,255,255,0.55); margin-top:6px; }
 
 .welcome-pregunta {
-  font-family:'Bebas Neue',sans-serif; font-size:1.5rem;
+  font-family:'Archivo',sans-serif; font-size:1.5rem;
   color:var(--blanco); letter-spacing:2px; margin-bottom:16px;
 }
 .tipo-cards { display:flex; flex-direction:column; gap:10px; width:100%; max-width:380px; }
@@ -223,7 +223,7 @@ select.inp { appearance: none; cursor: pointer; }
   background: radial-gradient(ellipse at 50% 0%, #1a1200, var(--negro) 60%);
 }
 .otp-box { width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; gap:18px; }
-.otp-title { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--amarillo); letter-spacing:2px; }
+.otp-title { font-family:'Archivo',sans-serif; font-size:2rem; color:var(--amarillo); letter-spacing:2px; }
 .otp-desc { color:var(--suave); font-size:0.88rem; font-weight:600; line-height:1.5; }
 .tel-wrap { display:flex; width:100%; gap:8px; }
 .lada {
@@ -234,7 +234,7 @@ select.inp { appearance: none; cursor: pointer; }
 .otp-digits { display:flex; gap:8px; justify-content:center; }
 .otp-d {
   width:44px; height:54px; background:var(--gris); border:2px solid var(--gris3);
-  border-radius:12px; color:var(--blanco); font-family:'Bebas Neue',sans-serif;
+  border-radius:12px; color:var(--blanco); font-family:'Archivo',sans-serif;
   font-size:1.8rem; text-align:center; outline:none; transition:border-color 0.2s;
 }
 .otp-d:focus { border-color:var(--amarillo); }
@@ -259,7 +259,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:10px 14px; display:flex; align-items:center;
   justify-content:space-between; position:sticky; top:0; z-index:100;
 }
-.logo { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--amarillo); letter-spacing:2px; line-height:1; }
+.logo { font-family:'Archivo',sans-serif; text-transform:uppercase; font-size:1.5rem; color:var(--amarillo); letter-spacing:2px; line-height:1; }
 .logo span { color:var(--rojo); }
 .header-right { display:flex; gap:8px; align-items:center; }
 .user-chip {
@@ -374,6 +374,10 @@ select.inp { appearance: none; cursor: pointer; }
   padding:14px 14px 140px;
   display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px;
 }
+/* Archivo, a diferencia de la display anterior, SI tiene pesos: un titular sin
+   font-weight saldria en regular y perderia la jerarquia. Especificidad baja a
+   proposito - cualquier font-weight inline sigue ganando. */
+[style*="Archivo"] { font-weight: 700; }
 .prod-card {
   background:#f0f0f0; border-radius:16px;
   padding:0; display:flex; flex-direction:column;
@@ -391,7 +395,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .promo-pct {
   position:absolute; top:4px; right:8px; z-index:2;
-  font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--rojo); line-height:1;
+  font-family:'Archivo',sans-serif; font-size:1.8rem; color:var(--rojo); line-height:1;
 }
 .prod-img-wrap {
   width:100%; aspect-ratio:1/1; background:#e8e8e8;
@@ -410,7 +414,7 @@ select.inp { appearance: none; cursor: pointer; }
 .prod-nombre { font-weight:900; font-size:0.88rem; color:#111; line-height:1.2; }
 .prod-pres { font-size:0.7rem; color:#888; font-weight:700; text-transform:uppercase; }
 .prod-vigencia { font-size:0.68rem; color:var(--rojo); font-weight:800; }
-.prod-precio { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:#111; margin-top:2px; }
+.prod-precio { font-family:'Archivo',sans-serif; font-size:1.5rem; color:#111; margin-top:2px; }
 .prod-precio-orig { font-size:0.78rem; color:#aaa; text-decoration:line-through; }
 .qty-ctrl { display:flex; align-items:center; gap:5px; margin-top:auto; padding-top:6px; }
 .qty-btn {
@@ -438,13 +442,13 @@ select.inp { appearance: none; cursor: pointer; }
   background:var(--gris); border:2px solid var(--gris3); border-radius:14px; padding:16px;
 }
 .granel-title {
-  font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:var(--amarillo);
+  font-family:'Archivo',sans-serif; font-size:1.2rem; color:var(--amarillo);
   letter-spacing:1px; margin-bottom:12px;
 }
 .granel-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
 .granel-result {
   background:var(--gris2); border-radius:10px; padding:10px; text-align:center;
-  font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px;
+  font-family:'Archivo',sans-serif; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px;
 }
 
 /* ══════════════════════════
@@ -464,7 +468,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .drawer.open { transform:translateY(0); }
 .drawer-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 16px; }
-.drawer-title { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; margin-bottom:12px; }
+.drawer-title { font-family:'Archivo',sans-serif; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; margin-bottom:12px; }
 .cart-empty { text-align:center; color:var(--suave); padding:28px 0; font-size:0.95rem; font-weight:600; }
 .cart-empty span { font-size:2.8rem; display:block; margin-bottom:10px; }
 .cart-item {
@@ -474,15 +478,15 @@ select.inp { appearance: none; cursor: pointer; }
 .cart-item-info { flex:1; }
 .cart-item-nom { font-weight:800; font-size:0.86rem; }
 .cart-item-sub { font-size:0.76rem; color:var(--suave); font-weight:600; }
-.cart-item-precio { font-family:'Bebas Neue',sans-serif; font-size:1.15rem; color:var(--amarillo); }
+.cart-item-precio { font-family:'Archivo',sans-serif; font-size:1.15rem; color:var(--amarillo); }
 .del-btn { background:none; border:none; color:#555; font-size:1.1rem; cursor:pointer; padding:4px; transition:color 0.15s; }
 .del-btn:hover { color:var(--rojo); }
 .cart-total {
   display:flex; justify-content:space-between; align-items:center;
   padding:12px 0 6px; margin-top:4px;
 }
-.cart-total .lbl { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--suave); letter-spacing:1px; }
-.cart-total .mnt { font-family:'Bebas Neue',sans-serif; font-size:1.9rem; color:var(--amarillo); }
+.cart-total .lbl { font-family:'Archivo',sans-serif; font-size:1.1rem; color:var(--suave); letter-spacing:1px; }
+.cart-total .mnt { font-family:'Archivo',sans-serif; font-size:1.9rem; color:var(--amarillo); }
 .min-msg {
   background:var(--gris2); border-left:3px solid var(--amarillo);
   border-radius:0 8px 8px 0; padding:9px 12px;
@@ -526,7 +530,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:10px 14px; font-size:0.82rem; font-weight:700; color:var(--suave);
   display:flex; align-items:center; justify-content:space-between;
 }
-.puntos-chip .pts { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:var(--amarillo); }
+.puntos-chip .pts { font-family:'Archivo',sans-serif; font-size:1.2rem; color:var(--amarillo); }
 
 .btn-confirmar {
   background:var(--amarillo); border:none; border-radius:14px;
@@ -565,13 +569,13 @@ select.inp { appearance: none; cursor: pointer; }
 #gracias-overlay.visible { display:flex; animation:fadeIn 0.3s ease; }
 .gracias-box { max-width:340px; width:100%; }
 .gracias-emoji { font-size:5rem; margin-bottom:14px; animation:bounceIn 0.5s ease; }
-.gracias-titulo { font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--amarillo); letter-spacing:3px; line-height:1; }
-.gracias-sub { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--blanco); letter-spacing:2px; margin-bottom:20px; }
+.gracias-titulo { font-family:'Archivo',sans-serif; font-size:3rem; color:var(--amarillo); letter-spacing:3px; line-height:1; }
+.gracias-sub { font-family:'Archivo',sans-serif; font-size:1.3rem; color:var(--blanco); letter-spacing:2px; margin-bottom:20px; }
 .gracias-card {
   background:var(--gris); border-radius:16px; padding:16px; margin-bottom:16px; text-align:left;
 }
 .gracias-card .consec-lbl { font-size:0.72rem; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
-.gracias-card .consec-val { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; }
+.gracias-card .consec-val { font-family:'Archivo',sans-serif; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; }
 .gracias-card .vend-info { font-size:0.82rem; font-weight:700; color:var(--suave); margin-top:8px; }
 .gracias-card .puntos-ganados { font-size:0.82rem; font-weight:800; color:#4caf50; margin-top:6px; }
 .gracias-wpp-wrap {
@@ -607,11 +611,11 @@ select.inp { appearance: none; cursor: pointer; }
 }
 #historial-panel.visible { display:block; }
 .hist-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.hist-titulo { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:var(--amarillo); letter-spacing:1px; }
+.hist-titulo { font-family:'Archivo',sans-serif; font-size:1rem; color:var(--amarillo); letter-spacing:1px; }
 .hist-close { background:none; border:none; color:#555; font-size:1.1rem; cursor:pointer; }
 .hist-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
 .hist-stat { background:var(--gris2); border-radius:10px; padding:10px; text-align:center; }
-.hist-stat .val { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--amarillo); }
+.hist-stat .val { font-family:'Archivo',sans-serif; font-size:1.4rem; color:var(--amarillo); }
 .hist-stat .lbl { font-size:0.65rem; font-weight:700; color:#555; text-transform:uppercase; }
 .hist-footer { margin-top:8px; font-size:0.72rem; font-weight:700; color:#444; text-align:center; }
 
@@ -681,7 +685,7 @@ select.inp { appearance: none; cursor: pointer; }
 .mc-qty { background:var(--amarillo); color:var(--negro); border-radius:50%; width:30px; height:30px; font-weight:900; font-size:0.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .mc-txt { flex:1; }
 .mc-lbl { font-size:0.73rem; font-weight:700; color:var(--suave); }
-.mc-total { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:var(--blanco); }
+.mc-total { font-family:'Archivo',sans-serif; font-size:1.2rem; color:var(--blanco); }
 .mc-btn { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:10px 18px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.88rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
 
 /* PREMIA */
@@ -689,17 +693,17 @@ select.inp { appearance: none; cursor: pointer; }
 .premia-hero { background:linear-gradient(135deg,#2a1f00,#1a1200); padding:28px 20px 24px; text-align:center; position:relative; overflow:hidden; }
 .premia-hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,210,0,0.07) 1px,transparent 1px); background-size:20px 20px; }
 .premia-nivel-badge { display:inline-flex; align-items:center; gap:6px; background:var(--amarillo); color:var(--negro); border-radius:50px; padding:5px 14px; font-weight:900; font-size:0.8rem; margin-bottom:14px; position:relative; }
-.premia-num { font-family:'Bebas Neue',sans-serif; font-size:5rem; color:var(--amarillo); line-height:1; position:relative; }
+.premia-num { font-family:'Archivo',sans-serif; font-size:5rem; color:var(--amarillo); line-height:1; position:relative; }
 .premia-lbl { font-size:0.85rem; font-weight:700; color:rgba(255,255,255,0.4); margin-top:4px; position:relative; }
 .premia-prog-wrap { margin:18px 0 6px; background:rgba(255,255,255,0.1); border-radius:50px; height:8px; overflow:hidden; position:relative; }
 .premia-prog { height:100%; background:var(--amarillo); border-radius:50px; transition:width 1s ease; }
 .premia-prog-labels { display:flex; justify-content:space-between; font-size:0.7rem; font-weight:700; color:#555; position:relative; }
 .premia-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px 0; }
 .premia-stat { background:var(--gris); border-radius:14px; padding:14px; }
-.premia-stat .pv { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--amarillo); }
+.premia-stat .pv { font-family:'Archivo',sans-serif; font-size:1.8rem; color:var(--amarillo); }
 .premia-stat .pl { font-size:0.72rem; font-weight:700; color:var(--suave); text-transform:uppercase; }
 .premia-beneficios { padding:14px 16px; }
-.premia-beneficios h3 { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:10px; }
+.premia-beneficios h3 { font-family:'Archivo',sans-serif; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:10px; }
 .bene-card { background:var(--gris); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; opacity:0.4; }
 .bene-card.activo { opacity:1; border:1px solid rgba(255,210,0,0.3); }
 .bene-icon { font-size:1.6rem; flex-shrink:0; }
@@ -709,7 +713,7 @@ select.inp { appearance: none; cursor: pointer; }
 
 /* PEDIDOS */
 #s-pedidos { background:var(--negro); padding:16px 16px 80px; }
-.pedidos-titulo { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:14px; }
+.pedidos-titulo { font-family:'Archivo',sans-serif; font-size:1.5rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:14px; }
 .pedido-card { background:var(--gris); border-radius:14px; padding:14px; margin-bottom:8px; }
 .rt { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:600px; }
 .rt th { text-align:left; padding:8px 10px; color:var(--suave); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--gris3); position:sticky; top:0; background:var(--negro); white-space:nowrap; }
@@ -718,13 +722,13 @@ select.inp { appearance: none; cursor: pointer; }
 .rt .num { text-align:right; font-variant-numeric:tabular-nums; }
 .rt .est { font-size:0.66rem; font-weight:800; padding:2px 7px; border-radius:20px; }
 .rs-chip { background:var(--gris2); border:1px solid var(--gris3); border-radius:10px; padding:8px 12px; }
-.rs-chip .v { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:var(--amarillo); line-height:1; }
+.rs-chip .v { font-family:'Archivo',sans-serif; font-size:1.3rem; color:var(--amarillo); line-height:1; }
 .rs-chip .l { font-size:0.64rem; color:var(--suave); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
 .btn-confirm-wpp { width:100%; margin-top:10px; background:#25D366; color:#fff; border:none; border-radius:10px; padding:9px; font-family:'Inter',sans-serif; font-weight:800; font-size:0.8rem; cursor:pointer; }
 .btn-confirm-wpp:hover { background:#1ebe5d; }
 .pedido-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-.pedido-consec { font-family:'Bebas Neue',sans-serif; font-size:0.95rem; color:var(--amarillo); }
-.pedido-total { font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:var(--blanco); }
+.pedido-consec { font-family:'Archivo',sans-serif; font-size:0.95rem; color:var(--amarillo); }
+.pedido-total { font-family:'Archivo',sans-serif; font-size:1.1rem; color:var(--blanco); }
 .pedido-fecha { font-size:0.73rem; color:var(--suave); font-weight:600; }
 .pedido-estatus { display:inline-block; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:50px; background:var(--gris3); color:var(--suave); margin-top:4px; }
 .pedido-estatus.entregado { background:#0d2d0d; color:#4caf50; }
@@ -759,7 +763,7 @@ select.inp { appearance: none; cursor: pointer; }
   margin-bottom: 10px;
 }
 .ticket-h .ticket-logo {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Archivo', sans-serif;
   font-size: 1.8rem;
   letter-spacing: 3px;
   color: #000;
@@ -780,7 +784,7 @@ select.inp { appearance: none; cursor: pointer; }
 .ticket-line .mnt { font-weight: 800; white-space: nowrap; }
 .ticket-tot {
   display: flex; justify-content: space-between;
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Archivo', sans-serif;
   font-size: 1.4rem; padding: 8px 0;
   border-top: 2px solid #000; margin-top: 6px;
 }
@@ -825,13 +829,13 @@ select.inp { appearance: none; cursor: pointer; }
   margin: 0 auto;
 }
 #ticket-print .tk-h1 {
-  font-family: 'Bebas Neue', cursive, serif;
+  font-family: 'Archivo', Georgia, serif;
   font-size: 26pt; font-weight: 900;
   text-align: center; line-height: 1; letter-spacing: 0.5pt;
   margin-bottom: 0;
 }
 #ticket-print .tk-h2 {
-  font-family: 'Bebas Neue', cursive, serif;
+  font-family: 'Archivo', Georgia, serif;
   font-size: 13pt; font-weight: 700; letter-spacing: 4pt;
   text-align: center; margin-bottom: 10pt;
 }
@@ -928,7 +932,7 @@ select.inp { appearance: none; cursor: pointer; }
   margin-bottom: 14px;
 }
 .vend-resumen-h .titulo {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Archivo', sans-serif;
   font-size: 1.1rem; color: var(--amarillo); letter-spacing: 1px;
 }
 .vend-resumen-h .mes {
@@ -969,7 +973,7 @@ select.inp { appearance: none; cursor: pointer; }
   gap: 8px; margin-top: 14px;
 }
 .vend-stat { background: var(--gris2); border-radius: 10px; padding: 10px; text-align: center; }
-.vend-stat .v { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--amarillo); line-height: 1; }
+.vend-stat .v { font-family: 'Archivo', sans-serif; font-size: 1.4rem; color: var(--amarillo); line-height: 1; }
 .vend-stat .l { font-size: 0.6rem; font-weight: 800; color: #555; text-transform: uppercase; margin-top: 4px; }
 
 /* Pedido card con acciones para vendedor */
@@ -1026,8 +1030,8 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
     <!-- Logo / marca -->
     <div style="margin-bottom:24px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--amarillo);letter-spacing:4px;line-height:1;">CRUNCHY</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--rojo);letter-spacing:4px;line-height:1;margin-top:-8px;">PAPS</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--amarillo);letter-spacing:4px;line-height:1;">CRUNCHY</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--rojo);letter-spacing:4px;line-height:1;margin-top:-8px;">PAPS</div>
       <div style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Adictivamente crujientes</div>
     </div>
 
@@ -1093,7 +1097,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
         <!-- Confirmación del número antes de enviar -->
         <div id="confirm-tel-wrap" style="display:none;width:100%;background:var(--gris2);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.75rem;font-weight:700;color:var(--suave);margin-bottom:6px;">¿Tu número es correcto?</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--amarillo);letter-spacing:2px;" id="confirm-tel-display">—</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--amarillo);letter-spacing:2px;" id="confirm-tel-display">—</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <button onclick="corregirTel()" style="flex:1;background:var(--gris3);border:none;border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">
               ✏️ Corregir
@@ -1144,7 +1148,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(ellipse at 50% 0%,#1a1200,var(--negro) 60%);">
     <div style="max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
       <div style="font-size:3rem;">🔐</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;">ACCESO VENDEDOR</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;">ACCESO VENDEDOR</div>
       <div style="font-size:0.85rem;font-weight:700;color:var(--suave);" id="pin-nombre-label">Ingresa tu PIN</div>
 
       <!-- Dígitos PIN — SEIS casillas. Antes eran cuatro, y como el mínimo al
@@ -1184,7 +1188,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     padding:40px 24px;background:radial-gradient(ellipse at 60% 20%,#2a2000,var(--negro) 65%);gap:0;">
 
     <div style="text-align:center;margin-bottom:28px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--amarillo);letter-spacing:3px;line-height:1;">
+      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);letter-spacing:3px;line-height:1;">
         BIENVENIDO
       </div>
       <div style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.4);margin-top:6px;">
@@ -1249,7 +1253,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;">
     <div style="max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
       <div style="font-size:4rem">🏪</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;line-height:1;">VALIDANDO<br>TU NEGOCIO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;line-height:1;">VALIDANDO<br>TU NEGOCIO</div>
       <div style="background:var(--gris);border:2px solid var(--gris3);border-radius:16px;padding:20px;text-align:left;width:100%;">
         <div style="font-size:0.86rem;font-weight:700;color:var(--suave);line-height:1.6;">
           Estamos validando tu <strong style="color:var(--blanco)" id="pend-tipo">tienda</strong> para darte <strong style="color:var(--amarillo)">precios de mayoreo</strong> 🌶️<br><br>
@@ -1276,7 +1280,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;">🏪</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">COMPLETA LOS DATOS<br>DE TU NEGOCIO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">COMPLETA LOS DATOS<br>DE TU NEGOCIO</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">
           Necesitamos estos datos para validar tu negocio y darte <strong style="color:var(--amarillo)">precios de mayoreo</strong>.
         </div>
@@ -1325,7 +1329,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;">🏪</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">DAR DE ALTA NEGOCIO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">DAR DE ALTA NEGOCIO</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Registra una tienda, restaurante o mayorista en sitio. Queda <strong style="color:var(--amarillo);">pendiente de aprobación</strong>.</div>
       </div>
 
@@ -1376,7 +1380,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;">📍</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">AJUSTAR UBICACIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">AJUSTAR UBICACIÓN</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Estás en el negocio: busca al cliente y captura su <strong style="color:var(--amarillo);">GPS exacto</strong>. Solo cambia la ubicación.</div>
       </div>
 
@@ -1426,22 +1430,22 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.5);
   ">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">
         📊 TU HISTORIAL
       </div>
       <button onclick="toggleHistorial()" style="background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-pedidos">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-pedidos">0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Pedidos</div>
       </div>
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-mes">$0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-mes">$0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Este mes</div>
       </div>
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-puntos">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-puntos">0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Puntos</div>
       </div>
     </div>
@@ -1604,10 +1608,10 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <!-- Canje de puntos -->
   <div style="padding:0 16px 16px;">
     <div style="background:var(--gris);border-radius:14px;padding:16px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">💸 CANJEAR PUNTOS</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">💸 CANJEAR PUNTOS</div>
       <div style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-bottom:14px;">100 puntos = $10 de descuento</div>
       <div style="background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--amarillo);line-height:1;"><span id="canje-disponibles">0</span></div>
+        <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);line-height:1;"><span id="canje-disponibles">0</span></div>
         <div style="font-size:0.68rem;font-weight:800;color:var(--suave);letter-spacing:1px;">PUNTOS ACUMULADOS</div>
       </div>
       <div style="font-size:0.74rem;font-weight:700;color:var(--suave);text-align:center;margin-top:10px;line-height:1.45;">
@@ -1648,7 +1652,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
          lee como una app rota en vez de como «te falta identificarte». -->
     <div id="cuenta-invitado" style="display:none;background:var(--gris);border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;">
       <div style="font-size:2.2rem;margin-bottom:8px;">👋</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;">ESTÁS COMO INVITADO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;">ESTÁS COMO INVITADO</div>
       <div style="font-size:0.82rem;font-weight:600;color:var(--suave);margin:8px 0 16px;line-height:1.45;">
         Puedes ver el catálogo y armar tu carrito.<br>
         Verifica tu número para guardar tus pedidos y acumular puntos.
@@ -1661,7 +1665,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <!-- Avatar y nombre -->
     <div style="text-align:center;padding:24px 0 20px;">
       <div style="width:72px;height:72px;background:var(--amarillo);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 12px;">👤</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--blanco);letter-spacing:1px;" id="cuenta-nombre">—</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);letter-spacing:1px;" id="cuenta-nombre">—</div>
       <div style="font-size:0.8rem;font-weight:700;color:var(--suave);" id="cuenta-tipo">—</div>
     </div>
 
@@ -1689,15 +1693,15 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
         <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📊 Mi actividad</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-pedidos">0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-pedidos">0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">PEDIDOS</div>
           </div>
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-total">$0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-total">$0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">TOTAL</div>
           </div>
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-puntos">0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-puntos">0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">PUNTOS</div>
           </div>
         </div>
@@ -1795,7 +1799,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-produccion">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCCIÓN</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCCIÓN</div>
   </div>
 
   <!-- Tabs de producción -->
@@ -1814,7 +1818,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
       <!-- Registrar nuevo lote -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">📦 REGISTRAR LOTE</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">📦 REGISTRAR LOTE</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
           <div>
             <div style="font-size:0.68rem;font-weight:700;color:#555;margin-bottom:4px;">FECHA</div>
@@ -1836,7 +1840,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
       <!-- Próxima producción -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">📅 PRÓXIMA PRODUCCIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">📅 PRÓXIMA PRODUCCIÓN</div>
         <div style="display:flex;gap:10px;align-items:center;">
           <input type="date" id="fecha-prod-input" class="inp" style="flex:1;">
           <button onclick="guardarFechaProduccion()" style="background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:10px 14px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--blanco);cursor:pointer;white-space:nowrap;">Guardar</button>
@@ -1847,7 +1851,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
       <!-- Historial lotes -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📊 HISTORIAL DE LOTES</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📊 HISTORIAL DE LOTES</div>
           <select id="lotes-filtro" onchange="renderProduccion()" style="background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:4px 8px;color:var(--suave);font-size:0.72rem;font-weight:700;">
             <option value="5">Últimos 5</option>
             <option value="10">Últimos 10</option>
@@ -1859,7 +1863,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
       <!-- Estadísticas de lotes -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">📊 ESTADÍSTICAS DE LOTES</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">📊 ESTADÍSTICAS DE LOTES</div>
         <div id="lotes-stats" style="font-size:0.82rem;font-weight:700;color:var(--suave);">Cargando...</div>
       </div>
     </div>
@@ -1873,7 +1877,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div id="prod-tab-insumos" style="display:none;">
 
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">🧴 INSUMOS DE PRODUCCIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">🧴 INSUMOS DE PRODUCCIÓN</div>
 
         <!-- Aceite -->
         <div style="margin-bottom:14px;border-bottom:1px solid var(--gris3);padding-bottom:14px;">
@@ -1902,7 +1906,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
             <input type="range" id="ins-gas-pct" min="0" max="100" step="5" value="50"
               oninput="document.getElementById('ins-gas-display').textContent=this.value+'%'"
               style="width:100%;accent-color:var(--amarillo);">
-            <div style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="ins-gas-display">50%</div>
+            <div style="text-align:center;font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="ins-gas-display">50%</div>
           </div>
           <div style="margin-top:6px;">
             <div style="font-size:0.65rem;font-weight:700;color:#555;margin-bottom:3px;">ALERTA MÍNIMA (%)</div>
@@ -1998,7 +2002,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
       <!-- Alertas activas -->
       <div id="alertas-insumos" style="display:none;background:#2a0d0d;border:1px solid var(--rojo);border-radius:14px;padding:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--rojo);margin-bottom:8px;">⚠️ ALERTAS DE STOCK BAJO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--rojo);margin-bottom:8px;">⚠️ ALERTAS DE STOCK BAJO</div>
         <div id="alertas-insumos-lista" style="font-size:0.8rem;font-weight:700;color:#ff8080;"></div>
       </div>
     </div>
@@ -2006,7 +2010,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <!-- ══ TAB: CONSUMIBLES ══ -->
     <div id="prod-tab-consumibles" style="display:none;">
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">🧹 CONSUMIBLES</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">🧹 CONSUMIBLES</div>
         <div id="consumibles-grid" style="display:flex;flex-direction:column;gap:10px;"></div>
         <button onclick="guardarConsumibles()" style="margin-top:16px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--negro);cursor:pointer;">
           💾 Guardar consumibles
@@ -2017,7 +2021,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <!-- ══ TAB: INVENTARIO FÍSICO ══ -->
     <div id="prod-tab-inventario" style="display:none;">
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">📋 INVENTARIO FÍSICO DE PIEZAS</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">📋 INVENTARIO FÍSICO DE PIEZAS</div>
         <div style="font-size:0.72rem;font-weight:700;color:#555;margin-bottom:12px;">Cuenta las piezas que quedan al final del lote</div>
         <div style="margin-bottom:10px;">
           <div style="font-size:0.68rem;font-weight:700;color:#555;margin-bottom:4px;">LOTE</div>
@@ -2042,7 +2046,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-b2b">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
   </div>
 
   <!-- Tabs B2B -->
@@ -2065,15 +2069,15 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <div id="b2b-resumen" style="padding:12px 16px 0;display:none;">
     <div style="background:var(--gris);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-total">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-total">0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Clientes</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-ventas">$0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-ventas">$0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Ventas mes</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-pend">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-pend">0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Pendientes</div>
       </div>
     </div>
@@ -2093,26 +2097,26 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-prospeccion">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PROSPECTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PROSPECTOS</div>
   </div>
 
   <!-- Resumen + acciones -->
   <div style="padding:14px 16px 0;">
     <div id="pros-resumen" style="background:var(--gris);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;text-align:center;margin-bottom:10px;">
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-total">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-total">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Total</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--rojo);" id="pros-r-pend">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--rojo);" id="pros-r-pend">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Pendientes</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-cont">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-cont">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Contactados</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#4caf50;" id="pros-r-conv">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:#4caf50;" id="pros-r-conv">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Convertidos</div>
       </div>
     </div>
@@ -2298,14 +2302,14 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-caja">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CAJA</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CAJA</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
     <!-- Selector de fecha -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
       <button onclick="cambiarFechaCaja(-1)" style="background:var(--gris);border:1px solid var(--gris3);border-radius:8px;padding:8px 12px;color:var(--blanco);font-size:1rem;cursor:pointer;">◀</button>
-      <div id="caja-fecha-label" style="flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;">—</div>
+      <div id="caja-fecha-label" style="flex:1;text-align:center;font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;">—</div>
       <button onclick="cambiarFechaCaja(1)" style="background:var(--gris);border:1px solid var(--gris3);border-radius:8px;padding:8px 12px;color:var(--blanco);font-size:1rem;cursor:pointer;">▶</button>
       <button onclick="cajaHoy()" id="caja-hoy-btn" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--suave);font-size:0.75rem;cursor:pointer;">HOY</button>
     </div>
@@ -2324,14 +2328,14 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="drawer" id="drawer-apertura-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">ABRIR CAJA</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">ABRIR CAJA</div>
       <button onclick="cerrarAperturaCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ap-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;color:var(--blanco);font-size:0.85rem;"></div>
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">💰 Saldo inicial</label>
       <input type="number" id="ap-saldo" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Bebas Neue',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
     </div>
     <div style="margin-bottom:14px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">📝 Notas (opcional)</label>
@@ -2349,14 +2353,14 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="drawer" id="drawer-cierre-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">CERRAR CAJA</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">CERRAR CAJA</div>
       <button onclick="cerrarCierreCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ci-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.85rem;"></div>
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">💰 Saldo físico contado</label>
       <input type="number" id="ci-saldo" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Bebas Neue',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;"
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;"
         oninput="actualizarDiferenciaCierre()">
     </div>
     <div id="ci-diferencia" style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:14px;font-size:0.84rem;color:var(--suave);text-align:center;"></div>
@@ -2376,7 +2380,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="drawer" id="drawer-mov-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">NUEVO MOVIMIENTO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">NUEVO MOVIMIENTO</div>
       <button onclick="cerrarMovCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="mc-punto-info" style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:12px;font-size:0.85rem;color:var(--blanco);"></div>
@@ -2396,7 +2400,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">💰 Monto</label>
       <input type="number" id="mc-monto" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Bebas Neue',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
     </div>
 
     <div style="margin-bottom:12px;">
@@ -2416,7 +2420,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="drawer" id="drawer-accion-pendiente">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">PEDIDO PENDIENTE</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">PEDIDO PENDIENTE</div>
       <button onclick="cerrarAccionesPendiente()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ap-pend-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.85rem;color:var(--blanco);"></div>
@@ -2450,7 +2454,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-gastos">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">GASTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">GASTOS</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
@@ -2458,7 +2462,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div id="g-resumen" style="background:var(--gris);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <div style="font-size:0.7rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;">Total mes</div>
-        <div id="g-total" style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);">$0</div>
+        <div id="g-total" style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);">$0</div>
       </div>
       <div id="g-resumen-detalle" style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.72rem;color:var(--suave);"></div>
     </div>
@@ -2582,7 +2586,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-jornadas">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">JORNADA</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">JORNADA</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
@@ -2659,7 +2663,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-tracking">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">SEGUIMIENTO</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">SEGUIMIENTO</div>
   </div>
   <div style="padding:14px 16px 100px;">
     <div id="tk-contenido">
@@ -2676,7 +2680,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-productos">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCTOS</div>
   </div>
   <div style="padding:14px 16px 100px;">
     <div style="display:flex;gap:8px;margin-bottom:14px;">
@@ -2701,7 +2705,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-cupones">
   <div class="header">
     <div class="logo">🍟 Crunchy<span> Paps</span></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CUPONES</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CUPONES</div>
   </div>
   <div style="padding:14px 16px 100px;">
     <button onclick="abrirNuevoCupon()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--negro);cursor:pointer;margin-bottom:14px;">
@@ -2948,7 +2952,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <div class="header"><div class="logo">🍟 Crunchy<span> Paps</span></div></div>
   <div style="padding:14px 14px 120px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);letter-spacing:1px;">📊 Resumen de pedidos</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);letter-spacing:1px;">📊 Resumen de pedidos</div>
       <div style="display:flex;gap:6px;">
         <button onclick="copiarResumenDia()" style="background:#25D366;border:none;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">📋 Compartir</button>
         <button onclick="descargarInformePDF()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">📄 PDF</button>
@@ -2983,7 +2987,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div id="resumen-stock" style="margin-bottom:14px;"></div>
     <div id="recordatorios-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">💸 RECORDATORIOS DE PAGO</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">💸 RECORDATORIOS DE PAGO</span>
         <div style="display:flex;gap:6px;">
           <button onclick="editarCopyRecordatorio()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;white-space:nowrap;">✏️ Mensaje</button>
           <button onclick="cargarRecordatoriosPago()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;white-space:nowrap;">↻ Ver pendientes</button>
@@ -3002,7 +3006,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     </div>
     <div id="kardex-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📒 KÁRDEX DE LOTE</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📒 KÁRDEX DE LOTE</span>
         <select id="kardex-lote-select" onchange="renderKardexLote(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;max-width:60%;">
           <option value="">Selecciona lote…</option>
         </select>
@@ -3011,14 +3015,14 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     </div>
     <div id="regalos-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🎁 REGALOS VS VENTAS</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🎁 REGALOS VS VENTAS</span>
         <input type="month" id="regalos-mes" onchange="cargarMetricaRegalo(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;">
       </div>
       <div id="regalos-cont"><div style="color:var(--suave);font-size:0.8rem;">Cargando métrica…</div></div>
     </div>
     <div id="embudo-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🫗 ¿DÓNDE SE CAE LA GENTE?</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🫗 ¿DÓNDE SE CAE LA GENTE?</span>
         <select id="embudo-dias" onchange="cargarEmbudo(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;">
           <option value="7">7 días</option>
           <option value="30" selected>30 días</option>
@@ -3115,7 +3119,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="flex:1;min-width:0;">
           <div style="font-size:0.74rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;">✅ Cupón aplicado</div>
-          <div id="cupon-aplicado-codigo" style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--amarillo);line-height:1;margin-top:2px;">CODIGO</div>
+          <div id="cupon-aplicado-codigo" style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--amarillo);line-height:1;margin-top:2px;">CODIGO</div>
           <div id="cupon-aplicado-desc" style="font-size:0.74rem;color:var(--blanco);margin-top:2px;">Descuento</div>
         </div>
         <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid #555;border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">✕ Quitar</button>
@@ -3146,7 +3150,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div class="form-section">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-cliente">1</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">CLIENTE</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">CLIENTE</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <!-- Buscador de cliente para vendedores en visita -->
@@ -3217,7 +3221,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div id="entrega-wrap" style="display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-entrega">2</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">🚚 ENTREGA</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">🚚 ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div id="entrega-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
@@ -3265,7 +3269,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div class="form-section">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-direccion">3</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📍 DIRECCIÓN</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📍 DIRECCIÓN</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div class="form-row">
@@ -3306,7 +3310,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <!-- Método de pago -->
     <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
       <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-pago">4</span>
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">💳 PAGO</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">💳 PAGO</span>
       <span style="flex:1;height:1px;background:var(--gris3);"></span>
     </div>
     <div class="pagos-grid" id="pagos-grid">
@@ -3355,7 +3359,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div id="fecha-entrega-wrap" style="background:var(--gris2);border-radius:10px;padding:10px 14px;margin-top:10px;display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-fecha">5</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📅 FECHA DE ENTREGA</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📅 FECHA DE ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div style="font-weight:800;color:var(--amarillo);font-size:0.9rem;" id="fecha-entrega-lbl">Calculando...</div>
@@ -7922,7 +7926,7 @@ async function renderProduccion() {
           <div style="font-size:0.65rem;font-weight:700;color:#555;margin-bottom:4px;">KG DISPONIBLES</div>
           <input type="number" id="inv-${idx}" value="${s.kilosDisponibles.toFixed(2)}"
             min="0" step="0.1"
-            style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--amarillo);font-family:'Bebas Neue',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
+            style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
             onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
         </div>
       </div>
@@ -7970,7 +7974,7 @@ async function renderProduccion() {
                   </div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--blanco);">${l.kilosTotales}kg</div>
+                  <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);">${l.kilosTotales}kg</div>
                   <div style="font-size:0.68rem;color:${colorPct};">${pct}% vendido</div>
                 </div>
               </div>
@@ -8659,7 +8663,7 @@ async function pintarRegalosCliente() {
       html += `<div class="pedido-card" style="opacity:0.95;">
         <div class="pedido-top">
           <span class="pedido-consec">${lbl[r.tipo_interno]||'🎁 Regalo'}</span>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--amarillo);">${kgTxt}</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);">${kgTxt}</span>
         </div>
         <div class="pedido-fecha">${f}${r.consecutivo ? ' · ' + r.consecutivo : ''}</div>
         <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;font-weight:700;">Cortesía · no es compra</div>
@@ -8689,8 +8693,8 @@ function renderPedidos() {
     <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,#1a1200,#2a2000);border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
       <div style="font-size:0.68rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">⭐ Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
       </div>
       <div style="font-size:0.75rem;color:var(--suave);font-weight:600;">${ultimo.fecha?new Date(ultimo.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
       <span class="pedido-estatus ${ultimo.estatus==='Entregado'?'entregado':''}" style="margin-top:8px;">${ultimo.estatus||'Pendiente'}</span>
@@ -8957,7 +8961,7 @@ function pintarDashboard() {
       <div style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-weight:800;color:var(--blanco);font-size:0.82rem;">${medalla} ${v.nombre || ('Vendedor '+id)}</span>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--amarillo);">$${ventas.toLocaleString('es-MX')}</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">$${ventas.toLocaleString('es-MX')}</span>
         </div>
         <div style="background:var(--gris3);border-radius:4px;height:7px;overflow:hidden;margin-bottom:4px;">
           <div style="background:${pct>=100?'#4caf50':'var(--amarillo)'};height:100%;width:${Math.max(2,Math.round((ventas/maxVend)*100))}%;"></div>
@@ -8984,7 +8988,7 @@ function pintarDashboard() {
     </div>`;
   const miniStat = (lbl, val, color) => `
     <div style="flex:1;min-width:70px;background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:${color||'var(--amarillo)'};line-height:1;">${val}</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:${String(val).length>8?'0.95rem':String(val).length>6?'1.15rem':'1.4rem'};color:${color||'var(--amarillo)'};line-height:1;">${val}</div>
       <div style="font-size:0.6rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${lbl}</div>
     </div>`;
 
@@ -9007,7 +9011,7 @@ function pintarDashboard() {
 
   cont.innerHTML =
     card(`💰 Ventas del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
-      `<div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
+      `<div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
        <div style="margin:4px 0 12px;">${deltaTxt}</div>
        <div style="display:flex;align-items:flex-end;gap:2px;height:70px;">${barrasDia}</div>
        <div style="font-size:0.58rem;color:var(--suave);text-align:center;margin-top:2px;">ventas por día del mes</div>`) +
@@ -9063,7 +9067,7 @@ window.descargarInformePDF = function() {
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:'Inter',Arial,sans-serif;background:#fff;color:#111;margin:0;padding:22px;}
     .cp-head{display:flex;align-items:center;gap:10px;border-bottom:3px solid #FFD200;padding-bottom:12px;margin-bottom:18px;}
-    .cp-head h1{font-size:18px;margin:0;color:#111;font-family:'Bebas Neue',Arial,sans-serif;letter-spacing:1px;}
+    .cp-head h1{font-size:18px;margin:0;color:#111;font-family:'Archivo',Arial,sans-serif;letter-spacing:1px;}
     .cp-head .d{margin-left:auto;color:#666;font-size:12px;text-transform:capitalize;}
     @media print { .noprint{display:none!important;} }
   `;
@@ -9072,7 +9076,7 @@ window.descargarInformePDF = function() {
   w.document.write(
     '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">' +
     '<title>Crunchy Paps — Informe ' + fecha + '</title>' +
-    '<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">' +
     '<style>' + css + '</style></head><body>' +
     '<div class="cp-head"><span style="font-size:22px;">🍟</span><h1>Crunchy Paps — Informe</h1><span class="d">' + fecha + '</span></div>' +
     dash + prod + stock +
@@ -9315,12 +9319,12 @@ window.cargarMetricaRegalo = async function(yyyymm) {
       <div style="display:flex;gap:10px;margin-bottom:12px;">
         <div style="flex:1;background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
           <div style="font-size:0.66rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">% en volumen</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:${colorPct(r.pct_volumen)};line-height:1;">${pctV}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:${colorPct(r.pct_volumen)};line-height:1;">${pctV}</div>
           <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;">${fmtKg(r.regalo_kg)} / ${fmtKg(r.ventas_kg)}</div>
         </div>
         <div style="flex:1;background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
           <div style="font-size:0.66rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">% en dinero</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:${colorPct(r.pct_dinero)};line-height:1;">${pctD}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:${colorPct(r.pct_dinero)};line-height:1;">${pctD}</div>
           <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;">${fmtMx(r.regalo_mxn)} / ${fmtMx(r.ventas_mxn)}</div>
         </div>
       </div>`;
@@ -9580,13 +9584,13 @@ async function renderResumenInventario(elId, incluirLote) {
       const filas = Object.keys(porSabor).map(sab => {
         const celdas = PRES.map(p => {
           const n = porSabor[sab][p]||0;
-          return `<span style="flex:1;text-align:center;color:${n>0?'var(--amarillo)':'#444'};font-family:'Bebas Neue',sans-serif;font-size:1rem;">${n}</span>`;
+          return `<span style="flex:1;text-align:center;color:${n>0?'var(--amarillo)':'#444'};font-family:'Archivo',sans-serif;font-size:1rem;">${n}</span>`;
         }).join('');
         return `<div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--gris3);"><span style="flex:1.4;font-size:0.76rem;font-weight:700;color:var(--blanco);">${sab}</span>${celdas}</div>`;
       }).join('');
       fisicoHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📦 STOCK TERMINADO</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">📦 STOCK TERMINADO</span>
           <span style="font-size:0.64rem;">${badge}</span>
         </div>
         <div style="display:flex;align-items:center;padding:2px 0;"><span style="flex:1.4;"></span>${PRES.map(p=>`<span style="flex:1;text-align:center;font-size:0.6rem;font-weight:800;color:#555;">${p}</span>`).join('')}</div>
@@ -9595,20 +9599,20 @@ async function renderResumenInventario(elId, incluirLote) {
         <div style="margin-top:6px;font-size:0.62rem;color:#444;font-style:italic;">Para actualizar: pestaña Inv. Físico.</div>`;
     } else {
       fisicoHTML = `
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:6px;">📦 STOCK TERMINADO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:6px;">📦 STOCK TERMINADO</div>
         <div style="color:var(--rojo);font-size:0.8rem;">🔴 Sin conteo físico de este lote. Regístralo en Inv. Físico.</div>`;
     }
 
     const loteHTML = incluirLote ? `
       <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🏭 LOTE ACTIVO</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🏭 LOTE ACTIVO</span>
           <span style="font-size:0.7rem;color:#666;">${idLote}</span>
         </div>
         <div style="display:flex;justify-content:space-between;text-align:center;">
-          <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--blanco);">${tot.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
-          <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);">${ven.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
-          <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${tot.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${ven.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
         </div>
         <div style="background:#222;border-radius:6px;height:8px;overflow:hidden;margin-top:8px;"><div style="background:${colP};height:8px;width:${pct}%;"></div></div>
         <div style="font-size:0.66rem;color:#666;margin-top:4px;text-align:right;">${pct}% agotado</div>
@@ -9670,23 +9674,23 @@ async function cargarResumenProduccion() {
       <div style="display:grid;grid-template-columns:1fr;gap:10px;">
         <div style="background:var(--gris);border-radius:14px;padding:14px;${alerta==='agotado'?'border:1px solid var(--rojo);':''}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🏭 LOTE ACTIVO</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">🏭 LOTE ACTIVO</span>
             <span style="font-size:0.72rem;color:#666;">${l.id_lote || ('LOTE-'+l.id)} · ${fechaLoteTxt}</span>
           </div>
           <div style="display:flex;justify-content:space-between;gap:8px;text-align:center;margin-bottom:10px;">
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--blanco);">${totales.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);">${vendidos.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${totales.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${vendidos.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
           </div>
           <div style="background:#222;border-radius:6px;height:8px;overflow:hidden;"><div style="background:${colorPct};height:8px;width:${pct}%;transition:width .5s;"></div></div>
           <div style="font-size:0.7rem;color:${colorPct};margin-top:4px;text-align:right;">${pct}% agotado</div>
         </div>
         <div style="background:var(--gris);border-radius:14px;padding:14px;${alerta==='pronto'?'border:1px solid var(--amarillo);':alerta==='agotado'?'border:1px solid var(--rojo);':''}">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">📅 INVENTARIO RESTANTE</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">📅 INVENTARIO RESTANTE</div>
           <div style="display:flex;justify-content:space-between;gap:8px;text-align:center;">
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--blanco);">${promDiario>0?promDiario.toFixed(2):'—'}</span><span style="font-size:0.62rem;color:#666;">PROM. kg/día</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:${alerta?'var(--amarillo)':'var(--blanco)'};">${diasRestTxt}</span><span style="font-size:0.62rem;color:#666;">TE ALCANZA</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:${alerta?'var(--amarillo)':'#4caf50'};margin-top:6px;">${fechaSugTxt}</span><span style="font-size:0.62rem;color:#666;">PRODUCIR ~</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--blanco);">${promDiario>0?promDiario.toFixed(2):'—'}</span><span style="font-size:0.62rem;color:#666;">PROM. kg/día</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:${alerta?'var(--amarillo)':'var(--blanco)'};">${diasRestTxt}</span><span style="font-size:0.62rem;color:#666;">TE ALCANZA</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:0.95rem;color:${alerta?'var(--amarillo)':'#4caf50'};margin-top:6px;">${fechaSugTxt}</span><span style="font-size:0.62rem;color:#666;">PRODUCIR ~</span></span>
           </div>
           <div style="font-size:0.66rem;color:#555;margin-top:8px;font-style:italic;">Estimado con el promedio de venta del lote (${diasActivos} día${diasActivos>1?'s':''}).</div>
         </div>
@@ -10038,7 +10042,7 @@ async function renderGridInventarioFisico(idLote) {
         ${PRESENTACIONES.map(p => `
           <input type="number" min="0" step="1" value="0"
             id="if-${sabor.replace(/\s/g,'_')}-${p.id}"
-            style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:4px;color:var(--amarillo);font-family:'Bebas Neue',sans-serif;font-size:1rem;text-align:center;width:100%;outline:none;"
+            style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:4px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1rem;text-align:center;width:100%;outline:none;"
             onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
         `).join('')}
       </div>`).join('')}
@@ -10528,7 +10532,7 @@ function pintarVistaPedidosVendedor() {
       </div>
       ${cuotaSet ? `
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
           <div style="font-size:0.78rem;font-weight:700;color:var(--suave);">de $${(r.cuotaMes||0).toLocaleString('es-MX')} (${pct}%)</div>
         </div>
         <div class="vend-cuota-bar">
@@ -10543,7 +10547,7 @@ function pintarVistaPedidosVendedor() {
       ` : `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
             <div style="font-size:0.7rem;font-weight:700;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ventas del mes</div>
           </div>
           ${esAdminUser ? `
@@ -10571,7 +10575,7 @@ function pintarVistaPedidosVendedor() {
         <div style="margin-top:10px;background:rgba(255,210,0,0.06);border:1px dashed rgba(255,210,0,0.3);border-radius:10px;padding:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
             <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">📦 Volumen interno este mes</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);line-height:1;">${(r.kgInternosMes||0).toFixed(2)} kg</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);line-height:1;">${(r.kgInternosMes||0).toFixed(2)} kg</div>
           </div>
           ${r.kgInternosPorTipo ? `
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:0.7rem;color:var(--suave);font-weight:700;">
@@ -10645,7 +10649,7 @@ function pintarVistaPedidosVendedor() {
     </div>`;
   } else {
     listaHTML = filtrosHTML + `
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin:6px 0 10px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin:6px 0 10px;">
         📋 ${filtro==='todos'    ? 'PEDIDOS RECIENTES' :
              filtro==='nuevos'   ? '🔥 NUEVOS — POR CONFIRMAR' :
              filtro==='entregar' ? 'POR ENTREGAR' :
@@ -11020,7 +11024,7 @@ function pintarDetallePedido({ orden, lineas }) {
           <div style="font-size:0.74rem;color:var(--suave);">${l.presentacion||''}${esInterno ? '' : ` · $${(l.precio_unitario||0).toLocaleString('es-MX')} c/u`}</div>
           ${l.notas ? `<div style="font-size:0.7rem;color:#888;font-style:italic;">${l.notas}</div>` : ''}
         </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--amarillo);white-space:nowrap;">
+        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);white-space:nowrap;">
           ${esInterno ? `${pesoLinea.toFixed(3)} kg` : `$${sub}`}
         </div>
       </div>
@@ -11083,14 +11087,14 @@ function pintarDetallePedido({ orden, lineas }) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);">${consec}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);">${consec}</div>
           <div style="font-size:0.75rem;color:var(--suave);font-weight:600;text-transform:capitalize;">${fechaStr} · ${horaStr}</div>
         </div>
         <div style="text-align:right;">
           ${esInterno
-            ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">SIN CARGO</div>
+            ? `<div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">SIN CARGO</div>
                <div style="font-size:0.7rem;color:var(--suave);">${(gramosTotalPedido/1000).toFixed(2)} kg de producto</div>`
-            : `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${(orden.total||0).toLocaleString('es-MX')}</div>
+            : `<div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${(orden.total||0).toLocaleString('es-MX')}</div>
                <div style="font-size:0.7rem;color:var(--suave);">${orden.tipo_pago||''}</div>`}
         </div>
       </div>
@@ -11110,7 +11114,7 @@ function pintarDetallePedido({ orden, lineas }) {
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${(gramosTotalPedido/1000).toFixed(2)}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${(gramosTotalPedido/1000).toFixed(2)}</div>
           <div style="font-size:0.65rem;color:var(--suave);font-weight:700;text-transform:uppercase;">kg del lote</div>
         </div>
       </div>
@@ -11172,7 +11176,7 @@ function pintarDetallePedido({ orden, lineas }) {
       ` : ''}
       <div style="display:flex;justify-content:space-between;padding:10px 0 4px;border-top:2px solid var(--amarillo);margin-top:8px;">
         <span style="font-weight:800;color:var(--blanco);">${esInterno ? 'Total kg' : 'Total'}</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);">
+        <span style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);">
           ${esInterno
             ? `${(gramosTotalPedido/1000).toFixed(3)} kg`
             : `$${(orden.total||0).toLocaleString('es-MX')}`}
@@ -11264,7 +11268,7 @@ function preguntarMetodoPago(metodoActual) {
     wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.15s;';
     wrap.innerHTML = `
       <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:14px;padding:18px;max-width:340px;width:100%;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">¿CÓMO TE PAGARON?</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">¿CÓMO TE PAGARON?</div>
         <div style="color:var(--suave);font-size:0.78rem;margin-bottom:14px;">Confirma el método de pago real para registrar el cobro.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${opciones.map(o => {
@@ -11729,15 +11733,15 @@ function renderB2BLista() {
       ${c.aprobadoB2B && (totalHist > 0 || c.numPedidos > 0) ? `
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--gris2);border-radius:8px;padding:8px;margin:6px 0;text-align:center;">
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${ventasMes.toLocaleString('es-MX')}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${ventasMes.toLocaleString('es-MX')}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Mes</div>
           </div>
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${totalHist.toLocaleString('es-MX')}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${totalHist.toLocaleString('es-MX')}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Total</div>
           </div>
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">${c.numPedidos||0}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">${c.numPedidos||0}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Pedidos</div>
           </div>
         </div>
@@ -12275,15 +12279,15 @@ function mostrarResultadoRuta() {
   document.getElementById('ruta-resumen').innerHTML = `
     <div style="display:flex;justify-content:space-around;text-align:center;">
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${distKm}km</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${distKm}km</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Distancia</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${tiempoStr}</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${tiempoStr}</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Tiempo total</div>
       </div>
       <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${r.paradas.length}</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${r.paradas.length}</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Paradas</div>
       </div>
     </div>
@@ -13337,7 +13341,7 @@ function pintarListaGastos() {
           ${g.nombreVendedor ? `<div style="font-size:0.66rem;color:#666;margin-top:2px;">👤 ${g.nombreVendedor}</div>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
           <div style="display:inline-block;margin-top:4px;background:${c.bg};color:${c.fg};font-size:0.66rem;font-weight:800;padding:2px 8px;border-radius:50px;">${ico[g.estatusAprobacion]} ${g.estatusAprobacion}</div>
         </div>
       </div>
@@ -13569,7 +13573,7 @@ window.verDetalleGasto = function(id) {
   document.getElementById('dg-contenido').innerHTML = `
     <!-- Encabezado: monto + estatus -->
     <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
       <div style="display:inline-block;margin-top:8px;background:${c.bg};color:${c.fg};font-size:0.78rem;font-weight:800;padding:4px 14px;border-radius:50px;">${ico[g.estatusAprobacion]||g.estatusAprobacion}</div>
     </div>
 
@@ -13870,21 +13874,21 @@ async function cargarPendientesCaja() {
       html += `
         <div style="background:var(--gris);border-radius:10px;padding:10px;margin-bottom:12px;">
           <div style="font-size:0.7rem;color:var(--amarillo);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">⏳ Pendientes de procesar</div>
-          ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>💵 Efectivo en vendedores</span><span style="font-family:'Bebas Neue',sans-serif;color:#ffc107;">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
-          ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>🏦 Transferencias por verificar</span><span style="font-family:'Bebas Neue',sans-serif;color:#ffc107;">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
+          ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>💵 Efectivo en vendedores</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
+          ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>🏦 Transferencias por verificar</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
         </div>
       `;
     }
 
     // Sección efectivo por vendedor
     if (efectivoArr.length > 0) {
-      html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1.5px;margin:14px 0 8px;">💵 EFECTIVO PENDIENTE POR VENDEDOR</div>';
+      html += '<div style="font-family:\'Archivo\',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1.5px;margin:14px 0 8px;">💵 EFECTIVO PENDIENTE POR VENDEDOR</div>';
       html += efectivoArr.map(v => renderEfectivoVendedor(v)).join('');
     }
 
     // Sección transferencias pendientes
     if (transferArr.length > 0) {
-      html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1.5px;margin:14px 0 8px;">🏦 TRANSFERENCIAS POR CONFIRMAR EN BANCO</div>';
+      html += '<div style="font-family:\'Archivo\',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1.5px;margin:14px 0 8px;">🏦 TRANSFERENCIAS POR CONFIRMAR EN BANCO</div>';
       html += transferArr.map(p => renderTransferPendiente(p)).join('');
     }
 
@@ -13912,7 +13916,7 @@ function renderEfectivoVendedor(v) {
           <div style="font-weight:800;font-size:0.82rem;color:var(--blanco);">${p.consec}</div>
           <div style="font-size:0.7rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cliente || '—'} · ${fechaFmt}</div>
         </div>
-        <div style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.1rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.1rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
         <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'efectivo')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--amarillo);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
       </div>
     `;
@@ -13922,12 +13926,12 @@ function renderEfectivoVendedor(v) {
     <div style="background:var(--gris);border-radius:12px;padding:12px;margin-bottom:10px;border-left:3px solid #ffc107;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;min-width:0;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--blanco);letter-spacing:1px;">${v.nombreVendedor}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);letter-spacing:1px;">${v.nombreVendedor}</div>
           <div style="font-size:0.72rem;color:var(--suave);">${v.numPedidos} pedido${v.numPedidos===1?'':'s'} ${alerta}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Pendiente</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#ffc107;line-height:1;">$${Number(v.montoTotal).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:#ffc107;line-height:1;">$${Number(v.montoTotal).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
         </div>
       </div>
       <details style="margin-top:8px;">
@@ -13955,7 +13959,7 @@ function renderTransferPendiente(p) {
         <div style="font-size:0.7rem;color:#888;margin-top:1px;">${p.tipoPago}${p.nombreVendedor ? ' · vía ' + p.nombreVendedor : ''}</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Bebas Neue',sans-serif;color:#ffc107;font-size:1.2rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        <div style="font-family:'Archivo',sans-serif;color:#ffc107;font-size:1.2rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
       <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'transferencia')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--amarillo);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
     </div>
@@ -14039,7 +14043,7 @@ function renderPuntoCaja(p, esHoy) {
               <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.descripcion || m.tipo}</div>
               <div style="font-size:0.7rem;color:#555;">${hora} · ${m.actor || ''}</div>
             </div>
-            <div style="text-align:right;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${color};">${signo}$${monto.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+            <div style="text-align:right;font-family:'Archivo',sans-serif;font-size:1.1rem;color:${color};">${signo}$${monto.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
           </div>`;
       }).join('');
 
@@ -14048,12 +14052,12 @@ function renderPuntoCaja(p, esHoy) {
       <!-- Header del punto -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--blanco);letter-spacing:1px;">${tipoIco} ${p.nombre}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--blanco);letter-spacing:1px;">${tipoIco} ${p.nombre}</div>
           <div style="font-size:0.7rem;color:${estadoColor};font-weight:700;">${estadoBadge}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.66rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">${estatusDia==='cerrada'?'Saldo cierre':'Saldo'} </div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">$${saldoCalculado.toLocaleString('es-MX', {minimumFractionDigits:2})}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">$${saldoCalculado.toLocaleString('es-MX', {minimumFractionDigits:2})}</div>
         </div>
       </div>
 
@@ -14364,7 +14368,7 @@ window.abrirAccionesPendiente = function(idOrden, consec, monto, modo) {
   document.getElementById('ap-pend-info').innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
       <strong style="color:var(--amarillo);">${consec}</strong>
-      <span style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.2rem;">$${_accionPendActual.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      <span style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;">$${_accionPendActual.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
     </div>
     <div style="color:var(--suave);font-size:0.78rem;">Método declarado: ${icoModo}</div>
   `;
@@ -14945,7 +14949,7 @@ function pintarEstadoActual() {
     cont.innerHTML = `
       <div style="background:linear-gradient(135deg,#0d2d0d,#1a4a1a);border:1px solid #4caf50;border-radius:14px;padding:14px;">
         <div style="font-size:0.7rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">⏱️ Jornada activa</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">${horas}h ${mins}m</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">${horas}h ${mins}m</div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:4px;">
           Entrada: ${ent.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})} · ${ubicacionInfo}
         </div>
@@ -15026,7 +15030,7 @@ async function pintarReporteAdmin() {
           <div style="background:var(--gris2);border-radius:8px;padding:9px;margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;">
               <div style="font-weight:800;color:var(--blanco);font-size:0.84rem;">${v.nombreVendedor}</div>
-              <div style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${v.horasTotales}h</div>
+              <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${v.horasTotales}h</div>
             </div>
             <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">
               ${v.diasTrabajados} día(s) · ${v.promedioHorasDia}h/día prom · ${v.porcentajeEnPlanta}% en planta
@@ -15070,7 +15074,7 @@ function pintarHistorialJornadas() {
           ${j.autoCerrada ? `<div style="font-size:0.66rem;color:var(--rojo);margin-top:2px;">⚠️ Cerrada automáticamente</div>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap;">
-          <div style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">${horas}h</div>
+          <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">${horas}h</div>
         </div>
       </div>
     </div>`;
@@ -15296,7 +15300,7 @@ window.verDetalleJornada = function(id) {
 
   document.getElementById('dj-contenido').innerHTML = `
     <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">${horas}h</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">${horas}h</div>
       <div style="font-size:0.78rem;color:var(--suave);margin-top:4px;">${fecha}</div>
       ${adminViendo ? `<div style="font-size:0.74rem;color:var(--blanco);margin-top:3px;">👤 ${j.nombreVendedor}</div>` : ''}
       ${j.autoCerrada ? `<div style="margin-top:8px;font-size:0.72rem;color:var(--rojo);font-weight:700;">⚠️ Cerrada automáticamente</div>` : ''}
@@ -15526,11 +15530,11 @@ function pintarTracking() {
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${p.consecutivo}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${p.consecutivo}</div>
           <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">${fecha}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${p.total.toLocaleString('es-MX')}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${p.total.toLocaleString('es-MX')}</div>
           <div style="font-size:0.66rem;color:${p.estatusPago.toLowerCase().includes('paga')?'#4caf50':'var(--amarillo)'};font-weight:700;">${p.estatusPago}</div>
         </div>
       </div>
@@ -15741,7 +15745,7 @@ function cardProducto(p) {
         ${p.codigo_barras ? '🏷️ '+p.codigo_barras : ''}
       </div>
     </div>
-    <div style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">$${Number(p.precio_consumidor||0).toLocaleString('es-MX')}</div>
+    <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">$${Number(p.precio_consumidor||0).toLocaleString('es-MX')}</div>
   </div>`;
 }
 
@@ -16082,7 +16086,7 @@ function pintarListaCupones() {
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:1.1rem;">${ico[c.tipo]||'🎟️'}</span>
-            <span style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${c.codigo}</span>
+            <span style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${c.codigo}</span>
             ${estado}
           </div>
           <div style="font-size:0.74rem;color:var(--blanco);margin-top:3px;">${c.descripcion || valorStr}</div>
@@ -16092,7 +16096,7 @@ function pintarListaCupones() {
             ${c.min_compra > 0 ? ' · Mín $'+c.min_compra : ''}
           </div>
         </div>
-        <div style="font-family:'Bebas Neue',sans-serif;color:var(--amarillo);font-size:1.4rem;">${valorStr}</div>
+        <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;">${valorStr}</div>
       </div>
     </div>`;
   }).join('');
@@ -16496,7 +16500,7 @@ window.mostrarInstruccionesInstalar = function() {
   ov.innerHTML = `
     <div style="background:var(--negro);border-top:4px solid var(--amarillo);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:18px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--amarillo);">📲 INSTALAR LA APP</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">📲 INSTALAR LA APP</div>
         <button id="cp-instr-close" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;">✕</button>
       </div>
       <div style="font-size:0.82rem;color:var(--suave);margin-bottom:14px;line-height:1.4;">
