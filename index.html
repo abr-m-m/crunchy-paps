@@ -631,6 +631,45 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
 
+/* ── AVISO: el sustituto de alert() ──────────────────────────────────────
+   alert() detiene el hilo del navegador. En una PWA eso deja la pantalla
+   pintada a medias y los toques sin respuesta hasta que alguien pulse Aceptar,
+   y con el teclado del telefono abierto el cuadro a veces ni se ve. Esto hace
+   lo mismo sin congelar nada: se queda hasta que la persona lo cierra -que es
+   lo que un toast de 2,4s no puede hacer- pero la pagina sigue viva detras.
+   Por encima de 9999, que es el techo de apilamiento de la app: el checkout
+   vive dentro del drawer del carrito y el aviso tiene que taparlo. */
+.aviso-fondo {
+  position:fixed; inset:0; background:rgba(0,0,0,0.8);
+  z-index:10100; opacity:0; pointer-events:none; transition:opacity 0.25s;
+}
+.aviso-fondo.visible { opacity:1; pointer-events:all; }
+.aviso {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--gris); border-radius:20px 20px 0 0;
+  border-top:3px solid var(--amarillo); z-index:10101;
+  transform:translateY(100%); transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  max-height:85vh; overflow-y:auto; padding:20px 20px 32px;
+}
+.aviso.open { transform:translateY(0); }
+.aviso-titulo {
+  font-family:'Archivo',sans-serif; font-weight:700; font-size:1.35rem;
+  color:var(--amarillo); margin-bottom:10px; line-height:1.15;
+}
+/* pre-line: los mensajes llevan saltos de linea con listas y cifras, y eran
+   legibles dentro del alert. Se conservan sin tener que meter marcado. */
+.aviso-cuerpo {
+  font-size:0.95rem; font-weight:600; color:var(--blanco);
+  line-height:1.5; white-space:pre-line; margin-bottom:20px;
+}
+.aviso .btn-primary { padding:16px; }
+@media (min-width:560px) {
+  .aviso { left:50%; right:auto; transform:translate(-50%,100%);
+           width:460px; border-radius:20px; bottom:auto; top:50%;
+           margin-top:-1px; }
+  .aviso.open { transform:translate(-50%,-50%); }
+}
+
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 @keyframes bounceIn { 0%{transform:scale(0.3);opacity:0;} 50%{transform:scale(1.1);} 100%{transform:scale(1);opacity:1;} }
 @keyframes slideUp { from{transform:translateY(20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
@@ -3451,6 +3490,17 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <!-- TOAST -->
 <div class="toast" id="toast">¡Guardado! 🍟</div>
 
+<!-- El aviso vive fuera de toda pantalla y de todo drawer, porque tiene que
+     poder aparecer encima de cualquiera de los dos. role=alertdialog para que
+     un lector de pantalla lo anuncie y no lo trate como texto de la pagina. -->
+<div class="aviso-fondo" id="aviso-fondo"></div>
+<div class="aviso" id="aviso" role="alertdialog" aria-modal="true"
+     aria-labelledby="aviso-titulo" aria-describedby="aviso-cuerpo" hidden>
+  <div class="aviso-titulo" id="aviso-titulo"></div>
+  <div class="aviso-cuerpo" id="aviso-cuerpo"></div>
+  <button class="btn-primary" id="aviso-ok" type="button">Entendido</button>
+</div>
+
 <!-- v2.7.3: PERFORMANCE MONITOR (admin only) -->
 <div id="perf-monitor" style="display:none;position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.92);border:1px solid var(--amarillo);border-radius:10px;padding:8px 10px;min-width:240px;max-width:300px;font-family:monospace;font-size:0.7rem;color:#ddd;box-shadow:0 4px 16px rgba(0,0,0,0.6);">
   <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #444;padding-bottom:4px;margin-bottom:6px;">
@@ -5216,6 +5266,79 @@ function mostrarToast(mensaje) {
   setTimeout(()=>t.classList.remove('show'),2400);
 }
 
+// Sustituto de alert(). Devuelve una promesa que se resuelve al cerrarse, asi
+// que dentro de una funcion async se comporta igual que alert(): el codigo de
+// despues espera. Esa espera es lo que un toast NO puede dar -dura 2,4s y se
+// va-, y estos mensajes llevan cifras y listas que hay que poder leer.
+//
+// Se cierra con el boton, con Escape o tocando fuera. Nunca se cierra solo:
+// si un mensaje se puede ignorar, es un toast, no un aviso.
+const SALTO = String.fromCharCode(10);
+let _avisoCerrarActual = null;
+window.avisar = function(opciones) {
+  const o = opciones || {};
+  return new Promise(function(resolver) {
+    // Si ya habia uno abierto se cierra primero, para no apilar dos cajas ni
+    // dejar dos promesas colgando.
+    if (_avisoCerrarActual) { try { _avisoCerrarActual(); } catch (_e) {} }
+
+    const fondo  = document.getElementById('aviso-fondo');
+    const caja   = document.getElementById('aviso');
+    const boton  = document.getElementById('aviso-ok');
+    const titulo = document.getElementById('aviso-titulo');
+    const cuerpo = document.getElementById('aviso-cuerpo');
+    // Si el marcado no esta (una version cacheada por el service worker, por
+    // ejemplo), no se pierde el mensaje: se cae a alert() antes que callarlo.
+    if (!fondo || !caja || !boton) {
+      try { alert(`${o.titulo||''}
+
+${o.cuerpo||''}`.trim()); } catch (_e) {}
+      resolver(); return;
+    }
+
+    // textContent y no innerHTML: el cuerpo lleva texto que viene del servidor
+    // -nombre de producto, mensaje de error- y no debe poder inyectar marcado.
+    titulo.textContent = o.titulo || 'Aviso';
+    cuerpo.textContent = o.cuerpo || '';
+    boton.textContent  = o.boton  || 'Entendido';
+
+    const teniaFoco = document.activeElement;
+    caja.hidden = false;
+
+    function cerrar() {
+      fondo.classList.remove('visible');
+      caja.classList.remove('open');
+      boton.removeEventListener('click', cerrar);
+      fondo.removeEventListener('click', cerrar);
+      document.removeEventListener('keydown', porTecla);
+      // El marcado se vuelve a ocultar cuando termina la transicion, no antes,
+      // para que no desaparezca de golpe.
+      setTimeout(function(){ if (!caja.classList.contains('open')) caja.hidden = true; }, 320);
+      try { if (teniaFoco && teniaFoco.focus) teniaFoco.focus(); } catch (_e) {}
+      _avisoCerrarActual = null;
+      resolver();
+    }
+    function porTecla(e) {
+      if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
+      // Trampa de foco: sin esto el tabulador se pasea por el formulario que
+      // hay debajo, que es justo lo que el aviso esta tapando.
+      if (e.key === 'Tab') { e.preventDefault(); try { boton.focus(); } catch (_e) {} }
+    }
+
+    _avisoCerrarActual = cerrar;
+    boton.addEventListener('click', cerrar);
+    fondo.addEventListener('click', cerrar);
+    document.addEventListener('keydown', porTecla);
+
+    // Un fotograma de margen para que la transicion tenga desde donde salir.
+    requestAnimationFrame(function(){
+      fondo.classList.add('visible');
+      caja.classList.add('open');
+      setTimeout(function(){ try { boton.focus(); } catch (_e) {} }, 60);
+    });
+  });
+};
+
 // #3: aviso inmediato si el vendedor pone su propio número como teléfono del cliente
 // #4: renumeración dinámica de los encabezados de sección (omite las ocultas)
 function renumerarSecciones() {
@@ -6675,7 +6798,12 @@ window.confirmarPedido = async function() {
   if (!esVendedor && !telefonoVerif) {
     window._volverAlCheckout = true;
     try { cerrarCarrito(); } catch (_e) {}
-    alert('📱 Ya casi. Verificamos tu número para confirmar el pedido — tu carrito se queda como está.');
+    await avisar({
+      titulo: '📱 Ya casi',
+      cuerpo: `Verificamos tu número para confirmar el pedido.
+Tu carrito se queda como está.`,
+      boton: 'Verificar mi número'
+    });
     ir('s-otp');
     return;
   }
@@ -6696,7 +6824,11 @@ window.confirmarPedido = async function() {
   if (_faltMay.length) {
     _enviandoPedido = false; clearTimeout(safetyTimer);
     const detalle = _faltMay.map(f => `• ${f.presentacion}: tienes ${f.actual}, mínimo ${f.minimo}`).join('\n');
-    alert('🧾 Pedido de mayoreo: aún no alcanzas el mínimo por presentación.\n\n' + detalle + '\n\nAgrega más piezas de esas presentaciones para continuar.');
+    await avisar({
+      titulo: '🧾 Aún no alcanzas el mínimo de mayoreo',
+      cuerpo: 'Falta llegar al mínimo por presentación:' + SALTO + SALTO + detalle + SALTO + SALTO +
+              'Agrega más piezas de esas presentaciones para continuar.'
+    });
     return;
   }
 
@@ -6749,7 +6881,11 @@ window.confirmarPedido = async function() {
 
   // Si está en modo interno pero no eligió tipo, frenar con mensaje claro
   if (esModoInternoActivo && !esInternoCheck) {
-    alert('⚠️ Selecciona un motivo para el pedido interno (Sampling, Consumo, Demo, Regalo o Merma) antes de confirmar.');
+    await avisar({
+      titulo: '⚠️ Falta el motivo del pedido interno',
+      cuerpo: `Elige uno antes de confirmar:
+Sampling, Consumo, Demo, Regalo o Merma.`
+    });
     _enviandoPedido = false; clearTimeout(safetyTimer); return;
   }
 
@@ -6964,8 +7100,12 @@ window.confirmarPedido = async function() {
     // Error de red / timeout. NO limpiar idempotency key.
     _enviandoPedido = false; clearTimeout(safetyTimer);
     btn.disabled = false; btn.textContent = '✅ Confirmar pedido';
-    alert('Hubo un problema al enviar el pedido: ' + (e.message || 'Sin conexión') +
-          '\n\nIntenta de nuevo. Si el pedido sí se registró, no se duplicará.');
+    await avisar({
+      titulo: '📶 No se pudo enviar el pedido',
+      cuerpo: (e.message || 'Sin conexión') + SALTO + SALTO +
+              'Intenta de nuevo. Si el pedido sí llegó a registrarse, no se duplicará.',
+      boton: 'Reintentar'
+    });
     return;
   }
 
@@ -6984,19 +7124,34 @@ window.confirmarPedido = async function() {
     var _msg = (rp && rp.mensaje) || '';
 
     if (_err === 'precio_cambiado') {
-      alert('⚠️ El precio cambió mientras armabas tu pedido.\n\n' +
-            'Tu total: $' + Number(rp.totalEnviado || 0).toLocaleString('es-MX') + '\n' +
-            'Total correcto: $' + Number(rp.totalCorrecto || 0).toLocaleString('es-MX') + '\n\n' +
-            'Revisa tu carrito y confirma de nuevo.');
+      await avisar({
+        titulo: '⚠️ El precio cambió mientras armabas tu pedido',
+        cuerpo: 'Tu total: $' + Number(rp.totalEnviado || 0).toLocaleString('es-MX') + SALTO +
+                'Total correcto: $' + Number(rp.totalCorrecto || 0).toLocaleString('es-MX') + SALTO + SALTO +
+                'Revisa tu carrito y confirma de nuevo.',
+        boton: 'Revisar mi carrito'
+      });
     } else if (_err === 'sesion_requerida') {
-      alert('📱 Para completar tu pedido necesitamos verificar tu teléfono.');
+      await avisar({
+        titulo: '📱 Falta verificar tu teléfono',
+        cuerpo: 'Para completar tu pedido necesitamos confirmar tu número.',
+        boton: 'Verificar ahora'
+      });
       try { ir('s-otp'); } catch (_e) {}
     } else if (_err === 'producto_no_encontrado' || _err === 'granel_sin_precio') {
-      alert('⚠️ ' + (_msg || 'Uno de los productos ya no está disponible.') +
-            '\n\nQuítalo del carrito e intenta de nuevo.');
+      await avisar({
+        titulo: '⚠️ Un producto ya no está disponible',
+        cuerpo: (_msg || 'Uno de los productos de tu carrito ya no está disponible.') + SALTO + SALTO +
+                'Quítalo del carrito e intenta de nuevo.',
+        boton: 'Revisar mi carrito'
+      });
     } else {
-      alert('No se pudo registrar el pedido: ' + (_msg || _err) +
-            '\n\nIntenta de nuevo. Si el pedido sí se registró, no se duplicará.');
+      await avisar({
+        titulo: 'No se pudo registrar el pedido',
+        cuerpo: (_msg || _err) + SALTO + SALTO +
+                'Intenta de nuevo. Si el pedido sí llegó a registrarse, no se duplicará.',
+        boton: 'Reintentar'
+      });
     }
     return;
   }
