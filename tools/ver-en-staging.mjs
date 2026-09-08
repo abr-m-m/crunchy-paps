@@ -69,10 +69,15 @@ createServer((req, res) => {
   res.writeHead(200, { 'content-type': TIPOS[extname(p)] || 'text/plain' });
   res.end(readFileSync(p));
 }).listen(PUERTO, () => {
-  console.log(`\n  Piel clara corriendo en  http://localhost:${PUERTO}`);
-  console.log('  Base: STAGING (datos falsos)\n');
+  console.log('');
+  console.log(`  Crunchy Paps corriendo en  http://localhost:${PUERTO}`);
+  console.log('  Base: STAGING (datos falsos, no produccion)');
+  console.log('');
   console.log('  Para ver el panel, entra como vendedora:');
-  console.log('    teléfono  5500000001');
-  console.log('    PIN       1234\n');
-  console.log('  Ctrl+C para pararlo.\n');
+  console.log('    telefono  5500000001');
+  console.log('    PIN       1234   tecléalo y pulsa «Entrar»');
+  console.log('                     (son 6 casillas; los de 4 no se autoenvian)');
+  console.log('');
+  console.log('  Ctrl+C para pararlo.');
+  console.log('');
 });
