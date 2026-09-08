@@ -40,12 +40,23 @@ const PUERTO = 8794;
 let LLAVE = process.env.SUPABASE_KEY;
 if (!LLAVE) {
   try {
+    // `--output-format json` explicito: sin el, el CLI decide el formato segun
+    // si cree que lo llama un agente, y el 7 sep eso dejo al script sin llave.
+    // Ademas el CLI mezcla avisos («A new version...») con la respuesta, asi
+    // que se recorta desde el primer `{` o `[`.
     const out = execFileSync('supabase',
-      ['projects', 'api-keys', '--project-ref', 'dkwatbsaidlfjqjnfyrk'],
-      { encoding: 'utf8' });
-    LLAVE = JSON.parse(out).keys.find((k) => k.type === 'publishable')?.api_key;
-  } catch {
-    console.error('No pude pedirle la llave de staging al CLI de Supabase.');
+      ['projects', 'api-keys', '--project-ref', 'dkwatbsaidlfjqjnfyrk',
+       '--output-format', 'json'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const ini = out.search(/[\[{]/);
+    const j = JSON.parse(ini >= 0 ? out.slice(ini) : out);
+    const lista = Array.isArray(j) ? j : (j.keys || j.data || []);
+    LLAVE = lista.find((k) => k.type === 'publishable' || k.name === 'publishable' ||
+                              String(k.api_key || '').startsWith('sb_publishable_'))?.api_key;
+  } catch (e) {
+    // Solo el tipo de error: el mensaje de un JSON.parse fallido trae un trozo
+    // de la salida, y ahi puede ir una llave.
+    console.error('No pude pedirle la llave de staging al CLI de Supabase (' + (e && e.name) + ').');
     console.error('Alternativa:  SUPABASE_KEY=<llave publishable> node tools/ver-en-staging.mjs');
     process.exit(1);
   }
