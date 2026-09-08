@@ -5226,7 +5226,7 @@ window.calcGranel = function() {
 window.agregarGranel = function() {
   const monto = parseFloat(document.getElementById('granel-monto').value)||0;
   const sabor = document.getElementById('granel-sabor').value;
-  if (!monto||!sabor) { alert('Selecciona un sabor e ingresa el monto'); return; }
+  if (!monto||!sabor) { mostrarToast('⚠️ Selecciona un sabor e ingresa el monto'); return; }
   const granel = catalogo.find(p=>p.sabor===sabor&&p.tipo_venta===2);
   const kg  = granel?(granel.precio_granel_kg||220):220;
   const grs = Math.round((monto/kg)*1000);
@@ -6533,7 +6533,7 @@ window.usarMiUbicacion = function() {
 
   // Verificar soporte del navegador
   if (!navigator.geolocation) {
-    alert('Tu navegador no soporta geolocalización. Por favor escribe la dirección manualmente.');
+    avisar({ titulo: '📍 Sin geolocalización', cuerpo: 'Tu navegador no soporta geolocalización. Escribe la dirección manualmente.' });
     return;
   }
 
@@ -6577,7 +6577,7 @@ window.usarMiUbicacion = function() {
         geocoder.geocode({ location: { lat, lng } }, async (results, status) => {
           if (status !== 'OK' || !results || !results[0]) {
             reset();
-            alert('No pude identificar la dirección. Mueve el pin del mapa al punto exacto o escribe la dirección manualmente.');
+            avisar({ titulo: '📍 No pude identificar la dirección', cuerpo: 'Mueve el pin del mapa al punto exacto o escribe la dirección manualmente.' });
             // Aún así mostramos el mapa con el punto detectado
             dirCoords = { lat, lng };
             mostrarMapaInteractivo(lat, lng);
@@ -6650,7 +6650,7 @@ window.usarMiUbicacion = function() {
         });
       } catch(e) {
         reset();
-        alert('Error al consultar Google Maps: ' + e.message);
+        avisar({ titulo: '📍 Error al consultar Google Maps', cuerpo: e.message });
       }
     },
     function(error) {
@@ -6659,7 +6659,7 @@ window.usarMiUbicacion = function() {
       if (error.code === 1)      msg = 'Permiso denegado. Activa la ubicación en los ajustes del navegador.';
       else if (error.code === 2) msg = 'Ubicación no disponible. Verifica el GPS de tu dispositivo.';
       else if (error.code === 3) msg = 'Tiempo agotado. Intenta de nuevo.';
-      alert(msg);
+      avisar({ titulo: '📍 Ubicación', cuerpo: msg });
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
@@ -7325,8 +7325,8 @@ ${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
       return;
     } catch (err) {
       btn.disabled = false; btn.textContent = '✅ Confirmar pedido';
-      alert('No se pudo iniciar el pago con tarjeta: ' + (err.message || '') +
-            '\n\nTu pedido quedó guardado. Intenta pagar de nuevo.');
+      await avisar({ titulo: '💳 No se pudo iniciar el pago con tarjeta', cuerpo: (err.message || '') + SALTO + SALTO +
+            'Tu pedido quedó guardado. Intenta pagar de nuevo.' });
       return;
     }
   }
@@ -7379,12 +7379,12 @@ window.enviarWpp = function() {
 
 // v2.10: enviar resumen a otro contacto (abre WhatsApp para que el usuario elija)
 window.enviarWppOtro = function() {
-  if (!wppUrlPend) { alert('Sin datos del pedido'); return; }
+  if (!wppUrlPend) { mostrarToast('⚠️ Sin datos del pedido'); return; }
   // Extraer el texto codificado del URL del vendedor
   const match = wppUrlPend.vendedor.match(/wa\.me\/\d+\?text=(.*)$/);
   const textParam = match && match[1] ? match[1] : '';
   if (!textParam) {
-    alert('No hay texto de resumen para compartir');
+    mostrarToast('⚠️ No hay texto de resumen para compartir');
     return;
   }
   // Usar wa.me/?text=... (sin número) → WhatsApp abre el selector de contacto
@@ -8241,7 +8241,7 @@ window.inicializarSaboresProduccion = async function() {
     mostrarToast('✅ Sabores inicializados');
     renderProduccion();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
   }
 };
 
@@ -8276,7 +8276,7 @@ window.registrarNuevoLote = async function() {
   const notas = document.getElementById('lote-notas').value;
 
   if (!fecha || !kilos || kilos <= 0) {
-    alert('Ingresa fecha y kilos del lote');
+    mostrarToast('⚠️ Ingresa fecha y kilos del lote');
     return;
   }
   // Guardia anti-toneladas: un lote artesanal no pesa cientos de kilos
@@ -8306,7 +8306,7 @@ window.registrarNuevoLote = async function() {
 
 window.guardarFechaProduccion = async function() {
   const fecha = document.getElementById('fecha-prod-input').value;
-  if (!fecha) { alert('Selecciona una fecha'); return; }
+  if (!fecha) { mostrarToast('⚠️ Selecciona una fecha'); return; }
   try {
     // v2.9: actualizar fecha_siguiente en todos los sabores activos
     // Actualiza TODAS las filas activas: el RPC lo hace explícito con
@@ -8345,7 +8345,7 @@ window.calcCanje = function(val) {
 // era `pts > puntos` contra una variable local, y cualquiera con la consola
 // abierta se habría regalado el descuento.
 window.aplicarCanje = function() {
-  alert('El canje de puntos estará disponible muy pronto. Tus puntos se siguen acumulando y no caducan.');
+  avisar({ titulo: '🎁 Muy pronto', cuerpo: 'El canje de puntos estará disponible muy pronto. Tus puntos se siguen acumulando y no caducan.' });
 };
 
 
@@ -10052,14 +10052,14 @@ window.reasignarVendedor = async function(idCliente, idVendedor, nombreVendedor)
       p_nombre_vendedor: nomV,
       p_token: tokenVendedor(),
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') }); return; }
     mostrarToast('✅ Vendedor reasignado');
     const cli = _b2bClientes.find(c => String(c.id) === String(idCliente));
     if (cli) {
       cli.idVendedor = idV;
       cli.vendedor   = nomV;
     }
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.aprobarB2B = async function(idCliente, tipo) {
@@ -10077,7 +10077,7 @@ window.aprobarB2B = async function(idCliente, tipo) {
       if (c) c.aprobadoB2B = true;
       renderB2BLista();
     } else {
-      alert('Error: ' + (res?.error || ''));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') });
     }
   } catch(e) { mostrarToast('Error: ' + e.message); }
 };
@@ -10138,7 +10138,7 @@ window.editarLote = async function(idLote, kilosTotales, kilosDisponibles) {
   );
   if (!nuevosKilos || isNaN(nuevosKilos)) return;
   const kilos = parseFloat(nuevosKilos);
-  if (kilos <= 0) { alert('Ingresa un valor válido'); return; }
+  if (kilos <= 0) { mostrarToast('⚠️ Ingresa un valor válido'); return; }
 
   try {
     // v2.9: PATCH lotes_produccion por id_lote
@@ -10262,7 +10262,7 @@ function calcularTotalFisico() {
 
 window.guardarInventarioFisico = async function() {
   const idLote = document.getElementById('inv-lote-select')?.value;
-  if (!idLote) { alert('Selecciona un lote'); return; }
+  if (!idLote) { mostrarToast('⚠️ Selecciona un lote'); return; }
 
   const items = [];
   SABORES_INV.forEach(sabor => {
@@ -10282,7 +10282,7 @@ window.guardarInventarioFisico = async function() {
     });
   });
 
-  if (!items.length) { alert('Ingresa al menos una pieza'); return; }
+  if (!items.length) { mostrarToast('⚠️ Ingresa al menos una pieza'); return; }
 
   try {
     // Snapshot: reemplaza el conteo previo por el actual. Antes eran DELETE y
@@ -10476,7 +10476,7 @@ window.seleccionarCliente = function(idx) {
     const msg = alertaCanal.msg + (totalItems > 0
       ? '\n\nSe vaciará el carrito para recalcular los precios correctos.'
       : '');
-    alert(msg);
+    avisar({ titulo: '🔄 Cambio de canal', cuerpo: msg });
     // Vaciar carrito
     carrito = {};
     actualizarBadge();
@@ -11034,9 +11034,9 @@ window.guardarReasignacionLote = async function(idOrden, consecutivo) {
       const cont = document.getElementById('reasignar-lote-' + idOrden);
       if (cont) cont.style.display = 'none';
     } else {
-      alert('No se pudo reasignar: ' + ((r && r.error) || 'error desconocido'));
+      avisar({ titulo: 'No se pudo reasignar el lote', cuerpo: (r && r.error) || 'error desconocido' });
     }
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -11054,7 +11054,7 @@ window.abrirSetCuota = async function() {
   );
   if (nueva === null || nueva === '') return;
   const cuota = Number(String(nueva).replace(/\D/g,''));
-  if (isNaN(cuota) || cuota < 0) { alert('Cantidad inválida'); return; }
+  if (isNaN(cuota) || cuota < 0) { mostrarToast('⚠️ Cantidad inválida'); return; }
 
   try {
     const res = await supabaseCall('POST', 'rpc/set_cuota_vendedor', {
@@ -11069,9 +11069,9 @@ window.abrirSetCuota = async function() {
       mostrarToast('✅ Cuota actualizada');
       renderPedidosVendedor(); // refrescar
     } else {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
     }
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -11409,7 +11409,7 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
     fechaEntregaReal: 'fecha_entrega_real',
   };
   const colSql = colMap[campo];
-  if (!colSql) { alert('Campo de fecha no válido'); return; }
+  if (!colSql) { mostrarToast('⚠️ Campo de fecha no válido'); return; }
 
   // valor viene como 'yyyy-mm-dd'; convertir a ISO timestamp para Postgres
   const patch = {};
@@ -11422,7 +11422,7 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
     const res = await supabaseCall('POST', 'rpc/actualizar_campos_pedido', {
       p_data: { idOrden: String(idOrden), campos: patch }
     });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Fecha actualizada');
 
     if (_pedidoActual) {
@@ -11430,7 +11430,7 @@ window.actualizarFechaPedido = async function(idOrden, campo, valor) {
       if (campo === 'fechaEntrega')     _pedidoActual.orden.fecha_entrega      = fechaObj;
       if (campo === 'fechaEntregaReal') _pedidoActual.orden.fecha_entrega_real = fechaObj;
     }
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // Helper: pregunta método de pago con modal simple
@@ -11512,7 +11512,7 @@ window.marcarEstatus = async function(idOrden, campo, valor) {
     if (campo === 'estatusPago')   data.estatusPago = valor;
 
     const res = await supabaseCall('POST', 'rpc/actualizar_estatus_pedido', { p_data: data });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') }); return; }
     mostrarToast('✅ ' + (campo === 'estatusPago' ? 'Pago' : 'Estatus') + ': ' + valor);
 
     // Actualizar localmente
@@ -11537,7 +11537,7 @@ window.marcarEstatus = async function(idOrden, campo, valor) {
     if (esVendedor && document.getElementById('s-pedidos').classList.contains('active')) {
       renderPedidosVendedor();
     }
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -11588,7 +11588,7 @@ function _numerosALetras(num) {
 }
 
 window.imprimirTicket = function() {
-  if (!_pedidoActual) { alert('No hay pedido seleccionado'); return; }
+  if (!_pedidoActual) { mostrarToast('⚠️ No hay pedido seleccionado'); return; }
   const { orden, lineas } = _pedidoActual;
 
   // Crear contenedor de impresión
@@ -12275,7 +12275,7 @@ window.centrarEnMiUbicacion = async function() {
   mostrarToast('📍 Buscando tu ubicación...');
   const loc = await obtenerMiUbicacion();
   if (!loc) {
-    alert('No pude obtener tu ubicación. Verifica permisos de geolocalización.');
+    avisar({ titulo: '📍 No pude obtener tu ubicación', cuerpo: 'Verifica los permisos de geolocalización.' });
     return;
   }
   _userLat = loc.lat;
@@ -12439,7 +12439,7 @@ window.calcularRutaOptima = async function() {
 
     mostrarResultadoRuta();
   } catch(e) {
-    alert('Error calculando ruta: ' + e.message);
+    avisar({ titulo: '🗺️ Error calculando la ruta', cuerpo: e.message });
     btn.disabled = false; actualizarBannerRuta();
   }
 };
@@ -12606,8 +12606,8 @@ window.guardarNuevoProspecto = async function() {
   const tel    = document.getElementById('np-tel').value.trim();
   const notas  = document.getElementById('np-notas').value.trim();
 
-  if (!nombre) { alert('Ingresa el nombre del negocio'); return; }
-  if (!_coordsNuevoProspecto) { alert('No hay ubicación. Activa el GPS y vuelve a intentar.'); return; }
+  if (!nombre) { mostrarToast('⚠️ Ingresa el nombre del negocio'); return; }
+  if (!_coordsNuevoProspecto) { mostrarToast('⚠️ No hay ubicación. Activa el GPS y vuelve a intentar.'); return; }
 
   // Calcular distancia a la planta
   function distanciaMetros(lat1, lng1, lat2, lng2) {
@@ -12646,13 +12646,13 @@ window.guardarNuevoProspecto = async function() {
     // partir del token, no el navegador: nadie registra prospectos a nombre de otro.
     const res = await supabaseCall('POST', 'rpc/crear_prospecto', { p_data: payload });
     if (!res || !res.ok) {
-      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Prospecto registrado');
     cerrarNuevoProspecto();
     renderProspeccion();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──────────────────────────────────────────
@@ -12877,11 +12877,11 @@ window.accionRegistrarVisita = async function(id) {
     const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', {
       p_data: { id, campos: payload, incrementarVisitas: true }
     });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Visita registrada');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.accionConvertirCliente = async function(id) {
@@ -12893,7 +12893,7 @@ window.accionConvertirCliente = async function(id) {
   let telefono = p.telefono;
   if (!telefono) {
     telefono = prompt('Teléfono de contacto del cliente (10 dígitos):', '');
-    if (!telefono) { alert('Teléfono requerido'); return; }
+    if (!telefono) { mostrarToast('⚠️ Teléfono requerido'); return; }
   }
 
   try {
@@ -12904,11 +12904,11 @@ window.accionConvertirCliente = async function(id) {
         nombreVendedor: vendedorInfo?.nombre || '',
       }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error||'')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
     mostrarToast('🎯 Convertido a cliente');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.accionDescartarProspecto = async function(id) {
@@ -12920,11 +12920,11 @@ window.accionDescartarProspecto = async function(id) {
       motivo_descarte: motivo,
       fecha_descarte: new Date().toISOString(),
     } } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🚫 Descartado');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.accionReactivarProspecto = async function(id) {
@@ -12935,11 +12935,11 @@ window.accionReactivarProspecto = async function(id) {
       motivo_descarte: null,
       fecha_descarte: null,
     } } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('↩️ Reactivado');
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──────────────────────────────────────────
@@ -13247,7 +13247,7 @@ window.confirmarImportacion = async function() {
 // ──────────────────────────────────────────
 window.probarImportUnaFila = async function() {
   if (!_prosCSVPendientes.length) {
-    alert('Primero carga el CSV.');
+    mostrarToast('⚠️ Primero carga el CSV.');
     return;
   }
   const test = _prosCSVPendientes[0];
@@ -13594,14 +13594,14 @@ document.addEventListener('change', function(e) {
     }
     // Mismo límite que el bucket, para avisar aquí en vez de fallar al subir.
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no debe exceder 5MB.');
+      mostrarToast('⚠️ La imagen no debe exceder 5MB.');
       e.target.value = '';
       _ticketArchivo = null;
       return;
     }
     const tipo = file.type || 'image/jpeg';
     if (!TICKET_TIPOS_OK.includes(tipo)) {
-      alert('Formato no admitido. Usa JPG, PNG, WEBP, HEIC o PDF.');
+      mostrarToast('⚠️ Formato no admitido. Usa JPG, PNG, WEBP, HEIC o PDF.');
       e.target.value = '';
       _ticketArchivo = null;
       return;
@@ -13625,9 +13625,9 @@ window.guardarGasto = async function() {
   const factura   = document.getElementById('ng-factura').value.trim();
   const notas     = document.getElementById('ng-notas').value.trim();
 
-  if (!fecha)      { alert('Falta la fecha'); return; }
-  if (!categoria)  { alert('Selecciona una categoría'); return; }
-  if (!monto || monto <= 0) { alert('Ingresa un monto válido'); return; }
+  if (!fecha)      { mostrarToast('⚠️ Falta la fecha'); return; }
+  if (!categoria)  { mostrarToast('⚠️ Selecciona una categoría'); return; }
+  if (!monto || monto <= 0) { mostrarToast('⚠️ Ingresa un monto válido'); return; }
 
   const btn = document.getElementById('ng-btn-guardar');
   btn.disabled = true; btn.textContent = 'Guardando...';
@@ -13660,7 +13660,7 @@ window.guardarGasto = async function() {
     const idGasto = (res && res.ok) ? res.id : null;
     const itemCheck = (res && res.ok) ? null : { message: (res && res.error) || 'Sin respuesta', code: 'RPC' };
     if (itemCheck && itemCheck.message && itemCheck.code) {
-      alert('Error: ' + itemCheck.message);
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: itemCheck.message });
       btn.disabled = false; btn.textContent = 'Guardar gasto';
       return;
     }
@@ -13717,7 +13717,7 @@ window.guardarGasto = async function() {
     cerrarNuevoGasto();
     renderGastos();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
     btn.disabled = false; btn.textContent = 'Guardar gasto';
   }
 };
@@ -13831,11 +13831,11 @@ window.aprobarGastoUI = async function(id) {
         aprobadoPor: vendedorInfo?.nombre || 'Admin',
       }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error || '')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') }); return; }
     mostrarToast('✅ Aprobado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.rechazarGastoUI = async function(id) {
@@ -13849,11 +13849,11 @@ window.rechazarGastoUI = async function(id) {
         aprobadoPor: vendedorInfo?.nombre || 'Admin',
       }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error || '')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || '') }); return; }
     mostrarToast('🚫 Rechazado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.editarGastoUI = function(id) {
@@ -13891,11 +13891,11 @@ window.eliminarGastoUI = async function(id) {
     // Borrar contabilidad no se deshace sin respaldos, así que el RPC lo
     // reserva al rol dueño.
     const res = await supabaseCall('POST', 'rpc/eliminar_gasto', { p_data: { id } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🗑️ Eliminado');
     cerrarDetalleGasto();
     renderGastos();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 
@@ -14321,7 +14321,7 @@ window.cerrarAperturaCaja = function() {
 window.confirmarApertura = async function() {
   const saldo = parseFloat(document.getElementById('ap-saldo').value) || 0;
   const notas = document.getElementById('ap-notas').value.trim();
-  if (saldo < 0) { alert('El saldo no puede ser negativo'); return; }
+  if (saldo < 0) { mostrarToast('⚠️ El saldo no puede ser negativo'); return; }
   if (!_cajaPuntoSeleccionado) return;
 
   const btn = document.getElementById('ap-btn');
@@ -14337,14 +14337,14 @@ window.confirmarApertura = async function() {
       }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Caja abierta');
     cerrarAperturaCaja();
     renderCaja();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
   } finally {
     btn.disabled = false; btn.textContent = '🔓 Abrir caja';
   }
@@ -14401,7 +14401,7 @@ window.confirmarCierre = async function() {
   if (!_cajaPuntoSeleccionado?.cajaDia) return;
   const declarado = parseFloat(document.getElementById('ci-saldo').value) || 0;
   const notas = document.getElementById('ci-notas').value.trim();
-  if (declarado < 0) { alert('El saldo no puede ser negativo'); return; }
+  if (declarado < 0) { mostrarToast('⚠️ El saldo no puede ser negativo'); return; }
   if (!confirm('¿Confirmas el cierre de caja? Esta acción no se puede deshacer.')) return;
 
   const btn = document.getElementById('ci-btn');
@@ -14417,14 +14417,14 @@ window.confirmarCierre = async function() {
       }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast(`✅ Cerrada. ${res.diferencia === 0 ? 'Cuadrado.' : 'Diferencia: $' + Number(res.diferencia).toFixed(2)}`);
     cerrarCierreCaja();
     renderCaja();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
   } finally {
     // Garantizar que el botón vuelva a su estado original SIEMPRE
     btn.disabled = false; btn.textContent = '🔒 Cerrar caja';
@@ -14468,7 +14468,7 @@ window.confirmarMovCaja = async function() {
   const tipo = document.getElementById('mc-tipo').value;
   const monto = parseFloat(document.getElementById('mc-monto').value) || 0;
   const desc = document.getElementById('mc-desc').value.trim();
-  if (!tipo || monto <= 0) { alert('Selecciona tipo y monto'); return; }
+  if (!tipo || monto <= 0) { mostrarToast('⚠️ Selecciona tipo y monto'); return; }
   if (!_cajaPuntoSeleccionado) return;
 
   const btn = document.getElementById('mc-btn');
@@ -14484,13 +14484,13 @@ window.confirmarMovCaja = async function() {
 
     if (tipo === 'efectivo_a_banco') {
       // Sale efectivo, entra a banco
-      if (!pEfectivo || !pBanco) { alert('Faltan puntos de caja configurados'); btn.disabled=false; btn.textContent='Registrar movimiento'; return; }
+      if (!pEfectivo || !pBanco) { avisar({ titulo: '⚠️ Faltan puntos de caja configurados', cuerpo: 'Configura el punto de efectivo y el de banco antes de registrar movimientos.' }); btn.disabled=false; btn.textContent='Registrar movimiento'; return; }
       idPuntoOrigen = pEfectivo.idPunto;
       idPuntoDestino = pBanco.idPunto;
       tipoBackend = 'retiro';  // desde efectivo es un retiro (sale)
       montoFinal = monto;       // la RPC se encarga de signos
     } else if (tipo === 'banco_a_efectivo') {
-      if (!pEfectivo || !pBanco) { alert('Faltan puntos de caja configurados'); btn.disabled=false; btn.textContent='Registrar movimiento'; return; }
+      if (!pEfectivo || !pBanco) { avisar({ titulo: '⚠️ Faltan puntos de caja configurados', cuerpo: 'Configura el punto de efectivo y el de banco antes de registrar movimientos.' }); btn.disabled=false; btn.textContent='Registrar movimiento'; return; }
       idPuntoOrigen = pBanco.idPunto;
       idPuntoDestino = pEfectivo.idPunto;
       tipoBackend = 'retiro';   // desde banco es un retiro (sale)
@@ -14519,7 +14519,7 @@ window.confirmarMovCaja = async function() {
       }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
       btn.disabled = false; btn.textContent = 'Registrar movimiento';
       return;
     }
@@ -14527,7 +14527,7 @@ window.confirmarMovCaja = async function() {
     cerrarMovCaja();
     renderCaja();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
     btn.disabled = false; btn.textContent = 'Registrar movimiento';
   } finally {
     // Garantizar restauración del botón en cualquier caso
@@ -14573,14 +14573,14 @@ window.ejecutarConfirmarPedido = async function() {
       }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Pedido confirmado en caja');
     cerrarAccionesPendiente();
     renderCaja();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
   } finally {
     btn.disabled = false; btn.textContent = '✓ Confirmar (entró en caja/banco)';
   }
@@ -14589,7 +14589,7 @@ window.ejecutarConfirmarPedido = async function() {
 window.ejecutarCorregirMetodo = async function() {
   if (!_accionPendActual) return;
   const nuevoMet = document.getElementById('ap-nuevo-metodo').value;
-  if (!nuevoMet) { alert('Selecciona método correcto'); return; }
+  if (!nuevoMet) { mostrarToast('⚠️ Selecciona método correcto'); return; }
   if (!confirm(`¿Cambiar método de pago de ${_accionPendActual.consec} a ${nuevoMet}?`)) return;
   try {
     const res = await supabaseCall('POST', 'rpc/corregir_metodo_pago_pedido', {
@@ -14600,14 +14600,14 @@ window.ejecutarCorregirMetodo = async function() {
       }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + (res?.error || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error || 'Sin respuesta') });
       return;
     }
     mostrarToast('✅ Método corregido a ' + nuevoMet);
     cerrarAccionesPendiente();
     renderCaja();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
   }
 };
 
@@ -14793,9 +14793,9 @@ window.guardarPermisosRol = async function(rol) {
     const res = await supabaseCall('POST', 'rpc/set_config_secciones', {
       p_data: { rol, secciones }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error||'')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Permisos de ' + rol + ' guardados');
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 async function pintarPermisosPorVendedor() {
@@ -14847,10 +14847,10 @@ window.guardarPermisosVendedor = async function(idVendedor) {
     const res = await supabaseCall('POST', 'rpc/set_secciones_vendedor', {
       p_data: { idVendedor, secciones }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error||'')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Permisos guardados');
     pintarPermisosPorVendedor();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.quitarOverrideVendedor = async function(idVendedor) {
@@ -14859,10 +14859,10 @@ window.quitarOverrideVendedor = async function(idVendedor) {
     const res = await supabaseCall('POST', 'rpc/set_secciones_vendedor', {
       p_data: { idVendedor, secciones: [] }
     });
-    if (!res || !res.ok) { alert('Error: ' + (res?.error||'')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: (res?.error||'') }); return; }
     mostrarToast('✅ Override quitado');
     pintarPermisosPorVendedor();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // Resolver qué secciones ve realmente un vendedor (mismo criterio que aplicarPermisosNavbar)
@@ -15033,11 +15033,11 @@ window.guardarMatrizPermisos = async function(btn) {
       supabaseCall('POST', 'rpc/set_secciones_vendedor', { p_data: { idVendedor: id, secciones: porVend[id] } })
     ));
     const fallos = results.filter(r => !r || !r.ok).length;
-    if (fallos) { alert('Se guardaron con ' + fallos + ' error(es). Revisa e intenta de nuevo.'); }
+    if (fallos) { avisar({ titulo: '⚠️ Se guardó con errores', cuerpo: 'Se guardaron con ' + fallos + ' error(es). Revisa e intenta de nuevo.' }); }
     else { mostrarToast('✅ Permisos guardados (' + ids.length + ' vendedores)'); }
     pintarMatrizPermisos();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
     if (btn) { btn.textContent = '💾 Guardar todo'; btn.disabled = false; }
   }
 };
@@ -15352,11 +15352,11 @@ window.confirmarIniciarJornada = async function() {
     };
     // El vendedor sale del token: nadie ficha por otro.
     const res = await supabaseCall('POST', 'rpc/guardar_jornada', { p_data: { campos: payload } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast(dentroPlanta ? '✅ Jornada iniciada en planta' : '⚠️ Iniciada FUERA de planta');
     cerrarIniciarJornada();
     renderJornadas();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──── Cerrar jornada ────
@@ -15424,11 +15424,11 @@ window.confirmarCerrarJornada = async function() {
     };
     const res = await supabaseCall('POST', 'rpc/guardar_jornada',
       { p_data: { id: _jornadaAbierta.id, campos: payload } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('🏁 Jornada cerrada');
     cerrarCerrarJornada();
     renderJornadas();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──── Editar actividades durante la jornada ────
@@ -15453,14 +15453,14 @@ window.actualizarActividades = async function() {
         notas_inicio: notas || null,
       }
     } });
-    if (!res || !res.ok) { alert('Error: ' + ((res && res.error) || 'Sin respuesta')); return; }
+    if (!res || !res.ok) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
     mostrarToast('✅ Actualizado');
     cerrarCerrarJornada();
     // Restaurar onclick original para próxima vez
     document.querySelector('#drawer-cerrar-jornada button[onclick="actualizarActividades()"]').setAttribute('onclick','confirmarCerrarJornada()');
     document.querySelector('#drawer-cerrar-jornada button[onclick="confirmarCerrarJornada()"]').textContent = '🏁 Cerrar jornada';
     renderJornadas();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──── Detalle jornada ────
@@ -15883,7 +15883,7 @@ window.togglePapa = async function(id, nuevoActivo, el) {
       p_data: { id, campos: { activo: nuevoActivo } }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
       el.checked = !nuevoActivo;
       togglePapa(id, !nuevoActivo, el);
       return;
@@ -15895,7 +15895,7 @@ window.togglePapa = async function(id, nuevoActivo, el) {
     if (p) p.activo = nuevoActivo;
     pintarListaProductos();
   } catch(e) {
-    alert('Error: ' + e.message);
+    avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message });
     el.checked = !nuevoActivo;
   }
 };
@@ -16000,8 +16000,8 @@ window.actualizarSwitchActivo = function() {
 window.guardarProducto = async function() {
   const nombre = document.getElementById('pf-nombre').value.trim();
   const precio = Number(document.getElementById('pf-precio').value);
-  if (!nombre) { alert('Captura un nombre'); return; }
-  if (!precio || precio <= 0) { alert('Captura un precio válido'); return; }
+  if (!nombre) { mostrarToast('⚠️ Captura un nombre'); return; }
+  if (!precio || precio <= 0) { mostrarToast('⚠️ Captura un precio válido'); return; }
 
   const payload = {
     nombre,
@@ -16024,14 +16024,14 @@ window.guardarProducto = async function() {
     const created = res;
     if (!res || !res.ok) {
       // Es un error de Supabase (ej. {message: "...", code: "..."})
-      alert('Error Supabase: ' + created.message);
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: created.message });
       return;
     }
     cacheClear(CACHE_KEYS.CATALOGO);
     mostrarToast(_editandoProducto ? '✅ Bebida actualizada' : '✅ Bebida creada');
     cerrarProdForm();
     cargarListaProductos();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 window.eliminarBebidaActual = async function() {
@@ -16045,14 +16045,14 @@ window.eliminarBebidaActual = async function() {
       p_data: { id: _editandoProducto.id, campos: { descontinuado: true, activo: false } }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     cacheClear(CACHE_KEYS.CATALOGO);
     mostrarToast('✅ Bebida eliminada');
     cerrarProdForm();
     cargarListaProductos();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 // ──── Escáner código de barras ────
@@ -16132,7 +16132,7 @@ document.addEventListener('click', e => {
 
 window.confirmarEscanerManual = function() {
   const codigo = document.getElementById('esc-manual').value.trim();
-  if (!codigo) { alert('Captura un código'); return; }
+  if (!codigo) { mostrarToast('⚠️ Captura un código'); return; }
   procesarCodigoEscaneado(codigo);
 };
 
@@ -16335,7 +16335,7 @@ window.actualizarValorCupon = function() {
 window.guardarCupon = async function() {
   const codigo = document.getElementById('cf-codigo').value.trim().toUpperCase();
   const tipo = document.getElementById('cf-tipo').value;
-  if (!codigo) { alert('Captura un código'); return; }
+  if (!codigo) { mostrarToast('⚠️ Captura un código'); return; }
 
   const payload = {
     codigo,
@@ -16357,13 +16357,13 @@ window.guardarCupon = async function() {
       p_data: { id: _editandoCupon ? _editandoCupon.id : null, campos: payload }
     });
     if (!res || !res.ok) {
-      alert('Error: ' + ((res && res.error) || 'Sin respuesta'));
+      avisar({ titulo: '⚠️ Algo salió mal', cuerpo: ((res && res.error) || 'Sin respuesta') });
       return;
     }
     mostrarToast(_editandoCupon ? '✅ Cupón actualizado' : '✅ Cupón creado');
     cerrarCupForm();
     cargarCupones();
-  } catch(e) { alert('Error: ' + e.message); }
+  } catch(e) { avisar({ titulo: '⚠️ Algo salió mal', cuerpo: e.message }); }
 };
 
 
