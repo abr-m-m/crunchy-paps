@@ -4546,7 +4546,11 @@ function restaurarSesion() {
     if (!s.telefonoVerif) return false;
     // Verificar expiración
     if (s.expira && Date.now() > s.expira) { localStorage.removeItem('cp_session'); return false; }
-    tipoCliente   = s.tipoCliente   || 'consumidor';
+    // Un vendedor entra siempre como 'vendedor' (así lo deja el PIN). Las
+    // sesiones guardadas antes del 7 sep 2026 pueden traer 'consumidor' —lo
+    // escribía confirmarPedido— y con eso el vendedor veía el checkout del
+    // consumidor. Se repara aquí, al restaurar.
+    tipoCliente   = s.esVendedor ? 'vendedor' : (s.tipoCliente || 'consumidor');
     telefonoVerif = s.telefonoVerif || '';
     esVendedor    = s.esVendedor    || false;
     vendedorInfo  = s.vendedorInfo  || null;
@@ -6389,6 +6393,13 @@ function initMaps() {
 // ── Fix coordenadas (Opción 1) ──────────────────────────────────────
 // Geocodifica una dirección de texto a {lat,lng}. Espera a que el SDK
 // de Maps esté listo. Devuelve null si no se pudo resolver.
+// Tope de espera al geocodificador. Si Maps carga pero no responde —bloqueador
+// de rastreo, corte de googleapis, referer rechazado— la devolución de llamada
+// no llega NUNCA, y confirmarPedido se quedaba en «Registrando...» para
+// siempre. Sin coordenadas el pedido sale igual; sin respuesta, no.
+// 2 s: un geocode vivo tarda 200-600 ms, hasta ~1.5 s en red movil floja.
+// (Empezo en 4 s; Abraham lo bajo el 7 sep: «es demasiado».)
+const GEOCODE_TOPE_MS = 2000;
 async function geocodificarDireccionTexto(direccionCompleta) {
   let intentos = 0;
   while ((typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) && intentos < 40) {
@@ -6397,9 +6408,11 @@ async function geocodificarDireccionTexto(direccionCompleta) {
   }
   if (typeof google === 'undefined' || !google.maps || !google.maps.Geocoder) return null;
   return new Promise((resolve) => {
+    const tope = setTimeout(() => resolve(null), GEOCODE_TOPE_MS);
     try {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address: direccionCompleta, componentRestrictions: { country: 'MX' } }, (results, status) => {
+        clearTimeout(tope);
         if (status === 'OK' && results && results[0] && results[0].geometry) {
           const loc = results[0].geometry.location;
           resolve({ lat: loc.lat(), lng: loc.lng() });
@@ -6407,7 +6420,7 @@ async function geocodificarDireccionTexto(direccionCompleta) {
           resolve(null);
         }
       });
-    } catch (_e) { resolve(null); }
+    } catch (_e) { clearTimeout(tope); resolve(null); }
   });
 }
 
@@ -6843,7 +6856,13 @@ Tu carrito se queda como está.`,
   const errEl   = document.getElementById('form-err');
   const mun     = document.getElementById('cp-mun').textContent;
   const est     = document.getElementById('cp-est').textContent;
-  const esB2B   = tipoCliente==='tienda'||tipoCliente==='restaurante';
+  // Tipo de ESTE pedido. Para un vendedor es el canal elegido; para el cliente
+  // web, su propio tipo. Antes se escribía en la global `tipoCliente`, y como
+  // `guardarSesion` la persiste, un vendedor que vendía a consumidor heredaba
+  // desde su segunda venta el checkout del consumidor (bloque de entrega y
+  // guarda del contacto Crunchy). La global no se toca.
+  const tipoPedido = (esVendedor && canalVenta) ? canalVenta : tipoCliente;
+  const esB2B   = tipoPedido==='tienda'||tipoPedido==='restaurante';
 
   // Validar RFC B2B
   if (esB2B && rfc) {
@@ -6939,7 +6958,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const esPedidoInterno = !!(window._pedidoInterno && window._pedidoInterno.tipo);
 
   // Para vendedor, el tipo de cliente es el canal seleccionado
-  if (esVendedor && canalVenta) tipoCliente = canalVenta;
+  // (`tipoPedido`, declarado arriba, ya lleva el canal del vendedor)
   const canal = esPedidoInterno
     ? 'interno'
     : (esVendedor
@@ -6957,7 +6976,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   if (esPedidoInterno) {
     idCliente = clienteActual?.id || 999999;
   } else {
-    const tipoParaRegistro = clienteActual?.tipo || TIPO_LABELS[tipoCliente] || tipoCliente;
+    const tipoParaRegistro = clienteActual?.tipo || TIPO_LABELS[tipoPedido] || tipoPedido;
     // Mapear tipo a tipoId numérico
     const tipoIdMap = {
       'Consumidor': 1, 'consumidor': 1,
@@ -7010,7 +7029,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   if (esVendedor) {
     vendedorPedidoId     = vendedorInfo?.id || '';
     vendedorPedidoNombre = vendedorInfo?.nombre || '';
-  } else if (tipoCliente === 'consumidor' && metodoEntrega === 'coordinar' && _contactoVendedor && _contactoVendedor.id > 0) {
+  } else if (tipoPedido === 'consumidor' && metodoEntrega === 'coordinar' && _contactoVendedor && _contactoVendedor.id > 0) {
     vendedorPedidoId     = _contactoVendedor.id;
     vendedorPedidoNombre = _contactoVendedor.nombre;
   } else {
@@ -7038,7 +7057,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const subtotalCarrito = totalMonto();
   const descuentoCupon = calcularDescuentoCupon(subtotalCarrito);
   // v2.10: Costo de envío si eligió paquetería
-  const costoEnvio = (metodoEntrega === 'paqueteria' && tipoCliente === 'consumidor' && !esPedidoInterno) ? COSTO_PAQUETERIA : 0;
+  const costoEnvio = (metodoEntrega === 'paqueteria' && tipoPedido === 'consumidor' && !esPedidoInterno) ? COSTO_PAQUETERIA : 0;
   // v2.10: descuento envío si cupón es envio_gratis
   const descuentoEnvio = calcularDescuentoEnvio(costoEnvio);
   const totalFinal = esPedidoInterno ? 0 : Math.max(0, subtotalCarrito - descuentoCupon + costoEnvio - descuentoEnvio);
@@ -7064,7 +7083,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       notas: (() => {
         let n = notas || '';
         // Solo agregar etiqueta de método de entrega para consumidor
-        if (tipoCliente !== 'consumidor' || esPedidoInterno) {
+        if (tipoPedido !== 'consumidor' || esPedidoInterno) {
           return n;
         }
         let etiqueta;
@@ -7132,6 +7151,11 @@ Sampling, Consumo, Demo, Regalo o Merma.`
         boton: 'Revisar mi carrito'
       });
     } else if (_err === 'sesion_requerida') {
+      // Igual que la guarda del OTP forzoso: se cierra el carrito ANTES de
+      // navegar —el cajón es fijo y tapaba la pantalla de OTP— y se marca la
+      // vuelta al checkout para que el cliente regrese a su pedido.
+      window._volverAlCheckout = true;
+      try { cerrarCarrito(); } catch (_e) {}
       await avisar({
         titulo: '📱 Falta verificar tu teléfono',
         cuerpo: 'Para completar tu pedido necesitamos confirmar tu número.',
@@ -7246,7 +7270,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
 `🍟 *NUEVO PEDIDO — Crunchy Paps*
 No. *${consec}*
 ━━━━━━━━━━━━━━━━━━
-🔖 *Canal:* ${(TIPO_LABELS[tipoCliente]||tipoCliente).toUpperCase()}
+🔖 *Canal:* ${(TIPO_LABELS[tipoPedido]||tipoPedido).toUpperCase()}
 👤 *Cliente:* ${nombre}
 📱 *Tel:* +52 ${telefonoVerif}
 ${negocio?`🏪 *Negocio:* ${negocio}\n`:''}${rfc?`📋 *RFC:* ${rfc}\n`:''}━━━━━━━━━━━━━━━━━━
@@ -7267,7 +7291,7 @@ ${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
   // Número WhatsApp del vendedor asignado
   // v2.11: Si consumidor eligió un contacto específico con teléfono, mandarle a él
   let telVendedor = WHATSAPP_NUM;  // default: número general
-  if (tipoCliente === 'consumidor' && metodoEntrega === 'coordinar' && _contactoVendedor && _contactoVendedor.id > 0) {
+  if (tipoPedido === 'consumidor' && metodoEntrega === 'coordinar' && _contactoVendedor && _contactoVendedor.id > 0) {
     // Buscar el teléfono del contacto en el cache
     const cached = (_vendedoresCheckoutCache || []).find(v => v.id === _contactoVendedor.id);
     const telCached = cached?.telefono;
@@ -7289,7 +7313,7 @@ ${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
   if (tipoPagoId === 5 && rp && rp.ok) {
     try {
       btn.textContent = 'Redirigiendo a pago seguro…';
-      const esB2BReal = tipoCliente === 'tienda' || tipoCliente === 'restaurante';
+      const esB2BReal = tipoPedido === 'tienda' || tipoPedido === 'restaurante';
       localStorage.setItem('cp_gracias_pendiente', JSON.stringify({
         consec,
         vendedorTxt: (vendedorAsig && esB2BReal) ? `Tu vendedor asignado: ${vendNombre}` : '',
@@ -7314,7 +7338,7 @@ ${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
   // Mostrar gracias
   document.getElementById('g-consec').textContent = consec;
   // Solo mostrar "vendedor asignado" si el cliente es B2B (tienda/restaurante)
-  const esB2BReal = tipoCliente === 'tienda' || tipoCliente === 'restaurante';
+  const esB2BReal = tipoPedido === 'tienda' || tipoPedido === 'restaurante';
   if (vendedorAsig && esB2BReal) {
     document.getElementById('g-vendedor').textContent = `Tu vendedor asignado: ${vendNombre}`;
   } else {
@@ -7324,7 +7348,7 @@ ${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
   document.getElementById('g-puntos').textContent = ptosGanados>0 ? `+${ptosGanados} puntos al confirmar tu pago 🏆` : '';
   // B2B: recordatorio de coordinación de entrega con su vendedor/reparto
   const _gB2B = document.getElementById('g-entrega-b2b');
-  if (_gB2B) _gB2B.style.display = (!esVendedor && !esPedidoInterno && (tipoCliente === 'tienda' || tipoCliente === 'restaurante' || tipoCliente === 'mayorista')) ? 'block' : 'none';
+  if (_gB2B) _gB2B.style.display = (!esVendedor && !esPedidoInterno && (tipoPedido === 'tienda' || tipoPedido === 'restaurante' || tipoPedido === 'mayorista')) ? 'block' : 'none';
   document.getElementById('gracias-overlay').classList.add('visible');
 
   // v2.11.1: refrescar stats del cliente en background para que historial y "Mi cuenta" se actualicen
