@@ -568,7 +568,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 #gracias-overlay.visible { display:flex; animation:fadeIn 0.3s ease; }
 .gracias-box { max-width:340px; width:100%; }
-.gracias-emoji { font-size:5rem; margin-bottom:14px; animation:bounceIn 0.5s ease; }
+.gracias-emoji { color:var(--amarillo); margin-bottom:14px; animation:bounceIn 0.5s ease; display:flex; justify-content:center; }
 .gracias-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:3rem; color:var(--amarillo); letter-spacing:3px; line-height:1; }
 .gracias-sub { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.3rem; color:var(--blanco); letter-spacing:2px; margin-bottom:20px; }
 .gracias-card {
@@ -1095,7 +1095,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
          view_catalog solo se dispara después de verificar. -->
     <div style="width:100%;max-width:360px;margin-bottom:22px;">
       <button onclick="usarComoConsumidor()" style="background:var(--amarillo);border:none;border-radius:12px;padding:16px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:1.05rem;color:var(--negro);cursor:pointer;">
-        🍟 Ver el catálogo
+        Ver el catálogo
       </button>
       <div style="font-size:0.74rem;font-weight:600;color:rgba(255,255,255,0.42);margin-top:8px;">
         Mira sabores y precios sin registrarte. Te pediremos tu número solo al pagar.
@@ -1460,7 +1460,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <div class="screen" id="s-catalogo">
 
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div class="header-right">
       <div class="user-chip" onclick="toggleHistorial()" style="cursor:pointer;" title="Ver tu historial">
         <span class="nom" id="h-nombre">—</span>
@@ -1585,7 +1585,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-premia">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div class="header-right">
       <div class="user-chip" onclick="toggleHistorial()">
         <span class="nom" id="h-nombre2">—</span>
@@ -1677,7 +1677,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-pedidos">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
   </div>
   <div style="padding:16px 16px 80px;">
     <div class="pedidos-titulo">MIS PEDIDOS</div>
@@ -1693,7 +1693,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <!-- SCREEN: MI CUENTA -->
 <div class="screen" id="s-cuenta">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
   </div>
   <div style="padding:16px 16px 80px;">
 
@@ -1848,7 +1848,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <!-- SCREEN: PRODUCCIÓN (solo vendedores) -->
 <div class="screen" id="s-produccion">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCCIÓN</div>
   </div>
 
@@ -2095,7 +2095,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-b2b">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
   </div>
 
@@ -2146,7 +2146,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-prospeccion">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PROSPECTOS</div>
   </div>
 
@@ -2351,7 +2351,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-caja">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CAJA</div>
   </div>
 
@@ -2503,7 +2503,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-gastos">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">GASTOS</div>
   </div>
 
@@ -2635,7 +2635,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-jornadas">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">JORNADA</div>
   </div>
 
@@ -2712,7 +2712,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-tracking">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">SEGUIMIENTO</div>
   </div>
   <div style="padding:14px 16px 100px;">
@@ -2729,7 +2729,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-productos">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCTOS</div>
   </div>
   <div style="padding:14px 16px 100px;">
@@ -2754,7 +2754,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 ══════════════════════════════════ -->
 <div class="screen" id="s-cupones">
   <div class="header">
-    <div class="logo">🍟 Crunchy<span> Paps</span></div>
+    <div class="logo">Crunchy<span> Paps</span></div>
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CUPONES</div>
   </div>
   <div style="padding:14px 16px 100px;">
@@ -2999,7 +2999,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 
 <!-- NAVBAR -->
 <div class="screen" id="s-resumen">
-  <div class="header"><div class="logo">🍟 Crunchy<span> Paps</span></div></div>
+  <div class="header"><div class="logo">Crunchy<span> Paps</span></div></div>
   <div style="padding:14px 14px 120px;">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
       <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);letter-spacing:1px;">📊 Resumen de pedidos</div>
@@ -3449,7 +3449,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 <!-- GRACIAS -->
 <div id="gracias-overlay">
   <div class="gracias-box">
-    <div class="gracias-emoji">🍟</div>
+    <div class="gracias-emoji" aria-hidden="true"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg></div>
     <div class="gracias-titulo">¡GRACIAS!</div>
     <div class="gracias-sub">PEDIDO REGISTRADO</div>
     <div class="gracias-card">
@@ -3499,7 +3499,7 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast">¡Guardado! 🍟</div>
+<div class="toast" id="toast">¡Guardado!</div>
 
 <!-- El aviso vive fuera de toda pantalla y de todo drawer, porque tiene que
      poder aparecer encima de cualquiera de los dos. role=alertdialog para que
@@ -5279,7 +5279,7 @@ function actualizarBadge() { document.getElementById('cart-badge').textContent=t
 function mostrarToast(mensaje) {
   const t=document.getElementById('toast');
   if (mensaje) t.textContent = mensaje;
-  else t.textContent = '¡Guardado! 🍟';  // mensaje default solo si no se pasa nada
+  else t.textContent = '¡Guardado!';  // mensaje default solo si no se pasa nada
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2400);
 }
@@ -9298,7 +9298,7 @@ window.descargarInformePDF = function() {
     '<title>Crunchy Paps — Informe ' + fecha + '</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">' +
     '<style>' + css + '</style></head><body>' +
-    '<div class="cp-head"><span style="font-size:22px;">🍟</span><h1>Crunchy Paps — Informe</h1><span class="d">' + fecha + '</span></div>' +
+    '<div class="cp-head"><h1>Crunchy Paps — Informe</h1><span class="d">' + fecha + '</span></div>' +
     dash + prod + stock +
     '<button class="noprint" onclick="window.print()" style="position:fixed;bottom:16px;right:16px;background:#FFD200;border:none;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);">Guardar como PDF</button>' +
     '</body></html>'
@@ -16672,7 +16672,7 @@ window.mostrarInstruccionesInstalar = function() {
           <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Añadir"</strong> arriba a la derecha</div>
         </div>
-        <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">El ícono aparecerá en tu pantalla principal 🍟</div>
+        <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">El ícono aparecerá en tu pantalla principal</div>
       </div>
     `;
   } else if (isAndroid) {
@@ -16996,7 +16996,7 @@ function mostrarPagoConfirmado(ok) {
       try {
         var res = await supabaseCall('POST', 'rpc/guardar_encuesta', { p_data: payload });
         if (res && res.ok) {
-          if (typeof mostrarToast === 'function') mostrarToast('¡Gracias por tu feedback! 🍟');
+          if (typeof mostrarToast === 'function') mostrarToast('¡Gracias por tu feedback!');
         } else {
           if (typeof mostrarToast === 'function') mostrarToast('No se pudo guardar, intenta de nuevo');
         }
@@ -17013,7 +17013,7 @@ function mostrarPagoConfirmado(ok) {
 <div id="ffe-modal" class="ffe-overlay" role="dialog" aria-modal="true" aria-labelledby="ffe-title">
   <div class="ffe-card">
     <button type="button" class="ffe-close" aria-label="Cerrar" onclick="window.crunchyEncuesta.cerrar()">&times;</button>
-    <h3 id="ffe-title" class="ffe-h">¿Qué te parecieron tus Crunchy Paps? 🍟</h3>
+    <h3 id="ffe-title" class="ffe-h">¿Qué te parecieron tus Crunchy Paps?</h3>
     <p class="ffe-sub">30 segundos. Tu opinión nos ayuda muchísimo.</p>
 
     <div class="ffe-q">
