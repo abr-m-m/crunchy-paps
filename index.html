@@ -338,7 +338,7 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-cart-line { font-size:0.84rem; font-weight:800; color:var(--amarillo,#ffd200); text-align:center; }
 .pd-cart-line.pd-cart-empty { color:#888; font-weight:700; }
 .pd-bottom .pd-qty-num { color:#fff; font-size:1.15rem; min-width:30px; }
-.pd-bottom .qty-ctrl { margin:0; }
+.pd-bottom .qty-ctrl { margin:0; padding-top:0; }
 .pd-add { flex:1; background:var(--rojo,#e3000f); color:#fff; border:none; border-radius:10px; padding:13px; font-weight:900; font-size:0.95rem; cursor:pointer; }
 .pd-agotado { flex:1; text-align:center; color:#888; font-weight:700; padding:12px; }
 .pd-add-sec { background:#3a3a3a; color:#eee; }
@@ -381,15 +381,15 @@ select.inp { appearance: none; cursor: pointer; }
    proposito - cualquier font-weight inline sigue ganando. */
 [style*="Archivo"] { font-weight: 700; }
 .prod-card {
-  background:#f0f0f0; border-radius:16px;
+  background:#f0f0f0; border-radius:12px;
   padding:0; display:flex; flex-direction:column;
   overflow:hidden; position:relative;
-  box-shadow:0 2px 12px rgba(0,0,0,0.2);
+  box-shadow:0 1px 4px rgba(0,0,0,0.18);
   transition:transform 0.2s, box-shadow 0.2s; border:none;
 }
 .prod-card::before { display:none; }
-.prod-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-.prod-card.en-carrito { outline:3px solid var(--amarillo); outline-offset:-1px; }
+.prod-card:hover { transform:translateY(-3px); box-shadow:0 6px 16px rgba(0,0,0,0.25); }
+.prod-card.en-carrito { outline:2px solid var(--amarillo); outline-offset:-2px; }
 .promo-badge {
   position:absolute; top:8px; left:8px; z-index:2;
   background:var(--rojo); color:white; border-radius:6px;
@@ -419,23 +419,23 @@ select.inp { appearance: none; cursor: pointer; }
 .prod-vigencia { font-size:0.68rem; color:var(--rojo); font-weight:800; }
 .prod-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:#111; margin-top:2px; }
 .prod-precio-orig { font-size:0.78rem; color:#aaa; text-decoration:line-through; }
-.qty-ctrl { display:flex; align-items:center; gap:5px; margin-top:auto; padding-top:6px; }
+.qty-ctrl { display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:8px; }
 .qty-btn {
-  background:#222; border:none; border-radius:50%;
-  width:28px; height:28px; color:var(--blanco);
+  background:#222; border:none; border-radius:8px;
+  width:36px; height:36px; color:var(--blanco);
   font-size:1rem; font-weight:900; cursor:pointer;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
   transition:background 0.15s; position:relative;
 }
 /* Zona de toque de 44px sin agrandar el dibujo: el boton mide 28px (24 en
    pantallas chicas) y el pulgar necesita mas. */
-.qty-btn::after { content:''; position:absolute; inset:-8px; border-radius:50%; }
+.qty-btn::after { content:''; position:absolute; inset:-4px; border-radius:12px; }
 .qty-btn:hover { background:var(--amarillo); color:var(--negro); }
-.qty-num { font-weight:900; font-size:0.95rem; min-width:18px; text-align:center; color:#111; }
+.qty-num { flex:1; font-weight:900; font-size:1rem; min-width:18px; text-align:center; color:#111; font-variant-numeric:tabular-nums; }
 .agregar-btn {
-  background:var(--rojo); border:none; border-radius:50px;
-  padding:5px 10px; color:white; font-family:'Inter',sans-serif;
-  font-weight:800; font-size:0.73rem; cursor:pointer; margin-left:auto;
+  background:var(--rojo); border:none; border-radius:8px;
+  flex:1; min-height:40px; padding:0 12px; color:white; font-family:'Inter',sans-serif; position:relative;
+  font-weight:800; font-size:0.82rem; cursor:pointer;
 }
 .agregar-btn:hover { background:#c71d22; color:white; }
 
@@ -476,7 +476,7 @@ select.inp { appearance: none; cursor: pointer; }
 .drawer-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 16px; }
 .drawer-title { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; margin-bottom:12px; }
 .cart-empty { text-align:center; color:var(--suave); padding:28px 0; font-size:0.95rem; font-weight:600; }
-.cart-empty span { font-size:2.8rem; display:block; margin-bottom:10px; }
+.cart-empty span { display:flex; justify-content:center; margin-bottom:10px; color:var(--suave); }
 .cart-item {
   display:flex; align-items:center; gap:10px;
   padding:10px 0; border-bottom:1px solid var(--gris3);
@@ -695,7 +695,6 @@ select.inp { appearance: none; cursor: pointer; }
   .catalogo { grid-template-columns:1fr 1fr; padding:12px 12px 120px; gap:10px; }
   .prod-card { padding:10px; }
   .prod-precio { font-size:1.2rem; }
-  .qty-btn { width:24px; height:24px; }
   .otp-d { width:40px; height:50px; font-size:1.6rem; }
 }
 
@@ -1072,7 +1071,7 @@ body.modo-interno .prod-card::after {
   margin-top: 4px;
 }
 body.modo-interno .modo-btn:not(.active) { opacity: 0.55; }
-body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
+body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 
 /* Sabor: un punto de color en vez de emoji (rediseno visual, paso 3). El
    nombre va siempre al lado, asi que el color no es la unica senal. */
@@ -1081,6 +1080,53 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
 /* Accesibilidad (reglas de la skill ui-ux-pro-max): foco visible con teclado
    y respeto a quien pide menos movimiento en su sistema. */
 :focus-visible { outline:2px solid var(--amarillo); outline-offset:2px; }
+/* ── Paso 4 del rediseño (12 sep 2026): cabecera, carrito vacío y seguimiento ── */
+.carrito-btn { min-height:44px; padding:8px 12px; }
+.carrito-btn svg { width:22px; height:22px; flex-shrink:0; }
+.cart-empty span svg { width:44px; height:44px; }
+/* Banner del catálogo, opción A (12 sep 2026): saludo compacto y carrusel como tarjeta debajo */
+.banner-cat { min-height:0; background:none; border-bottom:none; }
+.banner-cat .banner-pattern, .banner-cat .banner-accent, .banner-cat .banner-overlay, .banner-cat .banner-slogan { display:none; }
+.banner-cat .banner-content { padding:14px 16px 8px; max-width:100%; }
+.banner-cat .banner-tag { background:none; color:var(--amarillo); padding:0; margin-bottom:4px; letter-spacing:1.5px; }
+.banner-cat .banner-h { font-size:1.5rem; letter-spacing:1px; text-shadow:none; }
+.bn-wrap { padding:0 16px 6px; }
+.bn-wrap .bn-carousel { border-radius:12px; }
+.tk-card { background:var(--gris); border-radius:12px; padding:16px; margin-bottom:10px; }
+.tk-cab { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+.tk-folio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.4rem; color:var(--amarillo); line-height:1; }
+.tk-fecha { font-size:0.74rem; color:var(--suave); margin-top:4px; }
+.tk-cab-der { display:flex; flex-direction:column; align-items:flex-end; gap:6px; text-align:right; }
+.tk-monto { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.6rem; color:var(--blanco); line-height:1; font-variant-numeric:tabular-nums; }
+.tk-pago { display:inline-block; background:var(--gris2); border:1px solid var(--gris3); border-radius:50px; padding:3px 10px; font-size:0.68rem; font-weight:800; color:var(--amarillo); white-space:nowrap; }
+.tk-pago.ok { color:var(--blanco); }
+.tk-pasos { list-style:none; margin:0; padding:4px 0 0; }
+.tk-paso { position:relative; display:flex; gap:12px; padding:0 0 18px; }
+.tk-paso:last-child { padding-bottom:0; }
+.tk-paso::before { content:''; position:absolute; left:13px; top:28px; bottom:-2px; width:2px; background:var(--gris3); }
+.tk-paso:last-child::before { display:none; }
+.tk-paso.hecho::before { background:var(--amarillo); }
+.tk-circulo { flex:0 0 28px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; border:2px solid var(--gris3); color:var(--suave); background:var(--gris); position:relative; z-index:1; }
+.tk-paso.hecho .tk-circulo { background:var(--amarillo); border-color:var(--amarillo); color:var(--negro); }
+.tk-paso.actual .tk-circulo { border-color:var(--amarillo); color:var(--amarillo); animation:pulse-glow 1.5s ease-in-out infinite; }
+.tk-texto { display:flex; flex-direction:column; gap:2px; padding-top:4px; min-width:0; }
+.tk-titulo { font-weight:800; font-size:0.9rem; color:var(--suave); line-height:1.2; }
+.tk-paso.hecho .tk-titulo, .tk-paso.actual .tk-titulo { color:var(--blanco); }
+.tk-detalle { font-size:0.78rem; color:var(--suave); line-height:1.35; }
+.tk-paso.actual .tk-detalle { color:var(--amarillo); font-weight:600; }
+.tk-cancelado { margin-top:12px; border-left:3px solid var(--rojo); padding:8px 12px; color:var(--rojo); font-weight:700; font-size:0.85rem; }
+.tk-bloque { background:var(--gris2); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+.tk-etq { font-size:0.66rem; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.tk-valor { font-size:0.86rem; color:var(--blanco); }
+.tk-suave { font-size:0.78rem; color:var(--suave); }
+.tk-linea { display:flex; justify-content:space-between; gap:12px; font-size:0.84rem; padding:4px 0; color:var(--blanco); }
+.tk-linea.tk-suave { color:var(--suave); }
+.tk-linea.tk-sep { border-top:1px solid var(--gris3); margin-top:6px; padding-top:8px; }
+.tk-linea.tk-total { font-weight:900; }
+.tk-linea.tk-total .tk-num { color:var(--amarillo); }
+.tk-num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tk-btn { width:100%; min-height:44px; background:transparent; border:1px solid var(--amarillo); border-radius:10px; padding:10px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.86rem; color:var(--amarillo); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+.tk-nota { font-size:0.68rem; color:var(--suave); text-align:center; margin-top:8px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
 }
@@ -1483,8 +1529,8 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
         <span class="nom" id="h-nombre">—</span>
         <span class="badge" id="h-tipo">—</span>
       </div>
-      <button class="carrito-btn" onclick="abrirCarrito()">
-        🛒 <span class="cart-badge" id="cart-badge">0</span>
+      <button class="carrito-btn" onclick="abrirCarrito()" aria-label="Ver carrito">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6.3"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="17.5" cy="20" r="1.2"/></svg> <span class="cart-badge" id="cart-badge">0</span>
       </button>
     </div>
   </div>
@@ -1498,9 +1544,9 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   ">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">
-        📊 TU HISTORIAL
+        TU HISTORIAL
       </div>
-      <button onclick="toggleHistorial()" style="background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;">✕</button>
+      <button onclick="toggleHistorial()" aria-label="Cerrar" style="background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;min-width:44px;min-height:44px;">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
@@ -1524,29 +1570,29 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
     <div class="banner-accent"></div>
     <div class="banner-overlay"></div>
     <div class="banner-content">
-      <div class="banner-tag" id="cat-tag">🛒 Tu pedido</div>
-      <div class="banner-h" id="cat-titulo">¡Hola! Elige tus <span class="hl">papas</span> 🔥</div>
+      <div class="banner-tag" id="cat-tag">Tu pedido</div>
+      <div class="banner-h" id="cat-titulo">Elige tus <span class="hl">papas</span></div>
       <div class="banner-slogan">Adictivamente crujientes</div>
     </div>
   </div>
 
   <!-- Banner B2B pendiente de aprobación -->
   <div id="banner-b2b-pendiente" style="display:none;background:#2a1f00;border-left:4px solid var(--amarillo);padding:10px 16px;font-size:0.78rem;font-weight:700;color:rgba(255,210,0,0.8);">
-    ⏳ Tu cuenta de mayoreo está en revisión. Estás viendo precios de consumidor. Te notificaremos cuando sea aprobada.
+    Tu cuenta de mayoreo está en revisión. Estás viendo precios de consumidor. Te notificaremos cuando sea aprobada.
   </div>
 
   <!-- Modo venta (solo vendedor) -->
   <div class="modo-venta-wrap" id="modo-wrap">
-    <button class="modo-btn active" id="modo-pieza" onclick="setModo('pieza')">📦 Por Pieza</button>
-    <button class="modo-btn" id="modo-granel" onclick="setModo('granel')">⚖️ A Granel</button>
-    <button class="modo-btn" id="modo-interno" onclick="setModo('interno')" style="display:none;">📦 Interno</button>
+    <button class="modo-btn active" id="modo-pieza" onclick="setModo('pieza')">Por pieza</button>
+    <button class="modo-btn" id="modo-granel" onclick="setModo('granel')">A granel</button>
+    <button class="modo-btn" id="modo-interno" onclick="setModo('interno')" style="display:none;">Interno</button>
   </div>
 
   <!-- Banner modo interno (solo vendedor + cuando está en modo interno) -->
   <div id="banner-interno" style="display:none;margin:0 16px 8px;background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:10px;padding:10px 12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div>
-        <div style="font-size:0.74rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">📦 Modo: Pedido Interno</div>
+        <div style="font-size:0.74rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Modo: pedido interno</div>
         <div style="font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sin cargo · Descuenta inventario · Elegirás el motivo al confirmar</div>
       </div>
       <button onclick="setModo('pieza')" style="background:transparent;border:1px solid #555;border-radius:6px;padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--suave);cursor:pointer;white-space:nowrap;">Salir</button>
@@ -1556,10 +1602,10 @@ body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
   <div id="canal-wrap" style="display:none;padding:0 16px 8px;">
     <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Venta para:</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button id="canal-consumidor" onclick="setCanalVenta('consumidor')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--amarillo);background:var(--amarillo);color:var(--negro);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">🛒 Consumidor</button>
-      <button id="canal-tienda" onclick="setCanalVenta('tienda')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">🏪 Tienda</button>
-      <button id="canal-restaurante" onclick="setCanalVenta('restaurante')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">🍽️ Restaurante</button>
-      <button id="canal-mayorista" onclick="setCanalVenta('mayorista')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">📦 Mayorista</button>
+      <button id="canal-consumidor" onclick="setCanalVenta('consumidor')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--amarillo);background:var(--amarillo);color:var(--negro);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Consumidor</button>
+      <button id="canal-tienda" onclick="setCanalVenta('tienda')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Tienda</button>
+      <button id="canal-restaurante" onclick="setCanalVenta('restaurante')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Restaurante</button>
+      <button id="canal-mayorista" onclick="setCanalVenta('mayorista')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Mayorista</button>
     </div>
   </div>
 
@@ -3894,6 +3940,7 @@ function saborDot(sabor, px) {
     : `<span class="sabor-dot" aria-hidden="true" style="${tam}background:${c};"></span>`;
 }
 // Un solo placeholder de trazo para todo producto sin foto (papas y bebidas).
+const ICONO_CARRITO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6.3"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="17.5" cy="20" r="1.2"/></svg>';
 const ICONO_FOTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-8 8"/></svg>';
 const MINIMOS       = { consumidor:0, tienda:200, restaurante:300, mayorista:500, vendedor:0, mostrador:0 };
 
@@ -4639,6 +4686,15 @@ function limpiarSesion() {
   try { localStorage.removeItem('cp_session'); } catch(e) {}
 }
 
+// Titular del catálogo para el consumidor: «Hola, Nombre» con sesión, «Elige tus
+// papas» como invitado. El nombre viene de la base (su propia ficha) y se escapa.
+function tituloConsumidor() {
+  const bruto = (typeof clienteActual !== 'undefined' && clienteActual && clienteActual.nombre && !esVendedor)
+    ? String(clienteActual.nombre).trim().split(/\s+/)[0] : '';
+  const nombre = bruto.replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  return nombre ? 'Hola, <span class="hl">' + nombre + '</span>' : 'Elige tus <span class="hl">papas</span>';
+}
+
 async function irAlCatalogo() {
   track('view_catalog');
   // Header
@@ -4652,11 +4708,11 @@ async function irAlCatalogo() {
 
   // Banner
   const banners = {
-    consumidor: { tag:'🛒 Tu pedido', titulo:'¡Hola! Elige tus <span class="hl">papas</span> 🔥' },
-    tienda:     { tag:'🏪 Mayoreo',   titulo:'Pedido para tu <span class="hl">tienda</span>' },
-    restaurante:{ tag:'🍽️ Restaurante',titulo:'Pedido para tu <span class="hl">cocina</span>' },
-    vendedor:   { tag:'👤 Vendedor',  titulo:`Hola, <span class="hl">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
-    mostrador:  { tag:'🏬 Mostrador', titulo:'Punto de <span class="hl">venta</span>' },
+    consumidor: { tag:'Tu pedido', titulo:tituloConsumidor() },
+    tienda:     { tag:'Mayoreo',   titulo:'Pedido para tu <span class="hl">tienda</span>' },
+    restaurante:{ tag:'Restaurante',titulo:'Pedido para tu <span class="hl">cocina</span>' },
+    vendedor:   { tag:'Vendedor',  titulo:`Hola, <span class="hl">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
+    mostrador:  { tag:'Mostrador', titulo:'Punto de <span class="hl">venta</span>' },
   };
   const b = banners[tipoCliente] || banners.consumidor;
   const elCatTag = document.getElementById('cat-tag');
@@ -4747,10 +4803,10 @@ async function intentarRestaurarSesion() {
 
   // Restaurar banner
   const banners = {
-    consumidor:  { tag:'🛒 Tu pedido',   titulo:'¡Hola! Elige tus <span class=\"hl\">papas</span> 🔥' },
-    tienda:      { tag:'🏪 Mayoreo',     titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
-    restaurante: { tag:'🍽️ Restaurante', titulo:'Pedido para tu <span class=\"hl\">cocina</span>' },
-    vendedor:    { tag:'👤 Vendedor',    titulo:`Hola, <span class=\"hl\">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
+    consumidor:  { tag:'Tu pedido',   titulo:tituloConsumidor() },
+    tienda:      { tag:'Mayoreo',     titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
+    restaurante: { tag:'Restaurante', titulo:'Pedido para tu <span class=\"hl\">cocina</span>' },
+    vendedor:    { tag:'Vendedor',    titulo:`Hola, <span class=\"hl\">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
   };
   const b = banners[tipoCliente] || banners.consumidor;
   const catTag = document.getElementById('cat-tag');
@@ -5177,7 +5233,7 @@ window.renderCatalogo = function() {
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;" title="Solo referencia de precios">
         <div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">🏪 $${p.precio_tienda||0}</div>
         <div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">🍽️ $${p.precio_restaurante||0}</div>
-        ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">📦 $${p.precio_mayorista}</div>` : ''}
+        ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">Mayoreo $${p.precio_mayorista}</div>` : ''}
       </div>` : '';
 
     // Sin foto: el mismo placeholder de trazo para papas y bebidas
@@ -5202,12 +5258,13 @@ window.renderCatalogo = function() {
     const ctrlHTML = agotado ? `
       <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
     ` : `
-      <div class="qty-ctrl">
-        <button class="qty-btn" onclick="cambiarQty('${key}',-1)">−</button>
+      ${qty===0
+        ? `<div class="qty-ctrl"><button class="agregar-btn" onclick="cambiarQty('${key}',1)">Agregar</button></div>`
+        : `<div class="qty-ctrl">
+        <button class="qty-btn" onclick="cambiarQty('${key}',-1)" aria-label="Quitar uno">−</button>
         <span class="qty-num">${qty}</span>
-        <button class="qty-btn" onclick="cambiarQty('${key}',1)">+</button>
-        ${qty===0?`<button class="agregar-btn" onclick="cambiarQty('${key}',1)">Agregar</button>`:''}
-      </div>
+        <button class="qty-btn" onclick="cambiarQty('${key}',1)" aria-label="Agregar uno">+</button>
+      </div>`}
     `;
 
     return `
@@ -5549,7 +5606,7 @@ function renderDrawer() {
   const esInternoModo = (modoVenta === 'interno');
 
   if (items.length===0) {
-    ci.innerHTML='<div class="cart-empty"><span>🛒</span>Tu carrito está vacío.<br>¡Elige tus papas!</div>';
+    ci.innerHTML='<div class="cart-empty"><span>' + ICONO_CARRITO + '</span>Tu carrito está vacío.<br>¡Elige tus papas!</div>';
     tr.style.display='none'; fp.style.display='none'; mm.classList.remove('visible');
     return;
   }
@@ -15623,12 +15680,9 @@ let _trackingAutoRefresh = null;
 
 window.abrirTracking = function(idOrden) {
   // Mostrar pantalla tracking
-  if (window.navSections) {
-    window.navSections.forEach(s => {
-      const el = document.getElementById(s);
-      if (el) el.classList.remove('active');
-    });
-  }
+  // Apaga TODA pantalla activa, no solo las de navSections: con ?track= y sin
+  // sesión, s-welcome quedaba activa encima y tapaba el seguimiento (12 sep 2026).
+  document.querySelectorAll('.screen.active').forEach(el => el.classList.remove('active'));
   const sT = document.getElementById('s-tracking');
   if (sT) sT.classList.add('active');
   cargarTracking(idOrden);
@@ -15643,9 +15697,8 @@ async function cargarTracking(idOrden) {
     const res = await supabaseCall('POST', 'rpc/get_tracking_pedido', { p_id_orden: String(idOrden) });
     if (!res || !res.ok) {
       cont.innerHTML = `<div style="background:#2d0d0d;border:1px solid var(--rojo);border-radius:12px;padding:18px;text-align:center;">
-        <div style="font-size:2rem;margin-bottom:6px;">😕</div>
-        <div style="color:var(--rojo);font-weight:700;">${(res && res.error) || 'No se encontró el pedido'}</div>
-        <div style="font-size:0.78rem;color:var(--suave);margin-top:6px;">Verifica el código del pedido.</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);">No encontramos ese pedido</div>
+        <div style="font-size:0.8rem;color:var(--suave);margin-top:6px;">${(res && res.error) || 'Pedido no encontrado'}. Verifica el código del pedido.</div>
       </div>`;
       return;
     }
@@ -15688,119 +15741,96 @@ function pintarTracking() {
   const ESTADOS = ['Recibido','En preparación','En camino','Entregado'];
   const estatusActual = p.estatusCliente;
   const cancelado = estatusActual === 'Cancelado';
-  const idxActual = ESTADOS.indexOf(estatusActual);
+  const idxActual = cancelado ? -1 : ESTADOS.indexOf(estatusActual);
 
-  // Steps visuales
-  let stepsHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;padding:8px 0 30px;">';
-  // Línea de progreso de fondo
-  stepsHTML += `<div style="position:absolute;top:24px;left:25px;right:25px;height:3px;background:var(--gris3);border-radius:2px;z-index:0;"></div>`;
-  // Línea de progreso amarilla (hasta el estado actual)
-  if (idxActual > 0 && !cancelado) {
-    const pct = (idxActual / (ESTADOS.length - 1)) * 100;
-    stepsHTML += `<div style="position:absolute;top:24px;left:25px;width:calc(${pct}% - 25px);height:3px;background:var(--amarillo);border-radius:2px;z-index:1;"></div>`;
-  }
+  const fechaCorta = (v) => v ? new Date(v).toLocaleString('es-MX', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+  const fecha     = p.fecha ? new Date(p.fecha).toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' }) : '';
+  const fechaHora = fechaCorta(p.fecha);
+  const fechaReal = fechaCorta(p.fechaEntregaReal);
+  const fechaEnt  = p.fechaEntrega ? new Date(p.fechaEntrega).toLocaleDateString('es-MX', { day:'numeric', month:'short' }) : '';
+
+  // El mensaje del estado vive bajo el paso actual, no en un cuadro aparte.
+  const mensajes = {
+    'Recibido':       'Recibimos tu pedido; pronto empezamos a prepararlo.',
+    'En preparación': 'Estamos preparando tus papas.',
+    'En camino':      'Tu pedido va en camino.',
+    'Entregado':      'Entregado. Gracias por elegirnos.',
+  };
+  const detalle = (i) => {
+    const est = ESTADOS[i];
+    if (i === idxActual && mensajes[est]) return mensajes[est];
+    if (est === 'Recibido' && fechaHora) return fechaHora;
+    if (est === 'Entregado') {
+      if (fechaReal) return fechaReal;
+      if (fechaEnt && !cancelado) return 'Estimada: ' + fechaEnt;
+    }
+    return '';
+  };
+
+  const CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let stepsHTML = '<ol class="tk-pasos">';
   ESTADOS.forEach((est, i) => {
-    const completed = i < idxActual;
-    const current   = i === idxActual && !cancelado;
-    const pending   = i > idxActual;
-    const bg = cancelado ? '#444' : (completed ? '#4caf50' : current ? 'var(--amarillo)' : 'var(--gris3)');
-    const fg = (completed || current) && !cancelado ? '#000' : '#666';
-    const icono = completed ? '✓' : (i + 1);
-    const pulse = current ? 'animation:pulse-glow 1.5s ease-in-out infinite;' : '';
-    stepsHTML += `
-      <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;flex:1;text-align:center;">
-        <div style="width:36px;height:36px;border-radius:50%;background:${bg};color:${fg};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1rem;border:3px solid var(--negro);${pulse}">${icono}</div>
-        <div style="font-size:0.66rem;font-weight:700;color:${current ? 'var(--amarillo)' : completed ? '#4caf50' : 'var(--suave)'};margin-top:6px;line-height:1.1;">${est}</div>
-      </div>`;
+    const hecho  = !cancelado && i < idxActual;
+    const actual = !cancelado && i === idxActual;
+    const cls = hecho ? 'hecho' : actual ? 'actual' : 'pendiente';
+    const det = detalle(i);
+    stepsHTML += `<li class="tk-paso ${cls}"${actual ? ' aria-current="step"' : ''}>
+      <span class="tk-circulo">${hecho ? CHECK : (i + 1)}</span>
+      <span class="tk-texto"><span class="tk-titulo">${est}</span>${det ? `<span class="tk-detalle">${det}</span>` : ''}</span>
+    </li>`;
   });
-  stepsHTML += '</div>';
+  stepsHTML += '</ol>';
+  if (cancelado) stepsHTML += '<div class="tk-cancelado">Este pedido fue cancelado.</div>';
 
-  // Items
+  // Productos, con presentación (el RPC ya la devolvía y no se enseñaba)
+  const mxn = (n) => '$' + Number(n || 0).toLocaleString('es-MX');
   let itemsHTML = '';
   if (p.items && p.items.length) {
-    itemsHTML = '<div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">';
-    itemsHTML += '<div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Productos</div>';
+    itemsHTML = '<div class="tk-bloque"><div class="tk-etq">Productos</div>';
     p.items.forEach(it => {
-      itemsHTML += `<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:3px 0;color:var(--blanco);">
-        <span>${it.cantidad}× ${it.sabor} ${it.modo === 'granel' ? '(granel)' : ''}</span>
-        <span style="color:var(--amarillo);font-weight:700;">$${it.subtotal.toLocaleString('es-MX')}</span>
-      </div>`;
+      const desc = it.modo === 'granel'
+        ? `${it.sabor} · ${Number(it.gramos || 0).toLocaleString('es-MX')} g a granel`
+        : `${it.cantidad} × ${it.sabor}${it.presentacion ? ' · ' + it.presentacion : ''}`;
+      itemsHTML += `<div class="tk-linea"><span>${desc}</span><span class="tk-num">${mxn(it.subtotal)}</span></div>`;
     });
     // v2.7.2: si hay descuento de cupón, mostrar subtotal y descuento por separado
     const huboDesc = (p.descuento && p.descuento > 0) || (p.cuponCodigo && p.subtotal && p.subtotal > p.total);
     if (huboDesc) {
       const subt = p.subtotal && p.subtotal > 0 ? p.subtotal : (p.total + (p.descuento||0));
       const desc = p.descuento && p.descuento > 0 ? p.descuento : (subt - p.total);
-      itemsHTML += `<div style="border-top:1px solid var(--gris3);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-size:0.82rem;color:var(--suave);">
-        <span>Subtotal</span>
-        <span>$${subt.toLocaleString('es-MX')}</span>
-      </div>`;
-      itemsHTML += `<div style="display:flex;justify-content:space-between;font-size:0.82rem;color:#4caf50;font-weight:700;padding:3px 0;">
-        <span>🎟️ Cupón ${p.cuponCodigo || ''}</span>
-        <span>-$${desc.toLocaleString('es-MX')}</span>
-      </div>`;
-      itemsHTML += `<div style="margin-top:6px;padding-top:8px;border-top:1px solid var(--gris3);display:flex;justify-content:space-between;font-weight:900;color:var(--blanco);">
-        <span>TOTAL</span>
-        <span style="color:var(--amarillo);">$${p.total.toLocaleString('es-MX')}</span>
-      </div>`;
-    } else {
-      itemsHTML += `<div style="border-top:1px solid var(--gris3);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:900;color:var(--blanco);">
-        <span>TOTAL</span>
-        <span style="color:var(--amarillo);">$${p.total.toLocaleString('es-MX')}</span>
-      </div>`;
+      itemsHTML += `<div class="tk-linea tk-sep tk-suave"><span>Subtotal</span><span class="tk-num">${mxn(subt)}</span></div>`;
+      itemsHTML += `<div class="tk-linea tk-suave"><span>Cupón ${p.cuponCodigo || ''}</span><span class="tk-num" style="color:var(--blanco);">−${mxn(desc)}</span></div>`;
     }
-    itemsHTML += '</div>';
+    itemsHTML += `<div class="tk-linea tk-sep tk-total"><span>Total</span><span class="tk-num">${mxn(p.total)}</span></div></div>`;
   }
 
-  // Mensaje según estatus
-  let mensajeEstatus = '';
-  if (cancelado) {
-    mensajeEstatus = `<div style="background:#2d0d0d;border:1px solid var(--rojo);border-radius:10px;padding:12px;text-align:center;color:var(--rojo);font-weight:700;">⚠️ Este pedido fue cancelado.</div>`;
-  } else {
-    const mensajes = {
-      'Recibido':       '✅ Recibimos tu pedido. Pronto comenzamos a prepararlo.',
-      'En preparación': '👨‍🍳 Estamos preparando tus papas con amor.',
-      'En camino':      '🚗 Tu pedido va en camino. ¡Prepárate!',
-      'Entregado':      '🎉 ¡Pedido entregado! Gracias por elegirnos.',
-    };
-    const m = mensajes[estatusActual] || '📦 En proceso';
-    const colorBg = estatusActual === 'Entregado' ? '#0d2d0d' : '#2a1f00';
-    const colorFg = estatusActual === 'Entregado' ? '#4caf50' : 'var(--amarillo)';
-    const colorBorder = estatusActual === 'Entregado' ? '#4caf50' : 'var(--amarillo)';
-    mensajeEstatus = `<div style="background:${colorBg};border:1px solid ${colorBorder};border-radius:10px;padding:12px;text-align:center;color:${colorFg};font-weight:700;">${m}</div>`;
-  }
-
-  // Fecha
-  const fecha = p.fecha ? new Date(p.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}) : '';
-  const fechaEnt = p.fechaEntrega ? new Date(p.fechaEntrega).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : '';
+  const pagado = String(p.estatusPago || '').toLowerCase().includes('paga');
+  const REFRESH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>';
 
   cont.innerHTML = `
-    <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
+    <div class="tk-card">
+      <div class="tk-cab">
         <div>
-          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${p.consecutivo}</div>
-          <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">${fecha}</div>
+          <div class="tk-folio">${p.consecutivo}</div>
+          <div class="tk-fecha">${fecha}</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${p.total.toLocaleString('es-MX')}</div>
-          <div style="font-size:0.66rem;color:${p.estatusPago.toLowerCase().includes('paga')?'#4caf50':'var(--amarillo)'};font-weight:700;">${p.estatusPago}</div>
+        <div class="tk-cab-der">
+          <div class="tk-monto">${mxn(p.total)}</div>
+          <span class="tk-pago${pagado ? ' ok' : ''}">${pagado ? 'Pagado' : 'Pendiente de pago'}</span>
         </div>
       </div>
       ${stepsHTML}
-      ${mensajeEstatus}
     </div>
     ${itemsHTML}
     ${p.direccion ? `
-      <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Entrega</div>
-        <div style="font-size:0.82rem;color:var(--blanco);">📍 ${p.direccion}</div>
-        ${p.colonia ? `<div style="font-size:0.74rem;color:var(--suave);">${p.colonia} ${p.cp ? '· CP '+p.cp : ''}</div>` : ''}
-        ${fechaEnt ? `<div style="font-size:0.74rem;color:var(--amarillo);margin-top:4px;font-weight:700;">📅 Estimada: ${fechaEnt}</div>` : ''}
+      <div class="tk-bloque">
+        <div class="tk-etq">Entrega</div>
+        <div class="tk-valor">${p.direccion}</div>
+        ${p.colonia ? `<div class="tk-suave">${p.colonia} ${p.cp ? '· CP '+p.cp : ''}</div>` : ''}
+        ${fechaEnt && !fechaReal ? `<div class="tk-etq" style="margin-top:10px;">Entrega estimada</div><div class="tk-valor">${fechaEnt}</div>` : ''}
       </div>` : ''}
-    <button onclick="cargarTracking('${p.consecutivo}')" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--amarillo);cursor:pointer;">
-      🔄 Actualizar estatus
-    </button>
-    <div style="font-size:0.66rem;color:#666;text-align:center;margin-top:6px;">Actualización automática cada 30s</div>
+    <button class="tk-btn" onclick="cargarTracking('${p.consecutivo}')">${REFRESH} Actualizar</button>
+    <div class="tk-nota">Actualización automática cada 30 s</div>
   `;
 }
 
@@ -16809,12 +16839,14 @@ window.mostrarInstruccionesInstalar = function() {
     if (typeof window.navegar === 'function') { try { window.navegar(dest); } catch (e) {} }
   }
   function montarCarrusel(banners) {
-    var cont = document.querySelector('.banner-cat');
-    if (!cont || !banners.length) return;
+    // Opción A (12 sep 2026): el carrusel va DEBAJO del saludo, como tarjeta con
+    // margen, y ya no sustituye el titular. Si Storage falla, se ve el saludo.
+    var ancla = document.querySelector('.banner-cat');
+    if (!ancla || !banners.length) return;
+    var cont = document.getElementById('bn-wrap');
+    if (!cont) { cont = document.createElement('div'); cont.className = 'bn-wrap'; cont.id = 'bn-wrap'; ancla.insertAdjacentElement('afterend', cont); }
     cont.innerHTML = '<div class="bn-carousel"><div class="bn-track" id="bn-track"></div>'
       + (banners.length > 1 ? '<div class="bn-dots" id="bn-dots"></div>' : '') + '</div>';
-    cont.style.minHeight = '0';
-    cont.style.background = 'none';
     var track = document.getElementById('bn-track');
     var dotsWrap = document.getElementById('bn-dots');
     var swiped = false; // distingue deslizar (swipe) de tocar (tap) — evita abrir destino al deslizar
