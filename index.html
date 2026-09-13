@@ -4739,7 +4739,8 @@ async function irAlCatalogo() {
   // Banner
   const banners = {
     consumidor: { tag:'Tu pedido', titulo:tituloConsumidor() },
-    tienda:     { tag:'Mayoreo',   titulo:'Pedido para tu <span class="hl">tienda</span>' },
+    tienda:     { tag:'Abarrotes', titulo:'Pedido para tu <span class="hl">tienda</span>' },
+    mayorista:  { tag:'Mayoreo',   titulo:'Pedido de <span class="hl">mayoreo</span>' },
     restaurante:{ tag:'Restaurante',titulo:'Pedido para tu <span class="hl">cocina</span>' },
     vendedor:   { tag:'Vendedor',  titulo:`Hola, <span class="hl">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
     mostrador:  { tag:'Mostrador', titulo:'Punto de <span class="hl">venta</span>' },
@@ -4836,7 +4837,8 @@ async function intentarRestaurarSesion() {
   // Restaurar banner
   const banners = {
     consumidor:  { tag:'Tu pedido',   titulo:tituloConsumidor() },
-    tienda:      { tag:'Mayoreo',     titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
+    tienda:      { tag:'Abarrotes',   titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
+    mayorista:   { tag:'Mayoreo',     titulo:'Pedido de <span class=\"hl\">mayoreo</span>' },
     restaurante: { tag:'Restaurante', titulo:'Pedido para tu <span class=\"hl\">cocina</span>' },
     vendedor:    { tag:'Vendedor',    titulo:`Hola, <span class=\"hl\">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
   };
@@ -11182,7 +11184,8 @@ function pedidoCardVendedorHTML(p) {
     </div>
     ${(!p.esInterno && p.estatus !== 'Cancelado')
       ? `<button class="btn-confirm-wpp" onclick="event.stopPropagation(); confirmarPedidoWpp(${p.id})">Confirmar al cliente</button>
-         <button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); enviarResumenPedidoWpp(${p.id})">Reenviar resumen</button>`
+         <button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); enviarResumenPedidoWpp(${p.id})">Reenviar resumen</button>
+         <button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); imprimirTicketPedido(${p.id})">Ticket</button>`
       : ''}
     ${(typeof esAdminEstricto === 'function' && esAdminEstricto() && p.estatus !== 'Cancelado')
       ? `<button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--amarillo);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); abrirReasignarLote(${p.id}, '${p.consecutivo||''}')">Lote del pedido</button>
@@ -11802,6 +11805,16 @@ function _numerosALetras(num) {
   return millones(enteros) + ' ' + sufijo + ' ' + cstr + '/100 M.N.';
 }
 
+// Ticket desde la tarjeta del pedido (QA 13 sep: el botón del cajón no se
+// encontraba). Carga el detalle por el mismo camino que el cajón, lo cierra y
+// manda a imprimir.
+window.imprimirTicketPedido = async function(idOrden) {
+  await verDetallePedido(idOrden);
+  if (!_pedidoActual || String(_pedidoActual.orden?.id) !== String(idOrden)) return;
+  cerrarDetallePedido();
+  imprimirTicket();
+};
+
 window.imprimirTicket = function() {
   if (!_pedidoActual) { mostrarToast('No hay pedido seleccionado'); return; }
   const { orden, lineas } = _pedidoActual;
@@ -11993,6 +12006,7 @@ async function renderB2B() {
         idVendedor:   c.id_vendedor,
         vendedor:     c.vendedor,
         aprobadoB2B:  c.aprobado_b2b !== false,
+        fechaSolicitud: c.fecha_creacion,
         esB2B,
         totalCompras: t.total,
         numPedidos:   t.num,
@@ -12088,6 +12102,11 @@ function renderB2BLista() {
   lista.innerHTML = filtrados.map(c => {
     const ventasMes = c.comprasMes || 0;
     const totalHist = c.totalCompras || 0;
+    // Cuánto lleva esperando una solicitud (o desde cuándo es cliente)
+    const fSol = c.fechaSolicitud ? new Date(c.fechaSolicitud) : null;
+    const diasSol = fSol && !isNaN(fSol) ? Math.max(0, Math.floor((Date.now() - fSol.getTime()) / 86400000)) : null;
+    const fSolTxt = fSol && !isNaN(fSol) ? fSol.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '';
+    const esperaTxt = diasSol === null ? '' : (diasSol === 0 ? 'hoy' : diasSol === 1 ? 'lleva 1 día esperando' : `lleva ${diasSol} días esperando`);
     const ult = c.ultimaCompra
       ? new Date(c.ultimaCompra).toLocaleDateString('es-MX',{day:'numeric',month:'short'})
       : 'Nunca';
@@ -12104,6 +12123,7 @@ function renderB2BLista() {
           <div style="font-size:0.72rem;color:var(--suave);">
             ${c.colonia||''} ${c.municipio||''} ${c.estado||''}
           </div>
+          ${fSolTxt ? `<div style="font-size:0.72rem;margin-top:2px;color:${!c.aprobadoB2B ? 'var(--amarillo)' : 'var(--suave)'};">${!c.aprobadoB2B ? 'Solicitud: ' + fSolTxt + (esperaTxt ? ' · ' + esperaTxt : '') : 'Cliente desde ' + fSolTxt}</div>` : ''}
           ${esAdmin() ? `
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Vendedor:</span>
