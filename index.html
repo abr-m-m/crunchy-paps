@@ -3954,7 +3954,6 @@ let catalogo       = []; // productos desde Sheets
 
 const TIPO_LABELS  = window.TIPO_LABELS = { consumidor:'Consumidor', tienda:'Tienda / Abarrotes', restaurante:'Restaurante', mayorista:'Mayorista', vendedor:'Vendedor', mostrador:'Mostrador' };
 const SABORES_ORDER = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
-const SABOR_EMOJI   = { 'Natural':'🥔','Adobada':'🫙','Feroz':'🐯','Habanero':'🌶️','Queso Jalapeño':'🫑','Queso Cheddar':'🧀','Crunchy Mix':'🎯' };  // solo para los textos de WhatsApp
 // Rediseno visual, paso 3: en pantalla cada sabor es un punto de color, no un
 // emoji. El nombre va al lado siempre; el color solo acelera el reconocimiento.
 const SABOR_COLOR   = { 'Natural':'#FFD200','Adobada':'#B5432E','Feroz':'#FF6A00','Habanero':'#E8242A','Queso Jalapeño':'#7CB342','Queso Cheddar':'#F5A623','Crunchy Mix':'mix' };
@@ -4509,11 +4508,11 @@ window.guardarAltaNegocio = async function() {
     btn.disabled = false; btn.textContent = orig;
     if (rc && (rc.ok || rc.idCliente)) {
       try {
-        const mapsLine = gps ? `\nMaps: https://www.google.com/maps?q=${gps.lat},${gps.lng}` : '\n📍 Sin GPS capturado';
-        const nota = `🏪 *NEGOCIO POR VALIDAR* (alta por vendedor)\n${sel.label}: ${negocio}\nTel: +52${tel}\n${dir}\nVendedor: ${vendedorInfo?.nombre || ''}${mapsLine}`;
+        const mapsLine = gps ? `\nMaps: https://www.google.com/maps?q=${gps.lat},${gps.lng}` : '\nSin GPS capturado';
+        const nota = `*NEGOCIO POR VALIDAR* (alta por vendedor)\n${sel.label}: ${negocio}\nTel: +52${tel}\n${dir}\nVendedor: ${vendedorInfo?.nombre || ''}${mapsLine}`;
         if (typeof WHATSAPP_NUM !== 'undefined') window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(nota)}`, '_blank');
       } catch(_e) {}
-      mostrarToast('✅ Negocio registrado. Pendiente de aprobación.');
+      mostrarToast('Negocio registrado. Pendiente de aprobación.');
       irAlCatalogo();
     } else {
       showMsg('No se pudo guardar. Intenta de nuevo.');
@@ -7402,7 +7401,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const lineas     = items.map(i=>{
     const sub = i.tipoVenta==='A granel'?i.monto:i.qty*i.precio;
     const desc = i.tipoVenta==='A granel'?`${i.gramos}g`:`×${i.qty}`;
-    return `• ${SABOR_EMOJI[i.sabor]||'🍟'} *${i.sabor}* ${i.presentacion} ${desc} = $${sub}`;
+    return `• *${i.sabor}* ${i.presentacion} ${desc} = $${sub}`;
   }).join('\n');
 
   // v2.7.2 / v2.10: bloque de totales con cupón y/o envío si aplica
@@ -7411,43 +7410,43 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const huboDescEnvio = descuentoEnvio > 0;
   let bloqueTotales;
   if (huboCupon || huboEnvio || huboDescEnvio) {
-    const lineas = [`💵 *Subtotal:* $${subtotalCarrito.toLocaleString('es-MX')}`];
+    const lineas = [`*Subtotal:* $${subtotalCarrito.toLocaleString('es-MX')}`];
     if (huboCupon) {
-      lineas.push(`🎟️ *Cupón ${_cuponEnCarrito.codigo}:* -$${descuentoCupon.toLocaleString('es-MX')}`);
+      lineas.push(`*Cupón ${_cuponEnCarrito.codigo}:* -$${descuentoCupon.toLocaleString('es-MX')}`);
     }
     if (huboEnvio) {
-      lineas.push(`📦 *Envío paquetería:* +$${costoEnvio.toLocaleString('es-MX')}`);
+      lineas.push(`*Envío paquetería:* +$${costoEnvio.toLocaleString('es-MX')}`);
     }
     if (huboDescEnvio) {
-      lineas.push(`🚚 *Cupón envío gratis (${_cuponEnCarrito.codigo}):* -$${descuentoEnvio.toLocaleString('es-MX')}`);
+      lineas.push(`*Cupón envío gratis (${_cuponEnCarrito.codigo}):* -$${descuentoEnvio.toLocaleString('es-MX')}`);
     }
-    lineas.push(`💰 *Total:* $${totalFinal.toLocaleString('es-MX')}`);
+    lineas.push(`*Total:* $${totalFinal.toLocaleString('es-MX')}`);
     bloqueTotales = lineas.join('\n');
   } else {
-    bloqueTotales = `💰 *Total:* $${totalFinal.toLocaleString('es-MX')}`;
+    bloqueTotales = `*Total:* $${totalFinal.toLocaleString('es-MX')}`;
   }
 
   const msgWpp =
-`🍟 *NUEVO PEDIDO — Crunchy Paps*
+`*NUEVO PEDIDO — Crunchy Paps*
 No. *${consec}*
 ━━━━━━━━━━━━━━━━━━
-🔖 *Canal:* ${(TIPO_LABELS[tipoPedido]||tipoPedido).toUpperCase()}
-👤 *Cliente:* ${nombre}
-📱 *Tel:* +52 ${telefonoVerif}
-${negocio?`🏪 *Negocio:* ${negocio}\n`:''}${rfc?`📋 *RFC:* ${rfc}\n`:''}━━━━━━━━━━━━━━━━━━
-📮 *C.P.:* ${cp}
-📍 *Colonia:* ${colonia}
-📌 *Municipio:* ${mun}, ${est}
-📍 *Dirección:* ${dir}
+*Canal:* ${(TIPO_LABELS[tipoPedido]||tipoPedido).toUpperCase()}
+*Cliente:* ${nombre}
+*Tel:* +52 ${telefonoVerif}
+${negocio?`*Negocio:* ${negocio}\n`:''}${rfc?`*RFC:* ${rfc}\n`:''}━━━━━━━━━━━━━━━━━━
+*C.P.:* ${cp}
+*Colonia:* ${colonia}
+*Municipio:* ${mun}, ${est}
+*Dirección:* ${dir}
 ━━━━━━━━━━━━━━━━━━
 *Productos:*
 ${lineas}
 ━━━━━━━━━━━━━━━━━━
 ${bloqueTotales}
-💳 *Pago:* ${tipoPagoNom}
-📍 *Zona:* ${zonaFinal.label}${zonaFinal.entrega !== 'normal' ? ' ⚠️ Requiere coordinación de envío' : ''}
-${notas?`📝 *Notas:* ${notas}\n`:''}🕐 ${fecha}
-✅ _Pedido registrado #${consec}_`;
+*Pago:* ${tipoPagoNom}
+*Zona:* ${zonaFinal.label}${zonaFinal.entrega !== 'normal' ? ' — requiere coordinación de envío' : ''}
+${notas?`*Notas:* ${notas}\n`:''}${fecha}
+_Pedido registrado #${consec}_`;
 
   // Número WhatsApp del vendedor asignado
   // v2.11: Si consumidor eligió un contacto específico con teléfono, mandarle a él
@@ -9377,19 +9376,19 @@ window.copiarResumenDia = function() {
   const pv = (Array.isArray(D.por_vendedor)?D.por_vendedor:[]);
   const vendTxt = pv.map(v => `• ${v.nombre||('Vend '+v.id_vendedor)}: $${(Number(v.ventas)||0).toLocaleString('es-MX')}`).join('\n');
   const txt =
-    `🍟 *Crunchy Paps — Resumen*\n${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}\n\n` +
-    `💰 Ventas del mes (MTD): *$${mtdAct.toLocaleString('es-MX')}*` +
+    `*Crunchy Paps — Resumen*\n${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}\n\n` +
+    `Ventas del mes (MTD): *$${mtdAct.toLocaleString('es-MX')}*` +
     (deltaPct!==null?` (${deltaPct>=0?'▲':'▼'}${Math.abs(deltaPct)}% vs mes ant.)`:'') + `\n` +
-    (avance!==null?`🎯 Avance objetivo: ${avance}% (de $${obj.toLocaleString('es-MX')})\n`:'') +
-    `📦 Por entregar: ${Number(D.por_entregar)||0}  ·  💵 Por cobrar: $${(Number(D.por_cobrar_monto)||0).toLocaleString('es-MX')}\n` +
+    (avance!==null?`Avance objetivo: ${avance}% (de $${obj.toLocaleString('es-MX')})\n`:'') +
+    `Por entregar: ${Number(D.por_entregar)||0}  ·  Por cobrar: $${(Number(D.por_cobrar_monto)||0).toLocaleString('es-MX')}\n` +
     (window._invResumenTxt ? `\n${window._invResumenTxt}` : '') + `\n` +
-    (sab.length?`🔥 Top sabores: ${sab.map(x=>`${x.sabor} (${Number(x.pzas).toLocaleString('es-MX')})`).join(', ')}\n`:'') +
-    (pres.length?`📐 Top presentaciones: ${pres.map(x=>`${x.presentacion} (${Number(x.pzas).toLocaleString('es-MX')})`).join(', ')}\n`:'') +
+    (sab.length?`Top sabores: ${sab.map(x=>`${x.sabor} (${Number(x.pzas).toLocaleString('es-MX')})`).join(', ')}\n`:'') +
+    (pres.length?`Top presentaciones: ${pres.map(x=>`${x.presentacion} (${Number(x.pzas).toLocaleString('es-MX')})`).join(', ')}\n`:'') +
     `\n` +
-    (vendTxt?`🏆 Por vendedor:\n${vendTxt}\n`:'');
+    (vendTxt?`Por vendedor:\n${vendTxt}\n`:'');
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(txt).then(
-      () => { if (typeof mostrarToast==='function') mostrarToast('✅ Resumen copiado — pégalo en WhatsApp'); },
+      () => { if (typeof mostrarToast==='function') mostrarToast('Resumen copiado. Pégalo en WhatsApp'); },
       () => prompt('Copia el resumen:', txt)
     );
   } else { prompt('Copia el resumen:', txt); }
@@ -9472,21 +9471,21 @@ window.cargarRecordatoriosPago = async function() {
     }).join('');
     const conTel = items.filter(x => x.to).length;
     cont.innerHTML = filas + (conTel > 1 ? `
-      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.8rem;color:#fff;cursor:pointer;">📩 Enviar a todos (${conTel})</button>` : '');
+      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.8rem;color:#fff;cursor:pointer;">Enviar a todos (${conTel})</button>` : '');
   } catch(e) {
     cont.innerHTML = `<div style="color:var(--rojo);font-size:0.8rem;">Error: ${e.message}</div>`;
   }
 };
 
 window.enviarRecordatorioUno = async function(folio, btn) {
-  if (!(await confirmar({ titulo: '💸 Enviar recordatorio de pago', cuerpo: `Pedido ${folio}. Se manda un SMS al cliente.`, aceptar: 'Enviar' }))) return;
+  if (!(await confirmar({ titulo: 'Enviar recordatorio de pago', cuerpo: `Pedido ${folio}. Se manda un SMS al cliente.`, aceptar: 'Enviar' }))) return;
   const secret = cronSecret(); if (!secret) return;
   const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Enviando…';
   try {
     const r = await fetch(`/api/recordatorios-pago?secret=${encodeURIComponent(secret)}&solo=${encodeURIComponent(folio)}&t=${Date.now()}`);
     const d = await r.json();
-    if (d.ok && d.enviados > 0) mostrarToast(`✅ Recordatorio enviado (${folio})`);
-    else if (d.ok && d.fallidos > 0) mostrarToast(`❌ No se envió: ${d.detalle?.[0]?.error || 'revisa el número'}`);
+    if (d.ok && d.enviados > 0) mostrarToast(`Recordatorio enviado (${folio})`);
+    else if (d.ok && d.fallidos > 0) mostrarToast(`No se envió: ${d.detalle?.[0]?.error || 'revisa el número'}`);
     else mostrarToast(d.error || 'No se pudo enviar');
   } catch(e) { mostrarToast('Error: ' + e.message); }
   btn.disabled = false; btn.textContent = orig;
@@ -9494,13 +9493,13 @@ window.enviarRecordatorioUno = async function(folio, btn) {
 };
 
 window.enviarRecordatoriosTodos = async function(n) {
-  if (!(await confirmar({ titulo: '💸 Enviar recordatorios de pago', cuerpo: `A los ${n} pedidos pendientes con teléfono. Un SMS por pedido.`, aceptar: `Enviar ${n}`, peligroso: true }))) return;
+  if (!(await confirmar({ titulo: 'Enviar recordatorios de pago', cuerpo: `A los ${n} pedidos pendientes con teléfono. Un SMS por pedido.`, aceptar: `Enviar ${n}`, peligroso: true }))) return;
   const secret = cronSecret(); if (!secret) return;
   mostrarToast('Enviando recordatorios…');
   try {
     const r = await fetch(`/api/recordatorios-pago?secret=${encodeURIComponent(secret)}&force=1&t=${Date.now()}`);
     const d = await r.json();
-    if (d.ok) mostrarToast(`✅ Enviados: ${d.enviados} · Fallidos: ${d.fallidos}`);
+    if (d.ok) mostrarToast(`Enviados: ${d.enviados} · Fallidos: ${d.fallidos}`);
     else mostrarToast(d.error || 'Error al enviar');
   } catch(e) { mostrarToast('Error: ' + e.message); }
   setTimeout(cargarRecordatoriosPago, 1200);
@@ -9538,7 +9537,7 @@ window.guardarCopyRecordatorio = async function(btn) {
   const plantilla = (txt.value || '').trim();
   if (!plantilla) { if (msg) msg.textContent = 'El mensaje no puede quedar vacío.'; return; }
   if (!/\{folio\}/.test(plantilla) || !/\{link\}/.test(plantilla)) {
-    if (!(await confirmar({ titulo: '✏️ Faltan marcadores', cuerpo: 'El mensaje no incluye {folio} o {link}.', aceptar: 'Guardar de todos modos' }))) return;
+    if (!(await confirmar({ titulo: 'Faltan marcadores', cuerpo: 'El mensaje no incluye {folio} o {link}.', aceptar: 'Guardar de todos modos' }))) return;
   }
   const secret = cronSecret(); if (!secret) return;
   const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
@@ -9548,7 +9547,7 @@ window.guardarCopyRecordatorio = async function(btn) {
       body: JSON.stringify({ accion: 'guardar_copy', plantilla })
     });
     const d = await r.json();
-    if (d.ok) { if (msg) msg.textContent = '✅ Mensaje guardado.'; mostrarToast('Mensaje actualizado'); }
+    if (d.ok) { if (msg) msg.textContent = 'Mensaje guardado.'; mostrarToast('Mensaje actualizado'); }
     else { if (msg) msg.textContent = d.error || 'No se pudo guardar.'; }
   } catch(e) { if (msg) msg.textContent = 'Error: ' + e.message; }
   btn.disabled = false; btn.textContent = orig;
@@ -9958,10 +9957,10 @@ async function renderResumenInventario(elId, incluirLote) {
       </div>` : '';
 
     window._invResumenTxt =
-      `📊 Inventario (${idLote}): disponible *${disp.toFixed(1)}kg* de ${tot.toFixed(1)}kg (${pct}% agotado)\n` +
+      `Inventario (${idLote}): disponible *${disp.toFixed(1)}kg* de ${tot.toFixed(1)}kg (${pct}% agotado)\n` +
       (_hayConteo
-        ? `📦 Embolsado: ${_totG>=1000?(_totG/1000).toFixed(1)+'kg':_totG+'g'}${_dias!==null?` (conteo ${_dias<=1?(_dias===0?'hoy':'ayer'):'hace '+_dias+' días'})`:''}\n`
-        : `📦 Embolsado: sin conteo de este lote\n`);
+        ? `Embolsado: ${_totG>=1000?(_totG/1000).toFixed(1)+'kg':_totG+'g'}${_dias!==null?` (conteo ${_dias<=1?(_dias===0?'hoy':'ayer'):'hace '+_dias+' días'})`:''}\n`
+        : `Embolsado: sin conteo de este lote\n`);
 
     cont.innerHTML = loteHTML + `<div style="background:var(--gris);border-radius:14px;padding:14px;">${fisicoHTML}</div>`;
   } catch(e) {
@@ -11030,9 +11029,9 @@ window.confirmarPedidoWpp = async function(idOrden) {
   const primerNombre = (p.cliente || '').trim().split(' ')[0];
   const saludo = primerNombre ? `¡Hola ${primerNombre}!` : '¡Hola!';
   const msg =
-    `${saludo} 🍟 Te saluda *Crunchy Paps*.\n\n` +
-    `Confirmamos que recibimos tu pedido *${p.consec || ''}* y ya lo estamos preparando. ✅\n\n` +
-    `Cualquier duda, por aquí estamos para ayudarte. ¡Gracias por tu compra! 💛`;
+    `${saludo} Te saluda *Crunchy Paps*.\n\n` +
+    `Confirmamos que recibimos tu pedido *${p.consec || ''}* y ya lo estamos preparando.\n\n` +
+    `Cualquier duda, por aquí estamos para ayudarte. ¡Gracias por tu compra!`;
   window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
@@ -11073,16 +11072,16 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
   if (!cuerpo) cuerpo = '• (Ver detalle con tu vendedor)\n';
 
   const totalTxt = `$${Number(p.total || 0).toLocaleString('es-MX')}`;
-  const pagoTxt = p.estatusPago === 'Pagado' ? '✅ Pagado' : '⏳ Pendiente de pago';
+  const pagoTxt = p.estatusPago === 'Pagado' ? 'Pagado' : 'Pendiente de pago';
   const link = `https://crunchypaps.mx/?track=${encodeURIComponent(p.consec || '')}`;
 
   const msg =
-    `${saludo} 🍟 Aquí está el resumen de tu pedido *${p.consec || ''}* en *Crunchy Paps*:\n\n` +
+    `${saludo} Aquí está el resumen de tu pedido *${p.consec || ''}* en *Crunchy Paps*:\n\n` +
     `${cuerpo}\n` +
     `*Total: ${totalTxt}*\n` +
     `Pago: ${pagoTxt}\n\n` +
     `Puedes dar seguimiento aquí: ${link}\n\n` +
-    `¡Gracias por tu compra! 💛`;
+    `¡Gracias por tu compra!`;
 
   window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -11753,7 +11752,7 @@ function _numerosALetras(num) {
 }
 
 window.imprimirTicket = function() {
-  if (!_pedidoActual) { mostrarToast('⚠️ No hay pedido seleccionado'); return; }
+  if (!_pedidoActual) { mostrarToast('No hay pedido seleccionado'); return; }
   const { orden, lineas } = _pedidoActual;
 
   // Crear contenedor de impresión
