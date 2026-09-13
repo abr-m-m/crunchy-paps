@@ -113,6 +113,10 @@
   --azul: #3b82f6;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+/* iOS: sin zoom por doble toque en controles (el «+» del carrito lo disparaba) */
+button, [role="button"], .nav-item, .ci-btn, .np-star, .chip, .tipo-card { touch-action: manipulation; }
+/* iOS: el <input type="date"> no encoge por sí solo y se encimaba con «Kilos» */
+input[type="date"].inp { min-width: 0; }
 html, body { height: 100%; }
 body {
   background: var(--negro);
@@ -1955,7 +1959,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
       <!-- Registrar nuevo lote -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">REGISTRAR LOTE</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:10px;">
           <div>
             <div style="font-size:0.68rem;font-weight:700;color:#555;margin-bottom:4px;">FECHA</div>
             <input type="date" id="lote-fecha" class="inp">
@@ -4510,7 +4514,7 @@ window.guardarAltaNegocio = async function() {
       try {
         const mapsLine = gps ? `\nMaps: https://www.google.com/maps?q=${gps.lat},${gps.lng}` : '\nSin GPS capturado';
         const nota = `*NEGOCIO POR VALIDAR* (alta por vendedor)\n${sel.label}: ${negocio}\nTel: +52${tel}\n${dir}\nVendedor: ${vendedorInfo?.nombre || ''}${mapsLine}`;
-        if (typeof WHATSAPP_NUM !== 'undefined') window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(nota)}`, '_blank');
+        if (typeof WHATSAPP_NUM !== 'undefined') irAWhatsApp(null, `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(nota)}`);
       } catch(_e) {}
       mostrarToast('Negocio registrado. Pendiente de aprobación.');
       irAlCatalogo();
@@ -6508,6 +6512,20 @@ function initMaps() {
   if (mapsListo || !GOOGLE_MAPS_KEY || GOOGLE_MAPS_KEY==='TU_API_KEY') return;
   const s=document.createElement('script');
   s.src=`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places,geocoder&language=es`;
+  // Si Google rechaza la llave (referer no permitido, cuota, llave caída), Places
+  // deshabilita #f-dir y le pone «Se ha producido un error.» como placeholder: el
+  // cliente se queda sin poder escribir su dirección. Se le devuelve el campo.
+  window.gm_authFailure = function() {
+    mapsListo = false;
+    const devolver = () => {
+      const i = document.getElementById('f-dir');
+      if (!i) return;
+      i.disabled = false;
+      i.placeholder = 'Ej. Av. Insurgentes Sur 123, int. 4';
+      i.classList.remove('gm-err-autocomplete');
+    };
+    devolver(); setTimeout(devolver, 500); setTimeout(devolver, 2000);
+  };
   s.onload=()=>{
     mapsListo=true;
     const input=document.getElementById('f-dir');
@@ -7525,6 +7543,21 @@ window.abrirTrackingDesdeGracias = function() {
   // Abrir tracking
   setTimeout(() => abrirTracking(consec), 200);
 };
+
+// iOS Safari bloquea window.open() cuando llega después de un await (lo trata como
+// ventana emergente). La pestaña se abre en el gesto del usuario, vacía, y se le
+// pone la URL al terminar. Si no se pudo abrir: en el teléfono se navega en la
+// misma pestaña (wa.me abre la app y la PWA sigue detrás); en escritorio se
+// intenta window.open como siempre.
+function abrirVentanaPendiente() {
+  try { return window.open('about:blank', '_blank'); } catch (e) { return null; }
+}
+function cerrarVentanaPendiente(v) { try { if (v && !v.closed) v.close(); } catch (e) {} }
+function irAWhatsApp(v, url) {
+  if (v && !v.closed) { v.location.href = url; return; }
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) { window.location.href = url; return; }
+  window.open(url, '_blank');
+}
 
 window.enviarWpp = function() {
   if (!wppUrlPend) return;
@@ -9365,6 +9398,22 @@ function pintarDashboard() {
     card('Por vendedor (ventas del mes vs cuota)', barrasVend);
 }
 
+// Respaldo de copiado cuando no hay navigator.clipboard (solo existe en https):
+// un textarea invisible y execCommand('copy'). Si tampoco, el prompt de siempre.
+function copiarResumenRespaldo(txt) {
+  let ok = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, txt.length);
+    ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  if (ok) { if (typeof mostrarToast==='function') mostrarToast('Resumen copiado. Pégalo en WhatsApp'); }
+  else prompt('Copia el resumen:', txt);
+}
 window.copiarResumenDia = function() {
   if (!_dashData) { if (typeof mostrarToast==='function') mostrarToast('Aún no carga el dashboard'); return; }
   const D = _dashData;
@@ -9389,9 +9438,9 @@ window.copiarResumenDia = function() {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(txt).then(
       () => { if (typeof mostrarToast==='function') mostrarToast('Resumen copiado. Pégalo en WhatsApp'); },
-      () => prompt('Copia el resumen:', txt)
+      () => copiarResumenRespaldo(txt)
     );
-  } else { prompt('Copia el resumen:', txt); }
+  } else { copiarResumenRespaldo(txt); }
 };
 
 window.descargarInformePDF = function() {
@@ -11010,8 +11059,9 @@ window.filtrarPedidosVendedor = function(filtro) {
 
 // Confirmar pedido al cliente por WhatsApp (envío manual: abre WhatsApp con el mensaje listo)
 window.confirmarPedidoWpp = async function(idOrden) {
+  const ventana = abrirVentanaPendiente();
   const p = (_pedidosVendedorCache || []).find(x => x.id === idOrden);
-  if (!p) { if (typeof mostrarToast==='function') mostrarToast('Pedido no encontrado'); return; }
+  if (!p) { if (typeof mostrarToast==='function') mostrarToast('Pedido no encontrado'); cerrarVentanaPendiente(ventana); return; }
   let tel = String(p.telefono || '').replace(/\D/g, '');
   // Respaldo: si el pedido no trae teléfono, buscarlo en el cliente
   if (!tel && p.idCliente) {
@@ -11024,7 +11074,7 @@ window.confirmarPedidoWpp = async function(idOrden) {
       if (c && c.ok && c.telefono) tel = String(c.telefono).replace(/\D/g, '');
     } catch(e) {}
   }
-  if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); return; }
+  if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); cerrarVentanaPendiente(ventana); return; }
   if (tel.length === 10) tel = '52' + tel; // lada México si viene a 10 dígitos
   const primerNombre = (p.cliente || '').trim().split(' ')[0];
   const saludo = primerNombre ? `¡Hola ${primerNombre}!` : '¡Hola!';
@@ -11032,12 +11082,13 @@ window.confirmarPedidoWpp = async function(idOrden) {
     `${saludo} Te saluda *Crunchy Paps*.\n\n` +
     `Confirmamos que recibimos tu pedido *${p.consec || ''}* y ya lo estamos preparando.\n\n` +
     `Cualquier duda, por aquí estamos para ayudarte. ¡Gracias por tu compra!`;
-  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+  irAWhatsApp(ventana, `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`);
 };
 
 window.enviarResumenPedidoWpp = async function(idOrden) {
+  const ventana = abrirVentanaPendiente();
   const p = (_pedidosVendedorCache || []).find(x => x.id === idOrden);
-  if (!p) { if (typeof mostrarToast==='function') mostrarToast('Pedido no encontrado'); return; }
+  if (!p) { if (typeof mostrarToast==='function') mostrarToast('Pedido no encontrado'); cerrarVentanaPendiente(ventana); return; }
   let tel = String(p.telefono || '').replace(/\D/g, '');
   if (!tel && p.idCliente) {
     try {
@@ -11049,7 +11100,7 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
       if (c && c.ok && c.telefono) tel = String(c.telefono).replace(/\D/g, '');
     } catch(e) {}
   }
-  if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); return; }
+  if (!tel) { if (typeof mostrarToast==='function') mostrarToast('Este pedido no tiene teléfono registrado'); cerrarVentanaPendiente(ventana); return; }
   if (tel.length === 10) tel = '52' + tel;
 
   // Traer el detalle del pedido (sabores/presentaciones)
@@ -11083,7 +11134,7 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
     `Puedes dar seguimiento aquí: ${link}\n\n` +
     `¡Gracias por tu compra!`;
 
-  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+  irAWhatsApp(ventana, `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`);
 };
 
 function pedidoCardVendedorHTML(p) {
@@ -14848,15 +14899,21 @@ async function aplicarPermisosNavbar() {
     }
   });
 
-  // Distribuir uniforme si hay pocos items (consumidor); scrollable si hay muchos
+  ajustarNavbarScroll();
+}
+
+// Distribuir uniforme si hay pocos items (consumidor); desplazable si hay muchos.
+// Se decide por lo que hay visible de verdad, y se vuelve a decidir cada vez que
+// alguien enciende o apaga un item (mostrarNavProduccion, mostrarNavB2B…).
+function ajustarNavbarScroll() {
   const navbar = document.getElementById('navbar');
-  if (navbar) {
-    if (countVisible <= 5) {
-      navbar.classList.remove('scrollable');
-    } else {
-      navbar.classList.add('scrollable');
-    }
-  }
+  if (!navbar) return;
+  const visibles = Array.from(navbar.querySelectorAll('.nav-item')).filter(e => e.style.display !== 'none').length;
+  navbar.classList.toggle('scrollable', visibles > 5);
+}
+if (window.MutationObserver) {
+  const nb = document.getElementById('navbar');
+  if (nb) new MutationObserver(ajustarNavbarScroll).observe(nb, { attributes: true, subtree: true, attributeFilter: ['style'] });
 }
 
 

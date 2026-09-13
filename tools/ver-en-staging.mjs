@@ -21,9 +21,21 @@
 // para mirar colores. La llave se pide al CLI de Supabase en el momento, así que
 // no hay ningún secreto escrito en el repo.
 //
-// NO SIRVE PARA ENSEÑÁRSELO A ALGUIEN QUE NO ESTÉ EN ESTA MÁQUINA: escucha en
-// localhost. Para eso hace falta un preview de Vercel, que es otra conversación
-// (y depende del secreto de bypass que sigue pendiente).
+// DESDE EL TELÉFONO (13 sep 2026): escucha en todas las interfaces, así que con
+// el teléfono en el mismo Wi-Fi basta abrir http://<IP de esta PC>:8794 (la IP
+// la da `ipconfig`; el firewall ya deja pasar a node.exe). Es la misma app
+// contra la misma base de staging.
+//
+// ENTRAR COMO CONSUMIDOR SIN SMS: aquí no hay /api/sheets ni /api/otp-email,
+// así que el OTP del cliente no se puede completar. Para probar lo que ve un
+// consumidor con sesión (Mi cuenta, Pedidos, Club, checkout sin OTP):
+//   http://<IP>:8794/entrar-como-consumidor
+//   http://<IP>:8794/entrar-como?tipo=tienda      (o restaurante | mayorista)
+// Pide a staging una sesión de prueba (`emitir_sesion_prueba`, el mismo RPC que
+// usa tools/probar-perfiles.mjs; solo existe en staging) para el perfil sembrado
+// («Consumidor Prueba» 5591000001, «Tienda Prueba» 5591000003…), la guarda en
+// el navegador y manda al catálogo. Tienda, restaurante y mayorista pasan por la
+// misma puerta B2B que un cliente real: si no están aprobados, verán «Validando».
 
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -66,8 +78,54 @@ if (!LLAVE) { console.error('El CLI no devolvió una llave publishable.'); proce
 const TIPOS = { '.html': 'text/html', '.js': 'application/javascript',
                 '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
+// Sesión de consumidor de prueba: la forma es la misma que guarda guardarSesion()
+// en index.html (cp_session). Solo funciona contra staging: producción no tiene
+// el RPC.
+// Los cuatro perfiles sembrados en staging (los mismos de tools/probar-perfiles.mjs).
+const PERFILES = {
+  consumidor:  { tel: '5591000001', nombre: 'Consumidor Prueba' },
+  restaurante: { tel: '5591000002', nombre: 'Restaurante Prueba' },
+  tienda:      { tel: '5591000003', nombre: 'Tienda Prueba' },
+  mayorista:   { tel: '5591000004', nombre: 'Mayorista Prueba' },
+};
+async function sesionPruebaHTML(tipo) {
+  const perfil = PERFILES[tipo];
+  if (!perfil) return { status: 400, html: `<meta charset="utf-8"><p style="font-family:sans-serif">Perfil desconocido. Usa ?tipo=${Object.keys(PERFILES).join(' | ')}</p>` };
+  const TEL_PRUEBA = perfil.tel;
+  const r = await fetch(`${STAGING}/rest/v1/rpc/emitir_sesion_prueba`, {
+    method: 'POST',
+    headers: { apikey: LLAVE, authorization: `Bearer ${LLAVE}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ p_telefono: TEL_PRUEBA }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok || !j.token) {
+    return { status: 502, html: `<meta charset="utf-8"><p style="font-family:sans-serif">Staging no emitió la sesión de prueba (HTTP ${r.status}): <code>${String(JSON.stringify(j)).slice(0, 200)}</code></p>` };
+  }
+  const sesion = {
+    tipoCliente: tipo, telefonoVerif: TEL_PRUEBA, esVendedor: false,
+    clienteToken: j.token, clienteTokenExp: j.expiraEn || null,
+    vendedorInfo: null, clienteActual: null, puntos: 0, carrito: {},
+    modoVenta: 'pieza', canalVenta: tipo, expira: Date.now() + 24 * 3600 * 1000,
+  };
+  return { status: 200, html: `<!doctype html><meta charset="utf-8"><title>Entrando…</title>
+<script>
+try { localStorage.setItem('cp_session', ${JSON.stringify(JSON.stringify(sesion))}); } catch (e) {}
+location.replace('/');
+</script><p style="font-family:sans-serif">Entrando como ${perfil.nombre}…</p>` };
+}
+
 createServer((req, res) => {
-  const ruta = req.url.split('?')[0];
+  const [ruta, query = ''] = req.url.split('?');
+  // /entrar-como-consumidor  ·  /entrar-como?tipo=tienda|restaurante|mayorista
+  if (ruta === '/entrar-como-consumidor' || ruta === '/entrar-como') {
+    const tipo = ruta === '/entrar-como-consumidor' ? 'consumidor'
+      : (new URLSearchParams(query).get('tipo') || 'consumidor');
+    sesionPruebaHTML(tipo).then(({ status, html }) => {
+      res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      res.end(html);
+    }).catch((e) => { res.writeHead(502); res.end('staging no responde: ' + (e && e.name)); });
+    return;
+  }
   // Vercel sirve esto por entorno; aquí se fabrica apuntando a staging.
   if (ruta === '/api/config.js') {
     res.writeHead(200, { 'content-type': 'application/javascript' });
@@ -88,6 +146,10 @@ createServer((req, res) => {
   console.log('    telefono  5500000001');
   console.log('    PIN       1234   tecléalo y pulsa «Entrar»');
   console.log('                     (son 6 casillas; los de 4 no se autoenvian)');
+  console.log('');
+  console.log('  Como consumidor con sesion (sin SMS):');
+  console.log(`    http://localhost:${PUERTO}/entrar-como-consumidor`);
+  console.log('  Desde el telefono: misma URL con la IP de esta PC (ipconfig).');
   console.log('');
   console.log('  Ctrl+C para pararlo.');
   console.log('');
