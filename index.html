@@ -485,7 +485,7 @@ select.inp { appearance: none; cursor: pointer; }
 .cart-item-nom { font-weight:800; font-size:0.86rem; }
 .cart-item-sub { font-size:0.76rem; color:var(--suave); font-weight:600; }
 .cart-item-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.15rem; color:var(--amarillo); }
-.del-btn { background:none; border:none; color:#555; font-size:1.1rem; cursor:pointer; padding:4px; transition:color 0.15s; }
+.del-btn { background:none; border:none; color:var(--suave); width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0; transition:color 0.15s; }
 .del-btn:hover { color:var(--rojo); }
 .cart-total {
   display:flex; justify-content:space-between; align-items:center;
@@ -521,7 +521,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .pago-btn.active { border-color:var(--amarillo); color:var(--amarillo); background:var(--gris); }
 .pago-btn:hover:not(.active) { border-color:#444; color:var(--blanco); }
-.pago-icon { font-size:1.3rem; display:block; margin-bottom:3px; }
+.pago-icon { display:flex; justify-content:center; margin-bottom:4px; }
 
 .confirm-check {
   display:flex; align-items:flex-start; gap:10px;
@@ -1127,6 +1127,18 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .tk-num { font-variant-numeric:tabular-nums; white-space:nowrap; }
 .tk-btn { width:100%; min-height:44px; background:transparent; border:1px solid var(--amarillo); border-radius:10px; padding:10px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.86rem; color:var(--amarillo); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
 .tk-nota { font-size:0.68rem; color:var(--suave); text-align:center; margin-top:8px; }
+/* ── Paso 4 (II), carrito y checkout (13 sep 2026) ── */
+.ci-qty { display:inline-flex; align-items:center; gap:6px; margin-top:6px; }
+.ci-btn { width:32px; height:32px; border-radius:8px; background:var(--gris3); border:none; color:var(--blanco); font-weight:900; font-size:1rem; cursor:pointer; position:relative; display:flex; align-items:center; justify-content:center; }
+.ci-btn::after { content:''; position:absolute; inset:-6px; }
+.ci-num { min-width:20px; text-align:center; font-weight:800; font-size:0.9rem; font-variant-numeric:tabular-nums; }
+.del-btn svg { width:18px; height:18px; }
+.lbl-campo { display:block; font-size:0.7rem; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; margin:0 0 6px 2px; }
+.form-section .lbl-campo { margin-bottom:-4px; }
+.ico-tarjeta { display:flex; justify-content:center; margin-bottom:4px; color:var(--blanco); }
+.ico-tarjeta svg, .pago-icon svg { width:24px; height:24px; }
+.tw-copy, #cupon-btn-aplicar, #gracias-overlay button { min-height:44px; }
+#btn-ubic-icon { display:flex; } #btn-ubic-icon svg { width:18px; height:18px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
 }
@@ -3214,14 +3226,14 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 <div class="drawer" id="drawer">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div class="drawer-title" style="margin-bottom:0;">Tu pedido</div>
-    <button onclick="cerrarCarrito()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarCarrito()" aria-label="Cerrar" style="background:var(--gris3);border:none;border-radius:50%;width:44px;height:44px;color:var(--blanco);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div id="cart-items"></div>
 
   <!-- Cupón de descuento (v2.7) -->
   <div id="cupon-wrap" style="display:none;margin:8px 0;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:10px;">
     <div id="cupon-input-wrap">
-      <div style="font-size:0.7rem;font-weight:800;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🎟️ ¿Tienes un cupón?</div>
+      <div style="font-size:0.7rem;font-weight:800;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cupón de descuento</div>
       <div style="display:flex;gap:6px;">
         <input class="inp" id="cupon-codigo" type="text" placeholder="Código" style="flex:1;text-transform:uppercase;" maxlength="20">
         <button onclick="aplicarCuponDesdeCarrito()" id="cupon-btn-aplicar" style="background:var(--amarillo);border:none;border-radius:8px;padding:0 14px;font-weight:900;cursor:pointer;font-size:0.82rem;">Aplicar</button>
@@ -3231,11 +3243,11 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div id="cupon-aplicado" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:0.74rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;">✅ Cupón aplicado</div>
+          <div style="font-size:0.74rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;">Cupón aplicado</div>
           <div id="cupon-aplicado-codigo" style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--amarillo);line-height:1;margin-top:2px;">CODIGO</div>
           <div id="cupon-aplicado-desc" style="font-size:0.74rem;color:var(--blanco);margin-top:2px;">Descuento</div>
         </div>
-        <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid #555;border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">✕ Quitar</button>
+        <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid #555;border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">Quitar</button>
       </div>
     </div>
   </div>
@@ -3278,13 +3290,13 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
             flex:1;padding:10px;border-radius:10px;border:2px solid var(--gris3);
             background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;
             font-weight:800;font-size:0.82rem;cursor:pointer;">
-            🔍 Sí, buscar
+            Sí, buscar
           </button>
           <button onclick="elegirModoCliente('nuevo')" id="btn-cliente-nuevo" style="
             flex:1;padding:10px;border-radius:10px;border:2px solid var(--gris3);
             background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;
             font-weight:800;font-size:0.82rem;cursor:pointer;">
-            ➕ No, es nuevo
+            No, es nuevo
           </button>
         </div>
       </div>
@@ -3299,7 +3311,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 
       <!-- Teléfono del cliente -->
       <div style="margin-top:10px;">
-        <div style="font-size:0.7rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📱 TELÉFONO DEL CLIENTE</div>
+        <div style="font-size:0.7rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">TELÉFONO DEL CLIENTE</div>
         <div style="display:flex;gap:8px;">
           <div style="background:var(--gris);border:2px solid var(--gris3);border-radius:12px;padding:13px 12px;color:var(--blanco);font-weight:700;font-size:0.95rem;width:76px;text-align:center;flex-shrink:0;">+52</div>
           <input class="inp" id="f-tel-cliente" type="tel" maxlength="10" placeholder="Teléfono del cliente"
@@ -3314,12 +3326,13 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
           background:transparent;border:1px solid var(--amarillo);border-radius:8px;
           padding:7px 14px;font-family:'Inter',sans-serif;font-weight:700;
           font-size:0.78rem;color:var(--amarillo);cursor:pointer;">
-          ✏️ Editar datos del cliente
+          Editar datos del cliente
         </button>
       </div>
 
     </div>
-    <input class="inp" id="f-nombre" type="text" placeholder="Tu nombre completo *" maxlength="60">
+    <label class="lbl-campo" for="f-nombre">Nombre completo *</label>
+    <input class="inp" id="f-nombre" type="text" placeholder="Como aparecerá en tu pedido" maxlength="60">
       <div class="campo-b2b" id="wrap-negocio">
         <input class="inp" id="f-negocio" type="text" placeholder="Nombre del negocio *" maxlength="80">
       </div>
@@ -3334,17 +3347,17 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div id="entrega-wrap" style="display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-entrega">2</span>
-        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">🚚 ENTREGA</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div id="entrega-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div class="entrega-btn" onclick="setEntrega('coordinar')" data-id="coordinar" style="background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:10px;cursor:pointer;text-align:center;transition:all 0.15s;">
-          <div style="font-size:1.3rem;margin-bottom:2px;">📞</div>
+          <div class="ico-tarjeta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></div>
           <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);line-height:1.2;">Coordinar con mi contacto</div>
           <div style="font-size:0.66rem;color:var(--suave);margin-top:2px;">Sin costo extra</div>
         </div>
         <div class="entrega-btn" onclick="setEntrega('paqueteria')" data-id="paqueteria" style="background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:10px;cursor:pointer;text-align:center;transition:all 0.15s;">
-          <div style="font-size:1.3rem;margin-bottom:2px;">📦</div>
+          <div class="ico-tarjeta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
           <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);line-height:1.2;">Paquetería</div>
           <div style="font-size:0.66rem;color:var(--amarillo);margin-top:2px;" id="entrega-paq-costo">+$80</div>
         </div>
@@ -3369,7 +3382,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 
         <!-- Buscador (visible cuando NO hay seleccionado) -->
         <div id="vend-buscador" style="display:block;">
-          <input id="vend-search" type="text" placeholder="🔍 Busca por nombre..."
+          <input id="vend-search" type="text" placeholder="Busca por nombre"
             oninput="buscarVendedoresCheckout()"
             onfocus="buscarVendedoresCheckout()"
             style="width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:10px 12px;color:var(--blanco);font-size:0.88rem;outline:none;margin-bottom:8px;">
@@ -3382,21 +3395,22 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div class="form-section">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-direccion">3</span>
-        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📍 DIRECCIÓN</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">DIRECCIÓN</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div class="form-row">
         <div>
+          <label class="lbl-campo" for="f-cp">C.P. *</label>
           <input class="inp" id="f-cp" type="text" maxlength="5" inputmode="numeric"
-            placeholder="C.P. *" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,5); if(this.value.length===5){ buscarCP(this.value); repintarInfoEntrega(); }">
+            placeholder="00000" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,5); if(this.value.length===5){ buscarCP(this.value); repintarInfoEntrega(); }">
           <div class="cp-status" id="cp-status"></div>
         </div>
-        <select class="inp" id="f-colonia" style="color:#444">
-          <option value="">Colonia *</option>
-        </select>
+        <div><label class="lbl-campo" for="f-colonia">Colonia *</label><select class="inp" id="f-colonia" style="color:#444">
+          <option value="">Elige tu colonia</option>
+        </select></div>
       </div>
       <div id="cp-info" style="display:none;background:var(--gris2);border-radius:10px;padding:9px 12px;font-size:0.8rem;font-weight:700;color:var(--suave);">
-        📍 <span id="cp-mun"></span>, <span id="cp-est"></span>
+        <span id="cp-mun"></span>, <span id="cp-est"></span>
       </div>
       <button type="button" id="btn-usar-ubicacion" onclick="usarMiUbicacion()" style="
         background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;
@@ -3404,16 +3418,17 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
         font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;cursor:pointer;
         display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.2s;
         margin-bottom:0;">
-        <span id="btn-ubic-icon">📍</span>
+        <span id="btn-ubic-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
         <span id="btn-ubic-text">Usar mi ubicación</span>
       </button>
-      <input class="inp" id="f-dir" type="text" placeholder="Calle y número *" maxlength="150"
+      <label class="lbl-campo" for="f-dir">Calle y número *</label>
+      <input class="inp" id="f-dir" type="text" placeholder="Ej. Av. Insurgentes Sur 123, int. 4" maxlength="150"
         autocomplete="off" oninput="onDirInput(this.value)">
       <div id="maps-sug" style="display:none;position:relative;"></div>
       <div id="mapa-wrap" style="display:none;border-radius:10px;overflow:hidden;border:2px solid var(--gris3);">
         <div style="background:var(--gris2);padding:7px 12px;font-size:0.73rem;font-weight:800;color:var(--suave);display:flex;align-items:center;justify-content:space-between;">
-          <span>🗺️ <span id="mapa-lbl">Arrastra el pin para ajustar</span></span>
-          <span style="font-size:0.65rem;color:#555;">📍 Mueve el pin al punto exacto</span>
+          <span><span id="mapa-lbl">Arrastra el pin para ajustar</span></span>
+          <span style="font-size:0.65rem;color:#555;">Mueve el pin al punto exacto</span>
         </div>
         <div id="mapa-div" style="width:100%;height:200px;"></div>
         <div id="mapa-coords" style="background:var(--gris3);padding:5px 12px;font-size:0.68rem;font-weight:700;color:#555;"></div>
@@ -3423,39 +3438,39 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <!-- Método de pago -->
     <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
       <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-pago">4</span>
-      <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">💳 PAGO</span>
+      <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">PAGO</span>
       <span style="flex:1;height:1px;background:var(--gris3);"></span>
     </div>
     <div class="pagos-grid" id="pagos-grid">
       <div class="pago-btn active" onclick="setPago(1,'Efectivo')" data-id="1">
-        <span class="pago-icon">💵</span>Efectivo
+        <span class="pago-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>Efectivo
       </div>
       <div class="pago-btn" onclick="setPago(3,'Transferencia')" data-id="3">
-        <span class="pago-icon">📲</span>Transferencia
+        <span class="pago-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span>Transferencia
       </div>
       <div class="pago-btn" id="pago-terminal" onclick="setPago(2,'Tarjeta terminal')" data-id="2" style="display:none;">
-        <span class="pago-icon">💳</span>Tarjeta terminal
+        <span class="pago-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Tarjeta terminal
       </div>
       <div class="pago-btn" onclick="setPago(5,'Tarjeta (Stripe)')" data-id="5">
-        <span class="pago-icon">🔐</span>Pago en línea
+        <span class="pago-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>Pago en línea
       </div>
     </div>
 
     <!-- Stripe -->
     <div class="stripe-wrap" id="stripe-wrap" style="margin-top:10px;">
       <div style="background:var(--gris2);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--suave);line-height:1.5;">
-        🔐 Al confirmar te llevaremos a la <strong style="color:var(--blanco);">página segura de Stripe</strong> para pagar con tarjeta. Tu pedido se registra y, al completar el pago, queda confirmado.
+        Al confirmar te llevaremos a la <strong style="color:var(--blanco);">página segura de Stripe</strong> para pagar con tarjeta. Tu pedido se registra y, al completar el pago, queda confirmado.
       </div>
     </div>
 
     <!-- Transferencia -->
     <div class="transfer-wrap" id="transfer-wrap">
       <div class="tw-card">
-        <div style="font-weight:800;color:var(--blanco);margin-bottom:8px;">📲 Datos para transferencia</div>
+        <div style="font-weight:800;color:var(--blanco);margin-bottom:8px;">Datos para transferencia</div>
         <div class="tw-row"><span class="tw-label">Banco</span><span class="tw-val" style="font-family:inherit;">NU</span></div>
         <div class="tw-row"><span class="tw-label">Beneficiario</span><span class="tw-val" style="font-family:inherit;">Abraham Miranda Mora</span></div>
         <div class="tw-row"><span class="tw-label">CLABE</span><span class="tw-val">638180010133787789</span></div>
-        <div class="tw-row" style="justify-content:flex-end;"><button type="button" class="tw-copy" onclick="copiarDato('638180010133787789','CLABE')">📋 Copiar CLABE</button></div>
+        <div class="tw-row" style="justify-content:flex-end;"><button type="button" class="tw-copy" onclick="copiarDato('638180010133787789','CLABE')"><svg width="16" height="16" style="vertical-align:-3px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copiar CLABE</button></div>
         <div class="tw-row"><span class="tw-label">No. de cuenta</span><span class="tw-val">01013378778</span></div>
         <div style="margin-top:8px;font-size:0.78rem;color:var(--suave);line-height:1.5;">Haz tu transferencia y, al confirmar, envía tu comprobante por WhatsApp. Tu pedido queda como <strong style="color:var(--blanco);">pendiente de pago</strong> hasta validarlo.</div>
       </div>
@@ -3463,7 +3478,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 
     <!-- Puntos de lealtad -->
     <div class="puntos-chip" id="puntos-chip" style="display:none;margin-top:10px;">
-      <span>🏆 Tus puntos disponibles</span>
+      <span>Tus puntos disponibles</span>
       <span class="pts" id="puntos-val">0</span>
     </div>
 
@@ -3472,7 +3487,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div id="fecha-entrega-wrap" style="background:var(--gris2);border-radius:10px;padding:10px 14px;margin-top:10px;display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;">
         <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-fecha">5</span>
-        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">📅 FECHA DE ENTREGA</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">FECHA DE ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
       <div style="font-weight:800;color:var(--amarillo);font-size:0.9rem;" id="fecha-entrega-lbl">Calculando...</div>
@@ -3485,7 +3500,8 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
           style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;">
       </div>
     </div>
-    <textarea class="inp" id="f-notas" rows="2" placeholder="Notas (horario, referencias...)" style="margin-top:10px;resize:none;"></textarea>
+    <label class="lbl-campo" for="f-notas" style="margin-top:10px;">Notas (opcional)</label>
+    <textarea class="inp" id="f-notas" rows="2" placeholder="Horario, referencias para llegar…" style="resize:none;"></textarea>
 
     <!-- Confirmar -->
     <label class="confirm-check" style="margin-top:10px;">
@@ -3496,7 +3512,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <!-- Opt-in marketing (explícito) -->
     <label class="confirm-check" id="chk-promos-wrap" style="margin-top:8px;">
       <input type="checkbox" id="chk-promos">
-      <label for="chk-promos">Quiero recibir promociones y novedades de Crunchy Paps por WhatsApp/SMS. 🌶️</label>
+      <label for="chk-promos">Quiero recibir promociones y novedades de Crunchy Paps por WhatsApp/SMS.</label>
     </label>
 
     <!-- v2.11.1: Aviso de validaciones faltantes (visible y claro) -->
@@ -3520,17 +3536,16 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       <div class="consec-val" id="g-consec">—</div>
       <div class="vend-info" id="g-vendedor"></div>
       <div class="puntos-ganados" id="g-puntos"></div>
-      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;">🚚 <strong style="color:var(--amarillo);">Envía tu pedido a tu vendedor / reparto</strong> para coordinar la entrega.</div>
+      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--amarillo);">Envía tu pedido a tu vendedor / reparto</strong> para coordinar la entrega.</div>
     </div>
     <div class="gracias-wpp-wrap">
-      <div class="wpp-hint">💬 ¿Quieres enviar el resumen a tu vendedor?</div>
+      <div class="wpp-hint">¿Quieres enviar el resumen a tu vendedor?</div>
       <button class="btn-wpp" id="g-btn-wpp" onclick="enviarWpp()">
         <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Enviar resumen al vendedor
       </button>
       <!-- v2.10: Opción enviar a otro contacto (abre WhatsApp para elegir) -->
       <button onclick="enviarWppOtro()" style="margin-top:8px;width:100%;background:transparent;border:1.5px solid var(--gris3);border-radius:10px;padding:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-        <span>📲</span>
         <span>Enviar a otro contacto</span>
       </button>
       <div class="wpp-opt-lbl">Opcional — tu pedido ya quedó registrado</div>
@@ -3541,9 +3556,9 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       border-radius:12px;padding:12px;font-family:'Inter',sans-serif;
       font-weight:800;font-size:0.86rem;color:var(--amarillo);cursor:pointer;
       margin-top:10px;">
-      📦 Ver seguimiento de mi pedido
+      Ver seguimiento de mi pedido
     </button>
-    <button class="btn-seguir" onclick="cerrarGracias()">Seguir comprando 🛒</button>
+    <button class="btn-seguir" onclick="cerrarGracias()">Seguir comprando</button>
   </div>
 </div>
 
@@ -3941,6 +3956,7 @@ function saborDot(sabor, px) {
 }
 // Un solo placeholder de trazo para todo producto sin foto (papas y bebidas).
 const ICONO_CARRITO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 8H6.3"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="17.5" cy="20" r="1.2"/></svg>';
+const ICONO_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 const ICONO_FOTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-8 8"/></svg>';
 const MINIMOS       = { consumidor:0, tienda:200, restaurante:300, mayorista:500, vendedor:0, mostrador:0 };
 
@@ -5570,7 +5586,7 @@ window.onCambioFechaEntrega = function(yyyymmdd) {
     const d = new Date(yyyymmdd + 'T12:00:00');
     lbl.textContent = d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
   }
-  if (msg) msg.textContent = '✏️ Fecha de entrega ajustada';
+  if (msg) msg.textContent = 'Fecha de entrega ajustada';
 };
 // Helper: resetea header al estado del vendedor logueado y limpia clienteActual.
 // Se invoca al cerrar carrito sin pedido, después de un pedido exitoso, o cuando
@@ -5617,21 +5633,28 @@ function renderDrawer() {
     const grsLinea = i.tipoVenta==='A granel'
       ? (Number(i.gramos)||0)
       : (Number(i.qty)||0) * (Number(i.gramos)||0);
-    const desc = i.tipoVenta==='A granel'
+    const esPieza = i.tipoVenta !== 'A granel';
+    const desc = !esPieza
       ? `${i.gramos}g · $${i.monto}`
-      : `×${i.qty} · $${i.precio} c/u`;
-    const descInterno = i.tipoVenta==='A granel'
+      : `$${i.precio} c/u`;
+    const descInterno = !esPieza
       ? `${i.gramos}g a granel`
-      : `×${i.qty} · ${i.gramos}g c/u`;
+      : `${i.gramos}g c/u`;
+    // Paso 4 (II): la cantidad se cambia desde el carrito (solo piezas; el
+    // granel se quita entero). cambiarQty ya redibuja el cajón si está abierto.
+    const qtyHTML = esPieza
+      ? `<div class="ci-qty"><button class="ci-btn" onclick="cambiarQty('${i.key}',-1)" aria-label="Quitar uno">−</button><span class="ci-num">${i.qty}</span><button class="ci-btn" onclick="cambiarQty('${i.key}',1)" aria-label="Agregar uno">+</button></div>`
+      : '';
 
     return `<div class="cart-item">
       ${saborDot(i.sabor, 12)}
       <div class="cart-item-info">
         <div class="cart-item-nom">${i.sabor} · ${i.presentacion}</div>
         <div class="cart-item-sub">${esInternoModo ? descInterno : desc}</div>
+        ${qtyHTML}
       </div>
       <span class="cart-item-precio">${esInternoModo ? `${(grsLinea/1000).toFixed(3)}kg` : `$${sub}`}</span>
-      <button class="del-btn" onclick="eliminarItem('${i.key}')">✕</button>
+      <button class="del-btn" onclick="eliminarItem('${i.key}')" aria-label="Quitar del pedido">${ICONO_X}</button>
     </div>`;
   }).join('');
 
@@ -5639,16 +5662,16 @@ function renderDrawer() {
   if (esInternoModo) {
     const tipoActual = window._pedidoInterno?.tipo || '';
     const TIPOS = [
-      { id:'sampling', label:'🎁 Sampling' },
-      { id:'consumo',  label:'🍽️ Consumo' },
-      { id:'demo',     label:'🎬 Demo' },
-      { id:'regalo',   label:'🎀 Regalo' },
-      { id:'bonificacion', label:'➕ Bonificación' },
-      { id:'merma',    label:'⚠️ Merma' },
+      { id:'sampling', label:'Sampling' },
+      { id:'consumo',  label:'Consumo' },
+      { id:'demo',     label:'Demo' },
+      { id:'regalo',   label:'Regalo' },
+      { id:'bonificacion', label:'Bonificación' },
+      { id:'merma',    label:'Merma' },
     ];
     const selectorHTML = `
       <div style="background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin:6px 0 10px;">
-        <div style="font-size:0.7rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📦 Motivo del pedido interno *</div>
+        <div style="font-size:0.7rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           ${TIPOS.map(t => {
             const sel = t.id === tipoActual;
@@ -5662,7 +5685,7 @@ function renderDrawer() {
             </button>`;
           }).join('')}
         </div>
-        ${!tipoActual ? '<div style="font-size:0.7rem;color:var(--rojo);margin-top:6px;font-weight:700;">⚠️ Selecciona un motivo antes de confirmar</div>' : ''}
+        ${!tipoActual ? '<div style="font-size:0.7rem;color:var(--rojo);margin-top:6px;font-weight:700;">Selecciona un motivo antes de confirmar</div>' : ''}
       </div>
     `;
     ci.insertAdjacentHTML('afterend', `<div id="selector-tipo-interno-wrap">${selectorHTML}</div>`);
@@ -5726,7 +5749,7 @@ function renderDrawer() {
       }
       if (envRow) {
         envRow.style.display = costoEnv > 0 ? 'flex' : 'none';
-        if (costoEnv > 0) envRow.innerHTML = `<span>📦 Envío paquetería</span><span style="color:var(--amarillo);">+$${costoEnv}</span>`;
+        if (costoEnv > 0) envRow.innerHTML = `<span>Envío paquetería</span><span style="color:var(--amarillo);">+$${costoEnv}</span>`;
       }
       // v2.10: línea de descuento por cupón envío gratis
       let envDescRow = document.getElementById('cart-envio-desc-row');
@@ -5738,7 +5761,7 @@ function renderDrawer() {
       }
       if (envDescRow) {
         envDescRow.style.display = descEnvio > 0 ? 'flex' : 'none';
-        if (descEnvio > 0) envDescRow.innerHTML = `<span>🚚 Cupón envío gratis (${_cuponEnCarrito.codigo})</span><span style="color:#4caf50;">-$${descEnvio.toLocaleString('es-MX')}</span>`;
+        if (descEnvio > 0) envDescRow.innerHTML = `<span>Cupón envío gratis (${_cuponEnCarrito.codigo})</span><span style="color:#4caf50;">-$${descEnvio.toLocaleString('es-MX')}</span>`;
       }
 
       if (totalLabelEl) {
@@ -5768,7 +5791,7 @@ function renderDrawer() {
   const ahorroEl = document.getElementById('cart-ahorro');
   if (ahorro > 0) {
     ahorroEl.style.display='block';
-    ahorroEl.innerHTML=`🎉 <strong>¡Ahorraste $${ahorro}!</strong> con tus descuentos activos`;
+    ahorroEl.innerHTML=`<strong>¡Ahorraste $${ahorro}!</strong> con tus descuentos activos`;
   } else {
     ahorroEl.style.display='none';
   }
@@ -5778,13 +5801,13 @@ function renderDrawer() {
   // (cliente que apenas inicia, prueba de producto, etc.).
   const faltMay = validarMinimosMayoreo();
   if (faltMay.length) {
-    mm.innerHTML = '🧾 <strong>Mínimo de mayoreo:</strong> ' +
+    mm.innerHTML = '<strong>Mínimo de mayoreo:</strong> ' +
       faltMay.map(f => `${f.presentacion} ${f.actual}/${f.minimo}`).join(' · ') +
       '. Agrega más de esas presentaciones para confirmar.';
     mm.classList.add('visible');
     mm.classList.add('warning');
   } else if (min>0 && monto<min) {
-    mm.innerHTML = `⚠️ <strong>Sugerido ${TIPO_LABELS[tipoCliente]}: $${min}</strong> (faltan $${min-monto}). Puedes continuar igual.`;
+    mm.innerHTML = `<strong>Sugerido ${TIPO_LABELS[tipoCliente]}: $${min}</strong> (faltan $${min-monto}). Puedes continuar igual.`;
     mm.classList.add('visible');
     mm.classList.add('warning');
   } else {
@@ -5938,7 +5961,7 @@ window.actualizarChecklistFaltantes = function() {
   if (tipoCliente === 'consumidor' && metodoEntrega === 'paqueteria') {
     const subtotal = totalMonto();
     if (subtotal < MIN_PAQUETERIA) {
-      faltantes.push({ campo: 'min', msg: `📦 Para envío por paquetería se requiere mínimo $${MIN_PAQUETERIA} (faltan $${MIN_PAQUETERIA - subtotal})` });
+      faltantes.push({ campo: 'min', msg: `Para envío por paquetería se requiere mínimo $${MIN_PAQUETERIA} (faltan $${MIN_PAQUETERIA - subtotal})` });
     }
   }
 
@@ -5947,13 +5970,13 @@ window.actualizarChecklistFaltantes = function() {
   //    ni a pedidos levantados por vendedor (el vendedor ES el contacto).
   const _esInterno = (modoVenta === 'interno') || !!(window._pedidoInterno && window._pedidoInterno.tipo);
   if (tipoCliente === 'consumidor' && metodoEntrega === 'coordinar' && !_contactoVendedor && !_esInterno && !esVendedor) {
-    faltantes.push({ campo: 'contacto', msg: '📞 Elige a tu contacto Crunchy (o "Cualquiera")' });
+    faltantes.push({ campo: 'contacto', msg: 'Elige a tu contacto Crunchy (o "Cualquiera")' });
   }
 
   // 3. Nombre del negocio requerido para B2B
   if (tipoCliente === 'tienda' || tipoCliente === 'restaurante' || tipoCliente === 'mayorista') {
     const negocio = (document.getElementById('f-negocio')?.value || '').trim();
-    if (!negocio) faltantes.push({ campo: 'negocio', msg: '🏪 Nombre del ' + (tipoCliente === 'tienda' ? 'establecimiento' : (tipoCliente === 'mayorista' ? 'negocio' : 'restaurante')) });
+    if (!negocio) faltantes.push({ campo: 'negocio', msg: 'Nombre del ' + (tipoCliente === 'tienda' ? 'establecimiento' : (tipoCliente === 'mayorista' ? 'negocio' : 'restaurante')) });
   }
 
   if (faltantes.length === 0) {
@@ -5965,7 +5988,7 @@ window.actualizarChecklistFaltantes = function() {
   } else {
     cont.style.display = 'block';
     cont.innerHTML = `
-      <div style="font-weight:800;color:#ffa500;margin-bottom:6px;font-size:0.86rem;">⚠️ Falta poco para confirmar tu pedido:</div>
+      <div style="font-weight:800;color:#ffa500;margin-bottom:6px;font-size:0.86rem;">Falta poco para confirmar tu pedido:</div>
       <ul style="margin:0;padding-left:20px;color:#ffd699;">
         ${faltantes.map(f => `<li style="margin:3px 0;">${f.msg}</li>`).join('')}
       </ul>
@@ -6047,7 +6070,7 @@ function esFueraCDMX() {
 function avisoEnvioCDMX() {
   if (esFueraCDMX() !== true) return '';
   return `<div style="margin-top:8px;background:#2d1a00;border:1px solid #ffa500;border-radius:8px;padding:10px;color:#ffd699;font-size:0.74rem;line-height:1.45;">
-    ⚠️ <strong style="color:#ffa500;">Destino fuera de CDMX.</strong> Tu pedido sí se puede enviar, pero el <strong>costo de envío puede variar según la distancia</strong> y quizá requiera un <strong>pago adicional</strong>. Confirmaremos el costo final contigo y <strong>el total se ajusta y se cobra antes de enviar</strong>.
+    <strong style="color:#ffa500;">Destino fuera de CDMX.</strong> Tu pedido sí se puede enviar, pero el <strong>costo de envío puede variar según la distancia</strong> y quizá requiera un <strong>pago adicional</strong>. Confirmaremos el costo final contigo y <strong>el total se ajusta y se cobra antes de enviar</strong>.
   </div>`;
 }
 function repintarInfoEntrega() {
@@ -6059,7 +6082,7 @@ window.setEntrega = function(id) {
   if (id === 'paqueteria') {
     const subtotal = totalMonto();
     if (subtotal < MIN_PAQUETERIA) {
-      mostrarToast(`📦 Para envío por paquetería, mínimo $${MIN_PAQUETERIA} de compra (actual: $${subtotal})`);
+      mostrarToast(`Para envío por paquetería, mínimo $${MIN_PAQUETERIA} de compra (actual: $${subtotal})`);
       return; // no cambia la selección
     }
   }
@@ -6078,13 +6101,13 @@ window.setEntrega = function(id) {
     // ¿Hay cupón envío gratis aplicado?
     const tieneCuponEnvio = _cuponEnCarrito && _cuponEnCarrito.tipo === 'envio_gratis';
     if (tieneCuponEnvio) {
-      info.innerHTML = `📦 Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. 🎉 <strong style="color:#4caf50;">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
+      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. <strong style="color:#4caf50;">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
     } else {
-      info.innerHTML = `📦 Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. Costo: <strong>$${COSTO_PAQUETERIA}</strong> que se sumará al total. Se asignará una guía de rastreo una vez confirmado.` + avisoEnvioCDMX();
+      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. Costo: <strong>$${COSTO_PAQUETERIA}</strong> que se sumará al total. Se asignará una guía de rastreo una vez confirmado.` + avisoEnvioCDMX();
     }
   } else if (id === 'coordinar') {
     info.style.display = 'block';
-    info.innerHTML = '📞 Tu contacto Crunchy te escribirá para coordinar la entrega. Sin costo extra.';
+    info.innerHTML = 'Tu contacto Crunchy te escribirá para coordinar la entrega. Sin costo extra.';
   } else {
     info.style.display = 'none';
   }
@@ -6215,7 +6238,7 @@ function pintarResultadosVendedor(vendedores, query) {
     const esMostrador = v.rol === 'Mostrador';
     // Solo el Mostrador conserva un subtítulo identificativo (es el punto físico).
     // Para todo lo demás (Vendedor, Admin), NO mostramos rol — privacidad.
-    const ico = esMostrador ? '🏪' : '👤';
+    const ico = '';
     const subtituloHtml = esMostrador
       ? '<div style="color:var(--suave);font-size:0.7rem;">Punto de venta local</div>'
       : '';
@@ -6223,7 +6246,7 @@ function pintarResultadosVendedor(vendedores, query) {
       <div onclick='seleccionarVendedor(${JSON.stringify(v).replace(/'/g, "&apos;")})'
         style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--gris2);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background 0.15s;"
         onmouseover="this.style.background='var(--gris3)'" onmouseout="this.style.background='var(--gris2)'">
-        <span style="font-size:1.1rem;">${ico}</span>
+        
         <div style="flex:1;min-width:0;">
           <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">${v.nombre}</div>
           ${subtituloHtml}
@@ -6235,7 +6258,7 @@ function pintarResultadosVendedor(vendedores, query) {
 
   // Hint cuando no hay query: "escribe el nombre de tu contacto..."
   const hint = (query.length < 2)
-    ? `<div style="color:var(--suave);font-size:0.74rem;padding:6px 4px 10px;text-align:center;font-style:italic;">✍️ Escribe el nombre de tu contacto Crunchy</div>`
+    ? `<div style="color:var(--suave);font-size:0.74rem;padding:6px 4px 10px;text-align:center;font-style:italic;">Escribe el nombre de tu contacto Crunchy</div>`
     : '';
 
   cont.innerHTML = hint + items + botonCualquiera();
@@ -6246,7 +6269,6 @@ function botonCualquiera() {
     <div onclick="seleccionarVendedor({id:0,nombre:'Cualquier vendedor',rol:'Cualquiera'})"
       style="display:flex;align-items:center;gap:10px;padding:10px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;cursor:pointer;margin-top:4px;"
       onmouseover="this.style.borderColor='var(--amarillo)'" onmouseout="this.style.borderColor='var(--gris3)'">
-      <span style="font-size:1.1rem;">🤷</span>
       <div style="flex:1;">
         <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">No conozco a nadie</div>
         <div style="color:var(--suave);font-size:0.7rem;">Que cualquiera me contacte</div>
@@ -6357,7 +6379,7 @@ function pintarHintUltimoContacto(vend) {
   const cont = document.getElementById('vend-resultados');
   if (!cont) return;
   const esMostrador = vend.rol === 'Mostrador';
-  const ico = esMostrador ? '🏪' : '👤';
+  const ico = '';
   const subtitulo = esMostrador ? 'Punto de venta local' : '';
 
   cont.innerHTML = `
@@ -6428,7 +6450,7 @@ window.buscarCP = async function(cp) {
   // cada vez que tocaba la dirección o usaba la ubicación. Bug anterior a la
   // Etapa B: `buscarCP` reconstruía las opciones sin restaurar la selección.
   const _coloniaPrevia = (col.value || '').trim();
-  col.innerHTML='<option value="">Colonia *</option>'; col.style.color='#444';
+  col.innerHTML='<option value="">Elige tu colonia</option>'; col.style.color='#444';
   info.style.display='none'; st.textContent='';
   if (cp.length<5) return;
   clearTimeout(cpTimer);
@@ -6659,20 +6681,20 @@ window.usarMiUbicacion = function() {
 
   // Verificar soporte del navegador
   if (!navigator.geolocation) {
-    avisar({ titulo: '📍 Sin geolocalización', cuerpo: 'Tu navegador no soporta geolocalización. Escribe la dirección manualmente.' });
+    avisar({ titulo: 'Sin geolocalización', cuerpo: 'Tu navegador no soporta geolocalización. Escribe la dirección manualmente.' });
     return;
   }
 
   // Estado de carga
   btn.disabled = true;
-  if (icon) icon.textContent = '⏳';
+  if (icon) icon.style.opacity = '0.4';
   if (text) text.textContent = 'Obteniendo ubicación…';
   btn.style.opacity = '0.7';
 
   // Helper para restablecer el botón
   const reset = (msg) => {
     btn.disabled = false;
-    if (icon) icon.textContent = '📍';
+    if (icon) icon.style.opacity = '';
     if (text) text.textContent = msg || 'Usar mi ubicación';
     btn.style.opacity = '1';
   };
@@ -7505,19 +7527,19 @@ window.enviarWpp = function() {
 
 // v2.10: enviar resumen a otro contacto (abre WhatsApp para que el usuario elija)
 window.enviarWppOtro = function() {
-  if (!wppUrlPend) { mostrarToast('⚠️ Sin datos del pedido'); return; }
+  if (!wppUrlPend) { mostrarToast('Sin datos del pedido'); return; }
   // Extraer el texto codificado del URL del vendedor
   const match = wppUrlPend.vendedor.match(/wa\.me\/\d+\?text=(.*)$/);
   const textParam = match && match[1] ? match[1] : '';
   if (!textParam) {
-    mostrarToast('⚠️ No hay texto de resumen para compartir');
+    mostrarToast('No hay texto de resumen para compartir');
     return;
   }
   // Usar wa.me/?text=... (sin número) → WhatsApp abre el selector de contacto
   // En móviles abre la app, en desktop abre web.whatsapp.com con selector
   const url = `https://wa.me/?text=${textParam}`;
   window.open(url, '_blank');
-  mostrarToast('📲 Elige el contacto en WhatsApp');
+  mostrarToast('Elige el contacto en WhatsApp');
 };
 
 window.cerrarGracias = function() {
@@ -10567,7 +10589,7 @@ window.buscarCliente = async function(q) {
         " onmouseover="this.style.borderColor='var(--amarillo)'" onmouseout="this.style.borderColor='var(--gris3)'">
           <div style="font-weight:800;font-size:0.85rem;color:var(--blanco);">${c.nombre}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
-            📱 ${c.telefono} · ${c.tipo} · ${c.colonia||''} ${c.municipio||''}
+            ${c.telefono} · ${c.tipo} · ${c.colonia||''} ${c.municipio||''}
           </div>
         </div>`).join('');
     } catch(e) {
@@ -10672,12 +10694,12 @@ window.limpiarBusqueda = function() {
 // PEDIDOS INTERNOS — selector de tipo (se invoca desde el carrito)
 // ══════════════════════════════════════════════════════════════════
 const TIPOS_INTERNOS = [
-  { id:'sampling', label:'🎁 Sampling',         desc:'Muestras a clientes nuevos / prospectos' },
+  { id:'sampling', label:'Sampling',         desc:'Muestras a clientes nuevos / prospectos' },
   { id:'consumo',  label:'🍽️ Consumo Interno',  desc:'Consumo del equipo / oficina' },
-  { id:'demo',     label:'🎬 Demo',              desc:'Activación, evento, demostración' },
-  { id:'regalo',   label:'🎀 Regalo',           desc:'Cortesía, obsequio a aliados' },
-  { id:'bonificacion', label:'➕ Bonificación',  desc:'Producto extra / compensación a un cliente' },
-  { id:'merma',    label:'⚠️ Merma',            desc:'Producto defectuoso / no vendible' },
+  { id:'demo',     label:'Demo',              desc:'Activación, evento, demostración' },
+  { id:'regalo',   label:'Regalo',           desc:'Cortesía, obsequio a aliados' },
+  { id:'bonificacion', label:'Bonificación',  desc:'Producto extra / compensación a un cliente' },
+  { id:'merma',    label:'Merma',            desc:'Producto defectuoso / no vendible' },
 ];
 
 // Setear tipo interno (lo invoca el selector inline en el drawer del carrito)
@@ -12010,7 +12032,7 @@ function renderB2BLista() {
         <div style="flex:1;">
           <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${c.nombre ? c.nombre : '<span style="color:#888;font-style:italic;font-weight:700;">(Sin nombre — solicitud nueva)</span>'}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
-            📱 ${c.telefono} · ${c.tipo}
+            ${c.telefono} · ${c.tipo}
           </div>
           <div style="font-size:0.72rem;color:var(--suave);">
             📍 ${c.colonia||''} ${c.municipio||''} ${c.estado||''}
@@ -14343,7 +14365,7 @@ function renderPuntoCaja(p, esHoy) {
         const signo = monto > 0 ? '+' : '';
         return `
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a1a;">
-            <span style="font-size:1.1rem;">${ico}</span>
+            
             <div style="flex:1;min-width:0;">
               <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.descripcion || m.tipo}</div>
               <div style="font-size:0.7rem;color:#555;">${hora} · ${m.actor || ''}</div>
