@@ -324,7 +324,8 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-imgwrap { width:100%; aspect-ratio:1/1; background:#f1f1f1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .pd-img { width:100%; height:100%; object-fit:contain; }
 .pd-ph { display:flex; flex-direction:column; align-items:center; gap:6px; }
-.pd-ph .emoji { font-size:4rem; }
+.pd-ph .emoji { display:flex; color:#9a9a9a; }
+.pd-ph .emoji svg { width:56px; height:56px; }
 .pd-ph .prox { font-size:0.7rem; font-weight:800; color:#999; text-transform:uppercase; }
 .pd-body { padding:18px 18px 26px; }
 .pd-nombre { font-weight:900; font-size:1.5rem; color:#fff; line-height:1.15; }
@@ -350,7 +351,8 @@ select.inp { appearance: none; cursor: pointer; }
 .tabs-wrap::-webkit-scrollbar { display:none; }
 .tab {
   background:var(--gris); border:2px solid var(--gris3); border-radius:50px;
-  padding:6px 14px; color:var(--suave); font-family:'Inter',sans-serif;
+  padding:8px 16px; min-height:44px; display:inline-flex; align-items:center;
+  color:var(--suave); font-family:'Inter',sans-serif;
   font-weight:700; font-size:0.8rem; cursor:pointer; white-space:nowrap;
   transition:all 0.2s; flex-shrink:0;
 }
@@ -408,11 +410,12 @@ select.inp { appearance: none; cursor: pointer; }
   align-items:center; justify-content:center; gap:4px;
   background:linear-gradient(135deg,#e8e8e8,#ddd);
 }
-.prod-placeholder .emoji { font-size:3rem; }
+.prod-placeholder .emoji { display:flex; color:#9a9a9a; }
+.prod-placeholder .emoji svg { width:44px; height:44px; }
 .prod-placeholder .prox { font-size:0.62rem; font-weight:800; color:#aaa; text-transform:uppercase; }
 .prod-info { padding:10px 12px 12px; flex:1; display:flex; flex-direction:column; gap:3px; }
 .prod-nombre { font-weight:900; font-size:0.88rem; color:#111; line-height:1.2; }
-.prod-pres { font-size:0.7rem; color:#888; font-weight:700; text-transform:uppercase; }
+.prod-pres { font-size:0.7rem; color:#666; font-weight:700; text-transform:uppercase; }
 .prod-vigencia { font-size:0.68rem; color:var(--rojo); font-weight:800; }
 .prod-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:#111; margin-top:2px; }
 .prod-precio-orig { font-size:0.78rem; color:#aaa; text-decoration:line-through; }
@@ -422,8 +425,11 @@ select.inp { appearance: none; cursor: pointer; }
   width:28px; height:28px; color:var(--blanco);
   font-size:1rem; font-weight:900; cursor:pointer;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  transition:background 0.15s;
+  transition:background 0.15s; position:relative;
 }
+/* Zona de toque de 44px sin agrandar el dibujo: el boton mide 28px (24 en
+   pantallas chicas) y el pulgar necesita mas. */
+.qty-btn::after { content:''; position:absolute; inset:-8px; border-radius:50%; }
 .qty-btn:hover { background:var(--amarillo); color:var(--negro); }
 .qty-num { font-weight:900; font-size:0.95rem; min-width:18px; text-align:center; color:#111; }
 .agregar-btn {
@@ -1067,6 +1073,17 @@ body.modo-interno .prod-card::after {
 }
 body.modo-interno .modo-btn:not(.active) { opacity: 0.55; }
 body.modo-interno .mini-cart .mc-total::before { content: '📦 '; }
+
+/* Sabor: un punto de color en vez de emoji (rediseno visual, paso 3). El
+   nombre va siempre al lado, asi que el color no es la unica senal. */
+.sabor-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; flex-shrink:0; background:#777; }
+.sabor-dot.mix { background:conic-gradient(#E8242A 0 33%, #F5A623 0 66%, #7CB342 0); }
+/* Accesibilidad (reglas de la skill ui-ux-pro-max): foco visible con teclado
+   y respeto a quien pide menos movimiento en su sistema. */
+:focus-visible { outline:2px solid var(--amarillo); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+}
 </style>
 </head>
 <body>
@@ -3865,7 +3882,19 @@ let catalogo       = []; // productos desde Sheets
 
 const TIPO_LABELS  = window.TIPO_LABELS = { consumidor:'Consumidor', tienda:'Tienda / Abarrotes', restaurante:'Restaurante', mayorista:'Mayorista', vendedor:'Vendedor', mostrador:'Mostrador' };
 const SABORES_ORDER = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
-const SABOR_EMOJI   = { 'Natural':'🥔','Adobada':'🫙','Feroz':'🐯','Habanero':'🌶️','Queso Jalapeño':'🫑','Queso Cheddar':'🧀','Crunchy Mix':'🎯' };
+const SABOR_EMOJI   = { 'Natural':'🥔','Adobada':'🫙','Feroz':'🐯','Habanero':'🌶️','Queso Jalapeño':'🫑','Queso Cheddar':'🧀','Crunchy Mix':'🎯' };  // solo para los textos de WhatsApp
+// Rediseno visual, paso 3: en pantalla cada sabor es un punto de color, no un
+// emoji. El nombre va al lado siempre; el color solo acelera el reconocimiento.
+const SABOR_COLOR   = { 'Natural':'#FFD200','Adobada':'#B5432E','Feroz':'#FF6A00','Habanero':'#E8242A','Queso Jalapeño':'#7CB342','Queso Cheddar':'#F5A623','Crunchy Mix':'mix' };
+function saborDot(sabor, px) {
+  const c = SABOR_COLOR[sabor] || '#777';
+  const tam = px ? `width:${px}px;height:${px}px;` : '';
+  return c === 'mix'
+    ? `<span class="sabor-dot mix" aria-hidden="true" style="${tam}"></span>`
+    : `<span class="sabor-dot" aria-hidden="true" style="${tam}background:${c};"></span>`;
+}
+// Un solo placeholder de trazo para todo producto sin foto (papas y bebidas).
+const ICONO_FOTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-8 8"/></svg>';
 const MINIMOS       = { consumidor:0, tienda:200, restaurante:300, mayorista:500, vendedor:0, mostrador:0 };
 
 // ══════════════════════════════════
@@ -4921,14 +4950,14 @@ window.renderTabs = function() {
   if (!saborActivo || (saborActivo !== '__bebidas' && saborActivo !== '__todos' && !sabores.includes(saborActivo))) {
     saborActivo = sabores[0] || '';
   }
-  let html = `<button class="tab ${saborActivo==='__todos'?'active':''}" onclick="cambiarSabor('__todos')">🍟 Todos</button>`;
+  let html = `<button class="tab ${saborActivo==='__todos'?'active':''}" onclick="cambiarSabor('__todos')">Todos</button>`;
   html += sabores.map(s => `
     <button class="tab ${s===saborActivo?'active':''}" onclick="cambiarSabor('${s}')">
-      ${SABOR_EMOJI[s]||'🍟'} ${s}
+      ${saborDot(s)}${s}
     </button>`).join('');
   if (tieneBebidas) {
     html += `<button class="tab ${saborActivo==='__bebidas'?'active':''}" onclick="cambiarSabor('__bebidas')">
-      🥤 Bebidas
+      Bebidas
     </button>`;
   }
   document.getElementById('tabs').innerHTML = html;
@@ -4971,7 +5000,7 @@ window.verProducto = function(key) {
     imgEl.src = p.imagen_url; imgEl.alt = p.sabor || ''; imgEl.style.display = ''; phEl.style.display = 'none';
   } else {
     imgEl.style.display = 'none'; phEl.style.display = 'flex';
-    phEl.querySelector('.emoji').textContent = esBebida ? '🥤' : (SABOR_EMOJI[p.sabor] || '🍟');
+    phEl.querySelector('.emoji').innerHTML = ICONO_FOTO;  // constante propia, no texto del servidor
   }
   document.getElementById('pd-topttl').textContent = p.sabor || '';
   document.getElementById('pd-nombre').textContent = p.sabor || '';
@@ -5151,9 +5180,8 @@ window.renderCatalogo = function() {
         ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">📦 $${p.precio_mayorista}</div>` : ''}
       </div>` : '';
 
-    // Para bebidas: imagen del producto, fallback a ícono según tipo
-    const tipoBebidaIco = { Refresco:'🥤', Agua:'💧', Cerveza:'🍺', Jugo:'🧃', Energizante:'⚡', Otro:'📦' };
-    const iconoFallback = esBebida ? (tipoBebidaIco[p.tipo_bebida] || '🥤') : (SABOR_EMOJI[p.sabor]||'🍟');
+    // Sin foto: el mismo placeholder de trazo para papas y bebidas
+    const iconoFallback = ICONO_FOTO;
     const altText = esBebida ? p.sabor : `${p.sabor} ${p.presentacion}`;
     const imgHTML = p.imagen_url
       ? `<img class="prod-img" src="${p.imagen_url}" alt="${altText}" loading="lazy"${agotado?' style="filter:grayscale(1);"':''}>`
@@ -5540,7 +5568,7 @@ function renderDrawer() {
       : `×${i.qty} · ${i.gramos}g c/u`;
 
     return `<div class="cart-item">
-      <span style="font-size:1.3rem">${SABOR_EMOJI[i.sabor]||'🍟'}</span>
+      ${saborDot(i.sabor, 12)}
       <div class="cart-item-info">
         <div class="cart-item-nom">${i.sabor} · ${i.presentacion}</div>
         <div class="cart-item-sub">${esInternoModo ? descInterno : desc}</div>
@@ -15872,14 +15900,14 @@ function pintarListaProductos() {
 
   // Sección de papas con switches on/off (solo control de disponibilidad)
   if (_papasLista.length > 0) {
-    html += `<div style="font-size:0.74rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">🍟 Papas (disponibilidad)</div>`;
+    html += `<div style="font-size:0.74rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
     html += `<div style="font-size:0.7rem;color:#777;margin-bottom:10px;">Apaga el switch cuando un sabor esté agotado.</div>`;
     _papasLista.forEach(p => {
       const activo = p.activo !== false;
       const id = p.id;
-      const ico = SABOR_EMOJI[p.sabor] || '🍟';
+      const ico = saborDot(p.sabor, 14);
       html += `<div style="background:var(--gris2);border-radius:10px;padding:11px;margin-bottom:6px;display:flex;gap:10px;align-items:center;${activo?'':'opacity:0.55;'}">
-        <div style="font-size:1.5rem;">${ico}</div>
+        <div style="display:flex;align-items:center;">${ico}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-weight:800;color:var(--blanco);font-size:0.86rem;">${p.sabor} <span style="color:#666;font-weight:500;">${p.presentacion}</span></div>
           <div style="font-size:0.7rem;color:#777;">${activo ? '✅ Disponible' : '⛔ Agotado'} · $${p.precio_consumidor||0}</div>
@@ -17099,7 +17127,7 @@ function mostrarPagoConfirmado(ok) {
     <div class="pd-scroll">
       <div class="pd-imgwrap">
         <img id="pd-img" class="pd-img" alt="" style="display:none;">
-        <div id="pd-img-ph" class="pd-ph" style="display:none;"><span class="emoji">🍟</span><span class="prox">Foto pronto</span></div>
+        <div id="pd-img-ph" class="pd-ph" style="display:none;"><span class="emoji"></span><span class="prox">Foto pronto</span></div>
       </div>
       <div class="pd-body">
         <div class="pd-nombre" id="pd-nombre"></div>
