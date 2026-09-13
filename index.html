@@ -761,7 +761,8 @@ select.inp { appearance: none; cursor: pointer; }
 .premia-beneficios h3 { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:10px; }
 .bene-card { background:var(--gris); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; opacity:0.4; }
 .bene-card.activo { opacity:1; border:1px solid rgba(255,210,0,0.3); }
-.bene-icon { font-size:1.6rem; flex-shrink:0; }
+.bene-icon { display:flex; flex-shrink:0; color:var(--amarillo); }
+.bene-icon svg { width:24px; height:24px; }
 .bene-titulo { font-weight:900; font-size:0.85rem; }
 .bene-desc { font-size:0.73rem; color:var(--suave); font-weight:600; }
 .bene-lock { margin-left:auto; font-size:0.72rem; font-weight:800; color:#444; white-space:nowrap; }
@@ -1139,6 +1140,9 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .ico-tarjeta svg, .pago-icon svg { width:24px; height:24px; }
 .tw-copy, #cupon-btn-aplicar, #gracias-overlay button { min-height:44px; }
 #btn-ubic-icon { display:flex; } #btn-ubic-icon svg { width:18px; height:18px; }
+/* ── Paso 4 (III), Mi cuenta · Pedidos · Club (13 sep 2026) ── */
+.vacio-ico { display:flex; justify-content:center; margin-bottom:12px; color:var(--suave); }
+.vacio-ico svg { width:44px; height:44px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
 }
@@ -1671,7 +1675,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
   <div id="club-admin-cfg" style="display:none;"></div>
   <div id="mayoreo-admin-cfg" style="display:none;"></div>
   <div class="premia-hero">
-    <div class="premia-nivel-badge" id="p-nivel">🥉 Bronce</div>
+    <div class="premia-nivel-badge" id="p-nivel">Bronce</div>
     <div class="premia-num" id="p-puntos">0</div>
     <div class="premia-lbl">PUNTOS DISPONIBLES</div>
     <div class="premia-prog-wrap">
@@ -1700,9 +1704,9 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     </div>
   </div>
   <div class="premia-beneficios">
-    <h3>🎁 BENEFICIOS</h3>
+    <h3>BENEFICIOS</h3>
     <div class="bene-card activo">
-      <span class="bene-icon">🥔</span>
+      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
       <div>
         <div class="bene-titulo">Acceso al catálogo completo</div>
         <div class="bene-desc">Disponible desde el nivel Bronce</div>
@@ -1710,7 +1714,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       <span class="bene-lock" style="color:#4caf50">✓ Activo</span>
     </div>
     <div class="bene-card" id="bene-plata">
-      <span class="bene-icon">🎉</span>
+      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
       <div>
         <div class="bene-titulo">Descuento exclusivo 5%</div>
         <div class="bene-desc">Requiere nivel Plata (200 puntos)</div>
@@ -1718,7 +1722,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       <span class="bene-lock" id="bene-plata-lock">200 pts</span>
     </div>
     <div class="bene-card" id="bene-oro">
-      <span class="bene-icon">⭐</span>
+      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6H3v12"/><path d="M14 9h4l3 3v6h-7"/><circle cx="7.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg></span>
       <div>
         <div class="bene-titulo">Envío gratis + Descuento 10%</div>
         <div class="bene-desc">Requiere nivel Oro (500 puntos)</div>
@@ -1726,21 +1730,21 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       <span class="bene-lock" id="bene-oro-lock">500 pts</span>
     </div>
     <div style="margin-top:16px;background:var(--gris);border-radius:12px;padding:12px 14px;font-size:0.78rem;font-weight:700;color:var(--suave);text-align:center;">
-      🏆 Ganas <strong style="color:var(--amarillo)">1 punto</strong> por cada <strong style="color:var(--amarillo)">$10</strong> de compra
+      Ganas <strong style="color:var(--amarillo)">1 punto</strong> por cada <strong style="color:var(--amarillo)">$10</strong> de compra
     </div>
   </div>
 
   <!-- Canje de puntos -->
   <div style="padding:0 16px 16px;">
     <div style="background:var(--gris);border-radius:14px;padding:16px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">💸 CANJEAR PUNTOS</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">CANJEAR PUNTOS</div>
       <div style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-bottom:14px;">100 puntos = $10 de descuento</div>
       <div style="background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
         <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);line-height:1;"><span id="canje-disponibles">0</span></div>
         <div style="font-size:0.68rem;font-weight:800;color:var(--suave);letter-spacing:1px;">PUNTOS ACUMULADOS</div>
       </div>
       <div style="font-size:0.74rem;font-weight:700;color:var(--suave);text-align:center;margin-top:10px;line-height:1.45;">
-        🔒 El canje estará disponible muy pronto.<br>
+        El canje estará disponible muy pronto.<br>
         <span style="color:#777;font-weight:600;">Tus puntos se siguen acumulando y no caducan.</span>
       </div>
     </div>
@@ -1758,7 +1762,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div class="pedidos-titulo">MIS PEDIDOS</div>
     <div id="pedidos-lista">
       <div style="text-align:center;color:var(--suave);padding:40px 0;font-size:0.9rem;font-weight:600;">
-        <span style="font-size:2.5rem;display:block;margin-bottom:12px;">📦</span>
+        <span class="vacio-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
         Aún no tienes pedidos registrados
       </div>
     </div>
@@ -1776,20 +1780,19 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
          renderCuenta salía en silencio y quedaba la pantalla en blanco, que se
          lee como una app rota en vez de como «te falta identificarte». -->
     <div id="cuenta-invitado" style="display:none;background:var(--gris);border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;">
-      <div style="font-size:2.2rem;margin-bottom:8px;">👋</div>
       <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;">ESTÁS COMO INVITADO</div>
       <div style="font-size:0.82rem;font-weight:600;color:var(--suave);margin:8px 0 16px;line-height:1.45;">
         Puedes ver el catálogo y armar tu carrito.<br>
         Verifica tu número para guardar tus pedidos y acumular puntos.
       </div>
       <button onclick="ir('s-otp')" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.9rem;color:var(--negro);cursor:pointer;">
-        📱 Verificar mi número
+        Verificar mi número
       </button>
     </div>
 
     <!-- Avatar y nombre -->
     <div style="text-align:center;padding:24px 0 20px;">
-      <div style="width:72px;height:72px;background:var(--amarillo);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 12px;">👤</div>
+      <div style="width:72px;height:72px;background:var(--amarillo);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--negro);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
       <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);letter-spacing:1px;" id="cuenta-nombre">—</div>
       <div style="font-size:0.8rem;font-weight:700;color:var(--suave);" id="cuenta-tipo">—</div>
     </div>
@@ -1798,24 +1801,24 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
     <div style="display:flex;flex-direction:column;gap:10px;">
 
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📱 Teléfono verificado</div>
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Teléfono verificado</div>
         <div style="font-weight:800;color:var(--blanco);" id="cuenta-tel">—</div>
       </div>
 
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">📮 Última dirección</div>
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Última dirección</div>
         <div style="font-weight:700;color:var(--blanco);font-size:0.88rem;" id="cuenta-dir">—</div>
         <div style="font-size:0.78rem;color:var(--suave);margin-top:3px;" id="cuenta-cp">—</div>
       </div>
 
       <div id="cuenta-negocio-wrap" style="display:none;background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🏪 Negocio</div>
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Negocio</div>
         <div style="font-weight:800;color:var(--blanco);" id="cuenta-negocio">—</div>
       </div>
 
       <!-- Resumen rápido -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📊 Mi actividad</div>
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mi actividad</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-pedidos">0</div>
@@ -1833,13 +1836,13 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
       </div>
 
       <!-- Promociones (opt-in marketing, editable desde el perfil) -->
-      <button id="btn-alta-negocio" onclick="abrirAltaNegocio()" style="display:none;width:100%;background:var(--amarillo);color:#000;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:4px;">🏪 Dar de alta negocio (B2B)</button>
-      <button id="btn-ajustar-ubicacion" onclick="abrirAjustarUbicacion()" style="display:none;width:100%;background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);border-radius:12px;padding:12px;font-weight:700;font-size:0.84rem;cursor:pointer;margin-bottom:4px;">📍 Ajustar ubicación de un cliente</button>
+      <button id="btn-alta-negocio" onclick="abrirAltaNegocio()" style="display:none;width:100%;background:var(--amarillo);color:#000;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:4px;">Dar de alta negocio (B2B)</button>
+      <button id="btn-ajustar-ubicacion" onclick="abrirAjustarUbicacion()" style="display:none;width:100%;background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);border-radius:12px;padding:12px;font-weight:700;font-size:0.84rem;cursor:pointer;margin-bottom:4px;">Ajustar ubicación de un cliente</button>
 
       <div id="cuenta-promos-card" style="background:var(--gris);border-radius:14px;padding:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="flex:1;">
-            <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🌶️ Promociones</div>
+            <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Promociones</div>
             <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;line-height:1.4;">Recibir promociones y novedades por WhatsApp/SMS</div>
             <div id="cuenta-promos-status" style="font-size:0.72rem;color:var(--suave);margin-top:4px;"></div>
           </div>
@@ -1856,7 +1859,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
         background:transparent;border:1px solid var(--amarillo);border-radius:14px;
         padding:14px;width:100%;font-family:'Inter',sans-serif;
         font-weight:800;font-size:0.9rem;color:var(--amarillo);cursor:pointer;margin-top:4px;">
-        📲 Instalar como app
+        Instalar como app
       </button>
 
       <!-- Permisos (solo admin) -->
@@ -1864,14 +1867,14 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
         background:transparent;border:1px solid var(--amarillo);border-radius:14px;
         padding:14px;width:100%;font-family:'Inter',sans-serif;
         font-weight:800;font-size:0.9rem;color:var(--amarillo);cursor:pointer;margin-top:4px;">
-        🔐 Permisos de secciones
+        Permisos de secciones
       </button>
 
       <!-- Cambiar mi PIN (solo personal). Hasta hoy no existía esta pantalla:
            cambiar un PIN requería SQL, así que no había forma de rotarlo si
            alguien lo compartía o dejaba el equipo. -->
       <div id="cuenta-pin-wrap" style="display:none;background:var(--gris);border-radius:14px;padding:16px;margin-top:4px;">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔑 Mi PIN de acceso</div>
+        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Mi PIN de acceso</div>
 
         <button id="pin-abrir" onclick="abrirCambioPin()" style="
           background:transparent;border:2px solid var(--gris3);border-radius:12px;
@@ -3034,7 +3037,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 <div class="drawer" id="drawer-permisos" style="max-height:92vh;">
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-    <div class="drawer-title" style="margin-bottom:0;">🔐 Permisos de secciones</div>
+    <div class="drawer-title" style="margin-bottom:0;">Permisos de secciones</div>
     <button onclick="cerrarPermisos()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -3053,7 +3056,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div class="drawer-title" style="margin-bottom:0;" id="dp-titulo">Pedido</div>
-    <button onclick="cerrarDetallePedido()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarDetallePedido()" aria-label="Cerrar" style="background:var(--gris3);border:none;border-radius:50%;width:44px;height:44px;color:var(--blanco);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div id="dp-contenido">
     <div style="text-align:center;color:var(--suave);padding:40px 0;">
@@ -4797,6 +4800,8 @@ async function intentarRestaurarSesion() {
   const hNombre = document.getElementById('h-nombre');
   const hTipo   = document.getElementById('h-tipo');
   if (hNombre) hNombre.textContent = clienteActual?.nombre || telDisp;
+  const hTipo2 = document.getElementById('h-tipo2');
+  if (hTipo2) hTipo2.textContent = esVendedor ? 'Vendedor' : (TIPO_LABELS[tipoCliente] || 'Consumidor');
   if (hTipo)   hTipo.textContent   = esVendedor
     ? (vendedorInfo?.nombre || 'Vendedor')
     : (TIPO_LABELS[tipoCliente] || tipoCliente);
@@ -8698,7 +8703,7 @@ window.togglePromosPerfil = async function(el) {
   try {
     const r = await supabaseCall('POST', 'rpc/set_opt_in_promos', { p_telefono: tel, p_acepta: on, p_origen: 'perfil' });
     if (r && r.ok) {
-      if (st) { st.textContent = on ? '✅ Activadas' : 'Desactivadas'; st.style.color = on ? '#7ee787' : 'var(--suave)'; }
+      if (st) { st.textContent = on ? 'Activadas' : 'Desactivadas'; st.style.color = on ? '#7ee787' : 'var(--suave)'; }
     } else {
       el.checked = !on; pintarSwitchPromos(!on);
       if (st) { st.textContent = 'No se pudo guardar.'; st.style.color = '#ff8a8a'; }
@@ -8831,15 +8836,14 @@ function renderPremia() {
 
   document.getElementById('p-puntos').textContent = puntos;
   const nivel = puntos >= 500 ? 'Oro' : puntos >= 200 ? 'Plata' : 'Bronce';
-  const emoji = puntos >= 500 ? '🥇' : puntos >= 200 ? '🥈' : '🥉';
-  document.getElementById('p-nivel').textContent = emoji + ' ' + nivel;
+  document.getElementById('p-nivel').textContent = nivel;
   const dispEl = document.getElementById('canje-disponibles'); if(dispEl) dispEl.textContent = puntos;
 
   // Barra de progreso
   let prog = 0, meta = '200 pts → Plata';
   if (puntos < 200) { prog = (puntos/200)*100; meta = (200-puntos) + ' pts → Plata'; }
   else if (puntos < 500) { prog = ((puntos-200)/300)*100; meta = (500-puntos) + ' pts → Oro'; }
-  else { prog = 100; meta = '¡Nivel Oro alcanzado! 🥇'; }
+  else { prog = 100; meta = 'Nivel Oro alcanzado'; }
   document.getElementById('p-prog').style.width = prog + '%';
   document.getElementById('p-meta-lbl').textContent = meta;
 
@@ -8981,15 +8985,15 @@ async function pintarRegalosCliente() {
     });
     const regs = (_rg && _rg.ok && Array.isArray(_rg.regalos)) ? _rg.regalos : [];
     if (!Array.isArray(regs) || regs.length === 0) return;
-    const lbl = { sampling:'🎁 Sampling', regalo:'🎀 Regalo', bonificacion:'➕ Bonificación' };
-    let html = `<div style="margin-top:18px;margin-bottom:8px;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">🎁 Regalos recibidos</div>`;
+    const lbl = { sampling:'Sampling', regalo:'Regalo', bonificacion:'Bonificación' };
+    let html = `<div style="margin-top:18px;margin-bottom:8px;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Regalos recibidos</div>`;
     regs.forEach(r => {
       const f = r.fecha_orden ? new Date(r.fecha_orden).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '—';
       const kg = (Array.isArray(r.ordenes_detalle) ? r.ordenes_detalle.reduce((s,d)=>s+(Number(d.kg_descontado_lote)||0),0) : 0);
       const kgTxt = kg > 0 ? `${kg.toLocaleString('es-MX',{maximumFractionDigits:3})} kg` : '';
       html += `<div class="pedido-card" style="opacity:0.95;">
         <div class="pedido-top">
-          <span class="pedido-consec">${lbl[r.tipo_interno]||'🎁 Regalo'}</span>
+          <span class="pedido-consec">${lbl[r.tipo_interno]||'Regalo'}</span>
           <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);">${kgTxt}</span>
         </div>
         <div class="pedido-fecha">${f}${r.consecutivo ? ' · ' + r.consecutivo : ''}</div>
@@ -9009,7 +9013,7 @@ function renderPedidos() {
 
   const lista = document.getElementById('pedidos-lista');
   if (!clienteActual || !window._misPedidos || window._misPedidos.length === 0) {
-    lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:40px 0;font-size:0.9rem;font-weight:600;"><span style="font-size:2.5rem;display:block;margin-bottom:12px;">📦</span>Aún no tienes pedidos registrados</div>';
+    lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:40px 0;font-size:0.9rem;font-weight:600;"><span class="vacio-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>Aún no tienes pedidos registrados</div>';
     pintarRegalosCliente();
     return;
   }
@@ -9018,7 +9022,7 @@ function renderPedidos() {
   lista.innerHTML = `
     <!-- Último pedido destacado -->
     <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,#1a1200,#2a2000);border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:0.68rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">⭐ Último pedido</div>
+      <div style="font-size:0.68rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
@@ -9026,7 +9030,7 @@ function renderPedidos() {
       <div style="font-size:0.75rem;color:var(--suave);font-weight:600;">${ultimo.fecha?new Date(ultimo.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
       <span class="pedido-estatus ${ultimo.estatus==='Entregado'?'entregado':''}" style="margin-top:8px;">${ultimo.estatus||'Pendiente'}</span>
       ${ultimo.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${ultimo.id})" style="margin-top:10px;width:100%;background:var(--amarillo);color:#222;border:none;border-radius:10px;padding:9px;font-weight:800;font-size:0.78rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(ultimo.id)>=0?'✓ Ya evaluado · editar':'⭐ Evaluar este pedido'}</button>` : ''}
-      <div style="font-size:0.7rem;color:var(--amarillo);margin-top:8px;font-weight:700;">Toca para ver detalle 👉</div>
+      <div style="font-size:0.7rem;color:var(--amarillo);margin-top:8px;font-weight:700;">Ver seguimiento</div>
     </div>
     <!-- Resto de pedidos -->
     ${pedidos.slice(1).map(p => {
@@ -11228,6 +11232,11 @@ window.abrirSetCuota = async function() {
 let _pedidoActual = null; // { orden, lineas }
 
 window.verDetallePedido = async function(idOrden) {
+  // Paso 4 (III), 13 sep 2026: el consumidor no puede leer `obtener_pedido`
+  // (exige token de vendedor desde el cierre de lecturas del 3 sep) y veía
+  // «Pedido no encontrado». Su detalle es la pantalla de seguimiento, que es
+  // pública (get_tracking_pedido acepta id o consecutivo) y ya está rediseñada.
+  if (!esVendedor) { abrirTracking(String(idOrden)); return; }
   // Abrir drawer
   document.getElementById('overlay-pedido').classList.add('visible');
   document.getElementById('drawer-pedido').classList.add('open');
@@ -11316,11 +11325,11 @@ function pintarDetallePedido({ orden, lineas }) {
   const esInterno = orden.canal === 'interno' || Number(orden.id_cliente) === 999999;
   const tipoInterno = orden.tipo_interno || '';
   const tiposInternosLbl = {
-    sampling:'🎁 Sampling',
-    consumo: '🍽️ Consumo Interno',
-    demo:    '🎬 Demo / Activación',
-    regalo:  '🎀 Regalo / Cortesía',
-    merma:   '⚠️ Merma',
+    sampling:'Sampling',
+    consumo: 'Consumo interno',
+    demo:    'Demo / Activación',
+    regalo:  'Regalo / Cortesía',
+    merma:   'Merma',
   };
   // Suma de gramos del pedido para banner interno
   let gramosTotalPedido = 0;
@@ -11398,7 +11407,7 @@ function pintarDetallePedido({ orden, lineas }) {
             font-size:0.78rem;cursor:pointer;
             background:${sel ? (colorOk?'#0d2d0d':'#2a1f00') : 'transparent'};
             color:${sel ? (colorOk?'#4caf50':'var(--amarillo)') : 'var(--suave)'};">
-            ${opt === 'Pagado' ? '💵 ' : '⏳ '}${opt}
+            ${opt}
           </button>`;
         }).join('')}
       </div>
@@ -11428,8 +11437,8 @@ function pintarDetallePedido({ orden, lineas }) {
       <div class="estatus-row">
         <span class="pedido-estatus ${estPedido==='Entregado'?'entregado':(cancelado?'cancelado':'')}">${estPedido}</span>
         ${esInterno
-          ? `<span class="pedido-estatus" style="background:#2a1f00;color:var(--amarillo);">${tiposInternosLbl[tipoInterno] || '📦 Interno'}</span>`
-          : `<span class="pedido-estatus ${estPago==='Pagado'?'pagado':'pendiente-pago'}">${estPago==='Pagado'?'💵 Pagado':'⏳ '+estPago}</span>`}
+          ? `<span class="pedido-estatus" style="background:#2a1f00;color:var(--amarillo);">${tiposInternosLbl[tipoInterno] || 'Interno'}</span>`
+          : `<span class="pedido-estatus ${estPago==='Pagado'?'pagado':'pendiente-pago'}">${estPago}</span>`}
       </div>
     </div>
 
@@ -11437,7 +11446,7 @@ function pintarDetallePedido({ orden, lineas }) {
       <!-- Banner: pedido interno -->
       <div style="background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div>
-          <div style="font-size:0.7rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">📦 Pedido Interno</div>
+          <div style="font-size:0.7rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
         </div>
         <div style="text-align:right;">
@@ -11451,7 +11460,7 @@ function pintarDetallePedido({ orden, lineas }) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
       <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cliente</div>
       <div style="font-weight:800;color:var(--blanco);font-size:0.92rem;">${orden.nombre_cliente||'—'}</div>
-      ${orden.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">📍 ${orden.direccion}</div>` : ''}
+      ${orden.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">${orden.direccion}</div>` : ''}
       ${(orden.colonia||orden.municipio) ? `<div style="font-size:0.74rem;color:var(--suave);">${orden.colonia||''} ${orden.municipio||''} ${orden.codigo_postal||''}</div>` : ''}
     </div>
 
