@@ -118,7 +118,7 @@ button, [role="button"], .nav-item, .ci-btn, .np-star, .chip, .tipo-card { touch
 /* iOS: el <input type="date"> no encoge por sí solo y se encimaba con «Kilos» */
 input[type="date"].inp { min-width: 0; }
 /* Si Google rechaza la llave, Places pinta círculos de «!» en el campo de calle: fuera */
-#f-dir { background-image: none !important; } /* Google lo pone en línea; el !important gana */
+#f-dir, #dt-dir { background-image: none !important; } /* Google lo pone en línea; el !important gana */
 html, body { height: 100%; }
 body {
   background: var(--negro);
@@ -1170,14 +1170,14 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .caja-btn.en-carrito { border-color:var(--amarillo); }
 .caja-btn .caja-x { font-size:0.7rem; color:var(--amarillo); font-weight:800; margin-left:6px; }
 /* Selector de unidad (Pieza · Caja 3 · 6 · 12): se elige y luego se agrega */
-.u-sel { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.u-sel { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px; }
 .u-sel.pd-usel { grid-template-columns:repeat(4,1fr); }
-.u-chip { min-height:44px; border:1px solid var(--gris3); background:var(--gris2); color:var(--blanco); border-radius:10px;
-  font-family:'Inter',sans-serif; font-weight:700; font-size:0.78rem; cursor:pointer; touch-action:manipulation; padding:0 6px; }
+.u-chip { min-height:36px; border:1px solid var(--gris3); background:var(--gris2); color:var(--blanco); border-radius:8px;
+  font-family:'Inter',sans-serif; font-weight:700; font-size:0.72rem; cursor:pointer; touch-action:manipulation; padding:0 6px; }
 .u-chip.sel { background:var(--amarillo); border-color:var(--amarillo); color:#111; }
 .u-chip .u-x { font-size:0.7rem; margin-left:4px; opacity:.85; }
 .u-precio { font-size:0.78rem; color:var(--suave); margin-top:6px; }
-.u-precio b { color:var(--amarillo); }
+.u-precio b { color:#111; } /* sobre la tarjeta clara el ámbar no se distingue (Abraham, Android) */
 .qty-num .u-unit { display:block; font-size:0.58rem; font-weight:700; color:var(--suave); line-height:1; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
@@ -6700,21 +6700,27 @@ function initMaps() {
   // cliente se queda sin poder escribir su dirección. Se le devuelve el campo.
   window.gm_authFailure = function() {
     mapsListo = false;
+    // Los dos campos con Autocomplete: el del checkout y el del alta de tienda.
+    const CAMPOS = { 'f-dir': 'Ej. Av. Insurgentes Sur 123, int. 4', 'dt-dir': 'Calle y número' };
     const devolver = () => {
-      const i = document.getElementById('f-dir');
-      if (!i) return;
-      i.disabled = false;
-      i.placeholder = 'Ej. Av. Insurgentes Sur 123, int. 4';
-      i.classList.remove('gm-err-autocomplete');
-      i.style.backgroundImage = '';
+      Object.entries(CAMPOS).forEach(([id, ph]) => {
+        const i = document.getElementById(id);
+        if (!i) return;
+        i.disabled = false;
+        i.placeholder = ph;
+        i.classList.remove('gm-err-autocomplete');
+        i.style.backgroundImage = '';
+      });
     };
     devolver(); setTimeout(devolver, 500); setTimeout(devolver, 2000);
     // Places vuelve a marcar el campo al enfocarlo: se deshace cada vez que lo toque.
-    const i = document.getElementById('f-dir');
-    if (i && window.MutationObserver && !i._obsErr) {
-      i._obsErr = new MutationObserver(() => { if (i.disabled || i.classList.contains('gm-err-autocomplete')) devolver(); });
-      i._obsErr.observe(i, { attributes: true, attributeFilter: ['disabled', 'class', 'placeholder', 'style'] });
-    }
+    Object.keys(CAMPOS).forEach((id) => {
+      const i = document.getElementById(id);
+      if (i && window.MutationObserver && !i._obsErr) {
+        i._obsErr = new MutationObserver(() => { if (i.disabled || i.classList.contains('gm-err-autocomplete')) devolver(); });
+        i._obsErr.observe(i, { attributes: true, attributeFilter: ['disabled', 'class', 'placeholder', 'style'] });
+      }
+    });
   };
   s.onload=()=>{
     mapsListo=true;
