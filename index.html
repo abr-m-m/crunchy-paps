@@ -1178,6 +1178,13 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .u-chip .u-x { font-size:0.7rem; margin-left:4px; opacity:.85; }
 .u-precio { font-size:0.78rem; color:var(--suave); margin-top:6px; }
 .u-precio b { color:#111; } /* sobre la tarjeta clara el ámbar no se distingue (Abraham, Android) */
+/* Ahorro de la caja frente a las piezas sueltas: tarjeta clara y hoja de detalle oscura */
+.u-ahorro { font-size:0.76rem; color:#444; margin-top:3px; }
+.u-ahorro s { color:#777; }
+.u-ahorro b { color:#1f7a2e; font-weight:800; }
+.pd-ahorro { font-size:0.82rem; color:var(--suave); text-align:center; }
+.pd-ahorro s { color:#888; }
+.pd-ahorro b { color:#7fd48c; font-weight:800; }
 .qty-num .u-unit { display:block; font-size:0.58rem; font-weight:700; color:var(--suave); line-height:1; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
@@ -5222,9 +5229,11 @@ function renderDetalleQty() {
     ? `<div class="pd-cart-line">✓ Llevas ${total} en tu canasta${enCajas > 0 ? ` (${enCajas} en cajas)` : ''}</div>`
     : `<div class="pd-cart-line pd-cart-empty">Aún no lo agregas</div>`;
   const etiqueta = uPD > 1 ? `Agregar caja de ${uPD} · $${precioCaja(p, uPD)}` : (qty > 0 ? 'Agregar más' : 'Agregar');
+  const ahorroHTML = uPD > 1 ? ahorroCajaHTML(p, uPD, 'pd-ahorro') : '';
   bottom.innerHTML = `
     ${linea}
     ${cajasHTML}
+    ${ahorroHTML}
     <div class="pd-bottom-row">
       <div class="qty-ctrl pd-qty">
         <button class="qty-btn" onclick="detalleAgregar(-1)" aria-label="Quitar ${uPD > 1 ? 'una caja' : 'uno'}">−</button>
@@ -5409,7 +5418,7 @@ window.renderCatalogo = function() {
           return `<button type="button" class="u-chip ${n === u ? 'sel' : ''}" aria-pressed="${n === u}" onclick="setUnidad('${key}',${n})">${n === 1 ? 'Pieza' : 'Caja ' + n}${enC > 0 ? `<span class="u-x">×${enC}</span>` : ''}</button>`;
         }).join('')}
       </div>
-      ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precioCaja(p, u)}</b></div>` : ''}` : '';
+      ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precioCaja(p, u)}</b></div>${ahorroCajaHTML(p, u, 'u-ahorro')}` : ''}` : '';
     const ctrlHTML = agotado ? `
       <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
     ` : `
@@ -5454,6 +5463,20 @@ window.renderCatalogo = function() {
 // piezas sueltas. La línea se guarda como piezas (qty) y recuerda caja/cajas
 // solo para mostrarlo: el servidor y el lote no saben de cajas.
 const CAJAS_PIEZAS = [3, 6, 12];
+// Comparativa de una caja: piezas × precio del canal (lo que costarían sueltas)
+// frente al precio de la caja, y el ahorro. ahorro = 0 cuando no hay precio
+// propio o no es menor: entonces no se enseña nada.
+function ahorroCaja(prod, n) {
+  const sueltas = getPrecioConDescuento(prod).precio * n;
+  const caja = precioCaja(prod, n);
+  const ahorro = Math.max(0, Math.round((sueltas - caja) * 100) / 100);
+  return { sueltas, caja, ahorro, pct: sueltas > 0 ? Math.round(ahorro / sueltas * 100) : 0 };
+}
+function ahorroCajaHTML(prod, n, clase) {
+  const a = ahorroCaja(prod, n);
+  if (a.ahorro <= 0) return '';
+  return `<div class="${clase}">${n} sueltas <s>$${a.sueltas}</s> · Ahorras <b>$${a.ahorro}</b> (${a.pct}%)</div>`;
+}
 // Precio de una caja de n piezas: el propio del producto (productos.precio_caja_n)
 // o, si no lo tiene, piezas × precio del canal. Es el mismo cálculo que hace
 // crear_pedido en el servidor; si difieren, el pedido vuelve con precio_cambiado.
