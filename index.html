@@ -4639,18 +4639,24 @@ window.guardarDatosTienda = async function() {
 };
 
 // Enrutar una tienda/restaurante tras login: catálogo solo si está aprobada.
-async function enrutarTrasLoginB2B() {
+// alRestaurar=true: viene de intentarRestaurarSesion; si la tienda está aprobada
+// devuelve true y el que llama sigue con el catálogo ya restaurado (irAlCatalogo
+// es el camino de entrada, no el de restauración). Si no, muestra el formulario
+// o «Validando» y devuelve false. Antes la puerta B2B solo existía al entrar:
+// una tienda a medio registrar que cerraba la app volvía al catálogo de mayoreo.
+async function enrutarTrasLoginB2B(alRestaurar) {
   let estado = null;
   try {
     const r = await supabaseCall('POST', 'rpc/get_estado_tienda', { p_telefono: telefonoVerif });
     if (r && r.ok && r.existe) estado = r;
   } catch(_e) {}
-  if (estado && estado.aprobado) { irAlCatalogo(); return; }          // aprobada → catálogo B2B
-  if (!estado || !estado.completo) { mostrarFormDatosTienda(); return; } // sin datos → formulario
+  if (estado && estado.aprobado) { if (!alRestaurar) irAlCatalogo(); return true; } // aprobada → catálogo B2B
+  if (!estado || !estado.completo) { mostrarFormDatosTienda(); return false; }     // sin datos → formulario
   // datos completos pero no aprobada → pantalla de validación
   const pt = document.getElementById('pend-tipo'); if (pt) pt.textContent = tipoCliente === 'restaurante' ? 'restaurante' : (tipoCliente === 'mayorista' ? 'negocio mayorista' : 'tienda');
   const ptel = document.getElementById('pend-tel'); if (ptel) ptel.textContent = '+52 ' + telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/, '$1 $2 $3');
   ir('s-pendiente');
+  return false;
 }
 
 
@@ -4871,6 +4877,11 @@ async function intentarRestaurarSesion() {
   const catTit = document.getElementById('cat-titulo');
   if (catTag) catTag.innerHTML = b.tag;
   if (catTit) catTit.innerHTML = b.titulo;
+
+  // Puerta B2B también al restaurar: una tienda sin datos o sin aprobar no ve
+  // el catálogo de mayoreo (antes solo se comprobaba al entrar con OTP).
+  const esB2BRestaurada = !esVendedor && (tipoCliente === 'tienda' || tipoCliente === 'restaurante' || tipoCliente === 'mayorista');
+  if (esB2BRestaurada && !(await enrutarTrasLoginB2B(true))) return;
 
   // Mostrar catálogo y navbar
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));

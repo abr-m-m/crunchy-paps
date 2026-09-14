@@ -88,9 +88,20 @@ const PERFILES = {
   tienda:      { tel: '5591000003', nombre: 'Tienda Prueba' },
   mayorista:   { tel: '5591000004', nombre: 'Mayorista Prueba' },
 };
-async function sesionPruebaHTML(tipo) {
-  const perfil = PERFILES[tipo];
-  if (!perfil) return { status: 400, html: `<meta charset="utf-8"><p style="font-family:sans-serif">Perfil desconocido. Usa ?tipo=${Object.keys(PERFILES).join(' | ')}</p>` };
+async function sesionPruebaHTML(tipo, telPedido) {
+  // ?tipo=tienda-nueva (o restaurante-nueva, mayorista-nueva): un teléfono que no
+  // existe en staging, para recorrer el alta desde cero (datos de la tienda →
+  // «Validando» → aprobación en B2B → catálogo). Cada visita es una tienda distinta;
+  // para volver a la MISMA tienda: ?tipo=tienda&tel=<los 10 dígitos que salieron>.
+  let perfil = PERFILES[tipo];
+  const mNueva = /^(tienda|restaurante|mayorista)-nueva$/.exec(tipo);
+  if (!perfil && mNueva) {
+    tipo = mNueva[1];
+    const tel = '559' + String(Date.now()).slice(-7);
+    perfil = { tel, nombre: `${tipo} nueva (${tel})` };
+  }
+  if (perfil && /^\d{10}$/.test(telPedido || '')) perfil = { tel: telPedido, nombre: `${tipo} ${telPedido}` };
+  if (!perfil) return { status: 400, html: `<meta charset="utf-8"><p style="font-family:sans-serif">Perfil desconocido. Usa ?tipo=${Object.keys(PERFILES).join(' | ')} | tienda-nueva | restaurante-nueva | mayorista-nueva</p>` };
   const TEL_PRUEBA = perfil.tel;
   const r = await fetch(`${STAGING}/rest/v1/rpc/emitir_sesion_prueba`, {
     method: 'POST',
@@ -118,9 +129,9 @@ createServer((req, res) => {
   const [ruta, query = ''] = req.url.split('?');
   // /entrar-como-consumidor  ·  /entrar-como?tipo=tienda|restaurante|mayorista
   if (ruta === '/entrar-como-consumidor' || ruta === '/entrar-como') {
-    const tipo = ruta === '/entrar-como-consumidor' ? 'consumidor'
-      : (new URLSearchParams(query).get('tipo') || 'consumidor');
-    sesionPruebaHTML(tipo).then(({ status, html }) => {
+    const q = new URLSearchParams(query);
+    const tipo = ruta === '/entrar-como-consumidor' ? 'consumidor' : (q.get('tipo') || 'consumidor');
+    sesionPruebaHTML(tipo, q.get('tel')).then(({ status, html }) => {
       res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(html);
     }).catch((e) => { res.writeHead(502); res.end('staging no responde: ' + (e && e.name)); });
