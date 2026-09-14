@@ -117,6 +117,8 @@
 button, [role="button"], .nav-item, .ci-btn, .np-star, .chip, .tipo-card { touch-action: manipulation; }
 /* iOS: el <input type="date"> no encoge por sí solo y se encimaba con «Kilos» */
 input[type="date"].inp { min-width: 0; }
+/* Si Google rechaza la llave, Places pinta círculos de «!» en el campo de calle: fuera */
+#f-dir { background-image: none !important; } /* Google lo pone en línea; el !important gana */
 html, body { height: 100%; }
 body {
   background: var(--negro);
@@ -3364,7 +3366,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         <input class="inp" id="f-negocio" type="text" placeholder="Nombre del negocio *" maxlength="80">
       </div>
       <div class="campo-b2b" id="wrap-rfc">
-        <input class="inp" id="f-rfc" type="text" placeholder="RFC del negocio *" maxlength="13"
+        <input class="inp" id="f-rfc" type="text" placeholder="RFC del negocio (opcional)" maxlength="13"
           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9&]/g,'')">
         <div class="rfc-err" id="rfc-err">RFC con formato inválido</div>
       </div>
@@ -4737,6 +4739,19 @@ function tituloConsumidor() {
   return nombre ? 'Hola, <span class="hl">' + nombre + '</span>' : 'Elige tus <span class="hl">papas</span>';
 }
 
+// Campos B2B del checkout (nombre del negocio y RFC). Antes solo los encendía
+// irAlCatalogo(), o sea al entrar; una tienda que volvía con su sesión de 60
+// días no los veía y el checklist le pedía «Nombre del establecimiento» sin
+// dónde escribirlo (recorrido como tendero, 13 sep 2026).
+function mostrarCamposB2B() {
+  const esB2B = tipoCliente === 'tienda' || tipoCliente === 'restaurante' || tipoCliente === 'mayorista';
+  const wn = document.getElementById('wrap-negocio'), wr = document.getElementById('wrap-rfc'), fn = document.getElementById('f-negocio');
+  if (!wn || !wr || !fn) return;
+  wn.classList.toggle('visible', esB2B);
+  wr.classList.toggle('visible', esB2B);
+  if (esB2B) fn.placeholder = tipoCliente === 'tienda' ? 'Nombre de tu tienda *' : (tipoCliente === 'mayorista' ? 'Nombre de tu negocio *' : 'Nombre del restaurante *');
+}
+
 async function irAlCatalogo() {
   track('view_catalog');
   // Header
@@ -4777,12 +4792,8 @@ async function irAlCatalogo() {
     }, 100);
   }
 
-  // Campos B2B
-  if (tipoCliente === 'tienda' || tipoCliente === 'restaurante') {
-    document.getElementById('wrap-negocio').classList.add('visible');
-    document.getElementById('wrap-rfc').classList.add('visible');
-    document.getElementById('f-negocio').placeholder = tipoCliente==='tienda' ? 'Nombre de tu tienda *' : (tipoCliente==='mayorista' ? 'Nombre de tu negocio *' : 'Nombre del restaurante *');
-  }
+  // Campos B2B (también al restaurar sesión: ver mostrarCamposB2B)
+  mostrarCamposB2B();
 
   // v2.10: Método de entrega solo para CONSUMIDOR
   // B2B (tienda/restaurante) coordina entrega con su vendedor directo
@@ -4847,6 +4858,7 @@ async function intentarRestaurarSesion() {
   }
 
   // Restaurar banner
+  mostrarCamposB2B();
   const banners = {
     consumidor:  { tag:'Tu pedido',   titulo:tituloConsumidor() },
     tienda:      { tag:'Abarrotes',   titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
@@ -5660,7 +5672,12 @@ async function cargarFechaEntrega() {
     const res = await supabaseCall('POST', 'rpc/obtener_fecha_entrega', { p_data: {} });
     if (res && res.ok) {
       wrap.style.display = 'block';
-      lbl.textContent  = res.fechaDisplay || 'El equipo confirmará la fecha';
+      // fechaDisplay lo arma Postgres con TO_CHAR y el locale del servidor (inglés):
+      // se prefiere la fecha ISO y se escribe aquí en español.
+      const fSug = res.fecha ? new Date(res.fecha + 'T12:00:00') : null;
+      lbl.textContent  = (fSug && !isNaN(fSug))
+        ? fSug.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
+        : (res.fechaDisplay || 'El equipo confirmará la fecha');
       msg.textContent  = res.msg || '';
       window._fechaEntrega = res.fecha;
       if (res.fecha) setInputFecha(res.fecha);
@@ -6604,8 +6621,15 @@ function initMaps() {
       i.disabled = false;
       i.placeholder = 'Ej. Av. Insurgentes Sur 123, int. 4';
       i.classList.remove('gm-err-autocomplete');
+      i.style.backgroundImage = '';
     };
     devolver(); setTimeout(devolver, 500); setTimeout(devolver, 2000);
+    // Places vuelve a marcar el campo al enfocarlo: se deshace cada vez que lo toque.
+    const i = document.getElementById('f-dir');
+    if (i && window.MutationObserver && !i._obsErr) {
+      i._obsErr = new MutationObserver(() => { if (i.disabled || i.classList.contains('gm-err-autocomplete')) devolver(); });
+      i._obsErr.observe(i, { attributes: true, attributeFilter: ['disabled', 'class', 'placeholder', 'style'] });
+    }
   };
   s.onload=()=>{
     mapsListo=true;
