@@ -346,6 +346,9 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-add { flex:1; background:var(--rojo,#e3000f); color:#fff; border:none; border-radius:10px; padding:13px; font-weight:900; font-size:0.95rem; cursor:pointer; }
 .pd-agotado { flex:1; text-align:center; color:#888; font-weight:700; padding:12px; }
 .pd-add-sec { background:#3a3a3a; color:#eee; }
+.pd-cajas { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.pd-cajas .caja-btn { flex-direction:column; justify-content:center; gap:2px; padding:6px 4px; }
+.pd-cajas-lbl { font-size:0.62rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); }
 
 /* TABS */
 .tabs-wrap {
@@ -5124,8 +5127,22 @@ function renderDetalleQty() {
   if (p.activo === false) { bottom.innerHTML = `<div class="pd-agotado">No disponible</div>`; return; }
   const it = carrito[String(detalleKey)];
   const qty = it ? it.qty : 0;
-  const linea = qty > 0
-    ? `<div class="pd-cart-line">✓ Llevas ${qty} en tu canasta</div>`
+  // Venta por caja: lo que va en cajas se suma a «Llevas N» y se ofrece abajo
+  const esBebidaPD = (p.categoria || '') === 'bebida';
+  const { precio } = getPrecioConDescuento(p);
+  const enCajas = CAJAS_PIEZAS.reduce((n, c) => n + ((carrito[`${detalleKey}-c${c}`] || {}).qty || 0), 0);
+  const total = qty + enCajas;
+  const cajasHTML = (!esBebidaPD && esCanalCaja() && presentacionConCaja(p.presentacion)) ? `
+    <div class="pd-cajas-lbl">Por caja</div>
+    <div class="pd-cajas" aria-label="Comprar por caja">
+      ${CAJAS_PIEZAS.map(c => {
+        const n = (carrito[`${detalleKey}-c${c}`] || {}).cajas || 0;
+        return `<button type="button" class="caja-btn ${n > 0 ? 'en-carrito' : ''}" onclick="detalleCaja(${c},1)" aria-label="Agregar caja de ${c} piezas">
+          <span>Caja de ${c}${n > 0 ? `<span class="caja-x">×${n}</span>` : ''}</span><b>$${precio * c}</b></button>`;
+      }).join('')}
+    </div>` : '';
+  const linea = total > 0
+    ? `<div class="pd-cart-line">✓ Llevas ${total} en tu canasta${enCajas > 0 ? ` (${enCajas} en cajas)` : ''}</div>`
     : `<div class="pd-cart-line pd-cart-empty">Aún no lo agregas</div>`;
   bottom.innerHTML = `
     ${linea}
@@ -5136,8 +5153,10 @@ function renderDetalleQty() {
         <button class="qty-btn" onclick="detalleQty(1)">+</button>
       </div>
       <button class="pd-add ${qty > 0 ? 'pd-add-sec' : ''}" onclick="detalleQty(1)">${qty > 0 ? 'Agregar más' : 'Agregar'}</button>
-    </div>`;
+    </div>
+    ${cajasHTML}`;
 }
+window.detalleCaja = function(piezas, delta) { cambiarCaja(String(detalleKey), piezas, delta); renderDetalleQty(); };
 window.detalleQty = function(delta) { cambiarQty(String(detalleKey), delta); renderDetalleQty(); };
 window.cerrarProducto = function() {
   const ov = document.getElementById('prod-detalle');
