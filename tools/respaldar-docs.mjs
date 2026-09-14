@@ -33,13 +33,23 @@ const CARPETAS = [
   { ruta: 'supabase/auditorias',  ext: ['.sql', '.csv'] },
 ];
 
+// 13 sep 2026: cada cambio puede traer una subcarpeta con sus parches, guiones
+// y SQL (cambios/2026-09-13-precio-por-caja/…). Se recorre un nivel más, con
+// las mismas extensiones más .mjs, .sh y .sql, que es lo que hay ahí.
 const listarCarpeta = ({ ruta, ext }) => {
   const dir = join(ORIGEN, ruta);
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
-    .filter((n) => ext.some((e) => n.endsWith(e)))
-    .sort()
-    .map((n) => `${ruta}/${n}`);
+  const extSub = [...ext, '.mjs', '.sh', '.sql'];
+  return readdirSync(dir, { withFileTypes: true })
+    .flatMap((d) => {
+      if (d.isDirectory()) {
+        return readdirSync(join(dir, d.name))
+          .filter((n) => extSub.some((e) => n.endsWith(e)))
+          .map((n) => `${ruta}/${d.name}/${n}`);
+      }
+      return ext.some((e) => d.name.endsWith(e)) ? [`${ruta}/${d.name}`] : [];
+    })
+    .sort();
 };
 
 const DOCS = [...FIJOS, ...CARPETAS.flatMap(listarCarpeta)];
