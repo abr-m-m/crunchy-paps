@@ -1169,6 +1169,16 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .caja-btn b { color:var(--amarillo); font-weight:800; }
 .caja-btn.en-carrito { border-color:var(--amarillo); }
 .caja-btn .caja-x { font-size:0.7rem; color:var(--amarillo); font-weight:800; margin-left:6px; }
+/* Selector de unidad (Pieza · Caja 3 · 6 · 12): se elige y luego se agrega */
+.u-sel { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+.u-sel.pd-usel { grid-template-columns:repeat(4,1fr); }
+.u-chip { min-height:44px; border:1px solid var(--gris3); background:var(--gris2); color:var(--blanco); border-radius:10px;
+  font-family:'Inter',sans-serif; font-weight:700; font-size:0.78rem; cursor:pointer; touch-action:manipulation; padding:0 6px; }
+.u-chip.sel { background:var(--amarillo); border-color:var(--amarillo); color:#111; }
+.u-chip .u-x { font-size:0.7rem; margin-left:4px; opacity:.85; }
+.u-precio { font-size:0.78rem; color:var(--suave); margin-top:6px; }
+.u-precio b { color:var(--amarillo); }
+.qty-num .u-unit { display:block; font-size:0.58rem; font-weight:700; color:var(--suave); line-height:1; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
 }
@@ -1447,9 +1457,11 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Dirección *</label>
       <input class="inp" id="dt-dir" type="text" maxlength="150" placeholder="Calle y número" style="margin-bottom:8px;">
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input class="inp" id="dt-cp" type="text" maxlength="5" inputmode="numeric" placeholder="CP" style="flex:0 0 90px;">
-        <input class="inp" id="dt-colonia" type="text" maxlength="60" placeholder="Colonia" style="flex:1;">
+        <input class="inp" id="dt-cp" type="text" maxlength="5" inputmode="numeric" placeholder="CP" style="flex:0 0 90px;"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,5); if(this.value.length===5) buscarCPTienda(this.value);">
+        <select class="inp" id="dt-colonia" style="flex:1;color:#444;"><option value="">Colonia (pon el CP)</option></select>
       </div>
+      <div class="cp-status" id="dt-cp-status" style="margin:-4px 0 8px;"></div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <input class="inp" id="dt-municipio" type="text" maxlength="60" placeholder="Municipio / Alcaldía" style="flex:1;">
         <input class="inp" id="dt-estado" type="text" maxlength="60" placeholder="Estado" style="flex:1;">
@@ -4286,6 +4298,9 @@ window.elegirTipoNuevo = async function(tipo) {
 // B2B — Captura obligatoria de datos de tienda + gating (Opción 3)
 // ══════════════════════════════════
 function mostrarFormDatosTienda() {
+  // Places para autocompletar «Dirección»: el cargador solo se llamaba desde el
+  // checkout y Prospección, así que aquí nunca había autocompletado.
+  if (!mapsListo) initMaps();
   window._dtCoords = null;     // ubicación de ENTREGA (la que ajusta el tendero)
   window._dtGpsCoords = null;  // GPS de validación (silencioso)
   ['dt-negocio','dt-dir','dt-cp','dt-colonia','dt-municipio','dt-estado'].forEach(id => {
@@ -4297,7 +4312,8 @@ function mostrarFormDatosTienda() {
     set('dt-negocio', clienteActual.nombre);
     set('dt-dir', clienteActual.direccion);
     set('dt-cp', clienteActual.cp);
-    set('dt-colonia', clienteActual.colonia);
+    { const sc = document.getElementById('dt-colonia'); if (sc) sc.dataset.previa = clienteActual.colonia || ''; }
+    if (clienteActual.cp) buscarCPTienda(clienteActual.cp);
     set('dt-municipio', clienteActual.municipio);
     set('dt-estado', clienteActual.estado);
   }
@@ -4536,6 +4552,42 @@ window.guardarAltaNegocio = async function() {
       showMsg('No se pudo guardar. Intenta de nuevo.');
     }
   } catch(e) { btn.disabled = false; btn.textContent = orig; showMsg('Error al guardar: ' + e.message); }
+};
+
+// Colonias por CP en el alta de tienda, como en el checkout (mismo servicio).
+// Rellena Estado si está vacío; el municipio lo escribe el tendero (el servicio
+// no lo devuelve). Restaura la colonia que ya estaba elegida si sigue en la lista.
+let _cpTiendaTimer = null;
+window.buscarCPTienda = function(cp) {
+  cp = String(cp || '').padStart(5, '0');
+  const sel = document.getElementById('dt-colonia'), st = document.getElementById('dt-cp-status');
+  if (!sel) return;
+  const previa = ((sel.dataset.previa || sel.value) || '').trim();
+  sel.dataset.previa = '';
+  sel.innerHTML = '<option value="">Elige tu colonia</option>'; sel.style.color = '#444';
+  if (st) st.textContent = '';
+  if (cp.length < 5) return;
+  clearTimeout(_cpTiendaTimer);
+  if (st) { st.style.color = '#888'; st.textContent = 'Buscando...'; }
+  _cpTiendaTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`https://api.zippopotam.us/MX/${cp}`);
+      if (!r.ok) throw new Error();
+      const d = await r.json();
+      const places = d.places || [];
+      if (!places.length) throw new Error();
+      places.forEach(p => { const o = document.createElement('option'); o.value = o.textContent = p['place name']; sel.appendChild(o); });
+      // Sin acentos ni mayúsculas: Google dice «Juárez» y el servicio de CP «Juarez».
+      const llano = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+      if (previa) { const obj = llano(previa); for (let i = 0; i < sel.options.length; i++) { if (llano(sel.options[i].value) === obj) { sel.selectedIndex = i; break; } } }
+      sel.style.color = 'var(--blanco)';
+      const est = document.getElementById('dt-estado');
+      if (est && !est.value && places[0].state) est.value = places[0].state;
+      if (st) { st.style.color = '#4caf50'; st.textContent = `✓ ${places.length} colonia${places.length > 1 ? 's' : ''}`; }
+    } catch (e) {
+      if (st) { st.style.color = 'var(--rojo)'; st.textContent = '✗ CP no encontrado'; }
+    }
+  }, 600);
 };
 
 window.guardarDatosTienda = async function() {
@@ -5155,31 +5207,34 @@ function renderDetalleQty() {
   const { precio } = getPrecioConDescuento(p);
   const enCajas = CAJAS_PIEZAS.reduce((n, c) => n + ((carrito[`${detalleKey}-c${c}`] || {}).qty || 0), 0);
   const total = qty + enCajas;
-  const cajasHTML = (!esBebidaPD && esCanalCaja() && presentacionConCaja(p.presentacion)) ? `
-    <div class="pd-cajas-lbl">Por caja</div>
-    <div class="pd-cajas" aria-label="Comprar por caja">
-      ${CAJAS_PIEZAS.map(c => {
-        const n = (carrito[`${detalleKey}-c${c}`] || {}).cajas || 0;
-        return `<button type="button" class="caja-btn ${n > 0 ? 'en-carrito' : ''}" onclick="detalleCaja(${c},1)" aria-label="Agregar caja de ${c} piezas">
-          <span>Caja de ${c}${n > 0 ? `<span class="caja-x">×${n}</span>` : ''}</span><b>$${precio * c}</b></button>`;
+  const conCajasPD = !esBebidaPD && esCanalCaja() && presentacionConCaja(p.presentacion);
+  const uPD = conCajasPD ? unidadDe(String(detalleKey)) : 1;
+  const nUPD = uPD === 1 ? qty : ((carrito[`${detalleKey}-c${uPD}`] || {}).cajas || 0);
+  const cajasHTML = conCajasPD ? `
+    <div class="pd-cajas-lbl">Cómo lo llevas</div>
+    <div class="u-sel pd-usel" role="group" aria-label="Cómo lo llevas">
+      ${[1, ...CAJAS_PIEZAS].map(n => {
+        const enC = n === 1 ? qty : ((carrito[`${detalleKey}-c${n}`] || {}).cajas || 0);
+        return `<button type="button" class="u-chip ${n === uPD ? 'sel' : ''}" aria-pressed="${n === uPD}" onclick="setUnidad('${detalleKey}',${n})">${n === 1 ? 'Pieza' : 'Caja ' + n}${enC > 0 ? `<span class="u-x">×${enC}</span>` : ''}</button>`;
       }).join('')}
     </div>` : '';
   const linea = total > 0
     ? `<div class="pd-cart-line">✓ Llevas ${total} en tu canasta${enCajas > 0 ? ` (${enCajas} en cajas)` : ''}</div>`
     : `<div class="pd-cart-line pd-cart-empty">Aún no lo agregas</div>`;
+  const etiqueta = uPD > 1 ? `Agregar caja de ${uPD} · $${precio * uPD}` : (qty > 0 ? 'Agregar más' : 'Agregar');
   bottom.innerHTML = `
     ${linea}
+    ${cajasHTML}
     <div class="pd-bottom-row">
       <div class="qty-ctrl pd-qty">
-        <button class="qty-btn" onclick="detalleQty(-1)">−</button>
-        <span class="qty-num pd-qty-num">${qty}</span>
-        <button class="qty-btn" onclick="detalleQty(1)">+</button>
+        <button class="qty-btn" onclick="detalleAgregar(-1)" aria-label="Quitar ${uPD > 1 ? 'una caja' : 'uno'}">−</button>
+        <span class="qty-num pd-qty-num">${nUPD}${uPD > 1 ? `<small class="u-unit">caja${nUPD === 1 ? '' : 's'}</small>` : ''}</span>
+        <button class="qty-btn" onclick="detalleAgregar(1)" aria-label="Agregar ${uPD > 1 ? 'una caja' : 'uno'}">+</button>
       </div>
-      <button class="pd-add ${qty > 0 ? 'pd-add-sec' : ''}" onclick="detalleQty(1)">${qty > 0 ? 'Agregar más' : 'Agregar'}</button>
-    </div>
-    ${cajasHTML}`;
+      <button class="pd-add ${nUPD > 0 ? 'pd-add-sec' : ''}" onclick="detalleAgregar(1)">${etiqueta}</button>
+    </div>`;
 }
-window.detalleCaja = function(piezas, delta) { cambiarCaja(String(detalleKey), piezas, delta); renderDetalleQty(); };
+window.detalleAgregar = function(delta) { agregarUnidad(String(detalleKey), delta); renderDetalleQty(); };
 window.detalleQty = function(delta) { cambiarQty(String(detalleKey), delta); renderDetalleQty(); };
 window.cerrarProducto = function() {
   const ov = document.getElementById('prod-detalle');
@@ -5340,26 +5395,30 @@ window.renderCatalogo = function() {
 
     // Si está agotado: badge + sin botón agregar
     const agotadoBadge = agotado ? `<div style="position:absolute;top:8px;right:8px;background:#5a1a1a;color:#ff8888;padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:900;letter-spacing:0.5px;z-index:3;">AGOTADO</div>` : '';
-    // Venta por caja: solo tienda/mayorista, papas de 50/100/250 g, no agotadas.
+    // Venta por caja (tienda/mayorista, papas de 50/100/250 g): se ELIGE cómo se
+    // lleva (pieza o caja de 3/6/12) y un solo control agrega esa unidad. Antes
+    // había tres botones que agregaban al instante y parecían una selección.
+    const conCajas = !agotado && !esBebida && esCanalCaja() && presentacionConCaja(p.presentacion);
     const cajasTot = CAJAS_PIEZAS.reduce((n, c) => n + ((carrito[`${key}-c${c}`] || {}).cajas || 0), 0);
-    const cajasHTML = (!agotado && !esBebida && esCanalCaja() && presentacionConCaja(p.presentacion)) ? `
-      <div class="caja-row" aria-label="Comprar por caja">
-        <span class="caja-lbl">Por caja</span>
-        ${CAJAS_PIEZAS.map(c => {
-          const n = (carrito[`${key}-c${c}`] || {}).cajas || 0;
-          return `<button type="button" class="caja-btn ${n > 0 ? 'en-carrito' : ''}" onclick="cambiarCaja('${key}',${c},1)" aria-label="Agregar caja de ${c} piezas">
-            <span>Caja de ${c}${n > 0 ? `<span class="caja-x">×${n}</span>` : ''}</span><b>$${precio * c}</b></button>`;
+    const u = conCajas ? unidadDe(key) : 1;
+    const nU = u === 1 ? qty : ((carrito[`${key}-c${u}`] || {}).cajas || 0);
+    const cajasHTML = conCajas ? `
+      <div class="u-sel" role="group" aria-label="Cómo lo llevas">
+        ${[1, ...CAJAS_PIEZAS].map(n => {
+          const enC = n === 1 ? qty : ((carrito[`${key}-c${n}`] || {}).cajas || 0);
+          return `<button type="button" class="u-chip ${n === u ? 'sel' : ''}" aria-pressed="${n === u}" onclick="setUnidad('${key}',${n})">${n === 1 ? 'Pieza' : 'Caja ' + n}${enC > 0 ? `<span class="u-x">×${enC}</span>` : ''}</button>`;
         }).join('')}
-      </div>` : '';
+      </div>
+      ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precio * u}</b></div>` : ''}` : '';
     const ctrlHTML = agotado ? `
       <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
     ` : `
-      ${qty===0
-        ? `<div class="qty-ctrl"><button class="agregar-btn" onclick="cambiarQty('${key}',1)">Agregar</button></div>`
+      ${nU===0
+        ? `<div class="qty-ctrl"><button class="agregar-btn" onclick="agregarUnidad('${key}',1)">${u > 1 ? 'Agregar caja' : 'Agregar'}</button></div>`
         : `<div class="qty-ctrl">
-        <button class="qty-btn" onclick="cambiarQty('${key}',-1)" aria-label="Quitar uno">−</button>
-        <span class="qty-num">${qty}</span>
-        <button class="qty-btn" onclick="cambiarQty('${key}',1)" aria-label="Agregar uno">+</button>
+        <button class="qty-btn" onclick="agregarUnidad('${key}',-1)" aria-label="Quitar ${u > 1 ? 'una caja' : 'uno'}">−</button>
+        <span class="qty-num">${nU}${u > 1 ? `<small class="u-unit">caja${nU === 1 ? '' : 's'}</small>` : ''}</span>
+        <button class="qty-btn" onclick="agregarUnidad('${key}',1)" aria-label="Agregar ${u > 1 ? 'una caja' : 'uno'}">+</button>
       </div>`}
     `;
 
@@ -5400,6 +5459,21 @@ function esCanalCaja() {
   return canal === 'tienda' || canal === 'mayorista';
 }
 function presentacionConCaja(pres) { return /\b(50|100|250)\s*g\b/i.test(String(pres || '')); }
+// Unidad elegida por producto en el catálogo: 1 (pieza) o 3/6/12 (caja). Solo
+// vive en memoria: es cómo se está mirando la tarjeta, no lo que hay en el carrito.
+const _unidadSel = {};
+function unidadDe(key) { const u = _unidadSel[String(key)]; return CAJAS_PIEZAS.includes(u) ? u : 1; }
+window.setUnidad = function(key, n) {
+  _unidadSel[String(key)] = n;
+  renderCatalogo();
+  const ov = document.getElementById('prod-detalle');
+  if (ov && ov.classList.contains('open') && String(detalleKey) === String(key)) renderDetalleQty();
+};
+window.agregarUnidad = function(key, delta) {
+  const u = unidadDe(key);
+  if (u === 1) cambiarQty(String(key), delta); else cambiarCaja(String(key), u, delta);
+};
+
 window.cambiarCaja = function(keyProd, piezas, delta) {
   const prod = catalogo.find(p => String(p.id) === keyProd);
   if (!prod || !CAJAS_PIEZAS.includes(piezas)) return;
@@ -6680,6 +6754,42 @@ function initMaps() {
       document.getElementById('mapa-lbl').textContent=place.formatted_address;
       mostrarMapaInteractivo(dirCoords.lat, dirCoords.lng);
     });
+
+    // Alta de tienda: el mismo autocompletado en «Dirección» (Abraham, 13 sep
+    // 2026). Al elegir, la calle queda como «calle número» y se rellenan CP,
+    // colonia (por el CP, como el checkout), municipio, estado y la ubicación
+    // de entrega, que se muestra en el mapa para ajustar el pin.
+    const inputT = document.getElementById('dt-dir');
+    if (inputT) {
+      const acT = new google.maps.places.Autocomplete(inputT, {
+        componentRestrictions: { country: 'mx' },
+        fields: ['geometry', 'formatted_address', 'address_components'],
+        types: ['address']
+      });
+      window._acTienda = acT;
+      acT.addListener('place_changed', () => {
+        const place = acT.getPlace();
+        if (!place || !place.geometry) return;
+        const comp = (tipo) => (place.address_components || []).find(c => c.types.includes(tipo));
+        const g = (tipo) => (comp(tipo) || {}).long_name || '';
+        const calle = [g('route'), g('street_number')].filter(Boolean).join(' ');
+        if (calle) inputT.value = calle;
+        const cp = g('postal_code');
+        const colonia = g('sublocality_level_1') || g('sublocality') || g('neighborhood');
+        const municipio = g('locality') || g('administrative_area_level_2') || g('administrative_area_level_3');
+        const estado = g('administrative_area_level_1');
+        const set = (id, v) => { const e = document.getElementById(id); if (e && v) e.value = v; };
+        set('dt-municipio', municipio);
+        set('dt-estado', estado);
+        if (cp) {
+          set('dt-cp', cp.padStart(5, '0'));
+          const sc = document.getElementById('dt-colonia'); if (sc) sc.dataset.previa = colonia || '';
+          buscarCPTienda(cp);
+        }
+        window._dtCoords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+        mostrarMapaTienda(window._dtCoords.lat, window._dtCoords.lng);
+      });
+    }
   };
   document.head.appendChild(s);
 }
