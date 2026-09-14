@@ -5221,7 +5221,7 @@ function renderDetalleQty() {
   const linea = total > 0
     ? `<div class="pd-cart-line">✓ Llevas ${total} en tu canasta${enCajas > 0 ? ` (${enCajas} en cajas)` : ''}</div>`
     : `<div class="pd-cart-line pd-cart-empty">Aún no lo agregas</div>`;
-  const etiqueta = uPD > 1 ? `Agregar caja de ${uPD} · $${precio * uPD}` : (qty > 0 ? 'Agregar más' : 'Agregar');
+  const etiqueta = uPD > 1 ? `Agregar caja de ${uPD} · $${precioCaja(p, uPD)}` : (qty > 0 ? 'Agregar más' : 'Agregar');
   bottom.innerHTML = `
     ${linea}
     ${cajasHTML}
@@ -5409,7 +5409,7 @@ window.renderCatalogo = function() {
           return `<button type="button" class="u-chip ${n === u ? 'sel' : ''}" aria-pressed="${n === u}" onclick="setUnidad('${key}',${n})">${n === 1 ? 'Pieza' : 'Caja ' + n}${enC > 0 ? `<span class="u-x">×${enC}</span>` : ''}</button>`;
         }).join('')}
       </div>
-      ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precio * u}</b></div>` : ''}` : '';
+      ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precioCaja(p, u)}</b></div>` : ''}` : '';
     const ctrlHTML = agotado ? `
       <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
     ` : `
@@ -5454,6 +5454,28 @@ window.renderCatalogo = function() {
 // piezas sueltas. La línea se guarda como piezas (qty) y recuerda caja/cajas
 // solo para mostrarlo: el servidor y el lote no saben de cajas.
 const CAJAS_PIEZAS = [3, 6, 12];
+// Precio de una caja de n piezas: el propio del producto (productos.precio_caja_n)
+// o, si no lo tiene, piezas × precio del canal. Es el mismo cálculo que hace
+// crear_pedido en el servidor; si difieren, el pedido vuelve con precio_cambiado.
+function precioCaja(prod, n) {
+  const propio = Number(prod['precio_caja_' + n]) || 0;
+  if (propio > 0) return propio;
+  return getPrecioConDescuento(prod).precio * n;
+}
+// Importe de una línea del carrito: granel por monto, caja por cajas × precio de
+// caja, pieza por piezas × precio. Las líneas guardadas antes de hoy no traen
+// precioCaja: se recompone con piezas × precio.
+function subLinea(i) {
+  if (i.tipoVenta === 'A granel') return i.monto;
+  if (i.caja) return (i.cajas || 0) * (i.precioCaja || i.precio * i.caja);
+  return i.qty * i.precio;
+}
+// «2 cajas de 12 (24 pz)» si la línea del pedido se vendió por caja; si no, «24×».
+function cantidadConCajas(l) {
+  const n = Number(l.cantidad) || 0, c = Number(l.piezas_por_caja) || 0;
+  if (c > 0 && n > 0 && n % c === 0) { const k = n / c; return `${k} caja${k === 1 ? '' : 's'} de ${c} (${n} pz)`; }
+  return `${n}×`;
+}
 function esCanalCaja() {
   const canal = esVendedor ? (canalVenta || '') : (tipoCliente || '');
   return canal === 'tienda' || canal === 'mayorista';
@@ -5483,11 +5505,12 @@ window.cambiarCaja = function(keyProd, piezas, delta) {
     carrito[key] = {
       key, keyProd, idProducto: prod.id, sabor: prod.sabor, presentacion: prod.presentacion,
       precio, precioOriginal, descuento,
-      gramos: prod.gramos, tipoVenta: 'Por Pieza', caja: piezas, cajas: 0, qty: 0,
+      gramos: prod.gramos, tipoVenta: 'Por Pieza', caja: piezas, cajas: 0, qty: 0, precioCaja: precioCaja(prod, piezas),
     };
   }
   carrito[key].cajas = Math.max(0, (carrito[key].cajas || 0) + delta);
   carrito[key].qty = carrito[key].cajas * piezas;
+  carrito[key].precioCaja = precioCaja(prod, piezas);
   if (carrito[key].cajas === 0) {
     delete carrito[key];
     if (delta < 0) { try { track('remove_from_cart', { sabor: prod.sabor, presentacion: prod.presentacion, caja: piezas }); } catch (e) {} }
@@ -5558,7 +5581,7 @@ window.agregarGranel = function() {
 function totalItems() { return Object.values(carrito).reduce((s,i)=>s+i.qty,0); }
 function totalMonto() {
   return Object.values(carrito).reduce((s,i)=>{
-    return s + (i.tipoVenta==='A granel' ? i.monto : i.qty*i.precio);
+    return s + subLinea(i);
   },0);
 }
 function totalGramos() {
@@ -5826,14 +5849,14 @@ function renderDrawer() {
 
   // Items
   ci.innerHTML = items.map(i => {
-    const sub = i.tipoVenta==='A granel' ? i.monto : i.qty*i.precio;
+    const sub = subLinea(i);
     const grsLinea = i.tipoVenta==='A granel'
       ? (Number(i.gramos)||0)
       : (Number(i.qty)||0) * (Number(i.gramos)||0);
     const esPieza = i.tipoVenta !== 'A granel';
     const desc = !esPieza
       ? `${i.gramos}g · $${i.monto}`
-      : i.caja ? `Caja de ${i.caja} · ${i.qty} pz · $${i.precio} c/u` : `$${i.precio} c/u`;
+      : i.caja ? `Caja de ${i.caja} · ${i.qty} pz · $${i.precioCaja || i.precio * i.caja} por caja` : `$${i.precio} c/u`;
     const descInterno = !esPieza
       ? `${i.gramos}g a granel`
       : `${i.gramos}g c/u`;
@@ -7516,12 +7539,13 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       productos: items.map(i => ({
         idProducto: i.idProducto || '', sabor: i.sabor, presentacion: i.presentacion,
         tipoVenta: i.tipoVenta, cantidad: i.qty || 0,
+        caja: i.caja || 0,
         monto: i.monto || 0, precioKg: i.precioKg || 220,
         precio: i.precio || 0,
         precioOriginal: i.precioOriginal || i.precio || 0,
         descuento: i.descuento || 0,
         gramos: i.gramos || 0,
-        subtotal: i.tipoVenta === 'A granel' ? i.monto : i.qty * i.precio,
+        subtotal: subLinea(i),
       })),
     };
     rp = await supabaseCall('POST', 'rpc/crear_pedido', { p_data: payload });
@@ -7649,7 +7673,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const vendNombre = vendedorAsig?.nombre || 'Equipo Crunchy Paps';
   const fecha      = new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
   const lineas     = items.map(i=>{
-    const sub = i.tipoVenta==='A granel'?i.monto:i.qty*i.precio;
+    const sub = subLinea(i);
     const desc = i.tipoVenta==='A granel'?`${i.gramos}g`:(i.caja?`${i.cajas} caja${i.cajas===1?'':'s'} de ${i.caja} (${i.qty} pz)`:`×${i.qty}`);
     return `• *${i.sabor}* ${i.presentacion} ${desc} = $${sub}`;
   }).join('\n');
@@ -8098,6 +8122,9 @@ async function cargarCatalogoSupabase() {
       precio_mayorista: Number(p.precio_mayorista) || 0,
       precio_mostrador: Number(p.precio_mostrador) || 0,
       precio_granel_kg: Number(p.precio_granel_kg) || 0,
+      precio_caja_3:  Number(p.precio_caja_3)  || 0,
+      precio_caja_6:  Number(p.precio_caja_6)  || 0,
+      precio_caja_12: Number(p.precio_caja_12) || 0,
       tipo_venta: Number(p.tipo_venta) || 1,
       imagen_url: p.imagen_url || '',
       descripcion: p.descripcion || '',
@@ -10078,7 +10105,7 @@ window.renderKardexLote = async function(idLote) {
       }
       porPedido[folio].kg += Number(l.kg_descontado_lote) || 0;
       const pres = l.presentacion ? ` ${l.presentacion}` : '';
-      const cant = l.cantidad ? `${l.cantidad}× ` : '';
+      const cant = l.cantidad ? `${cantidadConCajas(l)} ` : '';
       porPedido[folio].items.push(`${cant}${l.sabor || '—'}${pres}`);
     });
 
@@ -11347,7 +11374,7 @@ window.enviarResumenPedidoWpp = async function(idOrden) {
   const saludo = primerNombre ? `¡Hola ${primerNombre}!` : '¡Hola!';
   let cuerpo = '';
   lineas.forEach(l => {
-    const cant = l.cantidad ? `${l.cantidad}× ` : '';
+    const cant = l.cantidad ? `${cantidadConCajas(l)} ` : '';
     const pres = l.presentacion ? ` ${l.presentacion}` : '';
     const sub = (l.subtotal != null) ? ` — $${Number(l.subtotal).toLocaleString('es-MX')}` : '';
     cuerpo += `• ${cant}${l.sabor || 'Producto'}${pres}${sub}\n`;
@@ -11642,7 +11669,7 @@ function pintarDetallePedido({ orden, lineas }) {
     const sub = (l.subtotal || 0).toLocaleString('es-MX');
     const cantStr = l.tipo_venta === 'A granel'
       ? `${(l.gramos/1000).toFixed(3)}kg`
-      : `${l.cantidad || 0}×`;
+      : cantidadConCajas(l);
     const pesoLinea = (Number(l.gramos)||0) / 1000;
     return `
       <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--gris3);font-size:0.86rem;">
