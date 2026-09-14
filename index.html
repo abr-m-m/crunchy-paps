@@ -11611,6 +11611,7 @@ window.verDetallePedido = async function(idOrden) {
       precio_kg: Number(d.precio_kg) || 0,
       subtotal: Number(d.subtotal) || 0,
       descuento: Number(d.descuento) || 0,
+      piezas_por_caja: Number(d.piezas_por_caja) || 0,   // caja: «2 cajas de 12 (24 pz)»
     }));
     _pedidoActual = { ok: true, orden, lineas };
     pintarDetallePedido(_pedidoActual);
@@ -12100,7 +12101,8 @@ window.imprimirTicket = function() {
     const cantNum = l.tipo_venta === 'A granel'
       ? `${(l.gramos/1000).toFixed(3)}kg`
       : `${l.cantidad || 0}`;
-    const nom = `${l.sabor||''} ${l.presentacion||''}`.trim();
+    // Caja: «Natural Bolsa 50g (2 cajas de 12)»; la columna Cant sigue en piezas.
+    const nom = `${l.sabor||''} ${l.presentacion||''}`.trim() + (l.piezas_por_caja ? ` (${cantidadConCajas(l).replace(/ \(\d+ pz\)$/, '')})` : '');
     const pesoLineaKg = (Number(l.gramos)||0) / 1000;
     const importe = esInternoTk
       ? `${pesoLineaKg.toFixed(3)}kg`
