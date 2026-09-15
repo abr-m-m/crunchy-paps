@@ -21,7 +21,9 @@ const ORIGEN  = 'C:\\Proyectos\\crunchy-paps';
 // .gitignore del repo público; el guardia de abajo comprueba además que el
 // remoto sea crunchy-paps-docs antes de escribir.
 const DESTINO = 'C:\\Proyectos\\crunchy-paps\\crunchy-paps-docs';
-const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
+const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md',
+                 // Nacidos de la poda de CLAUDE.md del 15 sep 2026.
+                 'HISTORIA.md', 'REGLAS.md', 'ARQUITECTURA.md'];
 
 // `cambios/` es una CARPETA que crece: un archivo por cambio (PLAN.md §1.5).
 // Se recorre en vez de enumerarse, porque una lista fija habría que acordarse de

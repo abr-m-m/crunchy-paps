@@ -112,3 +112,10 @@ PLAN.md
 # PLAN.md, cambios/ y las auditorías con nombres de clientes. Tiene su propio
 # .git; nada de ahí puede entrar en este repo público.
 crunchy-paps-docs/
+
+# HISTORIA.md, REGLAS.md y ARQUITECTURA.md: nacieron el 15 sep 2026 de podar
+# CLAUDE.md, que ya estaba fuera del repo por el mismo criterio (contexto
+# interno, hallazgos y decisiones). Se respaldan al repo privado.
+HISTORIA.md
+REGLAS.md
+ARQUITECTURA.md
