@@ -1989,6 +1989,8 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <!-- ══ TAB: LOTES ══ -->
     <div id="prod-tab-lotes">
 
+      <div id="hora-limite-cfg" style="display:none;"></div>
+
       <!-- Registrar nuevo lote -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">REGISTRAR LOTE</div>
@@ -8547,6 +8549,7 @@ function mostrarNavProduccion() {
 }
 
 async function renderProduccion() {
+  renderHoraLimiteCfg();
   const tabla    = document.getElementById('prod-tabla');
   const fechaEl  = document.getElementById('fecha-prod-actual');
 
@@ -9265,6 +9268,50 @@ window.guardarLealtadCfg = async function() {
 };
 
 // ── Panel admin: mínimos de mayoreo (editable, sin tocar código) ──
+// Hora límite de pedido (entrega 1 de la cola de pedidos). Solo el dueño la
+// edita; la lee get_hora_limite_config y la aplica obtener_fecha_entrega.
+async function renderHoraLimiteCfg() {
+  const cont = document.getElementById('hora-limite-cfg');
+  if (!cont) return;
+  if (!esAdminEstricto()) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
+  cont.style.display = 'block';
+  let cfg = { hora: '18:00', diasNormal: 1, diasTarde: 2 };
+  try {
+    const r = await supabaseCall('POST', 'rpc/get_hora_limite_config', {});
+    if (r && r.ok) cfg = { hora: r.hora, diasNormal: r.diasNormal, diasTarde: r.diasTarde };
+  } catch (_e) {}
+  const num = (id, v) => `<input id="${id}" type="number" inputmode="numeric" min="0" max="7" step="1" value="${v}" style="width:70px;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--blanco);font-size:0.9rem;text-align:right;">`;
+  cont.innerHTML = `
+    <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:6px;">HORA LÍMITE DE PEDIDO</div>
+      <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Un pedido antes de esta hora se entrega en los días «normales»; después, en los días «tarde». Hora de la Ciudad de México.</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:0.86rem;color:var(--blanco);">
+        <label for="hl-hora">Hora límite</label>
+        <input id="hl-hora" type="time" value="${cfg.hora}" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--blanco);font-size:0.9rem;">
+        <label for="hl-normal">Días si pide antes</label>${num('hl-normal', cfg.diasNormal)}
+        <label for="hl-tarde">Días si pide después</label>${num('hl-tarde', cfg.diasTarde)}
+      </div>
+      <button onclick="guardarHoraLimiteCfg()" style="width:100%;min-height:44px;margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.86rem;color:var(--negro);cursor:pointer;">Guardar hora límite</button>
+    </div>`;
+}
+
+window.guardarHoraLimiteCfg = async function() {
+  const hora = (document.getElementById('hl-hora')?.value || '').trim();
+  const diasNormal = parseInt(document.getElementById('hl-normal')?.value, 10);
+  const diasTarde = parseInt(document.getElementById('hl-tarde')?.value, 10);
+  if (!/^\d{2}:\d{2}$/.test(hora) || isNaN(diasNormal) || isNaN(diasTarde) || diasTarde < diasNormal) {
+    await avisar({ titulo: 'Revisa la hora límite', cuerpo: 'La hora va como HH:MM y los días «después» no pueden ser menos que los días «antes».' });
+    return;
+  }
+  try {
+    const res = await supabaseCall('POST', 'rpc/set_hora_limite_config', { p_data: { hora, diasNormal, diasTarde } });
+    if (res && res.ok) { mostrarToast('Hora límite guardada'); renderHoraLimiteCfg(); }
+    else await avisar({ titulo: 'No se pudo guardar la hora límite', cuerpo: (res && res.error) || 'Sin respuesta' });
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo guardar la hora límite', cuerpo: e.message || '' });
+  }
+};
+
 async function renderMayoreoAdminCfg() {
   const cont = document.getElementById('mayoreo-admin-cfg');
   if (!cont) return;
