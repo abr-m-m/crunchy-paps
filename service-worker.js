@@ -68,9 +68,14 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/?ir=armado';
+  // Si la app ya está abierta se enfoca y se le AVISA por mensaje a dónde ir:
+  // `navigate` solo funciona en ventanas que este worker controla, y tras un
+  // despliegue la ventana abierta puede seguir siendo del worker anterior
+  // (15 sep 2026: la notificación enfocaba la app y no llegaba a Armado).
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
-    for (const c of lista) {
-      if ('focus' in c) { c.navigate(url); return c.focus(); }
+    const c = lista.find((w) => 'focus' in w);
+    if (c) {
+      return c.focus().then((w) => { try { (w || c).postMessage({ ir: 'armado' }); } catch (_e) {} return w; });
     }
     return self.clients.openWindow(url);
   }));

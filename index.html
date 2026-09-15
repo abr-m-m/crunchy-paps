@@ -16613,6 +16613,13 @@ function pintarTracking() {
   const url = new URL(window.location.href);
   // ?ir=armado: lo abre la notificación push. Se espera a que la sesión se
   // restaure (intentarRestaurarSesion es asíncrona) y solo si hay vendedor.
+  // Mensaje del service worker al tocar una notificación con la app ya abierta
+  // (15 sep 2026): enfocar no basta, hay que navegar desde la propia página.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e.data && e.data.ir === 'armado' && esVendedor && typeof navegar === 'function') navegar('armado');
+    });
+  }
   if (url.searchParams.get('ir') === 'armado') {
     window.addEventListener('load', () => {
       setTimeout(() => { if (esVendedor && typeof navegar === 'function') navegar('armado'); }, 1500);
