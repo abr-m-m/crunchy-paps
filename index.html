@@ -9399,7 +9399,7 @@ function pintarRutasEdit() {
   const cont = document.getElementById('rutas-admin-cfg');
   if (!cont || !window._rutasEdit) return;
   const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  const inp = 'background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;min-height:40px;color:var(--blanco);font-family:\'Inter\',sans-serif;font-size:0.84rem;';
+  const inp = 'background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;min-height:40px;min-width:0;max-width:100%;color:var(--blanco);font-family:\'Inter\',sans-serif;font-size:0.84rem;';
   const filas = window._rutasEdit.map((rt, i) => `
     <div style="border:1px solid var(--gris3);border-radius:12px;padding:12px;margin-bottom:10px;${rt.activa ? '' : 'opacity:.55;'}">
       <div style="display:grid;grid-template-columns:1fr 52px;gap:8px;align-items:center;">
@@ -9412,10 +9412,10 @@ function pintarRutasEdit() {
       </div>
       <div style="margin-top:8px;font-size:0.72rem;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;">Cobertura</div>
       ${rt.cobertura.map((c, j) => `
-        <div style="display:grid;grid-template-columns:88px 1fr 84px 40px;gap:6px;margin-top:6px;align-items:center;">
+        <div style="display:grid;grid-template-columns:${c.tipo === 'cp' ? '96px minmax(0,1fr) minmax(0,1fr) 40px' : '96px minmax(0,1fr) 40px'};gap:6px;margin-top:6px;align-items:center;">
           <select aria-label="Tipo" onchange="rutaCob(${i}, ${j}, 'tipo', this.value)" style="${inp}"><option value="colonia" ${c.tipo === 'colonia' ? 'selected' : ''}>Colonia</option><option value="cp" ${c.tipo === 'cp' ? 'selected' : ''}>CP</option></select>
           <input value="${esc(c.valor)}" placeholder="${c.tipo === 'cp' ? 'CP desde' : 'Colonia'}" aria-label="Valor" oninput="rutaCob(${i}, ${j}, 'valor', this.value)" style="${inp}">
-          <input value="${esc(c.cpHasta)}" placeholder="hasta" aria-label="CP hasta" oninput="rutaCob(${i}, ${j}, 'cpHasta', this.value)" ${c.tipo === 'cp' ? '' : 'disabled'} style="${inp}${c.tipo === 'cp' ? '' : 'opacity:.4;'}">
+          ${c.tipo === 'cp' ? `<input value="${esc(c.cpHasta)}" placeholder="hasta" aria-label="CP hasta" oninput="rutaCob(${i}, ${j}, 'cpHasta', this.value)" style="${inp}">` : ''}
           <button type="button" onclick="rutaQuitarCobertura(${i}, ${j})" aria-label="Quitar" style="min-height:40px;background:transparent;border:1px solid var(--gris3);border-radius:8px;color:var(--suave);cursor:pointer;">×</button>
         </div>`).join('')}
       <button type="button" onclick="rutaAgregarCobertura(${i})" style="margin-top:8px;min-height:36px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 12px;color:var(--suave);font-family:'Inter',sans-serif;font-size:0.78rem;cursor:pointer;">+ colonia o CP</button>
