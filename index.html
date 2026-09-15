@@ -2474,6 +2474,26 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 <!-- ══════════════════════════════════
      SCREEN: CAJA (admin + mostrador)
 ══════════════════════════════════ -->
+<div class="screen" id="s-armado">
+  <div class="header">
+    <div class="logo">Crunchy<span> Paps</span></div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">ARMADO</div>
+  </div>
+  <div style="padding:14px 16px 90px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+      <button onclick="armadoCambiarFecha(-1)" aria-label="Día anterior" style="min-width:44px;min-height:44px;background:var(--gris);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-size:1.1rem;cursor:pointer;">‹</button>
+      <div style="text-align:center;">
+        <div id="armado-fecha" style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);">—</div>
+        <div id="armado-hora" style="font-size:0.72rem;color:var(--suave);"></div>
+      </div>
+      <button onclick="armadoCambiarFecha(1)" aria-label="Día siguiente" style="min-width:44px;min-height:44px;background:var(--gris);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-size:1.1rem;cursor:pointer;">›</button>
+    </div>
+    <div id="armado-resumen" style="margin-top:12px;"></div>
+    <div id="armado-pedidos" style="margin-top:12px;"></div>
+    <div id="armado-por-confirmar" style="margin-top:12px;"></div>
+  </div>
+</div>
+
 <div class="screen" id="s-caja">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
@@ -3261,6 +3281,10 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
     <span class="nav-lbl">Cupones</span>
   </div>
+  <div class="nav-item" id="nav-armado" onclick="navegar('armado')" style="display:none;">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+    <span class="nav-lbl">Armado</span>
+  </div>
   <div class="nav-item" id="nav-resumen" onclick="navegar('resumen')" style="display:none;">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-3"/></svg>
     <span class="nav-lbl">Resumen</span>
@@ -3762,7 +3786,7 @@ window.ir = function(id) {
 };
 
 // Versión interna que preserva la navbar
-window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen'];
+window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen','s-armado'];
 
 
 
@@ -4821,6 +4845,9 @@ function mostrarCamposB2B() {
 
 async function irAlCatalogo() {
   track('view_catalog');
+  // Tras entrar con PIN la barra debe reflejar las secciones del servidor sin
+  // esperar a recargar (antes solo pasaba en intentarRestaurarSesion).
+  if (esVendedor) aplicarPermisosNavbar();
   // Header
   const telDisp = telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/,'$1 $2 $3');
   // Un invitado no tiene teléfono, y dejar el nombre vacío hace que la
@@ -9117,6 +9144,10 @@ window.navegar = function(seccion) {
   else if (seccion === 'cupones') {
     document.getElementById('s-cupones').classList.add('active');
     cargarCupones();
+  }
+  else if (seccion === 'armado') {
+    document.getElementById('s-armado').classList.add('active');
+    renderArmado();
   }
   else if (seccion === 'resumen') {
     document.getElementById('s-resumen').classList.add('active');
@@ -14515,6 +14546,118 @@ window.cambiarFechaCaja = function(delta) {
   renderCaja();
 };
 
+// ── Armado (cola de pedidos, entrega 2) ──────────────────────────────────────
+// Qué armar para una fecha: consolidado por sabor y presentación y una tarjeta
+// por pedido con casilla. El servidor decide qué entra (cola_armado) y quién
+// puede verlo (sección «armado»). Los pedidos Pendientes de esa fecha van
+// aparte, «por confirmar»; confirmar sigue haciéndose en Pedidos.
+window._armadoFecha = null;
+
+function armadoFechaISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function armadoManana() { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + 1); return armadoFechaISO(d); }
+function armadoFechaLarga(iso) { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }); }
+const ARMADO_CANAL = { tienda: 'Abarrotes', restaurante: 'Restaurante', mayorista: 'Mayoreo', consumidor: 'Consumidor', mostrador: 'Mostrador', web: 'Web', b2b: 'B2B', telefono: 'Teléfono' };
+function armadoLinea(l) {
+  const ppc = Number(l.piezasPorCaja || 0);
+  const n = Number(l.cantidad || 0);
+  if (ppc > 0 && n >= ppc) { const cajas = Math.round(n / ppc); return `${cajas} caja${cajas === 1 ? '' : 's'} de ${ppc} · ${l.sabor} ${l.presentacion}`; }
+  if (/granel/i.test(l.tipoVenta || '')) return `${(Number(l.gramos || 0) / 1000).toFixed(2)} kg ${l.sabor} granel`;
+  return `${n} × ${l.sabor} ${l.presentacion}`;
+}
+const ARMADO_VACIO = '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+
+async function renderArmado() {
+  if (!window._armadoFecha) window._armadoFecha = armadoManana();
+  const fecha = window._armadoFecha;
+  const elF = document.getElementById('armado-fecha'), elH = document.getElementById('armado-hora');
+  const elR = document.getElementById('armado-resumen'), elP = document.getElementById('armado-pedidos'), elC = document.getElementById('armado-por-confirmar');
+  if (!elF || !elR) return;
+  elF.textContent = armadoFechaLarga(fecha);
+  elR.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando…</div>';
+  elP.innerHTML = ''; elC.innerHTML = '';
+  let r = null;
+  try { r = await supabaseCall('POST', 'rpc/cola_armado', { p_data: { fecha } }); } catch (e) { r = { ok: false, error: e.message }; }
+  if (!r || !r.ok) {
+    elR.innerHTML = `<div style="background:var(--gris);border-radius:12px;padding:16px;color:var(--suave);font-size:0.86rem;">${/autorizado/i.test(r?.error || '') ? 'Tu sesión no tiene la sección Armado o caducó. Vuelve a entrar.' : 'No se pudo cargar: ' + (r?.error || 'sin respuesta')}</div>`;
+    return;
+  }
+  if (elH) elH.textContent = r.horaLimite ? `Pedidos hasta las ${r.horaLimite} entran al día siguiente` : '';
+  const t = r.totales || {};
+  const resumen = Array.isArray(r.resumen) ? r.resumen : [];
+  const pedidos = Array.isArray(r.pedidos) ? r.pedidos : [];
+  const porConfirmar = Array.isArray(r.porConfirmar) ? r.porConfirmar : [];
+  // Consolidado
+  if (!resumen.length) {
+    elR.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:22px;text-align:center;color:var(--suave);"><div class="ico-solo" style="margin-bottom:8px;">${ARMADO_VACIO}</div>Nada que armar para el ${armadoFechaLarga(fecha)}</div>`;
+  } else {
+    const filas = resumen.map(x => {
+      const cajas = (x.cajas || []).map(c => `${c.cajas} × caja de ${c.piezasPorCaja}`).join(', ');
+      return `<tr><td style="padding:8px 6px;">${x.sabor}<div style="color:var(--suave);font-size:0.72rem;">${x.presentacion}${cajas ? ' · ' + cajas : ''}</div></td><td style="padding:8px 6px;text-align:right;font-variant-numeric:tabular-nums;">${Number(x.piezas)}</td><td style="padding:8px 6px;text-align:right;font-variant-numeric:tabular-nums;">${Number(x.kg).toFixed(2)}</td></tr>`;
+    }).join('');
+    elR.innerHTML = `
+      <div style="background:var(--gris);border-radius:14px;padding:12px 10px;">
+        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;margin:0 6px 6px;">PARA ARMAR</div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.86rem;color:var(--blanco);">
+          <thead><tr style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;"><th style="text-align:left;padding:4px 6px;">Producto</th><th style="text-align:right;padding:4px 6px;">Piezas</th><th style="text-align:right;padding:4px 6px;">kg</th></tr></thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr style="border-top:1px solid var(--gris3);font-weight:800;"><td style="padding:8px 6px;">${t.pedidos} pedido${Number(t.pedidos) === 1 ? '' : 's'} · ${t.armados} armado${Number(t.armados) === 1 ? '' : 's'}</td><td style="padding:8px 6px;text-align:right;">${Number(t.piezas || 0)}</td><td style="padding:8px 6px;text-align:right;">${Number(t.kg || 0).toFixed(2)}</td></tr></tfoot>
+        </table>
+      </div>`;
+  }
+  // Por pedido
+  elP.innerHTML = pedidos.map(p => {
+    const canal = p.tipoInterno ? `Interno · ${p.tipoInterno}` : (ARMADO_CANAL[p.canal] || p.canal || '');
+    const quien = p.negocio || p.cliente || 'Sin nombre';
+    const hecho = !!p.armadoEn;
+    return `
+      <div style="background:var(--gris);border:1px solid ${hecho ? 'var(--verde, #1f7a2e)' : 'var(--gris3)'};border-radius:14px;padding:12px 14px;margin-bottom:10px;opacity:${hecho ? 0.75 : 1};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-weight:800;color:var(--blanco);">${quien}</div>
+            <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''}</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:0.8rem;color:var(--blanco);white-space:nowrap;">
+            <input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcar(${p.id}, this.checked)" style="width:24px;height:24px;accent-color:var(--amarillo);"> Armado
+          </label>
+        </div>
+        <ul style="margin:8px 0 0;padding-left:18px;color:var(--blanco);font-size:0.84rem;line-height:1.5;">${(p.lineas || []).map(l => '<li>' + armadoLinea(l) + '</li>').join('')}</ul>
+        ${hecho ? `<div style="color:var(--suave);font-size:0.7rem;margin-top:6px;">Armado por ${p.armadoPor || '—'} · ${new Date(p.armadoEn).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}
+      </div>`;
+  }).join('');
+  // Por confirmar
+  if (porConfirmar.length) {
+    elC.innerHTML = `
+      <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1px;margin:6px 0 8px;">POR CONFIRMAR (${porConfirmar.length})</div>
+      ${porConfirmar.map(p => `
+        <button onclick="verDetallePedido(${p.id})" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:12px;padding:10px 14px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;">
+          <span><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);"> · ${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''}</span></span>
+          <span style="color:var(--amarillo);font-weight:800;">Confirmar ›</span>
+        </button>`).join('')}`;
+  }
+}
+
+window.armadoCambiarFecha = function(delta) {
+  const d = new Date((window._armadoFecha || armadoManana()) + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  window._armadoFecha = armadoFechaISO(d);
+  renderArmado();
+};
+window.armadoRecargar = function() { renderArmado(); };
+
+window.armadoMarcar = async function(id, checked) {
+  try {
+    const r = await supabaseCall('POST', 'rpc/marcar_armado', { p_data: { id, armado: !!checked } });
+    if (!r || !r.ok) {
+      await avisar({ titulo: 'No se pudo marcar el pedido', cuerpo: r?.motivo || r?.error || 'Sin respuesta' });
+    } else {
+      mostrarToast(checked ? `${r.consecutivo} armado` : `${r.consecutivo} sin armar`);
+    }
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo marcar el pedido', cuerpo: e.message || '' });
+  }
+  renderArmado();   // repinta con lo que diga el servidor, pase lo que pase
+};
+
 async function renderCaja() {
   if (!_cajaFecha) _cajaFecha = fechaYYYYMMDD(new Date());
 
@@ -15214,6 +15357,7 @@ const NAV_ITEM_POR_SECCION = {
   productos:   'nav-productos',
   cupones:     'nav-cupones',
   resumen:     'nav-resumen',
+  armado:      'nav-armado',
   cuenta:      'nav-perfil',
 };
 
@@ -15341,6 +15485,7 @@ const SECCIONES_LABELS = {
   productos:   'Productos',
   cupones:     'Cupones',
   resumen:     'Resumen',
+  armado:      'Armado',
   cuenta:      'Mi cuenta',
 };
 
