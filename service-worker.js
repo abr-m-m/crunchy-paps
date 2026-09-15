@@ -2,7 +2,9 @@
 // Permite "instalar" la PWA y muestra el splash con icon. No cachea HTML
 // para garantizar que siempre tomen la versión más reciente del index.html.
 
-const CACHE_NAME = 'crunchy-paps-v1';
+// v2 (15 sep 2026): push «Pedido nuevo». Subir la versión obliga a los
+// clientes instalados a tomar este worker.
+const CACHE_NAME = 'crunchy-paps-v2';
 const ASSETS_CACHE = [
   '/icon-192.png',
   '/icon-512.png',
@@ -45,4 +47,31 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
+});
+
+// ── Push «Pedido nuevo» (cola de pedidos, entrega 4) ──────────────────────
+// El servidor manda {titulo, cuerpo, tag, url}. Si el cuerpo no es JSON,
+// se enseña como texto. Al tocar la notificación se abre (o enfoca) la app
+// en Armado.
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (_e) { d = { cuerpo: event.data ? event.data.text() : '' }; }
+  event.waitUntil(self.registration.showNotification(d.titulo || 'Crunchy Paps', {
+    body: d.cuerpo || '',
+    tag: d.tag || 'pedido',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: d.url || '/?ir=armado' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/?ir=armado';
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
+    for (const c of lista) {
+      if ('focus' in c) { c.navigate(url); return c.focus(); }
+    }
+    return self.clients.openWindow(url);
+  }));
 });

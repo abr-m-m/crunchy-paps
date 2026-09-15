@@ -69,7 +69,8 @@ const agregar = (grupo, nombre, fn, espera, escribe) => casos.push({ grupo, nomb
 // ── A. Debe estar CERRADO: tablas que el navegador nunca toca ──────────────
 for (const t of ['vendedores', 'caja_movimientos', 'caja_dias', 'caja_puntos',
                  'lealtad_movimientos', 'insumos', 'uso_insumos',
-                 'inventario_fisico', 'cuotas_vendedor', 'config_secciones']) {
+                 'inventario_fisico', 'cuotas_vendedor', 'config_secciones',
+                 'push_suscripciones']) {
   agregar('A. Tablas solo-RPC (deben negar lectura)', `GET ${t}`,
     () => pedir('GET', `${t}?select=*&limit=1`), cerrado);
 }

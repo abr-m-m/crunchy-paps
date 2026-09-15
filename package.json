@@ -1,0 +1,8 @@
+{
+  "name": "crunchy-paps",
+  "private": true,
+  "description": "Crunchy Paps — app web. Solo hay dependencias para las funciones de /api.",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

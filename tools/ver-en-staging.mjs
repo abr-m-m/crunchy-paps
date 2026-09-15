@@ -49,6 +49,14 @@ const PUERTO = 8794;
 
 // La llave publishable no es un secreto —viaja al navegador por diseño— pero
 // tampoco se guarda en el repo: se pide al CLI, que ya tiene sesión.
+// Push (entrega 4): la llave pública VAPID sale de .env.push si existe. Solo
+// esa línea; la privada y el secreto del webhook nunca llegan al navegador.
+try {
+  const envPush = readFileSync(join(REPO, '.env.push'), 'utf8');
+  const m = envPush.match(/^\s*VAPID_PUBLIC_KEY\s*=\s*(\S+)/m);
+  if (m && !process.env.VAPID_PUBLIC_KEY) process.env.VAPID_PUBLIC_KEY = m[1];
+} catch (_e) { /* sin .env.push no hay push en staging, y está bien */ }
+
 let LLAVE = process.env.SUPABASE_KEY;
 if (!LLAVE) {
   try {
@@ -141,7 +149,10 @@ createServer((req, res) => {
   if (ruta === '/api/config.js') {
     res.writeHead(200, { 'content-type': 'application/javascript' });
     res.end(`window.__CP_CONFIG__ = ${JSON.stringify({
-      SUPABASE_URL: STAGING, SUPABASE_ANON_KEY: LLAVE, ENTORNO: 'staging' })};`);
+      SUPABASE_URL: STAGING, SUPABASE_ANON_KEY: LLAVE, ENTORNO: 'staging',
+      // Push (entrega 4): la pública sale de .env.push si está cargada; sin
+      // ella la pantalla Armado no ofrece avisos, que es lo correcto.
+      VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '' })};`);
     return;
   }
   const p = join(REPO, ruta === '/' ? 'index.html' : ruta.slice(1));

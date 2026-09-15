@@ -47,7 +47,11 @@ module.exports = async (req, res) => {
     SUPABASE_ANON_KEY:
       process.env.PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '',
     // 'production' | 'preview' | 'development'. Lo pone Vercel solo.
-    ENTORNO: process.env.VERCEL_ENV || 'development'
+    ENTORNO: process.env.VERCEL_ENV || 'development',
+    // Llave pública VAPID (push «Pedido nuevo», entrega 4): viaja al navegador
+    // por diseño, es la que firma las suscripciones. La PRIVADA nunca sale de
+    // aquí. Sin ella la app simplemente no ofrece avisos.
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || ''
   };
 
   const faltantes = [];

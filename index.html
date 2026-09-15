@@ -2498,6 +2498,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <div id="armado-resumen" style="margin-top:12px;"></div>
     <div id="armado-pedidos" style="margin-top:12px;"></div>
     <div id="armado-por-confirmar" style="margin-top:12px;"></div>
+    <div id="armado-push" style="margin-top:16px;"></div>
   </div>
 </div>
 
@@ -14679,6 +14680,7 @@ async function renderArmado(silencioso) {
     return;
   }
   armadoPintarNuevos(Array.isArray(r.nuevos) ? r.nuevos : []);
+  armadoPushPintar();
   if (elH) elH.textContent = r.horaLimite ? `Pedidos hasta las ${r.horaLimite} entran al día siguiente` : '';
   const t = r.totales || {};
   const resumen = Array.isArray(r.resumen) ? r.resumen : [];
@@ -14741,6 +14743,71 @@ window.armadoCambiarFecha = function(delta) {
   renderArmado();
 };
 window.armadoRecargar = function() { renderArmado(); };
+
+// ── Push «Pedido nuevo» en este dispositivo (entrega 4) ─────────────────────
+// La suscripción vive en el navegador (service worker) y en push_suscripciones
+// (por RPC con sesión y sección). En iPhone solo funciona con la PWA instalada.
+function armadoPushSoporte() {
+  return !!(window.__CP_CONFIG__ && window.__CP_CONFIG__.VAPID_PUBLIC_KEY) && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+function armadoEsIphoneSinInstalar() {
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return ios && window.navigator.standalone !== true && !window.matchMedia('(display-mode: standalone)').matches;
+}
+function armadoB64aBytes(b64) {
+  const p = '='.repeat((4 - b64.length % 4) % 4); const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(s); const out = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i); return out;
+}
+async function armadoPushSuscripcion() {
+  try { const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); } catch (_e) { return null; }
+}
+async function armadoPushPintar() {
+  const el = document.getElementById('armado-push');
+  if (!el) return;
+  const caja = (titulo, texto, boton) => `
+    <div style="background:var(--gris);border-radius:14px;padding:14px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">${titulo}</div>
+      <div style="font-size:0.8rem;color:var(--suave);margin-bottom:${boton ? '10px' : '0'};">${texto}</div>${boton || ''}
+    </div>`;
+  const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.84rem;color:var(--negro);cursor:pointer;">${txt}</button>`;
+  const btnGris = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;">${txt}</button>`;
+  if (armadoEsIphoneSinInstalar()) { el.innerHTML = caja('Avisos en este dispositivo', 'En iPhone los avisos solo llegan con la app instalada. Instálala primero.', btnGris('Cómo instalar la app', 'mostrarInstruccionesInstalar')); return; }
+  if (!armadoPushSoporte()) { el.innerHTML = caja('Avisos en este dispositivo', 'Este navegador no puede recibir avisos, o el servidor no tiene configurado el push.'); return; }
+  if (Notification.permission === 'denied') { el.innerHTML = caja('Avisos en este dispositivo', 'Los avisos están bloqueados en los ajustes del navegador para este sitio.'); return; }
+  const sub = await armadoPushSuscripcion();
+  el.innerHTML = sub
+    ? caja('Avisos en este dispositivo', 'Activados: cada pedido nuevo llega como notificación aunque la app esté cerrada.', btnGris('Desactivar en este dispositivo', 'armadoPushDesactivar'))
+    : caja('Avisos en este dispositivo', 'Recibe una notificación por cada pedido nuevo, aunque la app esté cerrada.', btn('Activar avisos', 'armadoPushActivar'));
+}
+window.armadoPushActivar = async function() {
+  try {
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') { mostrarToast('Sin permiso para avisos'); armadoPushPintar(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: armadoB64aBytes(window.__CP_CONFIG__.VAPID_PUBLIC_KEY) });
+    const j = sub.toJSON();
+    const r = await supabaseCall('POST', 'rpc/guardar_suscripcion_push', { p_data: { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, userAgent: navigator.userAgent } });
+    if (!r || !r.ok) { await sub.unsubscribe(); await avisar({ titulo: 'No se pudo activar el aviso', cuerpo: r?.error || 'Sin respuesta' }); }
+    else mostrarToast('Avisos activados en este dispositivo');
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo activar el aviso', cuerpo: e.message || '' });
+  }
+  armadoPushPintar();
+};
+window.armadoPushDesactivar = async function() {
+  try {
+    const sub = await armadoPushSuscripcion();
+    if (sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      await supabaseCall('POST', 'rpc/borrar_suscripcion_push', { p_data: { endpoint } });
+    }
+    mostrarToast('Avisos desactivados en este dispositivo');
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo desactivar', cuerpo: e.message || '' });
+  }
+  armadoPushPintar();
+};
 
 window.armadoMarcar = async function(id, checked) {
   try {
@@ -16544,6 +16611,13 @@ function pintarTracking() {
 // Detectar parámetro ?track=XXX al cargar y abrir tracking directo
 (function detectarTrackingURL() {
   const url = new URL(window.location.href);
+  // ?ir=armado: lo abre la notificación push. Se espera a que la sesión se
+  // restaure (intentarRestaurarSesion es asíncrona) y solo si hay vendedor.
+  if (url.searchParams.get('ir') === 'armado') {
+    window.addEventListener('load', () => {
+      setTimeout(() => { if (esVendedor && typeof navegar === 'function') navegar('armado'); }, 1500);
+    });
+  }
   const trackParam = url.searchParams.get('track');
   if (trackParam) {
     // Esperar a que la app esté lista
