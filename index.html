@@ -2488,6 +2488,13 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
       </div>
       <button onclick="armadoCambiarFecha(1)" aria-label="Día siguiente" style="min-width:44px;min-height:44px;background:var(--gris);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-size:1.1rem;cursor:pointer;">›</button>
     </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+      <button id="armado-btn-sonido" onclick="armadoSonido()" aria-pressed="true" style="min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:8px 12px;color:var(--suave);font-family:'Inter',sans-serif;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+        <span id="armado-sonido-lbl">Sonido activado</span>
+      </button>
+    </div>
+    <div id="armado-nuevos" style="margin-top:8px;"></div>
     <div id="armado-resumen" style="margin-top:12px;"></div>
     <div id="armado-pedidos" style="margin-top:12px;"></div>
     <div id="armado-por-confirmar" style="margin-top:12px;"></div>
@@ -9087,6 +9094,8 @@ window.togglePromosPerfil = async function(el) {
 window.navegar = function(seccion) {
   const _perfH = perfStartNav(seccion);
   try { track('view_section', { seccion: seccion }); } catch(e) {}
+  // Cola en vivo: al dejar Armado se detiene el refresco y el título vuelve.
+  if (seccion !== 'armado' && typeof armadoPararRefresco === 'function') { armadoPararRefresco(); document.title = ARMADO_TITULO_BASE; }
   // Apagar pantallas sueltas (s-alta-negocio, s-ajustar-ubicacion, etc.):
   // si quedan activas se enciman con la sección destino
   document.querySelectorAll('.screen.active').forEach(s => {
@@ -14566,21 +14575,110 @@ function armadoLinea(l) {
 }
 const ARMADO_VACIO = '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
 
-async function renderArmado() {
+// ── Cola en vivo (entrega 3) ────────────────────────────────────────────────
+// «Nuevos» = pedidos caídos desde el último vistazo (cp_armado_visto, por
+// dispositivo). El refresco de 30 s solo corre con la pantalla activa y la
+// pestaña visible; se detiene solo si la sesión caduca. El tono suena solo
+// cuando el número de nuevos sube.
+window._armadoTimer = null;
+window._armadoNuevosPrev = null;
+window._armadoAudio = null;
+const ARMADO_TITULO_BASE = document.title;
+function armadoLS(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (_e) { return null; } }
+function armadoSonidoActivo() { return armadoLS('cp_armado_sonido') !== '0'; }
+function armadoPintarSonido() {
+  const b = document.getElementById('armado-btn-sonido'), l = document.getElementById('armado-sonido-lbl');
+  const on = armadoSonidoActivo();
+  if (b) { b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.style.color = on ? 'var(--amarillo)' : 'var(--suave)'; }
+  if (l) l.textContent = on ? 'Sonido activado' : 'Sonido apagado';
+}
+window.armadoSonido = function() { armadoLS('cp_armado_sonido', armadoSonidoActivo() ? '0' : '1'); armadoPintarSonido(); if (armadoSonidoActivo()) armadoTono(); };
+// El AudioContext solo puede nacer de un gesto del usuario; se crea en el
+// primer toque y se reutiliza. Si el navegador lo niega, no suena y ya.
+document.addEventListener('pointerdown', function () {
+  if (window._armadoAudio) return;
+  try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) window._armadoAudio = new AC(); } catch (_e) {}
+}, { passive: true });
+function armadoTono() {
+  if (!armadoSonidoActivo() || !window._armadoAudio) return;
+  try {
+    const ctx = window._armadoAudio; if (ctx.state === 'suspended') ctx.resume();
+    [[880, 0], [1175, 0.16]].forEach(([hz, t0]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = hz; g.gain.value = 0.0001;
+      o.connect(g); g.connect(ctx.destination);
+      const t = ctx.currentTime + t0;
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+      o.start(t); o.stop(t + 0.15);
+    });
+    window.__armadoTonos = (window.__armadoTonos || 0) + 1;   // bandera para las pruebas
+  } catch (_e) {}
+}
+function armadoPantallaActiva() { return !!document.getElementById('s-armado')?.classList.contains('active'); }
+function armadoTitulo(n) { document.title = (n > 0 ? '(' + n + ') ' : '') + (armadoPantallaActiva() ? 'Armado · Crunchy Paps' : ARMADO_TITULO_BASE); }
+function armadoArrancarRefresco() {
+  armadoPararRefresco();
+  window._armadoTimer = setInterval(() => {
+    if (!armadoPantallaActiva()) { armadoPararRefresco(); return; }
+    if (document.visibilityState === 'hidden') return;
+    renderArmado(true);
+  }, 30000);
+}
+function armadoPararRefresco() { if (window._armadoTimer) { clearInterval(window._armadoTimer); window._armadoTimer = null; } }
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && armadoPantallaActiva() && window._armadoTimer) renderArmado(true);
+});
+window.armadoVisto = function() {
+  armadoLS('cp_armado_visto', new Date().toISOString());
+  window._armadoNuevosPrev = 0;
+  renderArmado(true);
+};
+function armadoPintarNuevos(nuevos) {
+  const el = document.getElementById('armado-nuevos');
+  if (!el) return;
+  const n = nuevos.length;
+  if (window._armadoNuevosPrev !== null && n > window._armadoNuevosPrev) armadoTono();
+  window._armadoNuevosPrev = n;
+  armadoTitulo(n);
+  if (!n) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="background:var(--gris);border:1px solid var(--amarillo);border-radius:14px;padding:12px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;">NUEVOS (${n})</div>
+        <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:0.8rem;color:var(--negro);cursor:pointer;">Visto</button>
+      </div>
+      ${nuevos.map(p => `
+        <button onclick="verDetallePedido(${p.id})" style="display:block;width:100%;background:transparent;border:0;border-top:1px solid var(--gris3);padding:10px 0;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;min-height:44px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;"><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);white-space:nowrap;">${new Date(p.fechaOrden).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span></div>
+          <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''} · ${p.estatus} · entrega ${armadoFechaLarga(String(p.fechaEntrega).slice(0, 10))}</div>
+          <div style="font-size:0.8rem;margin-top:2px;">${p.lineasResumen || ''}</div>
+        </button>`).join('')}
+    </div>`;
+}
+
+async function renderArmado(silencioso) {
   if (!window._armadoFecha) window._armadoFecha = armadoManana();
   const fecha = window._armadoFecha;
+  const desde = armadoLS('cp_armado_visto') || null;
+  armadoPintarSonido();
+  if (!window._armadoTimer) armadoArrancarRefresco();
   const elF = document.getElementById('armado-fecha'), elH = document.getElementById('armado-hora');
   const elR = document.getElementById('armado-resumen'), elP = document.getElementById('armado-pedidos'), elC = document.getElementById('armado-por-confirmar');
   if (!elF || !elR) return;
   elF.textContent = armadoFechaLarga(fecha);
-  elR.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando…</div>';
-  elP.innerHTML = ''; elC.innerHTML = '';
+  if (!silencioso) {
+    elR.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando…</div>';
+    elP.innerHTML = ''; elC.innerHTML = '';
+  }
   let r = null;
-  try { r = await supabaseCall('POST', 'rpc/cola_armado', { p_data: { fecha } }); } catch (e) { r = { ok: false, error: e.message }; }
+  try { r = await supabaseCall('POST', 'rpc/cola_armado', { p_data: desde ? { fecha, desde } : { fecha } }); } catch (e) { r = { ok: false, error: e.message }; }
   if (!r || !r.ok) {
-    elR.innerHTML = `<div style="background:var(--gris);border-radius:12px;padding:16px;color:var(--suave);font-size:0.86rem;">${/autorizado/i.test(r?.error || '') ? 'Tu sesión no tiene la sección Armado o caducó. Vuelve a entrar.' : 'No se pudo cargar: ' + (r?.error || 'sin respuesta')}</div>`;
+    const caduco = sesionExpirada(r) || /autorizado/i.test(r?.error || '');
+    if (caduco) { armadoPararRefresco(); armadoTitulo(0); }
+    elR.innerHTML = `<div style="background:var(--gris);border-radius:12px;padding:16px;color:var(--suave);font-size:0.86rem;">${caduco ? 'Tu sesión no tiene la sección Armado o caducó. Vuelve a entrar.' : 'No se pudo cargar: ' + (r?.error || 'sin respuesta')}</div>`;
     return;
   }
+  armadoPintarNuevos(Array.isArray(r.nuevos) ? r.nuevos : []);
   if (elH) elH.textContent = r.horaLimite ? `Pedidos hasta las ${r.horaLimite} entran al día siguiente` : '';
   const t = r.totales || {};
   const resumen = Array.isArray(r.resumen) ? r.resumen : [];
@@ -14655,7 +14753,7 @@ window.armadoMarcar = async function(id, checked) {
   } catch (e) {
     await avisar({ titulo: 'No se pudo marcar el pedido', cuerpo: e.message || '' });
   }
-  renderArmado();   // repinta con lo que diga el servidor, pase lo que pase
+  renderArmado(true);   // repinta con lo que diga el servidor, pase lo que pase
 };
 
 async function renderCaja() {
