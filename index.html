@@ -3584,13 +3584,13 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
       <div class="consec-val" id="g-consec">—</div>
       <div class="vend-info" id="g-vendedor"></div>
       <div class="puntos-ganados" id="g-puntos"></div>
-      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--amarillo);">Envía tu pedido a tu vendedor / reparto</strong> para coordinar la entrega.</div>
+      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--amarillo);" id="g-b2b-txt">Te contactamos</strong> para coordinar la entrega.</div>
     </div>
     <div class="gracias-wpp-wrap">
-      <div class="wpp-hint">¿Quieres enviar el resumen a tu vendedor?</div>
+      <div class="wpp-hint">¿Quieres enviarnos el resumen por WhatsApp?</div>
       <button class="btn-wpp" id="g-btn-wpp" onclick="enviarWpp()">
         <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Enviar resumen al vendedor
+        Enviar resumen por WhatsApp
       </button>
       <!-- v2.10: Opción enviar a otro contacto (abre WhatsApp para elegir) -->
       <button onclick="enviarWppOtro()" style="margin-top:8px;width:100%;background:transparent;border:1.5px solid var(--gris3);border-radius:10px;padding:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -7693,7 +7693,6 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   if (rp && rp.ok && !esPedidoInterno) {
     try { track('purchase', { transaction_id: String(consec), value: Number(totalFinal) || 0, currency: 'MXN', coupon: (_cuponEnCarrito && _cuponEnCarrito.codigo) || undefined, items: items.length }); } catch (_e) {}
   }
-  const vendNombre = vendedorAsig?.nombre || 'Equipo Crunchy Paps';
   const fecha      = new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
   const lineas     = items.map(i=>{
     const sub = subLinea(i);
@@ -7758,6 +7757,22 @@ _Pedido registrado #${consec}_`;
       if (tel10.length === 10) telVendedor = '521' + tel10;
     }
   }
+  // B2B: el resumen va al asesor asignado en la ficha si sigue activo. La lista
+  // pública (buscar_vendedores, modo checkout) solo devuelve activos con rol de
+  // atención, así que un vendedor dado de baja cae solo al número del negocio.
+  // Sin nombre en pantalla: el asesor rota y la tienda no debe quedar ligada a
+  // una persona (Abraham, 14 sep 2026). Sin copia al negocio: el pedido ya está
+  // en el panel, y abrir dos WhatsApp seguidos lo bloquea iOS.
+  const esB2BPedido = !esVendedor && (tipoPedido === 'tienda' || tipoPedido === 'restaurante' || tipoPedido === 'mayorista');
+  let asesorActivo = false;
+  if (esB2BPedido && vendedorAsig?.id) {
+    try {
+      const lista = await cargarVendedoresCheckout();
+      const v = (lista || []).find(x => Number(x.id) === Number(vendedorAsig.id));
+      const tel10 = String(v?.telefono || '').replace(/\D/g, '').slice(-10);
+      if (tel10.length === 10) { telVendedor = '521' + tel10; asesorActivo = true; }
+    } catch (_e) { /* sin lista: al negocio */ }
+  }
   const wppVendedor = `https://wa.me/${telVendedor}?text=${encodeURIComponent(msgWpp)}`;
   const wppBodega   = `https://wa.me/${WHATSAPP_BODEGA}?text=${encodeURIComponent(msgWpp)}`;
   wppUrlPend = { vendedor: wppVendedor, bodega: wppBodega };
@@ -7770,10 +7785,9 @@ _Pedido registrado #${consec}_`;
   if (tipoPagoId === 5 && rp && rp.ok) {
     try {
       btn.textContent = 'Redirigiendo a pago seguro…';
-      const esB2BReal = tipoPedido === 'tienda' || tipoPedido === 'restaurante';
       localStorage.setItem('cp_gracias_pendiente', JSON.stringify({
         consec,
-        vendedorTxt: (vendedorAsig && esB2BReal) ? `Tu vendedor asignado: ${vendNombre}` : '',
+        b2b: esB2BPedido && !esPedidoInterno, asesor: asesorActivo,
         puntos: ptosGanados,
         wppVendedor, wppBodega,
       }));
@@ -7794,18 +7808,11 @@ _Pedido registrado #${consec}_`;
 
   // Mostrar gracias
   document.getElementById('g-consec').textContent = consec;
-  // Solo mostrar "vendedor asignado" si el cliente es B2B (tienda/restaurante)
-  const esB2BReal = tipoPedido === 'tienda' || tipoPedido === 'restaurante';
-  if (vendedorAsig && esB2BReal) {
-    document.getElementById('g-vendedor').textContent = `Tu vendedor asignado: ${vendNombre}`;
-  } else {
-    document.getElementById('g-vendedor').textContent = '';
-  }
+  // Sin nombre de persona: el asesor rota y la tienda no queda ligada a nadie (Abraham, 14 sep 2026).
+  document.getElementById('g-vendedor').textContent = '';
   // Puntos se ganan al confirmar pago, no al hacer pedido
   document.getElementById('g-puntos').textContent = ptosGanados>0 ? `+${ptosGanados} puntos al confirmar tu pago` : '';
-  // B2B: recordatorio de coordinación de entrega con su vendedor/reparto
-  const _gB2B = document.getElementById('g-entrega-b2b');
-  if (_gB2B) _gB2B.style.display = (!esVendedor && !esPedidoInterno && (tipoPedido === 'tienda' || tipoPedido === 'restaurante' || tipoPedido === 'mayorista')) ? 'block' : 'none';
+  pintarGraciasB2B(esB2BPedido && !esPedidoInterno, asesorActivo);
   document.getElementById('gracias-overlay').classList.add('visible');
 
   // v2.11.1: refrescar stats del cliente en background para que historial y "Mi cuenta" se actualicen
@@ -7836,6 +7843,17 @@ function irAWhatsApp(v, url) {
   if (v && !v.closed) { v.location.href = url; return; }
   if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) { window.location.href = url; return; }
   window.open(url, '_blank');
+}
+
+// Caja B2B de la pantalla de gracias. Con asesor activo: «Tu asesor Crunchy te
+// contacta para coordinar la entrega»; sin asesor: «Te contactamos…». Nunca un
+// nombre. También la usa la vuelta de Stripe, que reconstruye la pantalla.
+function pintarGraciasB2B(mostrar, conAsesor) {
+  const caja = document.getElementById('g-entrega-b2b');
+  if (!caja) return;
+  caja.style.display = mostrar ? 'block' : 'none';
+  const t = document.getElementById('g-b2b-txt');
+  if (t) t.textContent = conAsesor ? 'Tu asesor Crunchy te contacta' : 'Te contactamos';
 }
 
 window.enviarWpp = function() {
@@ -7897,7 +7915,7 @@ window.cerrarGracias = function() {
 
   // Reset botón wpp
   const bw=document.getElementById('g-btn-wpp');
-  bw.innerHTML=`<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Enviar resumen al vendedor`;
+  bw.innerHTML=`<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Enviar resumen por WhatsApp`;
   bw.disabled=false; bw.style.background='var(--verde)';
 
   renderCatalogo();
@@ -17355,6 +17373,7 @@ function mostrarPagoConfirmado(ok) {
           const gv = document.getElementById('g-vendedor'); if (gv) gv.textContent = g.vendedorTxt || '';
           const gp = document.getElementById('g-puntos'); if (gp) gp.textContent = (g.puntos > 0) ? ('+' + g.puntos + ' puntos por tu compra') : '';
           wppUrlPend = { vendedor: g.wppVendedor, bodega: g.wppBodega };
+          pintarGraciasB2B(!!g.b2b, !!g.asesor);
           quitarPagoCover();
           const ov = document.getElementById('gracias-overlay'); if (ov) ov.classList.add('visible');
           return;
