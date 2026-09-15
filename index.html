@@ -2224,6 +2224,8 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
   </div>
 
+  <div id="rutas-admin-cfg" style="display:none;"></div>
+
   <!-- Tabs B2B -->
   <div style="display:flex;gap:8px;padding:14px 16px 0;overflow-x:auto;">
     <button class="b2b-tab" id="b2b-tab-pend" onclick="filtrarB2B('pendiente')"
@@ -2496,6 +2498,15 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     </div>
     <div id="armado-nuevos" style="margin-top:8px;"></div>
     <div id="armado-resumen" style="margin-top:12px;"></div>
+    <div id="armado-filtros" style="display:none;margin-top:12px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" role="group" aria-label="Filtrar pedidos">
+        <button type="button" data-f="por-armar" onclick="armadoFiltro('por-armar')" class="armado-chip">Por armar</button>
+        <button type="button" data-f="armados" onclick="armadoFiltro('armados')" class="armado-chip">Armados</button>
+        <button type="button" data-f="por-confirmar" onclick="armadoFiltro('por-confirmar')" class="armado-chip">Por confirmar</button>
+        <button type="button" data-f="todos" onclick="armadoFiltro('todos')" class="armado-chip">Todos</button>
+      </div>
+      <input id="armado-busca" type="search" placeholder="Buscar folio o nombre" aria-label="Buscar pedido" oninput="armadoBuscar(this.value)" style="width:100%;margin-top:8px;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:8px 12px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;">
+    </div>
     <div id="armado-pedidos" style="margin-top:12px;"></div>
     <div id="armado-por-confirmar" style="margin-top:12px;"></div>
     <div id="armado-push" style="margin-top:16px;"></div>
@@ -5837,7 +5848,7 @@ async function cargarFechaEntrega() {
   }
 
   try {
-    const res = await supabaseCall('POST', 'rpc/obtener_fecha_entrega', { p_data: {} });
+    const res = await supabaseCall('POST', 'rpc/obtener_fecha_entrega', { p_data: telefonoVerif ? { telefono: telefonoVerif } : {} });
     if (res && res.ok) {
       wrap.style.display = 'block';
       // fechaDisplay lo arma Postgres con TO_CHAR y el locale del servidor (inglés):
@@ -9353,6 +9364,98 @@ window.guardarHoraLimiteCfg = async function() {
   }
 };
 
+// ── Rutas de reparto (R1, 15 sep 2026) ───────────────────────────────────────
+// Una ruta es una zona (colonias y rangos de CP) con días de reparto. Las lee
+// get_rutas (público) y las fija set_rutas (solo dueño). El servidor asigna la
+// ruta a cada tienda por trigger y nunca pisa una puesta a mano desde aquí.
+window._rutasCache = null;   // activas, para selectores
+window._rutasEdit = null;    // copia editable (incluye inactivas), solo dueño
+async function cargarRutasCache() {
+  try {
+    const r = await supabaseCall('POST', 'rpc/get_rutas', { p_data: {} });
+    window._rutasCache = (r && r.ok && Array.isArray(r.rutas)) ? r.rutas : [];
+  } catch (_e) { window._rutasCache = window._rutasCache || []; }
+  return window._rutasCache;
+}
+function nombreRuta(id) { const r = (window._rutasCache || []).find(x => String(x.id) === String(id)); return r ? r.nombre : ('Ruta ' + id); }
+const RUTA_DIAS = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+const RUTA_DIAS_LARGO = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+async function renderRutasAdminCfg() {
+  const cont = document.getElementById('rutas-admin-cfg');
+  if (!cont) return;
+  if (!esAdminEstricto()) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
+  cont.style.display = 'block';
+  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;color:var(--suave);font-size:0.8rem;">Cargando rutas…</div>';
+  let r = null;
+  try { r = await supabaseCall('POST', 'rpc/get_rutas', { p_data: { incluirInactivas: true } }); } catch (e) { r = { ok: false, error: e.message }; }
+  if (!r || !r.ok) {
+    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;color:var(--suave);font-size:0.8rem;">Rutas: el servidor aún no las conoce (' + ((r && r.error) || 'sin respuesta') + ').</div>';
+    return;
+  }
+  window._rutasEdit = (r.rutas || []).map(x => ({ id: x.id, nombre: x.nombre, color: x.color || '#ffd200', dias: (x.dias || []).map(Number), activa: x.activa !== false, cobertura: (x.cobertura || []).map(c => ({ tipo: c.tipo, valor: c.valor, cpHasta: c.cpHasta || '' })) }));
+  pintarRutasEdit();
+}
+function pintarRutasEdit() {
+  const cont = document.getElementById('rutas-admin-cfg');
+  if (!cont || !window._rutasEdit) return;
+  const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const inp = 'background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;min-height:40px;color:var(--blanco);font-family:\'Inter\',sans-serif;font-size:0.84rem;';
+  const filas = window._rutasEdit.map((rt, i) => `
+    <div style="border:1px solid var(--gris3);border-radius:12px;padding:12px;margin-bottom:10px;${rt.activa ? '' : 'opacity:.55;'}">
+      <div style="display:grid;grid-template-columns:1fr 52px;gap:8px;align-items:center;">
+        <input value="${esc(rt.nombre)}" placeholder="Nombre de la ruta" aria-label="Nombre" oninput="rutaCampo(${i}, 'nombre', this.value)" style="${inp}">
+        <input type="color" value="${esc(rt.color)}" aria-label="Color" oninput="rutaCampo(${i}, 'color', this.value)" style="width:52px;height:40px;border:1px solid var(--gris3);border-radius:8px;background:var(--gris2);padding:2px;">
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" role="group" aria-label="Días de reparto">
+        ${RUTA_DIAS.map((d, k) => `<label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;border:1px solid var(--gris3);border-radius:8px;font-size:0.78rem;color:var(--blanco);cursor:pointer;${rt.dias.includes(k) ? 'background:#2a2400;border-color:var(--amarillo);' : ''}"><input type="checkbox" ${rt.dias.includes(k) ? 'checked' : ''} onchange="rutaDia(${i}, ${k}, this.checked)" style="accent-color:var(--amarillo);"> ${d}</label>`).join('')}
+        <label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;font-size:0.78rem;color:var(--suave);cursor:pointer;margin-left:auto;"><input type="checkbox" ${rt.activa ? 'checked' : ''} onchange="rutaCampo(${i}, 'activa', this.checked)" style="accent-color:var(--amarillo);"> activa</label>
+      </div>
+      <div style="margin-top:8px;font-size:0.72rem;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;">Cobertura</div>
+      ${rt.cobertura.map((c, j) => `
+        <div style="display:grid;grid-template-columns:88px 1fr 84px 40px;gap:6px;margin-top:6px;align-items:center;">
+          <select aria-label="Tipo" onchange="rutaCob(${i}, ${j}, 'tipo', this.value)" style="${inp}"><option value="colonia" ${c.tipo === 'colonia' ? 'selected' : ''}>Colonia</option><option value="cp" ${c.tipo === 'cp' ? 'selected' : ''}>CP</option></select>
+          <input value="${esc(c.valor)}" placeholder="${c.tipo === 'cp' ? 'CP desde' : 'Colonia'}" aria-label="Valor" oninput="rutaCob(${i}, ${j}, 'valor', this.value)" style="${inp}">
+          <input value="${esc(c.cpHasta)}" placeholder="hasta" aria-label="CP hasta" oninput="rutaCob(${i}, ${j}, 'cpHasta', this.value)" ${c.tipo === 'cp' ? '' : 'disabled'} style="${inp}${c.tipo === 'cp' ? '' : 'opacity:.4;'}">
+          <button type="button" onclick="rutaQuitarCobertura(${i}, ${j})" aria-label="Quitar" style="min-height:40px;background:transparent;border:1px solid var(--gris3);border-radius:8px;color:var(--suave);cursor:pointer;">×</button>
+        </div>`).join('')}
+      <button type="button" onclick="rutaAgregarCobertura(${i})" style="margin-top:8px;min-height:36px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 12px;color:var(--suave);font-family:'Inter',sans-serif;font-size:0.78rem;cursor:pointer;">+ colonia o CP</button>
+    </div>`).join('');
+  cont.innerHTML = `
+    <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">RUTAS DE REPARTO</div>
+      <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Cada ruta es una zona (colonias o rangos de código postal) con sus días. Una tienda toma su ruta sola por su colonia o CP al darse de alta; en su tarjeta se puede cambiar. Una colonia o CP solo puede estar en una ruta.</div>
+      ${filas || '<div style="font-size:0.8rem;color:var(--suave);margin-bottom:10px;">Todavía no hay rutas.</div>'}
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button type="button" onclick="rutaAgregarFila()" style="flex:1;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;">Añadir ruta</button>
+        <button type="button" onclick="guardarRutasCfg()" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;font-weight:800;font-size:0.84rem;color:var(--negro);cursor:pointer;">Guardar rutas</button>
+      </div>
+    </div>`;
+}
+window.rutaCampo = function(i, campo, valor) { const r = window._rutasEdit?.[i]; if (!r) return; r[campo] = valor; if (campo === 'activa') pintarRutasEdit(); };
+window.rutaDia = function(i, d, on) { const r = window._rutasEdit?.[i]; if (!r) return; r.dias = on ? [...new Set([...r.dias, d])].sort() : r.dias.filter(x => x !== d); pintarRutasEdit(); };
+window.rutaCob = function(i, j, campo, valor) { const c = window._rutasEdit?.[i]?.cobertura?.[j]; if (!c) return; c[campo] = valor; if (campo === 'tipo') pintarRutasEdit(); };
+window.rutaAgregarCobertura = function(i) { const r = window._rutasEdit?.[i]; if (!r) return; r.cobertura.push({ tipo: 'colonia', valor: '', cpHasta: '' }); pintarRutasEdit(); };
+window.rutaQuitarCobertura = function(i, j) { const r = window._rutasEdit?.[i]; if (!r) return; r.cobertura.splice(j, 1); pintarRutasEdit(); };
+window.rutaAgregarFila = function() { if (!window._rutasEdit) window._rutasEdit = []; window._rutasEdit.push({ nombre: '', color: '#ffd200', dias: [], activa: true, cobertura: [{ tipo: 'colonia', valor: '', cpHasta: '' }] }); pintarRutasEdit(); };
+window.guardarRutasCfg = async function() {
+  const rutas = (window._rutasEdit || []).map(r => ({ id: r.id || null, nombre: (r.nombre || '').trim(), color: r.color, dias: r.dias, activa: r.activa !== false, cobertura: r.cobertura.filter(c => (c.valor || '').trim()).map(c => ({ tipo: c.tipo, valor: c.valor.trim(), cpHasta: c.tipo === 'cp' ? (c.cpHasta || '').trim() : '' })) }));
+  if (rutas.some(r => !r.nombre)) { await avisar({ titulo: 'Falta un nombre', cuerpo: 'Cada ruta necesita nombre.' }); return; }
+  try {
+    const res = await supabaseCall('POST', 'rpc/set_rutas', { p_data: { rutas } });
+    if (res && res.ok) { mostrarToast('Rutas guardadas'); await cargarRutasCache(); renderRutasAdminCfg(); if (typeof renderB2BLista === 'function') renderB2BLista(); }
+    else await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: (res && res.error) || 'Sin respuesta' });
+  } catch (e) { await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: e.message || '' }); }
+};
+window.reasignarRuta = async function(idCliente, idRuta) {
+  try {
+    const res = await supabaseCall('POST', 'rpc/reasignar_ruta_cliente', { p_data: { idCliente: Number(idCliente), idRuta: idRuta ? Number(idRuta) : null } });
+    if (!res || !res.ok) { await avisar({ titulo: 'No se pudo cambiar la ruta', cuerpo: (res && res.error) || 'Sin respuesta' }); return; }
+    mostrarToast(res.ruta ? 'Ruta: ' + res.ruta : 'Sin ruta');
+    const cli = (_b2bClientes || []).find(c => String(c.id) === String(idCliente));
+    if (cli) cli.idRuta = res.idRuta;
+  } catch (e) { await avisar({ titulo: 'No se pudo cambiar la ruta', cuerpo: e.message || '' }); }
+};
+
 async function renderMayoreoAdminCfg() {
   const cont = document.getElementById('mayoreo-admin-cfg');
   if (!cont) return;
@@ -12325,6 +12428,8 @@ window.imprimirTicket = function() {
 let _vendedoresActivos = [];
 
 async function renderB2B() {
+  await cargarRutasCache();
+  renderRutasAdminCfg();
   const lista = document.getElementById('b2b-lista');
   lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader loader-w"></span> Cargando clientes...</div>';
 
@@ -12392,6 +12497,7 @@ async function renderB2B() {
         coordenadas:  c.coordenadas,
         coordenadasGps: c.coordenadas_gps,
         idVendedor:   c.id_vendedor,
+        idRuta:       c.id_ruta,
         vendedor:     c.vendedor,
         aprobadoB2B:  c.aprobado_b2b !== false,
         fechaSolicitud: c.fecha_creacion,
@@ -12524,6 +12630,18 @@ function renderB2BLista() {
           ` : (c.vendedor
             ? `<div style="font-size:0.72rem;color:var(--suave);">Vendedor: <span style="color:var(--amarillo);font-weight:700;">${c.vendedor}</span></div>`
             : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin vendedor asignado</div>`)}
+          ${esAdmin() ? `
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
+              <span style="color:var(--suave);">Ruta:</span>
+              <select onchange="reasignarRuta(${c.id}, this.value)" aria-label="Ruta de reparto"
+                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;min-height:32px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;">
+                <option value="">— Sin ruta —</option>
+                ${(window._rutasCache || []).filter(r => r.activa !== false).map(r => `<option value="${r.id}" ${String(r.id)===String(c.idRuta)?'selected':''}>${r.nombre}</option>`).join('')}
+              </select>
+            </div>
+          ` : (c.idRuta
+            ? `<div style="font-size:0.72rem;color:var(--suave);">Ruta: <span style="color:var(--amarillo);font-weight:700;">${nombreRuta(c.idRuta)}</span></div>`
+            : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin ruta</div>`)}
           ${c.rfc ? `<div style="font-size:0.72rem;color:var(--suave);">RFC: ${c.rfc}</div>` : ''}
         </div>
         <div style="font-size:0.66rem;font-weight:800;padding:3px 8px;border-radius:50px;white-space:nowrap;
@@ -14704,36 +14822,9 @@ async function renderArmado(silencioso) {
         </table>
       </div>`;
   }
-  // Por pedido
-  elP.innerHTML = pedidos.map(p => {
-    const canal = p.tipoInterno ? `Interno · ${p.tipoInterno}` : (ARMADO_CANAL[p.canal] || p.canal || '');
-    const quien = p.negocio || p.cliente || 'Sin nombre';
-    const hecho = !!p.armadoEn;
-    return `
-      <div style="background:var(--gris);border:1px solid ${hecho ? 'var(--verde, #1f7a2e)' : 'var(--gris3)'};border-radius:14px;padding:12px 14px;margin-bottom:10px;opacity:${hecho ? 0.75 : 1};">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-          <div style="min-width:0;">
-            <div style="font-weight:800;color:var(--blanco);">${quien}</div>
-            <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''}</div>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:0.8rem;color:var(--blanco);white-space:nowrap;">
-            <input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcar(${p.id}, this.checked)" style="width:24px;height:24px;accent-color:var(--amarillo);"> Armado
-          </label>
-        </div>
-        <ul style="margin:8px 0 0;padding-left:18px;color:var(--blanco);font-size:0.84rem;line-height:1.5;">${(p.lineas || []).map(l => '<li>' + armadoLinea(l) + '</li>').join('')}</ul>
-        ${hecho ? `<div style="color:var(--suave);font-size:0.7rem;margin-top:6px;">Armado por ${p.armadoPor || '—'} · ${new Date(p.armadoEn).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</div>` : ''}
-      </div>`;
-  }).join('');
-  // Por confirmar
-  if (porConfirmar.length) {
-    elC.innerHTML = `
-      <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1px;margin:6px 0 8px;">POR CONFIRMAR (${porConfirmar.length})</div>
-      ${porConfirmar.map(p => `
-        <button onclick="verDetallePedido(${p.id})" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:12px;padding:10px 14px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;">
-          <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);"> · ${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''}</span></span>
-          <span style="color:var(--amarillo);font-weight:800;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
-        </button>`).join('')}`;
-  }
+  // Por pedido y por confirmar: R2, con filtros, buscador y tabla si son muchos.
+  window._armadoDatos = { pedidos, porConfirmar };
+  armadoPintarPedidos();
 }
 
 window.armadoCambiarFecha = function(delta) {
@@ -14807,6 +14898,127 @@ window.armadoPushDesactivar = async function() {
     await avisar({ titulo: 'No se pudo desactivar', cuerpo: e.message || '' });
   }
   armadoPushPintar();
+};
+
+// ── Armado a escala (R2, 15 sep 2026) ───────────────────────────────────────
+// Con seis pedidos o menos, tarjetas; con más, tabla compacta. Filtro «Por
+// armar» por defecto, buscador por folio o nombre, y lista de empaque antes de
+// marcar. Nada de esto vuelve a pedir al servidor: pinta window._armadoDatos.
+window._armadoDatos = null;
+window._armadoFiltro = 'por-armar';
+window._armadoBusqueda = '';
+const ARMADO_ESTILO = document.createElement('style');
+ARMADO_ESTILO.textContent = `
+  .armado-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--gris3);background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer}
+  .armado-chip[aria-pressed="true"]{background:var(--amarillo);border-color:var(--amarillo);color:var(--negro)}
+  .armado-chip:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}
+  .armado-tabla{width:100%;border-collapse:collapse;font-size:0.8rem;color:var(--blanco)}
+  .armado-tabla th{text-align:left;padding:6px 6px;color:var(--suave);font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--gris3)}
+  .armado-tabla td{padding:8px 6px;border-bottom:1px solid var(--gris3);vertical-align:top}
+  .armado-tabla tr.hecho td{opacity:.6}
+  .armado-tabla .folio{color:var(--suave);font-size:0.7rem}
+  .armado-ruta{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--negro);white-space:nowrap}
+  .armado-fila-btn{background:transparent;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px;display:block;width:100%}
+`;
+document.head.appendChild(ARMADO_ESTILO);
+function armadoRutaBadge(p) { return p && p.ruta ? `<span class="armado-ruta" style="background:${p.rutaColor || 'var(--amarillo)'};">${p.ruta}</span>` : ''; }
+function armadoFechaCorta(iso, conDia = true) { if (!iso) return '—'; const d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso); return isNaN(d) ? '—' : d.toLocaleDateString('es-MX', conDia ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' }); }
+function armadoHora(iso) { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
+function armadoHoraCorta(iso) { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+function armadoPiezasKg(p) { const ls = p.lineas || []; return { piezas: ls.reduce((s, l) => s + (/granel/i.test(l.tipoVenta || '') ? 0 : Number(l.cantidad || 0)), 0), kg: ls.reduce((s, l) => s + Number(l.kg || 0), 0) }; }
+function armadoCoincide(p) {
+  const q = (window._armadoBusqueda || '').trim().toLowerCase();
+  if (!q) return true;
+  return [p.consecutivo, p.negocio, p.cliente, p.ruta].some(v => String(v || '').toLowerCase().includes(q));
+}
+function armadoOrden(a, b) {
+  const ra = a.rutaOrden ?? (a.ruta ? 0 : 9), rb = b.rutaOrden ?? (b.ruta ? 0 : 9);
+  return ra - rb || String(a.fechaOrden || '').localeCompare(String(b.fechaOrden || ''));
+}
+window.armadoFiltro = function(f) { window._armadoFiltro = f; armadoPintarPedidos(); };
+window.armadoBuscar = function(t) { window._armadoBusqueda = t || ''; armadoPintarPedidos(); };
+function armadoPintarPedidos() {
+  const d = window._armadoDatos; const elP = document.getElementById('armado-pedidos'), elC = document.getElementById('armado-por-confirmar'), elF = document.getElementById('armado-filtros');
+  if (!d || !elP || !elC) return;
+  const pedidos = (d.pedidos || []).filter(armadoCoincide).sort(armadoOrden);
+  const porConfirmar = (d.porConfirmar || []).filter(armadoCoincide).sort(armadoOrden);
+  const muchos = (d.pedidos || []).length + (d.porConfirmar || []).length > 6;
+  if (elF) { elF.style.display = muchos ? 'block' : 'none'; elF.querySelectorAll('.armado-chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === window._armadoFiltro ? 'true' : 'false')); }
+  const f = muchos ? window._armadoFiltro : 'todos-tarjetas';
+  // ── Tarjetas (pocos pedidos): como hasta ahora ──
+  if (!muchos) {
+    elP.innerHTML = pedidos.map(p => {
+      const canal = p.tipoInterno ? `Interno · ${p.tipoInterno}` : (ARMADO_CANAL[p.canal] || p.canal || '');
+      const quien = p.negocio || p.cliente || 'Sin nombre';
+      const hecho = !!p.armadoEn;
+      return `
+      <div style="background:var(--gris);border:1px solid ${hecho ? 'var(--verde, #1f7a2e)' : 'var(--gris3)'};border-radius:14px;padding:12px 14px;margin-bottom:10px;opacity:${hecho ? 0.75 : 1};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-weight:800;color:var(--blanco);">${quien}</div>
+            <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''} ${armadoRutaBadge(p)}</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:0.8rem;color:var(--blanco);white-space:nowrap;">
+            <input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:24px;height:24px;accent-color:var(--amarillo);"> Armado
+          </label>
+        </div>
+        <ul style="margin:8px 0 0;padding-left:18px;color:var(--blanco);font-size:0.84rem;line-height:1.5;">${(p.lineas || []).map(l => '<li>' + armadoLinea(l) + '</li>').join('')}</ul>
+        ${hecho ? `<div style="color:var(--suave);font-size:0.7rem;margin-top:6px;">Armado por ${p.armadoPor || '—'} · ${armadoHora(p.armadoEn)}</div>` : ''}
+      </div>`;
+    }).join('');
+    elC.innerHTML = porConfirmar.length ? `
+      <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--suave);letter-spacing:1px;margin:6px 0 8px;">POR CONFIRMAR (${porConfirmar.length})</div>
+      ${porConfirmar.map(p => `
+        <button onclick="verDetallePedido(${p.id})" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:12px;padding:10px 14px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;">
+          <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);"> · ${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''}</span> ${armadoRutaBadge(p)}</span>
+          <span style="color:var(--amarillo);font-weight:800;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
+        </button>`).join('')}` : '';
+    return;
+  }
+  // ── Tabla (muchos pedidos) ──
+  elC.innerHTML = '';
+  let filas = [];
+  if (f === 'por-armar') filas = pedidos.filter(p => !p.armadoEn).map(p => ({ p, tipo: 'proceso' }));
+  else if (f === 'armados') filas = pedidos.filter(p => !!p.armadoEn).map(p => ({ p, tipo: 'proceso' }));
+  else if (f === 'por-confirmar') filas = porConfirmar.map(p => ({ p, tipo: 'pendiente' }));
+  else filas = [...porConfirmar.map(p => ({ p, tipo: 'pendiente' })), ...pedidos.map(p => ({ p, tipo: 'proceso' }))];
+  if (!filas.length) { elP.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:18px;text-align:center;color:var(--suave);font-size:0.86rem;">Nada en este filtro${window._armadoBusqueda ? ' con «' + window._armadoBusqueda + '»' : ''}.</div>`; return; }
+  const tr = ({ p, tipo }) => {
+    const { piezas, kg } = armadoPiezasKg(p);
+    const quien = p.negocio || p.cliente || 'Sin nombre';
+    const hecho = !!p.armadoEn;
+    const estado = tipo === 'pendiente'
+      ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
+      : `<label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;font-size:0.76rem;color:var(--blanco);white-space:nowrap;"><input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:22px;height:22px;accent-color:var(--amarillo);"> ${hecho ? 'Armado' : 'Armar'}</label>`;
+    return `<tr class="${hecho ? 'hecho' : ''}">
+      <td><button class="armado-fila-btn" onclick="verDetallePedido(${p.id})"><b>${quien}</b><div class="folio">${p.consecutivo} · ${p.tipoInterno ? 'Interno' : (ARMADO_CANAL[p.canal] || p.canal || '')}${hecho ? ' · ' + (p.armadoPor || '') : ''}</div></button></td>
+      <td style="white-space:nowrap;"><div class="folio">pedido</div>${armadoFechaCorta(p.fechaOrden, false)} · ${armadoHoraCorta(p.fechaOrden)}<div class="folio" style="margin-top:4px;">entrega</div>${armadoFechaCorta(p.fechaEntrega || window._armadoFecha)}${p.ruta ? '<div style="margin-top:3px;">' + armadoRutaBadge(p) + '</div>' : ''}</td>
+      <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">${tipo === 'pendiente' ? '—' : piezas + '<div class="folio">' + kg.toFixed(2) + ' kg</div>'}</td>
+      <td>${estado}</td>
+    </tr>`;
+  };
+  elP.innerHTML = `
+    <div style="background:var(--gris);border-radius:14px;padding:6px 8px;overflow-x:auto;">
+      <table class="armado-tabla">
+        <thead><tr><th>Pedido</th><th>Fechas</th><th style="text-align:right;">Pzas · kg</th><th>Armado</th></tr></thead>
+        <tbody>${filas.map(tr).join('')}</tbody>
+      </table>
+      <div style="color:var(--suave);font-size:0.72rem;padding:8px 6px 4px;">${filas.length} de ${(d.pedidos || []).length + (d.porConfirmar || []).length} pedidos del día</div>
+    </div>`;
+}
+// Lista de empaque: antes de marcar, el cuadro enseña qué lleva el pedido.
+window.armadoMarcarConLista = async function(id, input) {
+  const checked = !!(input && input.checked);
+  if (!checked) { return armadoMarcar(id, false); }
+  const p = ((window._armadoDatos && window._armadoDatos.pedidos) || []).find(x => String(x.id) === String(id));
+  const lineas = p ? (p.lineas || []).map(armadoLinea) : [];
+  const ok = await confirmar({
+    titulo: 'Este pedido incluye:',
+    cuerpo: (p ? (p.negocio || p.cliente || 'Sin nombre') + ' · ' + p.consecutivo + SALTO + SALTO : '') + (lineas.length ? lineas.map(l => '• ' + l).join(SALTO) : 'Sin líneas de papa') + SALTO + SALTO + '¿Está armado y completo?',
+    aceptar: 'Sí, armado', cancelar: 'Todavía no',
+  });
+  if (!ok) { if (input) input.checked = false; return; }
+  return armadoMarcar(id, true);
 };
 
 window.armadoMarcar = async function(id, checked) {
