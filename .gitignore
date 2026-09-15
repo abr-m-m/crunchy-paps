@@ -105,3 +105,10 @@ PLAN.md
 # que levantan sospecha de un registro falso. Sin credenciales, pero es
 # operativa interna y el repo es público. Se respalda al repo privado.
 .claude/
+
+# crunchy-paps-docs/ — el clon del repo PRIVADO de documentos, que desde el
+# 15 sep 2026 vive dentro de esta carpeta (antes era hermana en C:\Proyectos).
+# Es el espejo al que `tools/respaldar-docs.mjs` copia PROGRESO.md, ACCESOS.md,
+# PLAN.md, cambios/ y las auditorías con nombres de clientes. Tiene su propio
+# .git; nada de ahí puede entrar en este repo público.
+crunchy-paps-docs/

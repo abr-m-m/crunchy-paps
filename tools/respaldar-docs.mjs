@@ -16,7 +16,11 @@ import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 
 const ORIGEN  = 'C:\\Proyectos\\crunchy-paps';
-const DESTINO = 'C:\\Proyectos\\crunchy-paps-docs';
+// Desde el 15 sep 2026 el clon del repo privado vive DENTRO del proyecto
+// (decisión de Abraham: «todo debe vivir en crunchy-paps»). Está en el
+// .gitignore del repo público; el guardia de abajo comprueba además que el
+// remoto sea crunchy-paps-docs antes de escribir.
+const DESTINO = 'C:\\Proyectos\\crunchy-paps\\crunchy-paps-docs';
 const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md'];
 
 // `cambios/` es una CARPETA que crece: un archivo por cambio (PLAN.md §1.5).
@@ -39,14 +43,16 @@ const CARPETAS = [
 const listarCarpeta = ({ ruta, ext }) => {
   const dir = join(ORIGEN, ruta);
   if (!existsSync(dir)) return [];
-  const extSub = [...ext, '.mjs', '.sh', '.sql'];
+  const extSub = [...ext, '.mjs', '.sh', '.sql', '.txt'];
+  // Recursivo desde el 15 sep 2026: cambios/<cambio>/<subcarpeta>/ existía
+  // (la copia de la sesión alterna) y el respaldo la saltaba en silencio.
+  const recorrer = (rel) => readdirSync(join(ORIGEN, rel), { withFileTypes: true })
+    .flatMap((d) => d.isDirectory()
+      ? recorrer(`${rel}/${d.name}`)
+      : (extSub.some((e) => d.name.endsWith(e)) ? [`${rel}/${d.name}`] : []));
   return readdirSync(dir, { withFileTypes: true })
     .flatMap((d) => {
-      if (d.isDirectory()) {
-        return readdirSync(join(dir, d.name))
-          .filter((n) => extSub.some((e) => n.endsWith(e)))
-          .map((n) => `${ruta}/${d.name}/${n}`);
-      }
+      if (d.isDirectory()) return recorrer(`${ruta}/${d.name}`);
       return ext.some((e) => d.name.endsWith(e)) ? [`${ruta}/${d.name}`] : [];
     })
     .sort();
