@@ -2358,6 +2358,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
       <span><span class="dot-est pend"></span>Pend</span>
       <span><span class="dot-est cont"></span>Cont</span>
       <span><span class="dot-est conv"></span>Conv</span>
+      <button id="pros-rutas-btn" type="button" onclick="alternarRutasMapa()" aria-pressed="true" title="Mostrar u ocultar las zonas de reparto" style="min-height:36px;padding:0 10px;border:1px solid var(--gris3);border-radius:8px;background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.66rem;cursor:pointer;">Rutas</button>
     </div>
   </div>
 
@@ -12981,7 +12982,74 @@ async function pintarMapaProspectos() {
       console.error('[Mapa] Error agregando marcador para', p.nombre, err);
     }
   });
+
+  pintarRutasEnMapa();
 }
+
+// ── Rutas de reparto sobre el mapa (15 sep 2026) ────────────────────────────
+// Polígonos de código postal (SEPOMEX). Se descargan una vez, a demanda, y se
+// pintan debajo de los marcadores. La cobertura por colonia no se dibuja.
+let _cpZona = null, _cpZonaCargando = null, _rutasPoligonos = [];
+let _rutasEnMapa = true;
+try { _rutasEnMapa = localStorage.getItem('cp_rutas_mapa') !== '0'; } catch (_e) {}
+
+async function cargarGeoCP() {
+  if (_cpZona) return _cpZona;
+  if (!_cpZonaCargando) {
+    _cpZonaCargando = fetch('/datos-cp-zona.json')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(j => { _cpZona = j || {}; return _cpZona; });
+  }
+  return _cpZonaCargando;
+}
+
+// Una cobertura de CP puede ser un código suelto o un rango.
+function cpsDeCobertura(cob) {
+  const cps = [];
+  for (const c of (cob || [])) {
+    if (c.tipo !== 'cp') continue;
+    const desde = String(c.valor || '').trim();
+    const hasta = String(c.cpHasta || '').trim() || desde;
+    if (!desde) continue;
+    for (const cp of Object.keys(_cpZona || {})) if (cp >= desde && cp <= hasta) cps.push(cp);
+  }
+  return [...new Set(cps)];
+}
+
+async function pintarRutasEnMapa() {
+  if (!_prosMapa) return;
+  _rutasPoligonos.forEach(p => p.setMap(null));
+  _rutasPoligonos = [];
+  const btn = document.getElementById('pros-rutas-btn');
+  if (btn) { btn.setAttribute('aria-pressed', _rutasEnMapa ? 'true' : 'false'); btn.style.opacity = _rutasEnMapa ? '1' : '0.5'; }
+  if (!_rutasEnMapa) return;
+  if (!window._rutasCache) await cargarRutasCache();
+  const rutas = (window._rutasCache || []).filter(r => r.activa !== false);
+  if (!rutas.length) return;
+  await cargarGeoCP();
+  for (const r of rutas) {
+    const color = r.color || '#ffd200';
+    for (const cp of cpsDeCobertura(r.cobertura)) {
+      for (const poli of (_cpZona[cp] || [])) {
+        try {
+          _rutasPoligonos.push(new google.maps.Polygon({
+            paths: poli.map(anillo => anillo.map(c => ({ lat: c[1], lng: c[0] }))),
+            map: _prosMapa, clickable: false, zIndex: 1,
+            strokeColor: color, strokeOpacity: 0.9, strokeWeight: 1.5,
+            fillColor: color, fillOpacity: 0.16,
+          }));
+        } catch (_e) {}
+      }
+    }
+  }
+}
+
+window.alternarRutasMapa = function() {
+  _rutasEnMapa = !_rutasEnMapa;
+  try { localStorage.setItem('cp_rutas_mapa', _rutasEnMapa ? '1' : '0'); } catch (_e) {}
+  pintarRutasEnMapa();
+};
 
 function actualizarPinUsuario(lat, lng) {
   if (!_prosMapa) return;
