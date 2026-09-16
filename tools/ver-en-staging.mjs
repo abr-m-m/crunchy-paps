@@ -62,7 +62,8 @@ try {
 function deEnvPush(clave) {
   try {
     const txt = readFileSync(join(REPO, '.env.push'), 'utf8');
-    const m = txt.match(new RegExp('^\s*' + clave + '\s*=\s*(\S+)', 'm'));
+    const lin = txt.split(String.fromCharCode(10)).map(l => l.trim()).find(l => l.startsWith(clave + '='));
+    const m = lin ? [lin, lin.slice(lin.indexOf('=') + 1).trim()] : null;
     return m ? m[1] : '';
   } catch (_e) { return ''; }   // sin .env.push, cada cosa se degrada sola
 }

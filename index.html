@@ -12905,7 +12905,7 @@ async function pintarMapaProspectos() {
         position: { lat: PLANTA_LAT, lng: PLANTA_LNG },
         map: _prosMapa,
         title: 'Planta Crunchy Paps',
-        label: { text: '', fontSize: '20px' },
+        // Sin etiqueta: con texto vacío Google Maps pintaba «[object Object]».
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 0,
@@ -12998,7 +12998,8 @@ async function pintarMapaProspectos() {
 function escalaPunto(score) {
   const z = _prosMapa ? (_prosMapa.getZoom() || 15) : 15;
   const base = z >= 17 ? 8 : z >= 16 ? 6 : z >= 15 ? 4 : z >= 14 ? 3 : 2;
-  return Math.max(1.5, base + ((Number(score) || 3) - 3) * (z >= 15 ? 0.8 : 0.3));
+  const sc = Math.min(5, Math.max(1, Number(score) || 3));   // estrellas: 1 a 5
+  return Math.max(1.5, base + (sc - 3) * (z >= 15 ? 0.8 : 0.3));
 }
 function grosorPunto() {
   const z = _prosMapa ? (_prosMapa.getZoom() || 15) : 15;
