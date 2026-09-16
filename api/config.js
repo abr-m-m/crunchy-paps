@@ -51,7 +51,11 @@ module.exports = async (req, res) => {
     // Llave pública VAPID (push «Pedido nuevo», entrega 4): viaja al navegador
     // por diseño, es la que firma las suscripciones. La PRIVADA nunca sale de
     // aquí. Sin ella la app simplemente no ofrece avisos.
-    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || ''
+    VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
+    // Llave de Google Maps por entorno. Vacía = la app usa la que trae
+    // index.html. Viaja al navegador por diseño; lo que la protege son sus
+    // restricciones de sitio web.
+    GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY || ''
   };
 
   const faltantes = [];

@@ -57,6 +57,16 @@ try {
   if (m && !process.env.VAPID_PUBLIC_KEY) process.env.VAPID_PUBLIC_KEY = m[1];
 } catch (_e) { /* sin .env.push no hay push en staging, y está bien */ }
 
+// Se lee en cada petición, no al arrancar: así se puede pegar una llave nueva
+// en .env.push sin reiniciar el servidor.
+function deEnvPush(clave) {
+  try {
+    const txt = readFileSync(join(REPO, '.env.push'), 'utf8');
+    const m = txt.match(new RegExp('^\s*' + clave + '\s*=\s*(\S+)', 'm'));
+    return m ? m[1] : '';
+  } catch (_e) { return ''; }   // sin .env.push, cada cosa se degrada sola
+}
+
 let LLAVE = process.env.SUPABASE_KEY;
 if (!LLAVE) {
   try {
@@ -152,7 +162,11 @@ createServer((req, res) => {
       SUPABASE_URL: STAGING, SUPABASE_ANON_KEY: LLAVE, ENTORNO: 'staging',
       // Push (entrega 4): la pública sale de .env.push si está cargada; sin
       // ella la pantalla Armado no ofrece avisos, que es lo correcto.
-      VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '' })};`);
+      VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || deEnvPush('VAPID_PUBLIC_KEY'),
+      // Llave de Maps propia de staging, restringida a localhost. Sin ella la app
+      // cae en la de index.html, que solo acepta crunchypaps.mx: el mapa no carga
+      // y sale RefererNotAllowedMapError, que es lo que pasaba hasta hoy.
+      GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY || deEnvPush('GOOGLE_MAPS_KEY') })};`);
     return;
   }
   const p = join(REPO, ruta === '/' ? 'index.html' : ruta.slice(1));

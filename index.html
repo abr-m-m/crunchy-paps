@@ -3832,7 +3832,11 @@ window.onerror = function(msg, src, line) {
 // desde variable de entorno. Ver ACCESOS.md §3.4.
 const WHATSAPP_NUM        = '525573654109'; // Crunchy Paps (negocio)
 const WHATSAPP_BODEGA     = '525573654109'; // Mismo número (bodega)
-const GOOGLE_MAPS_KEY = 'AIzaSyCrFgvrh7Hk-o2TdtsT3A2oy9956PmioQw';
+// La llave de Maps sale de /api/config.js (una por entorno). La de abajo es el
+// respaldo: si el entorno no la trae, la app sigue como hasta hoy. Una llave de
+// Maps NO es un secreto —viaja al navegador por diseño—; lo que la protege son
+// sus restricciones, y por eso staging usa una llave aparte.
+const GOOGLE_MAPS_KEY = ((typeof window !== 'undefined' && window.__CP_CONFIG__ && window.__CP_CONFIG__.GOOGLE_MAPS_KEY) || 'AIzaSyCrFgvrh7Hk-o2TdtsT3A2oy9956PmioQw');
 
 // ════════════════════════════════════════════════════════════════
 // SUPABASE — migración progresiva (Fase 1: solo bebidas)
@@ -12963,11 +12967,11 @@ async function pintarMapaProspectos() {
         label: seleccionadoRuta ? { text: String(indiceEnRuta), color: '#000', fontWeight: '900', fontSize: '14px' } : null,
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: seleccionadoRuta ? 14 : 8 + (p.score - 3),
+          scale: seleccionadoRuta ? 14 : escalaPunto(p.score),
           fillColor: seleccionadoRuta ? '#FFD200' : color,
-          fillOpacity: seleccionadoRuta ? 1 : 0.9,
-          strokeColor: seleccionadoRuta ? '#000' : '#000',
-          strokeWeight: seleccionadoRuta ? 3 : 2,
+          fillOpacity: seleccionadoRuta ? 1 : 0.85,
+          strokeColor: '#000',
+          strokeWeight: seleccionadoRuta ? 3 : grosorPunto(),
         }
       });
       marker.addListener('click', () => {
@@ -12977,13 +12981,44 @@ async function pintarMapaProspectos() {
           verDetalleProspecto(p.id);
         }
       });
+      marker.__score = p.score;
+      marker.__sel = seleccionadoRuta;
       _prosMarkers.push(marker);
     } catch(err) {
       console.error('[Mapa] Error agregando marcador para', p.nombre, err);
     }
   });
 
+  hookZoomProspectos();
   pintarRutasEnMapa();
+}
+
+// El punto de un prospecto crece con el zoom: con mil puntos, 8 px de radio
+// tapan la calle. El score se sigue notando, pero solo de cerca.
+function escalaPunto(score) {
+  const z = _prosMapa ? (_prosMapa.getZoom() || 15) : 15;
+  const base = z >= 17 ? 8 : z >= 16 ? 6 : z >= 15 ? 4 : z >= 14 ? 3 : 2;
+  return Math.max(1.5, base + ((Number(score) || 3) - 3) * (z >= 15 ? 0.8 : 0.3));
+}
+function grosorPunto() {
+  const z = _prosMapa ? (_prosMapa.getZoom() || 15) : 15;
+  return z >= 16 ? 1.5 : z >= 14 ? 1 : 0.5;
+}
+function ajustarPuntosProspectos() {
+  for (const m of _prosMarkers) {
+    if (!m || m.__sel) continue;
+    const ic = m.getIcon();
+    if (!ic || typeof ic !== 'object') continue;
+    ic.scale = escalaPunto(m.__score);
+    ic.strokeWeight = grosorPunto();
+    m.setIcon(ic);
+  }
+}
+let _zoomHook = false;
+function hookZoomProspectos() {
+  if (!_prosMapa || _zoomHook) return;
+  _zoomHook = true;
+  _prosMapa.addListener('zoom_changed', ajustarPuntosProspectos);
 }
 
 // ── Rutas de reparto sobre el mapa (15 sep 2026) ────────────────────────────
