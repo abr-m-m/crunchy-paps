@@ -2477,6 +2477,22 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 <!-- ══════════════════════════════════
      SCREEN: CAJA (admin + mostrador)
 ══════════════════════════════════ -->
+<div class="screen" id="s-ruta">
+  <div class="header">
+    <div class="logo">Crunchy<span> Paps</span></div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">MI RUTA</div>
+  </div>
+  <div style="padding:14px 16px 90px;">
+    <div id="ruta-filtros" style="display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <select id="ruta-sel" aria-label="Ruta" onchange="rutaDiaCambiar()" style="flex:1 1 160px;min-width:0;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;"></select>
+      <input id="ruta-fecha" type="date" aria-label="Día" onchange="rutaDiaCambiar()" style="flex:1 1 140px;min-width:0;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;">
+    </div>
+    <div id="ruta-cabecera"></div>
+    <div id="mr-paradas"></div>
+  </div>
+  <div id="ruta-hoja" hidden style="position:fixed;left:0;right:0;bottom:0;z-index:1200;background:var(--gris);border-top:2px solid var(--amarillo);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;"></div>
+</div>
+
 <div class="screen" id="s-armado">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
@@ -3301,6 +3317,10 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
     <span class="nav-lbl">Cupones</span>
   </div>
+  <div class="nav-item" id="nav-ruta" onclick="navegar('ruta')" style="display:none;">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></svg>
+    <span class="nav-lbl">Mi ruta</span>
+  </div>
   <div class="nav-item" id="nav-armado" onclick="navegar('armado')" style="display:none;">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
     <span class="nav-lbl">Armado</span>
@@ -3806,7 +3826,7 @@ window.ir = function(id) {
 };
 
 // Versión interna que preserva la navbar
-window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen','s-armado'];
+window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen','s-armado','s-ruta'];
 
 
 
@@ -9175,6 +9195,10 @@ window.navegar = function(seccion) {
     document.getElementById('s-armado').classList.add('active');
     renderArmado();
   }
+  else if (seccion === 'ruta') {
+    document.getElementById('s-ruta').classList.add('active');
+    renderRuta();
+  }
   else if (seccion === 'resumen') {
     document.getElementById('s-resumen').classList.add('active');
     renderResumen();
@@ -9397,7 +9421,11 @@ async function renderRutasAdminCfg() {
     cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;color:var(--suave);font-size:0.8rem;">Rutas: el servidor aún no las conoce (' + ((r && r.error) || 'sin respuesta') + ').</div>';
     return;
   }
-  window._rutasEdit = (r.rutas || []).map(x => ({ id: x.id, nombre: x.nombre, color: x.color || '#ffd200', dias: (x.dias || []).map(Number), activa: x.activa !== false, cobertura: (x.cobertura || []).map(c => ({ tipo: c.tipo, valor: c.valor, cpHasta: c.cpHasta || '' })) }));
+  window._rutasEdit = (r.rutas || []).map(x => ({ id: x.id, idVendedor: x.idVendedor || null, nombre: x.nombre, color: x.color || '#ffd200', dias: (x.dias || []).map(Number), activa: x.activa !== false, cobertura: (x.cobertura || []).map(c => ({ tipo: c.tipo, valor: c.valor, cpHasta: c.cpHasta || '' })) }));
+  try {
+    const v = await supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: {} });
+    window._vendedoresRuta = ((v && v.vendedores) || []).filter(x => x.activo !== false);
+  } catch (_e) { window._vendedoresRuta = []; }
   pintarRutasEdit();
 }
 function pintarRutasEdit() {
@@ -9411,6 +9439,11 @@ function pintarRutasEdit() {
         <input value="${esc(rt.nombre)}" placeholder="Nombre de la ruta" aria-label="Nombre" oninput="rutaCampo(${i}, 'nombre', this.value)" style="${inp}">
         <input type="color" value="${esc(rt.color)}" aria-label="Color" oninput="rutaCampo(${i}, 'color', this.value)" style="width:52px;height:40px;border:1px solid var(--gris3);border-radius:8px;background:var(--gris2);padding:2px;">
       </div>
+      ${rt.id ? `<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.76rem;color:var(--suave);">Vendedor
+        <select aria-label="Vendedor de la ruta" onchange="asignarVendedorRuta(${rt.id}, this.value)" style="${inp}flex:1 1 auto;">
+          <option value="">Sin asignar</option>
+          ${(window._vendedoresRuta || []).map(v => `<option value="${v.id}" ${String(v.id) === String(rt.idVendedor) ? 'selected' : ''}>${esc(v.nombre)}</option>`).join('')}
+        </select></label>` : ''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" role="group" aria-label="Días de reparto">
         ${RUTA_DIAS.map((d, k) => `<label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;border:1px solid var(--gris3);border-radius:8px;font-size:0.78rem;color:var(--blanco);cursor:pointer;${rt.dias.includes(k) ? 'background:#2a2400;border-color:var(--amarillo);' : ''}"><input type="checkbox" ${rt.dias.includes(k) ? 'checked' : ''} onchange="rutaDia(${i}, ${k}, this.checked)" style="accent-color:var(--amarillo);"> ${d}</label>`).join('')}
         <label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;font-size:0.78rem;color:var(--suave);cursor:pointer;margin-left:auto;"><input type="checkbox" ${rt.activa ? 'checked' : ''} onchange="rutaCampo(${i}, 'activa', this.checked)" style="accent-color:var(--amarillo);"> activa</label>
@@ -9450,6 +9483,23 @@ window.guardarRutasCfg = async function() {
     if (res && res.ok) { mostrarToast('Rutas guardadas'); await cargarRutasCache(); renderRutasAdminCfg(); if (typeof renderB2BLista === 'function') renderB2BLista(); }
     else await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: (res && res.error) || 'Sin respuesta' });
   } catch (e) { await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: e.message || '' }); }
+};
+window.asignarVendedorRuta = async function(idRuta, idVendedor) {
+  try {
+    const res = await supabaseCall('POST', 'rpc/asignar_vendedor_ruta', {
+      p_data: { idRuta: Number(idRuta), idVendedor: idVendedor ? Number(idVendedor) : null }
+    });
+    if (!res || !res.ok) {
+      await avisar({ titulo: 'No se pudo asignar el vendedor', cuerpo: (res && res.error) || 'Sin respuesta' });
+      renderRutasAdminCfg();
+      return;
+    }
+    const rt = (window._rutasEdit || []).find(x => String(x.id) === String(idRuta));
+    if (rt) rt.idVendedor = res.idVendedor;
+    mostrarToast(res.vendedor ? 'Ruta asignada a ' + res.vendedor : 'Ruta sin vendedor');
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo asignar el vendedor', cuerpo: (e && e.message) || '' });
+  }
 };
 window.reasignarRuta = async function(idCliente, idRuta) {
   try {
@@ -12743,23 +12793,10 @@ let _prosMapa = null;
 let _prosMarkers = [];
 let _prosCSVPendientes = []; // datos parseados del CSV para confirmar
 
-async function renderProspeccion() {
-  // Mostrar botón importar solo a admin
-  const btnImp = document.getElementById('pros-btn-import');
-  if (btnImp) btnImp.style.display = (esAdmin && esAdmin()) ? '' : 'none';
-
-  const lista = document.getElementById('pros-lista');
-  if (lista) lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px 0;"><span class="loader loader-w"></span> Cargando prospectos...</div>';
-
-  try {
-    const _rpr = await supabaseCall('POST', 'rpc/obtener_prospectos', { p_data: { limit: 2000 } });
-    const arr = (_rpr && _rpr.ok) ? _rpr.prospectos : null;
-    if (!Array.isArray(arr)) {
-      if (lista) lista.innerHTML = '<div style="color:var(--rojo);padding:14px;">Error: respuesta inválida</div>';
-      return;
-    }
-    // Mapear nombres snake_case → camelCase que el frontend usa
-    _prospectos = arr.map(p => ({
+// Un prospecto tal como lo pinta la app, a partir de la fila de la base.
+// La usan la lista de Prospección y «Mi ruta» (cuando abre uno que no está en la lista).
+function normalizarProspecto(p) {
+  return ({
       id:                     p.id,
       ref:                    p.ref || '',
       nombreNegocio:          p.nombre_negocio || '',
@@ -12798,7 +12835,26 @@ async function renderProspeccion() {
       // La ficha usaba «Descartado: …» pero el motivo nunca se copiaba.
       motivoDescarte:         p.motivo_descarte || '',
       idClienteConvertido:    p.id_cliente_convertido,
-    }));
+  });
+}
+
+async function renderProspeccion() {
+  // Mostrar botón importar solo a admin
+  const btnImp = document.getElementById('pros-btn-import');
+  if (btnImp) btnImp.style.display = (esAdmin && esAdmin()) ? '' : 'none';
+
+  const lista = document.getElementById('pros-lista');
+  if (lista) lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px 0;"><span class="loader loader-w"></span> Cargando prospectos...</div>';
+
+  try {
+    const _rpr = await supabaseCall('POST', 'rpc/obtener_prospectos', { p_data: { limit: 2000 } });
+    const arr = (_rpr && _rpr.ok) ? _rpr.prospectos : null;
+    if (!Array.isArray(arr)) {
+      if (lista) lista.innerHTML = '<div style="color:var(--rojo);padding:14px;">Error: respuesta inválida</div>';
+      return;
+    }
+    // Mapear nombres snake_case → camelCase que el frontend usa
+    _prospectos = arr.map(normalizarProspecto);
     pintarResumenProspectos();
     pintarMapaProspectos();
     pintarListaProspectos();
@@ -13713,6 +13769,192 @@ document.addEventListener('click', e => {
 // ──────────────────────────────────────────
 // ACCIONES
 // ──────────────────────────────────────────
+// ── Mi ruta de hoy (Ruta del día, entrega 2) ─────────────────────────────────
+// El servidor (ruta_del_dia) decide las paradas, su orden y el avance: aquí solo
+// se pintan, se filtra por ruta y día (dueño) y se registran visitas. Cada
+// vendedor ve solo su ruta; el dueño y los socios eligen cualquiera.
+const RESULTADOS_VISITA_CLIENTE = [
+  { codigo: 'pedido',      etiqueta: 'Levantó pedido' },
+  { codigo: 'no_necesita', etiqueta: 'No necesita resurtido' },
+  { codigo: 'no_estaba',   etiqueta: 'No estaba el encargado' },
+];
+window._rutaDia = null;
+const RUTA_DIA_NOMBRE = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const rutaEsc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+async function renderRuta() {
+  const cab = document.getElementById('ruta-cabecera');
+  const lista = document.getElementById('mr-paradas');
+  const filtros = document.getElementById('ruta-filtros');
+  const sel = document.getElementById('ruta-sel');
+  const fecha = document.getElementById('ruta-fecha');
+  if (!cab || !lista) return;
+  lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando tu ruta…</div>';
+  const payload = {};
+  if (filtros && filtros.style.display !== 'none') {
+    if (sel && sel.value) payload.idRuta = Number(sel.value);
+    if (fecha && fecha.value) payload.fecha = fecha.value;
+  }
+  let r = null;
+  try { r = await supabaseCall('POST', 'rpc/ruta_del_dia', { p_data: payload }); }
+  catch (e) { r = { ok: false, error: e.message }; }
+  if (!r || !r.ok) {
+    cab.innerHTML = '';
+    lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">No se pudo cargar la ruta: ${rutaEsc((r && r.error) || 'sin respuesta')}</div>`;
+    return;
+  }
+  window._rutaDia = r;
+  if (r.veTodas && filtros && filtros.style.display === 'none') {
+    if (!window._rutasCache) await cargarRutasCache();
+    sel.innerHTML = '<option value="">La que toca ese día</option>' + (window._rutasCache || []).map(x => `<option value="${x.id}">${rutaEsc(x.nombre)}</option>`).join('');
+    fecha.value = r.fecha;
+    filtros.style.display = 'flex';
+  }
+  pintarRutaDia();
+}
+window.rutaDiaCambiar = function() { renderRuta(); };
+
+function pintarRutaDia() {
+  const r = window._rutaDia;
+  const cab = document.getElementById('ruta-cabecera');
+  const lista = document.getElementById('mr-paradas');
+  if (!r || !cab || !lista) return;
+  if (!r.ruta) {
+    cab.innerHTML = '';
+    const prox = r.proximaFecha ? new Date(r.proximaFecha + 'T12:00:00') : null;
+    lista.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);font-size:0.86rem;">No hay ruta para este día.${prox ? ' La siguiente es el ' + RUTA_DIA_NOMBRE[prox.getDay()] + ' ' + prox.getDate() + '.' : ''}</div>`;
+    return;
+  }
+  const a = r.avance || {};
+  const pct = a.programadas ? Math.round(100 * (a.visitadas || 0) / a.programadas) : 0;
+  const f = new Date(r.fecha + 'T12:00:00');
+  const paradas = r.paradas || [];
+  const hayPendientes = paradas.some(p => !p.visitadaHoy && p.lat != null && p.lng != null);
+  cab.innerHTML = `
+    <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid ${rutaEsc(r.ruta.color || '#ffd200')};">
+      <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);">${rutaEsc(r.ruta.nombre)}</div>
+      <div style="color:var(--suave);font-size:0.78rem;margin-top:2px;">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${r.ruta.vendedor ? rutaEsc(r.ruta.vendedor) : 'sin vendedor asignado'}</div>
+      <div role="progressbar" aria-label="Avance del día" aria-valuemin="0" aria-valuemax="${a.programadas || 0}" aria-valuenow="${a.visitadas || 0}" style="margin-top:10px;height:8px;background:var(--gris3);border-radius:999px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--amarillo);"></div></div>
+      <div style="margin-top:6px;font-size:0.84rem;color:var(--blanco);font-variant-numeric:tabular-nums;"><b>${a.visitadas || 0} de ${a.programadas || 0}</b> visitadas · ${a.convertidas || 0} convertidas${a.fueraDelPunto ? ' · <span style="color:var(--rojo);">' + a.fueraDelPunto + ' fuera del punto</span>' : ''}</div>
+      ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
+    </div>`;
+  const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const fila = (p) => {
+    const accion = p.tipo === 'cliente' ? `abrirVisitaCliente(${p.id})` : `abrirParadaProspecto(${p.id})`;
+    // El discurso cambia: a una parada NUEVA nadie la ha visitado; a una ya
+    // visitada se vuelve con lo que pasó la última vez, aunque no haya comprado.
+    const nuevo = !p.ultimaVisita && !p.visitadaHoy;
+    const detalle = p.visitadaHoy
+      ? rutaEsc(p.etiquetaHoy || '')
+      : (nuevo ? '<b style="color:var(--amarillo);">NUEVO</b> · primera visita'
+               : 'ya visitado ' + new Date(p.ultimaVisita).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+                 + (p.ultimoResultado ? ' · ' + rutaEsc((RESULTADOS_VISITA.concat(RESULTADOS_VISITA_CLIENTE).find(r => r.codigo === p.ultimoResultado) || {}).etiqueta || p.ultimoResultado) : ''));
+    return `
+    <button type="button" onclick="${accion}" aria-label="Parada ${p.orden}: ${rutaEsc(p.nombre)}${p.visitadaHoy ? ', visitada' : ''}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;text-align:left;background:var(--gris);border:1px solid ${p.visitadaHoy ? '#2e5a34' : 'var(--gris3)'};border-radius:12px;padding:10px 12px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;cursor:pointer;">
+      <span style="flex:0 0 30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;background:${p.visitadaHoy ? '#4caf50' : 'var(--gris3)'};color:${p.visitadaHoy ? '#000' : 'var(--blanco)'};">${p.visitadaHoy ? CHECK : p.orden}</span>
+      <span style="min-width:0;flex:1 1 auto;">
+        <span style="display:block;font-weight:700;font-size:0.88rem;overflow-wrap:anywhere;">${rutaEsc(p.nombre || 'Sin nombre')}</span>
+        <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
+      </span>
+    </button>`;
+  };
+  const bloque = (titulo, arr) => arr.length
+    ? `<div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
+    : '';
+  const html = bloque('Clientes', paradas.filter(p => p.tipo === 'cliente')) + bloque('Prospectos', paradas.filter(p => p.tipo === 'prospecto'));
+  lista.innerHTML = html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>';
+}
+
+// El detalle del prospecto usa la lista de Prospección: si no está cargada, se carga.
+window.abrirParadaProspecto = async function(id) {
+  // La lista de Prospección trae solo los prospectos con vendedor asignado; los
+  // de la ruta sin visitar no lo tienen. Se piden por id con la regla del servidor.
+  if (!_prospectos.some(x => String(x.id) === String(id))) {
+    try {
+      const r = await supabaseCall('POST', 'rpc/obtener_prospecto', { p_data: { id: Number(id) } });
+      if (!r || !r.ok || !r.prospecto) {
+        await avisar({ titulo: 'No se pudo abrir el prospecto', cuerpo: (r && r.error) || 'Sin respuesta' });
+        return;
+      }
+      _prospectos.push(normalizarProspecto(r.prospecto));
+    } catch (e) {
+      await avisar({ titulo: 'No se pudo abrir el prospecto', cuerpo: (e && e.message) || '' });
+      return;
+    }
+  }
+  verDetalleProspecto(id);
+};
+
+window.abrirVisitaCliente = function(id) {
+  const p = ((window._rutaDia && window._rutaDia.paradas) || []).find(x => x.tipo === 'cliente' && String(x.id) === String(id));
+  const hoja = document.getElementById('ruta-hoja');
+  if (!p || !hoja) return;
+  hoja.innerHTML = `
+    <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--blanco);">${rutaEsc(p.nombre)}</div>
+    <div style="color:var(--suave);font-size:0.74rem;margin:2px 0 10px;">Cliente${p.colonia ? ' · ' + rutaEsc(p.colonia) : ''}${p.visitadaHoy ? ' · ya visitado hoy: ' + rutaEsc(p.etiquetaHoy || '') : ''}</div>
+    <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${RESULTADOS_VISITA_CLIENTE.map(r => `<button type="button" onclick="registrarVisitaCliente(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.codigo === 'pedido' ? '#4caf50' : 'var(--gris3)'};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}</button>`).join('')}
+    </div>
+    <label for="ruta-visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
+    <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+    <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
+  hoja.hidden = false;
+};
+
+window.cerrarHojaRuta = function() {
+  const h = document.getElementById('ruta-hoja');
+  if (h) { h.hidden = true; h.innerHTML = ''; }
+};
+
+let _visitaClienteEnCurso = false;
+window.registrarVisitaCliente = async function(id, codigo) {
+  if (_visitaClienteEnCurso) return;
+  const r = RESULTADOS_VISITA_CLIENTE.find(x => x.codigo === codigo);
+  if (!r) return;
+  const nota = (document.getElementById('ruta-visita-nota')?.value || '').trim();
+  _visitaClienteEnCurso = true;
+  try {
+    mostrarToast('Tomando tu ubicación…');
+    const u = await ubicacionParaVisita();
+    if (u.error) {
+      await avisar({ titulo: 'Sin ubicación no se registra la visita', cuerpo: u.error });
+      return;
+    }
+    const res = await supabaseCall('POST', 'rpc/registrar_visita', {
+      p_data: { idCliente: id, resultado: codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision }
+    });
+    if (!res || !res.ok) {
+      await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });
+      return;
+    }
+    cerrarHojaRuta();
+    if (res.fueraDelPunto) {
+      await avisar({ titulo: 'Visita registrada fuera del punto', cuerpo: `Estás a ${res.distanciaMetros} m del cliente. La visita quedó marcada para revisión.` });
+    } else {
+      mostrarToast(`Visita registrada: ${r.etiqueta}`);
+    }
+    renderRuta();
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (e && e.message) || '' });
+  } finally {
+    _visitaClienteEnCurso = false;
+  }
+};
+
+// Las siguientes paradas pendientes, hasta 10, en Google Maps. Sin origen: el
+// teléfono usa su ubicación actual. Sin await antes de abrir la pestaña.
+window.abrirRecorridoRuta = function() {
+  const pend = ((window._rutaDia && window._rutaDia.paradas) || [])
+    .filter(p => !p.visitadaHoy && p.lat != null && p.lng != null).slice(0, 10);
+  if (!pend.length) return;
+  const destino = pend[pend.length - 1];
+  const intermedios = pend.slice(0, -1).map(p => p.lat + ',' + p.lng).join('|');
+  const url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destino.lat + ',' + destino.lng
+    + (intermedios ? '&waypoints=' + encodeURIComponent(intermedios) : '');
+  window.open(url, '_blank');
+};
+
 // ── Visitas con resultado (Ruta del día, entrega 1, 16 sep 2026) ────────────
 // Cada visita es un renglón en `visitas` que nunca se borra, con resultado de
 // catálogo y la ubicación del teléfono. Sin ubicación no hay visita; a más de
@@ -13814,6 +14056,7 @@ window.elegirResultadoVisita = async function(id, codigo) {
     }
     cerrarDetalleProspecto();
     renderProspeccion();
+    if (document.getElementById('s-ruta')?.classList.contains('active')) renderRuta();
   } catch (e) {
     await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (e && e.message) || '' });
   } finally {
@@ -15914,6 +16157,7 @@ const NAV_ITEM_POR_SECCION = {
   cupones:     'nav-cupones',
   resumen:     'nav-resumen',
   armado:      'nav-armado',
+  ruta:        'nav-ruta',
   cuenta:      'nav-perfil',
 };
 
@@ -16042,6 +16286,7 @@ const SECCIONES_LABELS = {
   cupones:     'Cupones',
   resumen:     'Resumen',
   armado:      'Armado',
+  ruta:        'Mi ruta',
   cuenta:      'Mi cuenta',
 };
 
