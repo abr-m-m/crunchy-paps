@@ -12795,6 +12795,8 @@ async function renderProspeccion() {
       numVisitas:             Number(p.num_visitas) || 0,
       // Alias legacy: la lista usa p.numContactos
       numContactos:           Number(p.num_visitas) || 0,
+      // La ficha usaba «Descartado: …» pero el motivo nunca se copiaba.
+      motivoDescarte:         p.motivo_descarte || '',
       idClienteConvertido:    p.id_cliente_convertido,
     }));
     pintarResumenProspectos();
@@ -13662,18 +13664,25 @@ window.verDetalleProspecto = function(id) {
         Descartado: ${p.motivoDescarte}
       </div>` : ''}
 
+    <div id="pros-visitas-hist" style="margin-bottom:10px;"></div>
+
     <!-- Acciones -->
     ${!descartado && !yaConvertido ? `
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button onclick="accionRegistrarVisita(${p.id})" style="background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--negro);cursor:pointer;">
+      <div id="pros-acciones" style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="accionRegistrarVisita(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--negro);cursor:pointer;">
           Registrar visita
         </button>
-        <button onclick="accionConvertirCliente(${p.id})" style="background:#0d2d0d;border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:#4caf50;cursor:pointer;">
-          Convertir a cliente
-        </button>
-        <button onclick="accionDescartarProspecto(${p.id})" style="background:transparent;border:1px solid #555;border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:#888;cursor:pointer;">
-          Descartar
-        </button>
+      </div>
+      <div id="pros-visita-hoja" hidden style="background:var(--gris2);border-radius:12px;padding:12px;">
+        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${RESULTADOS_VISITA.map(r => `<button onclick="elegirResultadoVisita(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.descarta ? 'var(--rojo)' : (r.codigo === 'convertido' ? '#4caf50' : 'var(--gris3)')};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}${r.descarta ? '<span style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sale de la ruta</span>' : ''}</button>`).join('')}
+        </div>
+        ${!p.telefono ? `<label for="visita-telefono" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Teléfono del cliente, solo si se convierte</label>
+        <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
+        <label for="visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
+        <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+        <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
       <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
@@ -13689,6 +13698,7 @@ window.verDetalleProspecto = function(id) {
       Cerrar
     </button>
   `;
+  cargarHistorialVisitas(p.id);
 };
 
 window.cerrarDetalleProspecto = function() {
@@ -13703,76 +13713,141 @@ document.addEventListener('click', e => {
 // ──────────────────────────────────────────
 // ACCIONES
 // ──────────────────────────────────────────
-window.accionRegistrarVisita = async function(id) {
-  const nota = prompt('Notas de la visita (opcional):', '');
-  if (nota === null) return; // canceló
-  try {
-    // Etapa B: el contador lo incrementa Postgres con `incrementarVisitas`.
-    // Antes esto leía num_visitas, le sumaba 1 y escribía el resultado. Era la
-    // última lectura directa a `prospectos` —la que impedía cerrar la tabla— y
-    // además una condición de carrera: dos visitas registradas a la vez leían
-    // el mismo valor y una se perdía.
-    //
-    // `id_vendedor` y `nombre_vendedor` tampoco se mandan: los pone el servidor
-    // desde el token, la única fuente fiable de quién hizo la visita.
-    const payload = {
-      estatus: 'contactado',
-      fecha_visita: new Date().toISOString(),
-    };
-    if (nota && nota.trim()) payload.notas = nota;
+// ── Visitas con resultado (Ruta del día, entrega 1, 16 sep 2026) ────────────
+// Cada visita es un renglón en `visitas` que nunca se borra, con resultado de
+// catálogo y la ubicación del teléfono. Sin ubicación no hay visita; a más de
+// 100 m de la tienda queda marcada «fuera del punto». Sustituye a los prompt()
+// de antes, que borraban la nota anterior y guardaban el motivo como texto libre.
+const RESULTADOS_VISITA = [
+  { codigo: 'convertido',         etiqueta: 'Convertido',              descarta: false },
+  { codigo: 'interesado',         etiqueta: 'Interesado, volver',      descarta: false },
+  { codigo: 'no_estaba',          etiqueta: 'No estaba el encargado',  descarta: false },
+  { codigo: 'ya_tiene_proveedor', etiqueta: 'Ya tiene proveedor',      descarta: false },
+  { codigo: 'caro',               etiqueta: 'Le pareció caro',         descarta: false },
+  { codigo: 'no_le_interesa',     etiqueta: 'No le interesa',          descarta: true  },
+  { codigo: 'ya_no_existe',       etiqueta: 'Ya no existe el negocio', descarta: true  },
+];
 
-    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', {
-      p_data: { id, campos: payload, incrementarVisitas: true }
-    });
-    if (!res || !res.ok) { avisar({ titulo: 'No se pudo registrar la visita', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
-    mostrarToast('Visita registrada');
-    cerrarDetalleProspecto();
-    renderProspeccion();
-  } catch(e) { avisar({ titulo: 'No se pudo registrar la visita', cuerpo: e.message }); }
+// Ubicación fresca (maximumAge 0): una posición de hace un minuto puede ser la
+// de la tienda anterior.
+function ubicacionParaVisita() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve({ error: 'Este teléfono no da ubicación.' });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, precision: Math.round(pos.coords.accuracy || 0) }),
+      (err) => resolve({ error: (err && err.code === 1)
+        ? 'La ubicación está bloqueada para este sitio. Actívala en los permisos del navegador y vuelve a intentarlo.'
+        : 'No se pudo obtener la ubicación. Sal a un lugar abierto y vuelve a intentarlo.' }),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+}
+
+window.accionRegistrarVisita = function(id) {
+  const acc = document.getElementById('pros-acciones');
+  const hoja = document.getElementById('pros-visita-hoja');
+  if (acc) acc.style.display = 'none';
+  if (hoja) hoja.hidden = false;
 };
 
-window.accionConvertirCliente = async function(id) {
-  const p = _prospectos.find(x => String(x.id) === String(id));
-  if (!p) return;
-  if (!(await confirmar({ titulo: `Convertir "${p.nombre}" a cliente`, cuerpo: 'Se creará en la lista de clientes B2B.', aceptar: 'Convertir' }))) return;
+window.cancelarVisita = function() {
+  const acc = document.getElementById('pros-acciones');
+  const hoja = document.getElementById('pros-visita-hoja');
+  if (hoja) hoja.hidden = true;
+  if (acc) acc.style.display = 'flex';
+};
 
-  // Pedir datos faltantes mínimos
-  let telefono = p.telefono;
-  if (!telefono) {
-    telefono = prompt('Teléfono de contacto del cliente (10 dígitos):', '');
-    if (!telefono) { mostrarToast('Teléfono requerido'); return; }
+let _visitaEnCurso = false;
+window.elegirResultadoVisita = async function(id, codigo) {
+  if (_visitaEnCurso) return;
+  const p = _prospectos.find(x => String(x.id) === String(id));
+  const r = RESULTADOS_VISITA.find(x => x.codigo === codigo);
+  if (!p || !r) return;
+  const nota = (document.getElementById('visita-nota')?.value || '').trim();
+  const telefono = String(p.telefono || document.getElementById('visita-telefono')?.value || '').replace(/\D/g, '');
+
+  if (r.codigo === 'convertido') {
+    if (telefono.length !== 10) {
+      await avisar({ titulo: 'Falta el teléfono', cuerpo: 'Para convertir a cliente escribe su teléfono de 10 dígitos.' });
+      return;
+    }
+    if (!(await confirmar({ titulo: `Convertir "${p.nombre}" a cliente`, cuerpo: 'Se creará en la lista de clientes B2B y la visita quedará como «Convertido».', aceptar: 'Convertir' }))) return;
+  }
+  if (r.descarta) {
+    if (!(await confirmar({ titulo: `«${r.etiqueta}»`, cuerpo: `"${p.nombre}" sale de la ruta. Se puede reactivar después.`, aceptar: 'Registrar y sacar de la ruta', cancelar: 'Volver', peligroso: true }))) return;
   }
 
+  _visitaEnCurso = true;
   try {
-    const res = await supabaseCall('POST', 'rpc/convertir_prospecto_a_cliente', {
-      p_data: {
-        id, telefono,
-        idVendedor: vendedorInfo?.id || null,
-        nombreVendedor: vendedorInfo?.nombre || '',
+    // La ubicación va ANTES de convertir: sin ella no se escribe nada.
+    mostrarToast('Tomando tu ubicación…');
+    const u = await ubicacionParaVisita();
+    if (u.error) {
+      await avisar({ titulo: 'Sin ubicación no se registra la visita', cuerpo: u.error });
+      return;
+    }
+
+    let idCliente = null;
+    if (r.codigo === 'convertido') {
+      const c = await supabaseCall('POST', 'rpc/convertir_prospecto_a_cliente', {
+        p_data: { id, telefono, idVendedor: vendedorInfo?.id || null, nombreVendedor: vendedorInfo?.nombre || '' }
+      });
+      if (!c || !c.ok) {
+        await avisar({ titulo: 'No se pudo convertir el prospecto', cuerpo: (c && c.error) || 'Sin respuesta' });
+        return;
       }
+      idCliente = c.idCliente;
+    }
+
+    const res = await supabaseCall('POST', 'rpc/registrar_visita', {
+      p_data: { idProspecto: id, resultado: r.codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, idCliente }
     });
-    if (!res || !res.ok) { avisar({ titulo: 'No se pudo convertir el prospecto', cuerpo: (res?.error||'') }); return; }
-    mostrarToast('Convertido a cliente');
+    if (!res || !res.ok) {
+      await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });
+      return;
+    }
+
+    if (res.fueraDelPunto) {
+      await avisar({ titulo: 'Visita registrada fuera del punto', cuerpo: `Estás a ${res.distanciaMetros} m de la tienda. La visita quedó marcada para revisión.` });
+    } else {
+      mostrarToast(`Visita registrada: ${r.etiqueta}`);
+    }
     cerrarDetalleProspecto();
     renderProspeccion();
-  } catch(e) { avisar({ titulo: 'No se pudo convertir el prospecto', cuerpo: e.message }); }
+  } catch (e) {
+    await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (e && e.message) || '' });
+  } finally {
+    _visitaEnCurso = false;
+  }
 };
 
-window.accionDescartarProspecto = async function(id) {
-  const motivo = prompt('Motivo del descarte (cerró, no le interesa, etc.):', '');
-  if (!motivo) return;
+// Historial de la ficha: las últimas 20 visitas, la más reciente primero.
+async function cargarHistorialVisitas(id) {
+  const el = document.getElementById('pros-visitas-hist');
+  if (!el) return;
   try {
-    const res = await supabaseCall('POST', 'rpc/actualizar_prospecto', { p_data: { id, campos: {
-      estatus: 'descartado',
-      motivo_descarte: motivo,
-      fecha_descarte: new Date().toISOString(),
-    } } });
-    if (!res || !res.ok) { avisar({ titulo: 'No se pudo descartar el prospecto', cuerpo: ((res && res.error) || 'Sin respuesta') }); return; }
-    mostrarToast('Descartado');
-    cerrarDetalleProspecto();
-    renderProspeccion();
-  } catch(e) { avisar({ titulo: 'No se pudo descartar el prospecto', cuerpo: e.message }); }
-};
+    const r = await supabaseCall('POST', 'rpc/obtener_visitas', { p_data: { idProspecto: id } });
+    if (!r || !r.ok) { el.innerHTML = ''; return; }
+    const vs = r.visitas || [];
+    if (!vs.length) {
+      el.innerHTML = '<div style="font-size:0.74rem;color:var(--suave);">Sin visitas registradas.</div>';
+      return;
+    }
+    const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    el.innerHTML = `
+      <div style="background:var(--gris2);border-radius:12px;padding:12px;">
+        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Visitas (${vs.length})</div>
+        ${vs.map(v => `
+          <div style="padding:6px 0;border-top:1px solid var(--gris3);font-size:0.78rem;color:var(--blanco);">
+            <div style="display:flex;justify-content:space-between;gap:8px;"><b>${esc(v.etiqueta)}</b><span style="color:var(--suave);white-space:nowrap;">${new Date(v.creadaEn).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>
+            <div style="color:var(--suave);font-size:0.72rem;">${esc(v.vendedor)}${v.distanciaMetros != null ? ' · a ' + v.distanciaMetros + ' m' : ' · tienda sin coordenadas'}${v.fueraDelPunto ? ' · <span style="color:var(--rojo);font-weight:700;">fuera del punto</span>' : ''}</div>
+            ${v.nota ? `<div style="margin-top:2px;white-space:pre-wrap;">${esc(v.nota)}</div>` : ''}
+          </div>`).join('')}
+      </div>`;
+  } catch (_e) {
+    el.innerHTML = '';
+  }
+}
 
 window.accionReactivarProspecto = async function(id) {
   if (!(await confirmar({ titulo: '¿Reactivar este prospecto?', aceptar: 'Reactivar' }))) return;
