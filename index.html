@@ -2493,6 +2493,30 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
   <div id="ruta-hoja" hidden style="position:fixed;left:0;right:0;bottom:0;z-index:1200;background:var(--gris);border-top:2px solid var(--amarillo);border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;"></div>
 </div>
 
+<div class="screen" id="s-reparto">
+  <div class="header">
+    <div class="logo">Crunchy<span> Paps</span></div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">REPARTO</div>
+  </div>
+  <div style="padding:14px 16px 90px;">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <input id="reparto-fecha" type="date" aria-label="Día" onchange="repartoCambiar()" style="flex:1 1 140px;min-width:0;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 10px;color:var(--blanco);font-family:'Inter',sans-serif;">
+    </div>
+    <div id="reparto-cuerpo"></div>
+  </div>
+</div>
+
+<div class="screen" id="s-entregas">
+  <div class="header">
+    <div class="logo">Crunchy<span> Paps</span></div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">MIS ENTREGAS</div>
+  </div>
+  <div style="padding:14px 16px 90px;">
+    <div id="entregas-cabecera"></div>
+    <div id="entregas-lista"></div>
+  </div>
+</div>
+
 <div class="screen" id="s-armado">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
@@ -3321,6 +3345,14 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8.5a3.5 3.5 0 0 0 0-7h-9a3.5 3.5 0 0 1 0-7H16"/></svg>
     <span class="nav-lbl">Mi ruta</span>
   </div>
+  <div class="nav-item" id="nav-reparto" onclick="navegar('reparto')" style="display:none;">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+    <span class="nav-lbl">Reparto</span>
+  </div>
+  <div class="nav-item" id="nav-entregas" onclick="navegar('entregas')" style="display:none;">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg>
+    <span class="nav-lbl">Entregas</span>
+  </div>
   <div class="nav-item" id="nav-armado" onclick="navegar('armado')" style="display:none;">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
     <span class="nav-lbl">Armado</span>
@@ -3826,7 +3858,7 @@ window.ir = function(id) {
 };
 
 // Versión interna que preserva la navbar
-window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen','s-armado','s-ruta'];
+window.navSections = ['s-catalogo','s-premia','s-pedidos','s-cuenta','s-produccion','s-b2b','s-prospeccion','s-caja','s-gastos','s-jornadas','s-tracking','s-productos','s-cupones','s-resumen','s-armado','s-ruta','s-reparto','s-entregas'];
 
 
 
@@ -7608,8 +7640,8 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       descuento: descuentoCupon,
       cuponCodigo: _cuponEnCarrito?.codigo || '',
       tokenCliente: (typeof tokenCliente === 'function' ? tokenCliente() : ''),
-      // 17 sep 2026: crear_pedido cobra el env�o por esta clave. Sin ella el
-      // servidor calculaba $0 de env�o y rechazaba con precio_cambiado.
+      // 17 sep 2026: crear_pedido cobra el env�o por esta clave. Sin ella el
+      // servidor calculaba $0 de env�o y rechazaba con precio_cambiado.
       metodoEntrega: (tipoPedido === 'consumidor' && !esPedidoInterno) ? metodoEntrega : 'coordinar',
       // v2.10: notas enriquecidas con método de entrega (solo consumidor)
       notas: (() => {
@@ -9201,6 +9233,14 @@ window.navegar = function(seccion) {
   else if (seccion === 'ruta') {
     document.getElementById('s-ruta').classList.add('active');
     renderRuta();
+  }
+  else if (seccion === 'reparto') {
+    document.getElementById('s-reparto').classList.add('active');
+    renderReparto();
+  }
+  else if (seccion === 'entregas') {
+    document.getElementById('s-entregas').classList.add('active');
+    renderEntregas();
   }
   else if (seccion === 'resumen') {
     document.getElementById('s-resumen').classList.add('active');
@@ -11903,6 +11943,7 @@ window.verDetallePedido = async function(idOrden) {
       descuento: Number(d.descuento) || 0,
       piezas_por_caja: Number(d.piezas_por_caja) || 0,   // caja: «2 cajas de 12 (24 pz)»
     }));
+    if (esAdmin() && !window._vendedoresReparto) { try { window._vendedoresReparto = await cargarVendedoresCheckout(); } catch (_e) { window._vendedoresReparto = []; } }
     _pedidoActual = { ok: true, orden, lineas };
     pintarDetallePedido(_pedidoActual);
   } catch(e) {
@@ -12003,6 +12044,21 @@ function pintarDetallePedido({ orden, lineas }) {
     </div>
   ` : '';
 
+  // Reparto P1: quién reparte (consumidores) y evidencia de la entrega.
+  const esTiendaPedido = String(orden.canal || '').toLowerCase() === 'b2b';
+  const vendsRep = window._vendedoresReparto || [];
+  const nombreRep = orden.id_repartidor ? ((vendsRep.find(v => String(v.id) === String(orden.id_repartidor)) || {}).nombre || ('vendedor ' + orden.id_repartidor)) : (orden.nombre_vendedor || 'el vendedor del pedido');
+  const reparteHTML = (!esTiendaPedido && esVendedor) ? `
+    <div style="margin-top:12px;font-size:0.8rem;color:var(--suave);display:flex;gap:8px;align-items:center;">
+      <span>Reparte:</span>
+      ${esAdmin() ? `<select onchange="asignarRepartidor(${orden.id}, this)" aria-label="Quién reparte" style="flex:1;min-height:40px;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;color:var(--blanco);padding:0 8px;">
+          <option value="">${rutaEsc(orden.nombre_vendedor || 'el vendedor del pedido')}</option>
+          ${vendsRep.map(v => `<option value="${v.id}" ${String(orden.id_repartidor || '') === String(v.id) ? 'selected' : ''}>${rutaEsc(v.nombre || '')}</option>`).join('')}
+        </select>` : `<b style="color:var(--blanco);">${rutaEsc(nombreRep)}</b>`}
+    </div>
+    ${orden.entrega_distancia_m != null ? `<div style="font-size:0.74rem;margin-top:4px;color:${orden.entrega_fuera_del_punto ? 'var(--rojo)' : '#666'};">${orden.entrega_fuera_del_punto ? 'Entregado fuera del punto, a ' : 'Entregado a '}${orden.entrega_distancia_m} m</div>` : ''}
+  ` : '';
+
   const segPagoHTML = puedeEditar ? `
     <div style="margin-top:10px;">
       <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Estatus del pago</div>
@@ -12024,7 +12080,7 @@ function pintarDetallePedido({ orden, lineas }) {
     </div>
   ` : '';
 
-  const accionesHTML = segPedidoHTML + segPagoHTML;
+  const accionesHTML = segPedidoHTML + reparteHTML + segPagoHTML;
 
   // Construcción final
   document.getElementById('dp-contenido').innerHTML = `
@@ -13956,6 +14012,170 @@ window.abrirRecorridoRuta = function() {
   const url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destino.lat + ',' + destino.lng
     + (intermedios ? '&waypoints=' + encodeURIComponent(intermedios) : '');
   window.open(url, '_blank');
+};
+
+// ── Reparto y Mis entregas (Reparto P1, 17 sep 2026) ────────────────────────
+// El servidor (reparto_del_dia) arma los bloques del día y decide qué ve cada
+// quien: el dueño todo; el vendedor con ruta su ruta; la familia sus consumidores.
+// «Salir a ruta» y «Entregado» pasan por la función de estatus de siempre.
+window._reparto = null;
+
+function repartoFila(p, acciones) {
+  const pagado = (p.estatusPago || '') === 'Pagado';
+  const est = p.estatusPedido === 'Entregado' ? '<span style="color:#4caf50;font-weight:800;">Entregado</span>'
+    : p.estatusPedido === 'En camino' ? '<span style="color:var(--amarillo);font-weight:800;">En camino</span>' : '';
+  const armado = p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>';
+  const dist = p.entregaDistanciaM != null ? (p.entregaFueraDelPunto
+    ? `<span style="color:var(--rojo);">fuera del punto, a ${p.entregaDistanciaM} m</span>` : `a ${p.entregaDistanciaM} m`) : '';
+  return `<div style="display:flex;gap:10px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid var(--gris3);">
+    <div style="flex:1;min-width:0;cursor:pointer;" onclick="verDetallePedido(${p.id})">
+      <div style="font-weight:800;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.consecutivo || '')} · ${rutaEsc(p.cliente || '')}</div>
+      <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--amarillo);">cobrar</b>'} · ${armado}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
+    </div>
+    ${acciones || ''}
+  </div>`;
+}
+
+function repartoBotonEntregar(p) {
+  if (p.estatusPedido === 'Entregado') return '';
+  if (p.metodoEntrega === 'paqueteria') return p.estatusPedido === 'En camino' ? '' : `<button onclick="repartoEnviado(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Enviado</button>`;
+  return `<button onclick="repartoEntregar(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 12px;color:var(--negro);font-weight:800;">Entregado</button>`;
+}
+
+function repartoBloque(titulo, pedidos, clave, conSalir) {
+  const pend = pedidos.filter(p => p.estatusPedido === 'En proceso').map(p => p.id);
+  const sinArmar = pedidos.filter(p => !p.armadoEn && p.estatusPedido === 'En proceso').length;
+  const ent = pedidos.filter(p => p.estatusPedido === 'Entregado').length;
+  const salir = conSalir && pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', ${sinArmar})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 14px;color:var(--negro);font-weight:800;">Salir a ruta</button>` : '';
+  const rec = pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('${clave}')" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Recorrido</button>` : '';
+  return `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+      <div style="flex:1 1 170px;min-width:0;"><div style="font-family:'Archivo',sans-serif;color:var(--blanco);">${titulo}</div>
+        <div style="font-size:0.76rem;color:var(--suave);">${pedidos.length} pedidos · ${ent} entregados${sinArmar ? ` · <span style="color:var(--rojo);">${sinArmar} sin armar</span>` : ''}</div></div>
+      ${rec}${salir}
+    </div>
+    ${pedidos.map(p => repartoFila(p, repartoBotonEntregar(p))).join('')}
+  </div>`;
+}
+
+async function renderReparto() {
+  const cuerpo = document.getElementById('reparto-cuerpo');
+  const fecha = document.getElementById('reparto-fecha');
+  if (!cuerpo) return;
+  cuerpo.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando el reparto…</div>';
+  const payload = {};
+  if (fecha && fecha.value) payload.fecha = fecha.value;
+  let r = null;
+  try { r = await supabaseCall('POST', 'rpc/reparto_del_dia', { p_data: payload }); } catch (e) { r = { ok: false, error: e.message }; }
+  if (!r || !r.ok) { cuerpo.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);">No se pudo cargar el reparto: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
+  window._reparto = r;
+  if (fecha && !fecha.value) fecha.value = r.fecha;
+  let html = '';
+  for (const ru of r.rutas) html += repartoBloque(rutaEsc(ru.nombre), ru.pedidos, 'ruta:' + ru.id, true);
+  for (const g of r.consumidores) html += repartoBloque('Consumidores · ' + rutaEsc(g.nombre || 'sin repartidor'), g.pedidos, 'cons:' + g.idRepartidor, true);
+  if (r.paqueteria.length) html += repartoBloque('Paquetería', r.paqueteria, 'paq', false);
+  if (r.sinRuta.length) html += repartoBloque('Sin ruta', r.sinRuta, 'sin', false);
+  if (!html) html = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);">Nada que repartir ese día.</div>`;
+  if (r.porConfirmar) html += `<div style="font-size:0.8rem;color:var(--suave);text-align:center;margin-top:4px;">${r.porConfirmar} por confirmar, fuera del reparto hasta confirmarse.</div>`;
+  cuerpo.innerHTML = html;
+}
+window.renderReparto = renderReparto;
+window.repartoCambiar = function() { renderReparto(); };
+
+function repartoPedidosDe(clave) {
+  const r = window._reparto; if (!r) return [];
+  if (clave.startsWith('ruta:')) return (r.rutas.find(x => String(x.id) === clave.slice(5)) || {}).pedidos || [];
+  if (clave.startsWith('cons:')) return (r.consumidores.find(x => String(x.idRepartidor) === clave.slice(5)) || {}).pedidos || [];
+  if (clave === 'paq') return r.paqueteria;
+  if (clave === 'sin') return r.sinRuta;
+  if (clave === 'entregas') return window._entregasDia || r.consumidores.flatMap(g => g.pedidos);
+  return [];
+}
+
+window.repartoRecorrido = function(clave) {
+  const pend = repartoPedidosDe(clave).filter(p => p.estatusPedido !== 'Entregado' && p.lat != null && p.lng != null).slice(0, 10);
+  if (!pend.length) return;
+  const destino = pend[pend.length - 1];
+  const intermedios = pend.slice(0, -1).map(p => p.lat + ',' + p.lng).join('|');
+  window.open('https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destino.lat + ',' + destino.lng + (intermedios ? '&waypoints=' + encodeURIComponent(intermedios) : ''), '_blank');
+};
+
+function repartoRefrescar() {
+  const ent = document.getElementById('s-entregas');
+  if (ent && ent.classList.contains('active')) renderEntregas(); else renderReparto();
+}
+
+window.repartoSalir = async function(idsCsv, sinArmar) {
+  const ids = String(idsCsv).split(',').map(Number).filter(Boolean);
+  if (!ids.length) return;
+  if (sinArmar > 0) {
+    const sigue = await confirmar({ titulo: 'Hay pedidos sin armar', cuerpo: `${sinArmar} de estos pedidos no tienen la marca de Armado. ¿Salir de todos modos?`, aceptar: 'Salir', cancelar: 'Esperar' });
+    if (!sigue) return;
+  }
+  const r = await supabaseCall('POST', 'rpc/salir_a_ruta', { p_data: { ids } });
+  if (!r || !r.ok) { await avisar({ titulo: 'No se pudo salir a ruta', cuerpo: (r && r.error) || 'Sin respuesta' }); return; }
+  mostrarToast(`${r.cambiados} en camino${r.rechazados.length ? ` · ${r.rechazados.length} sin cambiar` : ''}`);
+  repartoRefrescar();
+};
+
+window.repartoEntregar = async function(id) {
+  const u = await ubicacionParaVisita();
+  if (u.error) { await avisar({ titulo: 'Sin ubicación no se marca la entrega', cuerpo: u.error }); return; }
+  const r = await supabaseCall('POST', 'rpc/entregar_pedido', { p_data: { id, lat: u.lat, lng: u.lng } });
+  if (!r || !r.ok) { await avisar({ titulo: 'No se pudo marcar la entrega', cuerpo: (r && r.error) || 'Sin respuesta' }); return; }
+  mostrarToast(r.fueraDelPunto ? `Entregado, fuera del punto (${r.distanciaM} m)` : `Entregado a ${r.distanciaM} m`);
+  repartoRefrescar();
+};
+
+window.repartoEnviado = async function(id) {
+  const r = await supabaseCall('POST', 'rpc/entregar_pedido', { p_data: { id, enviado: true } });
+  if (!r || !r.ok) { await avisar({ titulo: 'No se pudo marcar el envío', cuerpo: (r && r.error) || 'Sin respuesta' }); return; }
+  mostrarToast('Enviado por paquetería');
+  repartoRefrescar();
+};
+
+// Mis entregas (familia): solo sus consumidores, ordenados desde el teléfono si da ubicación.
+window._entregasDia = null;
+async function renderEntregas() {
+  const cab = document.getElementById('entregas-cabecera');
+  const lista = document.getElementById('entregas-lista');
+  if (!cab || !lista) return;
+  lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando tus entregas…</div>';
+  let r = null;
+  try { r = await supabaseCall('POST', 'rpc/reparto_del_dia', { p_data: {} }); } catch (e) { r = { ok: false, error: e.message }; }
+  if (!r || !r.ok) { cab.innerHTML = ''; lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);">No se pudieron cargar tus entregas: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
+  window._reparto = r;
+  let pedidos = r.consumidores.flatMap(g => g.pedidos);
+  // Orden desde donde está el teléfono; sin ubicación se queda el orden del servidor (desde la planta).
+  const aqui = await new Promise(res => { if (!navigator.geolocation) return res(null); navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lng: p.coords.longitude }), () => res(null), { timeout: 5000, maximumAge: 60000 }); });
+  if (aqui) {
+    const d = (a, b) => { const rad = x => x * Math.PI / 180; const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2; return 2 * 6371000 * Math.asin(Math.sqrt(h)); };
+    const con = pedidos.filter(p => p.lat != null), sin = pedidos.filter(p => p.lat == null), orden = []; let cur = aqui;
+    while (con.length) { let bi = 0; for (let i = 1; i < con.length; i++) if (d(cur, con[i]) < d(cur, con[bi])) bi = i; cur = con[bi]; orden.push(con.splice(bi, 1)[0]); }
+    pedidos = orden.concat(sin);
+  }
+  window._entregasDia = pedidos;
+  const ent = pedidos.filter(p => p.estatusPedido === 'Entregado').length;
+  const pend = pedidos.filter(p => p.estatusPedido === 'En proceso').map(p => p.id);
+  const f = new Date(r.fecha + 'T12:00:00');
+  cab.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
+    <div style="font-family:'Archivo',sans-serif;color:var(--blanco);">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${pedidos.length} entregas · ${ent} entregada${ent === 1 ? '' : 's'}</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      ${pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', 0)" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;color:var(--negro);font-weight:800;">Salir</button>` : ''}
+      ${pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('entregas')" style="flex:1;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-weight:800;">Recorrido</button>` : ''}
+    </div></div>`;
+  lista.innerHTML = pedidos.length ? pedidos.map(p => repartoFila(p, repartoBotonEntregar(p))).join('')
+    : `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);">No tienes entregas hoy.</div>`;
+}
+window.renderEntregas = renderEntregas;
+
+// Tarjeta del pedido: «Reparte: …» con selector solo para el dueño y solo en consumidores.
+window._vendedoresReparto = null;
+window.asignarRepartidor = async function(id, sel) {
+  const r = await supabaseCall('POST', 'rpc/asignar_repartidor', { p_data: { id, idRepartidor: sel.value ? Number(sel.value) : null } });
+  if (!r || !r.ok) { await avisar({ titulo: 'No se pudo cambiar quién reparte', cuerpo: (r && r.error) || 'Sin respuesta' }); return; }
+  mostrarToast(r.repartidor ? `Reparte ${r.repartidor}` : 'Reparte el vendedor del pedido');
+  if (_pedidoActual && _pedidoActual.orden && String(_pedidoActual.orden.id) === String(id)) _pedidoActual.orden.id_repartidor = r.idRepartidor;
 };
 
 // ── Visitas con resultado (Ruta del día, entrega 1, 16 sep 2026) ────────────
@@ -16161,6 +16381,8 @@ const NAV_ITEM_POR_SECCION = {
   resumen:     'nav-resumen',
   armado:      'nav-armado',
   ruta:        'nav-ruta',
+  reparto:     'nav-reparto',
+  entregas:    'nav-entregas',
   cuenta:      'nav-perfil',
 };
 
@@ -16290,6 +16512,8 @@ const SECCIONES_LABELS = {
   resumen:     'Resumen',
   armado:      'Armado',
   ruta:        'Mi ruta',
+  reparto:     'Reparto',
+  entregas:    'Mis entregas',
   cuenta:      'Mi cuenta',
 };
 
