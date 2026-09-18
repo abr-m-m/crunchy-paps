@@ -7608,6 +7608,9 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       descuento: descuentoCupon,
       cuponCodigo: _cuponEnCarrito?.codigo || '',
       tokenCliente: (typeof tokenCliente === 'function' ? tokenCliente() : ''),
+      // 17 sep 2026: crear_pedido cobra el envío por esta clave. Sin ella el
+      // servidor calculaba $0 de envío y rechazaba con precio_cambiado.
+      metodoEntrega: (tipoPedido === 'consumidor' && !esPedidoInterno) ? metodoEntrega : 'coordinar',
       // v2.10: notas enriquecidas con mÃ©todo de entrega (solo consumidor)
       notas: (() => {
         let n = notas || '';
