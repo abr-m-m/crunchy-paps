@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planeador de rutas · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --papel:#f7f6f2; --panel:#fffffe; --tinta:#14150f; --tinta2:#5d6055; --linea:#dedbd0;
+  --amarillo:#ffd200; --sombra:0 1px 2px rgba(20,21,15,.06);
+  --r1:#e8a91d; --r2:#4f9d69; --r3:#4a86c5;
+  --r1s:#fdf1d2; --r2s:#e0f0e5; --r3s:#dfeaf6;
+  --aviso:#b3261e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+    --sombra:0 1px 2px rgba(0,0,0,.4);
+    --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
+    --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
+    --aviso:#ff6b6b;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+  --sombra:0 1px 2px rgba(0,0,0,.4);
+  --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
+  --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
+  --aviso:#ff6b6b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-block:24px;padding-left:18px;padding-right:18px}
+h1,h2{font-family:Archivo,Inter,sans-serif;margin:0;text-wrap:balance}
+h1{font-size:clamp(1.5rem,3.4vw,2.1rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta2)}
+p{margin:0}
+.sub{color:var(--tinta2);margin-top:6px;max-width:70ch;font-size:.92rem}
+header{border-bottom:2px solid var(--tinta);padding-bottom:14px}
+.tot{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:16px}
+.tot .caja{background:var(--panel);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;box-shadow:var(--sombra)}
+.tot .caja.r1{border-left:4px solid var(--r1)}
+.tot .caja.r2{border-left:4px solid var(--r2)}
+.tot .caja.r3{border-left:4px solid var(--r3)}
+.tot b{font-family:Archivo,sans-serif;font-size:1.45rem;display:block;font-variant-numeric:tabular-nums;line-height:1.1}
+.tot span{font-size:.72rem;color:var(--tinta2);text-transform:uppercase;letter-spacing:.06em}
+.tot i{font-style:normal;font-size:.74rem;color:var(--tinta2);display:block;margin-top:2px}
+section{margin-top:26px}
+.rutas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}
+.ruta{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px;box-shadow:var(--sombra)}
+.ruta.r1{border-top:3px solid var(--r1)}
+.ruta.r2{border-top:3px solid var(--r2)}
+.ruta.r3{border-top:3px solid var(--r3)}
+.ruta input[type=text]{width:100%;font-family:Archivo,sans-serif;font-weight:700;font-size:1rem;background:transparent;border:0;border-bottom:1px dashed var(--linea);color:var(--tinta);padding:4px 0;min-width:0}
+.dias{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.dias label{display:flex;align-items:center;gap:3px;font-size:.74rem;border:1px solid var(--linea);border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--tinta2)}
+.dias label.on{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
+.dias input{margin:0;width:12px;height:12px;accent-color:#14150f}
+.rcount{margin-top:10px;font-size:.78rem;color:var(--tinta2);font-variant-numeric:tabular-nums}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 8px}
+button{font-family:Inter,sans-serif;font-size:.82rem;font-weight:600;border-radius:8px;border:1px solid var(--linea);background:var(--panel);color:var(--tinta);padding:8px 12px;cursor:pointer;min-height:38px}
+button.primario{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
+button:hover{border-color:var(--tinta2)}
+input[type=search]{flex:1 1 180px;min-width:0;background:var(--panel);border:1px solid var(--linea);border-radius:8px;padding:8px 10px;color:var(--tinta);font-size:.85rem;min-height:38px}
+.tabla-caja{overflow-x:auto;background:var(--panel);border:1px solid var(--linea);border-radius:12px;box-shadow:var(--sombra)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta2);padding:10px;border-bottom:1px solid var(--linea);white-space:nowrap;position:sticky;top:0;background:var(--panel)}
+td{padding:8px 10px;border-bottom:1px solid var(--linea);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.cp{font-family:Archivo,sans-serif;font-weight:700;white-space:nowrap}
+.cols{color:var(--tinta2);font-size:.8rem}
+tr.a1{background:var(--r1s)}
+tr.a2{background:var(--r2s)}
+tr.a3{background:var(--r3s)}
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:32px;padding:4px 9px;font-size:.76rem;background:transparent;color:var(--tinta2)}
+.seg button+button{border-left:1px solid var(--linea)}
+.seg button[aria-pressed=true]{font-weight:700;color:#14150f}
+.seg button.b1[aria-pressed=true]{background:var(--r1)}
+.seg button.b2[aria-pressed=true]{background:var(--r2)}
+.seg button.b3[aria-pressed=true]{background:var(--r3)}
+.seg button.b0[aria-pressed=true]{background:var(--linea);color:var(--tinta)}
+pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);border-radius:12px;overflow-x:auto;font-size:.78rem;line-height:1.5;max-height:340px;white-space:pre}
+.nota{font-size:.82rem;color:var(--tinta2);margin-top:8px}
+:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}
+.mapa-caja{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:10px;box-shadow:var(--sombra);margin-top:10px}
+#mapa{width:100%;height:auto;display:block}
+#mapa path.fondo{fill:var(--linea);fill-opacity:.35;stroke:var(--papel);stroke-width:1}
+#mapa path.cp{stroke:var(--panel);stroke-width:1.5;cursor:pointer}
+#mapa path.cp:hover{stroke:var(--tinta);stroke-width:2.5}
+.leyenda{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:.82rem;color:var(--tinta2)}
+.leyenda span{display:flex;align-items:center;gap:6px}
+.leyenda i{width:14px;height:14px;border-radius:3px;display:inline-block}
+@media(max-width:820px){.rutas{grid-template-columns:1fr}}
+/* Planeador E3.1 */
+.login{max-width:360px;margin:60px auto;background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:20px}
+.login input{width:100%;min-height:42px;border:1px solid var(--linea);border-radius:8px;padding:8px 10px;font-size:1rem;margin-top:8px;background:var(--papel);color:var(--tinta)}
+.err{color:var(--aviso);font-size:.85rem;margin-top:8px;min-height:1.2em}
+.cambios{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:.88rem}
+.cambios ul{margin:6px 0 0 18px;padding:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tinta);color:var(--papel);padding:10px 16px;border-radius:10px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.paleta{display:flex;gap:6px;margin-top:8px}
+.paleta button{width:22px;height:22px;min-height:0;padding:0;border-radius:50%;border:2px solid transparent}
+.paleta button[aria-pressed=true]{border-color:var(--tinta)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <h1 style="font-size:1.3rem">Planeador de rutas</h1>
+  <p class="sub">Solo para el dueño. Entra con tu teléfono y tu PIN de la app.</p>
+  <input id="l-tel" type="tel" inputmode="numeric" placeholder="Teléfono" aria-label="Teléfono" autocomplete="tel">
+  <input id="l-pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="PIN" maxlength="6">
+  <div class="err" id="l-err"></div>
+  <button class="primario" id="l-btn" type="button" style="margin-top:10px;width:100%">Entrar</button>
+</div>
+
+<div class="wrap" id="app" hidden>
+<header>
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">
+    <h1>Planeador de rutas</h1>
+    <div class="nota"><span id="generado"></span> · <button type="button" id="btn-recargar">Recargar datos</button> · <button type="button" id="btn-salir">Salir</button></div>
+  </div>
+  <p class="sub">Agrupa códigos postales en rutas viendo cuántos prospectos y tiendas caen en cada una. Reparto y preventa llevan calendarios distintos. Guardar escribe en la base.</p>
+  <div class="tot" id="tot"></div>
+</header>
+
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><h2>Rutas</h2><button type="button" id="btn-agregar">Agregar ruta</button></div>
+  <div class="rutas" id="rutas"></div>
+</section>
+
+<section>
+  <h2>Qué abarca cada ruta</h2>
+  <p class="nota">Cada polígono es un código postal real. Con «Seleccionar para el mapa» eliges la ruta; tocar un polígono lo pasa a ella y tocarlo otra vez lo deja sin ruta. Un código a medio color reparte sus prospectos por colonia. El gris claro de fondo son códigos sin prospectos ni tiendas.</p>
+  <div class="mapa-caja"><svg id="mapa" role="img" aria-label="Mapa de cobertura por código postal"></svg></div>
+  <div class="leyenda" id="leyenda"></div>
+</section>
+
+<section>
+  <h2>Códigos postales</h2>
+  <div class="barra">
+    <input type="search" id="q" placeholder="Filtrar por código postal o colonia" aria-label="Filtrar">
+    <button type="button" id="btn-limpiar">Quitar asignaciones</button>
+  </div>
+  <div class="tabla-caja"><table><thead><tr>
+    <th>CP</th><th>Colonias</th><th style="text-align:right">Prospectos</th><th style="text-align:right">Tiendas</th><th style="text-align:right">Consumidores</th><th>Ruta</th>
+  </tr></thead><tbody id="filas"></tbody></table></div>
+  <p class="nota" id="pie"></p>
+</section>
+
+<section>
+  <h2>Guardar</h2>
+  <div class="cambios" id="cambios"></div>
+  <div class="barra"><button class="primario" type="button" id="btn-guardar">Guardar rutas</button><button type="button" id="btn-descartar">Descartar cambios</button></div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = window.__CP_CONFIG__ || {};
+  const URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  const LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  const DIAS = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+  const PALETA = ['#e8a91d', '#4f9d69', '#4a86c5', '#c85c8e', '#8e6ac8', '#c8703c', '#3aa6a6', '#7a7a3a'];
+  const PLANTA = { lat: 19.3909758, lng: -99.1249345 };
+
+  let token = sessionStorage.getItem('cp-planeador-token') || '';
+  let datos = null;            // respuesta de planeador_datos
+  let zona = null;             // datos-cp-zona.json
+  let universo = [];           // todos los CP conocidos: los de los datos y los del mapa
+  // estado: rutas; asignado { cp: clave } (cobertura por CP); colonias { coloniaNormalizada: clave };
+  // rangos { clave: [{ desde, hasta }] } (rangos originales que siguen intactos); sel: ruta seleccionada.
+  let estado = null;
+  let base = null;             // foto de lo guardado, para «qué cambia»
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const num = (n) => Number(n || 0).toLocaleString('es-MX');
+  function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 3000); }
+  function normalizar(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+  async function rpc(nombre, cuerpo) {
+    const r = await fetch(URL_API + nombre, { method: 'POST', headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' }, body: JSON.stringify(cuerpo || {}) });
+    return r.json().catch(() => null);
+  }
+
+  // ── Login ─────────────────────────────────────────────────────────────
+  async function entrar() {
+    $('l-err').textContent = '';
+    const r = await rpc('validar_vendedor_pin', { p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value } });
+    if (!r || !r.token) { $('l-err').textContent = (r && r.error) || 'Teléfono o PIN incorrectos.'; return; }
+    token = r.token; sessionStorage.setItem('cp-planeador-token', token);
+    await cargar();
+  }
+  function salir() { token = ''; sessionStorage.removeItem('cp-planeador-token'); $('app').hidden = true; $('login').hidden = false; }
+
+  // ── Datos ─────────────────────────────────────────────────────────────
+  async function cargar() {
+    const r = await rpc('planeador_datos', { p_data: { token } });
+    if (!r || !r.ok) { salir(); $('l-err').textContent = (r && r.error) === 'No autorizado' ? 'Esta página es solo para el dueño.' : ((r && r.error) || 'No se pudieron cargar los datos.'); return; }
+    datos = r;
+    if (!zona) zona = await (await fetch('/datos-cp-zona.json')).json();
+    universo = [...new Set([...datos.cps.map(x => x.cp), ...Object.keys(zona)])].sort();
+    estado = estadoDesde(datos);
+    base = JSON.parse(JSON.stringify(estado));
+    const guardado = leerLocal();
+    if (guardado && guardado.rutas && confirm('Hay cambios sin guardar de una sesión anterior. ¿Conservarlos?')) {
+      estado = { ...estado, rutas: guardado.rutas, asignado: guardado.asignado, colonias: guardado.colonias, rangos: guardado.rangos || {} };
+      if (!estado.rutas.some(r => r.clave === estado.sel)) estado.sel = estado.rutas[0] ? estado.rutas[0].clave : null;
+    } else if (guardado) { try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {} }
+    $('login').hidden = true; $('app').hidden = false;
+    $('generado').textContent = 'Datos de ' + new Date(datos.generado).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+    pintar();
+  }
+
+  // Del servidor al estado de la página. Los rangos se expanden sobre todos los CP conocidos y se
+  // recuerdan: si nadie toca un CP dentro del rango, se guarda como rango, igual que estaba.
+  function estadoDesde(d) {
+    const activas = (d.rutas || []).filter(r => r.activa);
+    const rutas = activas.map((r, i) => ({ clave: 'r' + r.id, id: r.id, nombre: r.nombre, color: r.color || PALETA[i % PALETA.length], dias: (r.dias || []).slice().sort(), diasPreventa: r.diasPreventa && r.diasPreventa.length ? r.diasPreventa.slice().sort() : null, idVendedor: r.idVendedor, vendedor: r.vendedor || '' }));
+    const asignado = {}, colonias = {}, rangos = {};
+    for (const r of activas) {
+      const clave = 'r' + r.id;
+      for (const c of r.cobertura || []) {
+        if (c.tipo === 'cp') {
+          const desde = c.valor, hasta = c.cpHasta || c.valor;
+          for (const cp of universo) if (cp >= desde && cp <= hasta) asignado[cp] = clave;
+          if (hasta !== desde) (rangos[clave] = rangos[clave] || []).push({ desde, hasta });
+          else if (!universo.includes(desde)) asignado[desde] = clave;   // un CP suelto sin datos ni polígono se conserva
+        } else if (c.tipo === 'colonia') colonias[normalizar(c.valor)] = { clave, texto: c.valor };
+      }
+    }
+    return { rutas, asignado, colonias, rangos, sel: rutas.length ? rutas[0].clave : null };
+  }
+  // El borrador solo existe si hay cambios reales: sin ellos, al recargar no se pregunta nada.
+  function guardarLocal() { try { if (hayCambiosLocales()) localStorage.setItem('cp-planeador-v3', JSON.stringify({ generado: datos.generado, rutas: estado.rutas, asignado: estado.asignado, colonias: estado.colonias, rangos: estado.rangos })); else localStorage.removeItem('cp-planeador-v3'); } catch (e) {} }
+  function leerLocal() { try { return JSON.parse(localStorage.getItem('cp-planeador-v3') || 'null'); } catch (e) { return null; } }
+  function hayCambiosLocales() { return JSON.stringify(sinSel(estado)) !== JSON.stringify(sinSel(base)); }
+  function sinSel(e) { const { sel, ...resto } = e; return resto; }
+  function rutaDe(clave) { return estado.rutas.find(r => r.clave === clave) || null; }
+  // Como ruta_para: la colonia manda sobre el CP.
+  function rutaDeFila(cp, colonia) { const c = estado.colonias[normalizar(colonia)]; return (c && c.clave) || estado.asignado[cp] || null; }
+  function filas(x) { return (x.detalle && x.detalle.length) ? x.detalle : [{ colonia: '', prospectos: x.prospectos, tiendas: x.tiendas, consumidores: x.consumidores }]; }
+  // Ruta que más prospectos se lleva de un CP (para el color del mapa cuando el CP no tiene cobertura propia).
+  function rutaMayoritaria(x) {
+    const cuenta = {};
+    for (const f of filas(x)) { const k = rutaDeFila(x.cp, f.colonia); if (k) cuenta[k] = (cuenta[k] || 0) + f.prospectos + f.tiendas; }
+    let mejor = null; for (const k in cuenta) if (!mejor || cuenta[k] > cuenta[mejor]) mejor = k;
+    return mejor;
+  }
+
+  // ── Pintar ────────────────────────────────────────────────────────────
+  function totales() {
+    const t = { sin: { p: 0, ti: 0, co: 0, n: 0 } }; for (const r of estado.rutas) t[r.clave] = { p: 0, ti: 0, co: 0, n: 0 };
+    for (const x of datos.cps) {
+      for (const f of filas(x)) { const s = t[rutaDeFila(x.cp, f.colonia)] || t.sin; s.p += f.prospectos; s.ti += f.tiendas; s.co += f.consumidores; }
+      (t[estado.asignado[x.cp]] || t.sin).n += 1;
+    }
+    return t;
+  }
+  function pintar() {
+    const t = totales();
+    $('tot').innerHTML = estado.rutas.map(r => `<div class="caja" style="border-left:4px solid ${esc(r.color)}"><b>${num(t[r.clave].p)}</b><span>${esc(r.nombre || 'Sin nombre')}</span><i>${t[r.clave].n} CP · ${t[r.clave].ti} tiendas</i></div>`).join('')
+      + `<div class="caja"><b>${num(t.sin.p)}</b><span>Sin ruta</span><i>${t.sin.n} CP · ${t.sin.ti} tiendas</i></div>`;
+    $('rutas').innerHTML = estado.rutas.map(r => {
+      const casillas = (campo, lista) => DIAS.map((d, k) => `<label class="${lista.includes(k) ? 'on' : ''}"><input type="checkbox" data-r="${r.clave}" data-campo="${campo}" data-d="${k}" ${lista.includes(k) ? 'checked' : ''}> ${d}</label>`).join('');
+      const pre = r.diasPreventa || [];
+      const cols = Object.keys(estado.colonias).filter(k => estado.colonias[k].clave === r.clave);
+      const rgs = estado.rangos[r.clave] || [];
+      return `<div class="ruta" style="border-top:3px solid ${esc(r.color)};${estado.sel === r.clave ? 'box-shadow:0 0 0 2px ' + esc(r.color) + ';' : ''}">
+        <input type="text" value="${esc(r.nombre)}" aria-label="Nombre de la ruta" data-r="${r.clave}" data-campo="nombre">
+        <div class="paleta">${PALETA.map(c => `<button type="button" style="background:${c}" aria-label="Color" aria-pressed="${r.color === c}" data-r="${r.clave}" data-color="${c}"></button>`).join('')}</div>
+        <div class="nota" style="margin-top:8px">Reparto</div><div class="dias">${casillas('dias', r.dias)}</div>
+        <div class="nota" style="margin-top:8px">Preventa ${pre.length ? '' : '<i>(sin capturar: visita los días de reparto)</i>'}</div><div class="dias">${casillas('diasPreventa', pre)}</div>
+        ${cols.length ? `<div class="nota" style="margin-top:8px">Por colonia (manda sobre el CP): ${cols.map(k => `${esc(estado.colonias[k].texto)} <button type="button" data-quitarcol="${esc(k)}" aria-label="Quitar la colonia ${esc(estado.colonias[k].texto)}" style="min-height:0;padding:0 6px">×</button>`).join(' ')}</div>` : ''}
+        ${rgs.length ? `<div class="nota" style="margin-top:4px">Rangos: ${rgs.map(g => g.desde + '–' + g.hasta).join(', ')}</div>` : ''}
+        <div class="rcount">${num(t[r.clave].p)} prospectos · ${t[r.clave].n} CP · ${t[r.clave].ti} tiendas${r.vendedor ? ' · ' + esc(r.vendedor) : ''}</div>
+        <div class="barra" style="margin:8px 0 0"><button type="button" data-sel="${r.clave}" aria-pressed="${estado.sel === r.clave}">${estado.sel === r.clave ? 'Seleccionada para el mapa' : 'Seleccionar para el mapa'}</button><button type="button" data-quitar="${r.clave}">Quitar ruta</button></div>
+      </div>`;
+    }).join('');
+    pintarTabla(); pintarMapa(); pintarCambios(); guardarLocal();
+  }
+  function pintarTabla() {
+    const q = normalizar($('q').value);
+    const vis = datos.cps.filter(x => !q || x.cp.includes(q) || (x.colonias || []).some(c => normalizar(c).includes(q)));
+    $('filas').innerHTML = vis.map(x => {
+      const k = estado.asignado[x.cp] || null;
+      const seg = estado.rutas.map(r => `<button type="button" data-cp="${x.cp}" data-set="${r.clave}" aria-pressed="${k === r.clave}" title="${esc(r.nombre)}" style="${k === r.clave ? 'background:' + esc(r.color) + ';font-weight:700;color:#14150f' : ''}">${esc((r.nombre || '?').slice(0, 3))}</button>`).join('')
+        + `<button type="button" class="b0" data-cp="${x.cp}" data-set="" aria-pressed="${!k}">—</button>`;
+      // Filas del CP que se van a otra ruta por colonia.
+      const desvios = filas(x).filter(f => { const c = estado.colonias[normalizar(f.colonia)]; return c && c.clave !== k && (f.prospectos + f.tiendas + f.consumidores) > 0; })
+        .map(f => `${esc(f.colonia)} → ${esc((rutaDe(estado.colonias[normalizar(f.colonia)].clave) || {}).nombre || '')} (${f.prospectos})`);
+      const r = rutaDe(k);
+      return `<tr style="${r ? 'background:' + esc(r.color) + '22' : ''}"><td class="cp">${x.cp}</td><td class="cols">${esc((x.colonias || []).join(' · '))}${desvios.length ? `<div style="color:var(--tinta);font-size:.76rem;margin-top:2px">Por colonia: ${desvios.join(' · ')}</div>` : ''}</td><td class="num">${num(x.prospectos)}</td><td class="num">${x.tiendas || '—'}</td><td class="num">${x.consumidores || '—'}</td><td><span class="seg">${seg}</span></td></tr>`;
+    }).join('');
+    $('pie').textContent = `${vis.length} de ${datos.cps.length} códigos postales · ${num(datos.cps.reduce((s, x) => s + x.prospectos, 0))} prospectos activos · ${datos.sinCp.prospectos} prospectos y ${datos.sinCp.tiendas} tiendas sin CP no entran en ninguna ruta.`;
+  }
+
+  // Mapa: proyección plana del polígono al viewBox; el eje x se estira con cos(lat) para no deformar.
+  let proy = null;
+  function pintarMapa() {
+    const svg = $('mapa');
+    if (!proy) {
+      let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+      const walk = (a, f) => { if (typeof a[0] === 'number') f(a); else a.forEach(b => walk(b, f)); };
+      for (const cp in zona) walk(zona[cp], ([lng, lat]) => { minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat); minLng = Math.min(minLng, lng); maxLng = Math.max(maxLng, lng); });
+      const kx = Math.cos((minLat + maxLat) / 2 * Math.PI / 180), W = 1000, H = Math.round(W * (maxLat - minLat) / ((maxLng - minLng) * kx));
+      proy = { W, H, x: (lng) => (lng - minLng) / (maxLng - minLng) * W, y: (lat) => H - (lat - minLat) / (maxLat - minLat) * H };
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    }
+    const d = (multi) => multi.map(poly => poly.map(anillo => 'M' + anillo.map(([lng, lat]) => proy.x(lng).toFixed(1) + ' ' + proy.y(lat).toFixed(1)).join('L') + 'Z').join('')).join('');
+    const porCp = Object.fromEntries(datos.cps.map(x => [x.cp, x]));
+    let out = '';
+    for (const cp in zona) {
+      const x = porCp[cp]; const propia = rutaDe(estado.asignado[cp]);
+      const porColonia = !propia && x ? rutaDe(rutaMayoritaria(x)) : null;
+      const r = propia || porColonia;
+      const activo = !!x || !!propia;
+      out += `<path class="${activo ? 'cp' : 'fondo'}" data-cp="${cp}" d="${d(zona[cp])}" fill="${r ? r.color : (x ? '#bdbdbd' : '')}"${porColonia ? ' fill-opacity="0.45"' : ''}><title>${cp}${x ? ' · ' + num(x.prospectos) + ' prospectos' : ''}${propia ? ' · ' + esc(propia.nombre) : (porColonia ? ' · ' + esc(porColonia.nombre) + ' (por colonia)' : '')}</title></path>`;
+    }
+    out += `<circle cx="${proy.x(PLANTA.lng).toFixed(1)}" cy="${proy.y(PLANTA.lat).toFixed(1)}" r="6" fill="#14150f" stroke="#ffd200" stroke-width="2"><title>Planta</title></circle>`;
+    svg.innerHTML = out;
+    $('leyenda').innerHTML = estado.rutas.map(r => `<span><i style="background:${esc(r.color)}"></i>${esc(r.nombre)}</span>`).join('') + '<span><i style="background:#bdbdbd"></i>Sin ruta</span>';
+  }
+
+  // Cobertura a guardar: rangos intactos como rango, el resto como CP sueltos, y las colonias.
+  function coberturaDe(clave) {
+    const rgs = estado.rangos[clave] || [];
+    const dentro = (cp) => rgs.some(g => cp >= g.desde && cp <= g.hasta);
+    const cps = Object.keys(estado.asignado).filter(cp => estado.asignado[cp] === clave && !dentro(cp)).sort();
+    const cols = Object.keys(estado.colonias).filter(k => estado.colonias[k].clave === clave).map(k => estado.colonias[k].texto).sort();
+    return { rgs, cps, cols };
+  }
+  function cpsDe(e, clave) { return Object.keys(e.asignado).filter(cp => e.asignado[cp] === clave); }
+  function pintarCambios() {
+    const items = [];
+    for (const r of estado.rutas) {
+      const b = base.rutas.find(x => x.id && x.id === r.id);
+      if (!b) { items.push(`Ruta nueva «${esc(r.nombre)}» con ${cpsDe(estado, r.clave).length} CP`); continue; }
+      if (b.nombre !== r.nombre) items.push(`«${esc(b.nombre)}» pasa a llamarse «${esc(r.nombre)}»`);
+      if (b.color !== r.color) items.push(`${esc(r.nombre)}: cambia de color`);
+      if (JSON.stringify(b.dias) !== JSON.stringify(r.dias)) items.push(`${esc(r.nombre)}: reparto ${b.dias.map(k => DIAS[k]).join(' ') || '(ninguno)'} → ${r.dias.map(k => DIAS[k]).join(' ') || '(ninguno)'}`);
+      if (JSON.stringify(b.diasPreventa) !== JSON.stringify(r.diasPreventa)) items.push(`${esc(r.nombre)}: preventa ${(b.diasPreventa || []).map(k => DIAS[k]).join(' ') || '(la de reparto)'} → ${(r.diasPreventa || []).map(k => DIAS[k]).join(' ') || '(la de reparto)'}`);
+      const antes = cpsDe(base, r.clave), ahora = cpsDe(estado, r.clave);
+      const entran = ahora.filter(c => !antes.includes(c)), salen = antes.filter(c => !ahora.includes(c));
+      if (entran.length) items.push(`${esc(r.nombre)}: entran ${entran.length} CP (${entran.slice(0, 6).join(', ')}${entran.length > 6 ? '…' : ''})`);
+      if (salen.length) items.push(`${esc(r.nombre)}: salen ${salen.length} CP (${salen.slice(0, 6).join(', ')}${salen.length > 6 ? '…' : ''})`);
+      for (const g of base.rangos[r.clave] || []) if (!(estado.rangos[r.clave] || []).some(x => x.desde === g.desde && x.hasta === g.hasta)) items.push(`${esc(r.nombre)}: el rango ${g.desde}–${g.hasta} se guarda como códigos sueltos`);
+      for (const k in base.colonias) if (base.colonias[k].clave === r.clave && !(estado.colonias[k] && estado.colonias[k].clave === r.clave)) items.push(`${esc(r.nombre)}: deja de cubrir la colonia ${esc(base.colonias[k].texto)}`);
+    }
+    for (const b of base.rutas) if (!estado.rutas.some(r => r.id === b.id)) items.push(`«${esc(b.nombre)}» se desactiva (sus pedidos la siguen citando)`);
+    $('cambios').innerHTML = items.length ? `<b>Qué cambia al guardar</b><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><p class="nota">Las tiendas que ya tienen ruta no cambian solas: eso es «Recalcular tiendas», que llega en la siguiente entrega.</p>` : '<b>Sin cambios.</b> Lo que ves es lo que está guardado.';
+    $('btn-guardar').disabled = !items.length;
+  }
+
+  // Mover un CP: solo toca ese CP. Si estaba dentro de un rango de su ruta, el rango se rompe
+  // (sus demás CP siguen en la ruta y se guardan sueltos).
+  function asignarCp(cp, clave) {
+    const antes = estado.asignado[cp];
+    if (antes === clave) return;
+    if (antes && estado.rangos[antes]) estado.rangos[antes] = estado.rangos[antes].filter(g => !(cp >= g.desde && cp <= g.hasta));
+    if (clave) estado.asignado[cp] = clave; else delete estado.asignado[cp];
+  }
+
+  // ── Guardar ───────────────────────────────────────────────────────────
+  async function guardar() {
+    if (estado.rutas.some(r => !r.nombre.trim())) { toast('Hay una ruta sin nombre.'); return; }
+    const rutas = estado.rutas.map(r => {
+      const cob = coberturaDe(r.clave);
+      return { ...(r.id ? { id: r.id } : {}), nombre: r.nombre.trim(), color: r.color, dias: r.dias, diasPreventa: r.diasPreventa && r.diasPreventa.length ? r.diasPreventa : null, activa: true,
+        cobertura: cob.rgs.map(g => ({ tipo: 'cp', valor: g.desde, cpHasta: g.hasta }))
+          .concat(cob.cps.map(cp => ({ tipo: 'cp', valor: cp })))
+          .concat(cob.cols.map(c => ({ tipo: 'colonia', valor: c }))) };
+    });
+    $('btn-guardar').disabled = true;
+    const r = await rpc('set_rutas', { p_data: { token, rutas } });
+    if (!r || !r.ok) { toast('No se guardó: ' + ((r && r.error) || 'sin respuesta')); $('btn-guardar').disabled = false; return; }
+    try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {}
+    await cargar();
+    toast(`Guardadas ${r.rutas} rutas.`);
+  }
+
+  // ── Eventos ───────────────────────────────────────────────────────────
+  $('l-btn').addEventListener('click', entrar);
+  $('l-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+  $('btn-salir').addEventListener('click', salir);
+  $('btn-recargar').addEventListener('click', () => { if (!hayCambiosLocales() || confirm('Recargar descarta los cambios sin guardar. ¿Seguir?')) { try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {} cargar(); } });
+  $('btn-guardar').addEventListener('click', guardar);
+  $('btn-descartar').addEventListener('click', () => { try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {} estado = JSON.parse(JSON.stringify(base)); pintar(); toast('Cambios descartados.'); });
+  $('btn-limpiar').addEventListener('click', () => { if (confirm('¿Quitar todas las asignaciones por CP? Las reglas por colonia se quedan.')) { estado.asignado = {}; estado.rangos = {}; pintar(); } });
+  $('btn-agregar').addEventListener('click', () => { const n = estado.rutas.length + 1; const clave = 'n' + Date.now(); estado.rutas.push({ clave, id: null, nombre: 'Ruta ' + n, color: PALETA[(n - 1) % PALETA.length], dias: [], diasPreventa: null, idVendedor: null, vendedor: '' }); estado.sel = clave; pintar(); });
+  $('q').addEventListener('input', pintarTabla);
+  $('rutas').addEventListener('click', (e) => {
+    const s = e.target.closest('button[data-sel]'); if (s) { estado.sel = s.dataset.sel; pintar(); return; }
+    const c = e.target.closest('button[data-color]'); if (c) { rutaDe(c.dataset.r).color = c.dataset.color; pintar(); return; }
+    const qc = e.target.closest('button[data-quitarcol]'); if (qc) { const k = qc.dataset.quitarcol; if (confirm(`¿Dejar de cubrir la colonia ${estado.colonias[k].texto}? Sus prospectos pasan a la ruta de su CP.`)) { delete estado.colonias[k]; pintar(); } return; }
+    const q = e.target.closest('button[data-quitar]'); if (q && confirm('¿Quitar esta ruta? Sus CP y colonias quedan sin ruta; al guardar, la ruta se desactiva.')) {
+      const k = q.dataset.quitar;
+      for (const cp in estado.asignado) if (estado.asignado[cp] === k) delete estado.asignado[cp];
+      for (const col in estado.colonias) if (estado.colonias[col].clave === k) delete estado.colonias[col];
+      delete estado.rangos[k];
+      estado.rutas = estado.rutas.filter(r => r.clave !== k); if (estado.sel === k) estado.sel = estado.rutas[0] ? estado.rutas[0].clave : null; pintar();
+    }
+  });
+  $('rutas').addEventListener('change', (e) => {
+    const c = e.target.closest('input[type=checkbox]'); if (!c) return;
+    const r = rutaDe(c.dataset.r), k = Number(c.dataset.d);
+    if (c.dataset.campo === 'dias') r.dias = (c.checked ? [...new Set([...r.dias, k])] : r.dias.filter(x => x !== k)).sort();
+    else { const pre = r.diasPreventa || []; const nueva = (c.checked ? [...new Set([...pre, k])] : pre.filter(x => x !== k)).sort(); r.diasPreventa = nueva.length ? nueva : null; }
+    pintar();
+  });
+  $('rutas').addEventListener('input', (e) => { const i = e.target.closest('input[data-campo=nombre]'); if (!i) return; rutaDe(i.dataset.r).nombre = i.value; guardarLocal(); pintarCambios(); });
+  $('filas').addEventListener('click', (e) => { const b = e.target.closest('button[data-cp]'); if (!b) return; asignarCp(b.dataset.cp, b.dataset.set || null); pintar(); });
+  $('mapa').addEventListener('click', (e) => {
+    const p = e.target.closest('path.cp'); if (!p || !estado.sel) return;
+    const cp = p.dataset.cp;
+    asignarCp(cp, estado.asignado[cp] === estado.sel ? null : estado.sel);
+    pintar();
+  });
+
+  if (token) cargar(); else $('login').hidden = false;
+})();
+</script>
+</body>
+</html>
