@@ -10138,12 +10138,34 @@ function pintarDashboard() {
       <div style="text-align:right;font-weight:800;color:${avancePct>=100?'#4caf50':'var(--amarillo)'};font-size:0.8rem;">${avancePct}% del objetivo</div>`
     : '<div style="color:var(--suave);font-size:0.74rem;">Define las cuotas por vendedor (abajo) para ver el objetivo del mes.</div>';
 
+  // Bruto y neto (dashboard_resumen.ingresos): bruto − descuentos = neto; neto + envío cobrado = total cobrado.
+  const I = D.ingresos || null;
+  const dinero = (n) => '$' + (Number(n) || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const filaI = (lbl, val, signo, fuerte) => `
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:0.78rem;padding:3px 0;${fuerte ? 'border-top:1px solid var(--gris3);margin-top:4px;padding-top:7px;font-weight:800;color:var(--blanco);' : 'color:var(--suave);'}">
+      <span>${lbl}</span><span>${signo || ''}${dinero(val)}</span>
+    </div>`;
+  const bloqueIngresos = I
+    ? filaI('Ingreso bruto', I.bruto) +
+      filaI('Descuento de producto', I.desc_producto, '− ') +
+      filaI('Cupones', I.cupones, '− ') +
+      filaI('Crunchy Club (canje)', I.canje, '− ') +
+      filaI('Ingreso neto', I.neto, '', true) +
+      filaI('Envío: tarifa', I.envio_tarifa) +
+      filaI('Envío absorbido (envío gratis)', I.envio_absorbido, '− ') +
+      filaI('Envío cobrado', I.envio_cobrado, '+ ') +
+      filaI('Total cobrado', I.cobrado, '', true) +
+      (I.con_filtro ? '<div style="font-size:0.66rem;color:var(--suave);margin-top:6px;">Con filtro de producto: cupones y envío no se reparten por sabor.</div>' : '')
+    : '<div style="color:var(--suave);font-size:0.74rem;">Sin desglose de ingresos.</div>';
+
   cont.innerHTML =
-    card(`Ventas del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
+    card(`Ingreso neto del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
       `<div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
+       <div style="font-size:0.66rem;color:var(--suave);margin-top:4px;">Producto después de descuentos, sin envío</div>
        <div style="margin:4px 0 12px;">${deltaTxt}</div>
        <div style="display:flex;align-items:flex-end;gap:2px;height:70px;">${barrasDia}</div>
-       <div style="font-size:0.58rem;color:var(--suave);text-align:center;margin-top:2px;">ventas por día del mes</div>`) +
+       <div style="font-size:0.58rem;color:var(--suave);text-align:center;margin-top:2px;">ingreso neto por día</div>`) +
+    card('Bruto y neto', bloqueIngresos) +
     card('Objetivo vs avance', objBloque) +
     card('Estatus de pedidos',
       `<div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -10153,7 +10175,7 @@ function pintarDashboard() {
       </div>`) +
     card('Top sabores (piezas)', barrasSab) +
     card('Top presentaciones (piezas)', barrasPres) +
-    card('Por vendedor (ventas del mes vs cuota)', barrasVend);
+    card('Por vendedor (ingreso neto vs cuota)', barrasVend);
 }
 
 // Respaldo de copiado cuando no hay navigator.clipboard (solo existe en https):
@@ -10184,7 +10206,7 @@ window.copiarResumenDia = function() {
   const vendTxt = pv.map(v => `• ${v.nombre||('Vend '+v.id_vendedor)}: $${(Number(v.ventas)||0).toLocaleString('es-MX')}`).join('\n');
   const txt =
     `*Crunchy Paps — Resumen*\n${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})}\n\n` +
-    `Ventas del mes (MTD): *$${mtdAct.toLocaleString('es-MX')}*` +
+    `Ingreso neto del mes (MTD): *$${mtdAct.toLocaleString('es-MX')}*` +
     (deltaPct!==null?` (${deltaPct>=0?'▲':'▼'}${Math.abs(deltaPct)}% vs mes ant.)`:'') + `\n` +
     (avance!==null?`Avance objetivo: ${avance}% (de $${obj.toLocaleString('es-MX')})\n`:'') +
     `Por entregar: ${Number(D.por_entregar)||0}  ·  Por cobrar: $${(Number(D.por_cobrar_monto)||0).toLocaleString('es-MX')}\n` +
@@ -11608,9 +11630,10 @@ async function renderPedidosVendedor() {
       if (p.estatusPedido === 'Cancelado') return;
       if (p.tipoInterno) { pedidosMes++; return; } // internos cuentan en # no en $
       pedidosMes++;
-      ventasMes += p.total;
-      if (p.estatusPago === 'Pagado') ventasMesPagadas += p.total;
-      else ventasMesPendientes += p.total;
+      const neto = (Number(p.subtotal) || 0) - (Number(p.descuento) || 0); // ingreso neto, sin envío (19 sep 2026)
+      ventasMes += neto;
+      if (p.estatusPago === 'Pagado') ventasMesPagadas += neto;
+      else ventasMesPendientes += neto;
     });
 
     // Cuota (por ahora 0 — la calcularemos cuando migremos vendedores)
@@ -11693,7 +11716,7 @@ function pintarVistaPedidosVendedor() {
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
-            <div style="font-size:0.7rem;font-weight:700;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ventas del mes</div>
+            <div style="font-size:0.7rem;font-weight:700;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ingreso neto del mes</div>
           </div>
           ${esAdminUser ? `
           <button onclick="abrirSetCuota()" style="background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--amarillo);cursor:pointer;white-space:nowrap;">
