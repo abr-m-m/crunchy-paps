@@ -1729,16 +1729,12 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
   </div>
   <div id="club-admin-cfg" style="display:none;"></div>
   <div id="mayoreo-admin-cfg" style="display:none;"></div>
+  <!-- Sin niveles (Abraham, 18 sep): compras y generas puntos. Los niveles prometían descuentos
+       que ningún cobro aplicaba. -->
   <div class="premia-hero">
-    <div class="premia-nivel-badge" id="p-nivel">Bronce</div>
     <div class="premia-num" id="p-puntos">0</div>
     <div class="premia-lbl">PUNTOS DISPONIBLES</div>
-    <div class="premia-prog-wrap">
-      <div class="premia-prog" id="p-prog" style="width:0%"></div>
-    </div>
-    <div class="premia-prog-labels">
-      <span>Bronce</span><span id="p-meta-lbl">200 pts → Plata</span><span>Oro</span>
-    </div>
+    <div id="p-equiv" style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-top:6px;position:relative;"></div>
   </div>
   <div class="premia-stats">
     <div class="premia-stat">
@@ -1759,33 +1755,11 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     </div>
   </div>
   <div class="premia-beneficios">
-    <h3>BENEFICIOS</h3>
-    <div class="bene-card activo">
-      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
-      <div>
-        <div class="bene-titulo">Acceso al catálogo completo</div>
-        <div class="bene-desc">Disponible desde el nivel Bronce</div>
-      </div>
-      <span class="bene-lock" style="color:#4caf50">✓ Activo</span>
-    </div>
-    <div class="bene-card" id="bene-plata">
-      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
-      <div>
-        <div class="bene-titulo">Descuento exclusivo 5%</div>
-        <div class="bene-desc">Requiere nivel Plata (200 puntos)</div>
-      </div>
-      <span class="bene-lock" id="bene-plata-lock">200 pts</span>
-    </div>
-    <div class="bene-card" id="bene-oro">
-      <span class="bene-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6H3v12"/><path d="M14 9h4l3 3v6h-7"/><circle cx="7.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg></span>
-      <div>
-        <div class="bene-titulo">Envío gratis + Descuento 10%</div>
-        <div class="bene-desc">Requiere nivel Oro (500 puntos)</div>
-      </div>
-      <span class="bene-lock" id="bene-oro-lock">500 pts</span>
-    </div>
-    <div style="margin-top:16px;background:var(--gris);border-radius:12px;padding:12px 14px;font-size:0.78rem;font-weight:700;color:var(--suave);text-align:center;">
-      Ganas <strong style="color:var(--amarillo)">1 punto</strong> por cada <strong style="color:var(--amarillo)">$10</strong> de compra
+    <h3>CÓMO FUNCIONA</h3>
+    <div style="background:var(--gris);border-radius:12px;padding:14px;font-size:0.8rem;font-weight:600;color:var(--suave);line-height:1.55;">
+      <div style="font-size:0.95rem;font-weight:800;color:var(--blanco);margin-bottom:6px;">Compras y generas puntos.</div>
+      Ganas <strong style="color:var(--amarillo)">1 punto</strong> por cada <strong style="color:var(--amarillo)">$10</strong> de producto (sin envío).<br>
+      Si pagas en línea, llegan al momento; si pagas al recibir, cuando se registra tu pago. En tiendas, al entregar el pedido.
     </div>
   </div>
 
@@ -1793,7 +1767,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
   <div style="padding:0 16px 16px;">
     <div style="background:var(--gris);border-radius:14px;padding:16px;">
       <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">CANJEAR PUNTOS</div>
-      <div style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-bottom:14px;">100 puntos = $10 de descuento</div>
+      <div id="canje-equiv" style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-bottom:14px;">10 puntos = $3 en producto</div>
       <div style="background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
         <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);line-height:1;"><span id="canje-disponibles">0</span></div>
         <div style="font-size:0.68rem;font-weight:800;color:var(--suave);letter-spacing:1px;">PUNTOS ACUMULADOS</div>
@@ -1802,6 +1776,17 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         El canje estará disponible muy pronto.<br>
         <span style="color:#777;font-weight:600;">Tus puntos se siguen acumulando y no caducan.</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Movimientos de puntos: cuántos dio cada pedido y el saldo (mis_puntos) -->
+  <div class="club-cliente" style="padding:0 16px 90px;">
+    <div style="background:var(--gris);border-radius:14px;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px;">
+        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;">MIS PUNTOS</div>
+        <div style="font-size:0.78rem;font-weight:800;color:var(--blanco);margin-bottom:6px;">Saldo: <span id="club-movs-saldo" style="color:var(--amarillo);">0</span></div>
+      </div>
+      <div id="club-movs"></div>
     </div>
   </div>
 </div>
@@ -9316,42 +9301,63 @@ window.navegar = function(seccion) {
 function renderPremia() {
   // Admin: ocultar las tarjetas de cliente y mostrar solo el panel de reglas.
   const _esAdminCfg = (typeof esAdminEstricto === 'function' && esAdminEstricto());
-  ['.premia-hero', '.premia-stats', '.premia-beneficios'].forEach(sel => {
+  ['.premia-hero', '.premia-stats', '.premia-beneficios', '.club-cliente'].forEach(sel => {
     const el = document.querySelector(sel); if (el) el.style.display = _esAdminCfg ? 'none' : '';
   });
   if (_esAdminCfg) { renderClubAdminCfg(); renderMayoreoAdminCfg(); return; }
+  cargarMisPuntos();
 
   document.getElementById('p-puntos').textContent = puntos;
-  const nivel = puntos >= 500 ? 'Oro' : puntos >= 200 ? 'Plata' : 'Bronce';
-  document.getElementById('p-nivel').textContent = nivel;
   const dispEl = document.getElementById('canje-disponibles'); if(dispEl) dispEl.textContent = puntos;
 
-  // Barra de progreso
-  let prog = 0, meta = '200 pts → Plata';
-  if (puntos < 200) { prog = (puntos/200)*100; meta = (200-puntos) + ' pts → Plata'; }
-  else if (puntos < 500) { prog = ((puntos-200)/300)*100; meta = (500-puntos) + ' pts → Oro'; }
-  else { prog = 100; meta = 'Nivel Oro alcanzado'; }
-  document.getElementById('p-prog').style.width = prog + '%';
-  document.getElementById('p-meta-lbl').textContent = meta;
-
-  // Stats
-  if (clienteActual) {
-    // Se llenan en cargarDatosCliente
-  }
-
-  // Beneficios
-  if (puntos >= 200) {
-    document.getElementById('bene-plata').classList.add('activo');
-    document.getElementById('bene-plata-lock').textContent = '✓ Activo';
-    document.getElementById('bene-plata-lock').style.color = '#4caf50';
-  }
-  if (puntos >= 500) {
-    document.getElementById('bene-oro').classList.add('activo');
-    document.getElementById('bene-oro-lock').textContent = '✓ Activo';
-    document.getElementById('bene-oro-lock').style.color = '#4caf50';
-  }
-
   renderClubAdminCfg();
+}
+
+// ── Crunchy Club: saldo y movimientos del cliente (mis_puntos) ──
+// Cada pedido dice cuántos puntos dio; el saldo es la suma del ledger, como en el servidor.
+const MIS_PUNTOS_TIPO = { generacion: 'Pedido', reversion: 'Cancelación', canje: 'Canje', devolucion: 'Devolución de canje', vencimiento: 'Vencimiento', ajuste: 'Ajuste' };
+async function cargarMisPuntos() {
+  const cont = document.getElementById('club-movs');
+  const saldoEl = document.getElementById('club-movs-saldo');
+  if (!cont) return;
+  const nota = (txt) => { cont.innerHTML = ''; const d = document.createElement('div'); d.style.cssText = 'font-size:0.78rem;font-weight:600;color:var(--suave);text-align:center;padding:10px 0;'; d.textContent = txt; cont.appendChild(d); };
+  // La equivalencia del canje sale de las reglas, no de un texto fijo.
+  supabaseCall('POST', 'rpc/get_lealtad_config', {}).then(cfg => {
+    const v = Number(cfg?.redencion?.valor_punto_mxn), el = document.getElementById('canje-equiv');
+    if (el && v > 0) el.textContent = `10 puntos = $${(10 * v).toLocaleString('es-MX', { maximumFractionDigits: 2 })} en producto`;
+    const eq = document.getElementById('p-equiv');
+    if (eq && v > 0) eq.textContent = `Equivalen a $${(puntos * v).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} en producto`;
+  }).catch(() => {});
+  if (!tokenCliente()) { nota('Verifica tu número para ver tus puntos.'); return; }
+  nota('Cargando…');
+  let r;
+  try { r = await supabaseCall('POST', 'rpc/mis_puntos', { p_token: tokenCliente() }); } catch (e) { r = null; }
+  if (!r || !r.ok) { nota(sesionExpirada(r) ? 'Tu sesión venció. Vuelve a entrar para ver tus puntos.' : 'No se pudieron cargar tus puntos.'); return; }
+  if (saldoEl) saldoEl.textContent = Number(r.saldo || 0).toLocaleString('es-MX');
+  const movs = r.movimientos || [];
+  if (!movs.length) { nota('Aún no tienes movimientos. Tus puntos aparecerán aquí con cada pedido.'); return; }
+  cont.innerHTML = '';
+  for (const m of movs) {
+    const fila = document.createElement('div');
+    fila.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--gris3);';
+    const izq = document.createElement('div');
+    const tit = document.createElement('div');
+    tit.style.cssText = 'font-size:0.8rem;font-weight:700;color:var(--blanco);';
+    tit.textContent = (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento') + (m.consecutivo ? ' ' + m.consecutivo : '');
+    const sub = document.createElement('div');
+    sub.style.cssText = 'font-size:0.68rem;font-weight:600;color:var(--suave);margin-top:2px;';
+    const cuando = m.fecha ? new Date(m.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const detalle = m.tipo === 'generacion' && Number(m.monto) > 0 ? `$${Number(m.monto).toLocaleString('es-MX')} de producto`
+                  : m.tipo === 'ajuste' ? 'Reinicio del Club con las reglas nuevas' : '';
+    sub.textContent = [cuando, detalle].filter(Boolean).join(' · ');
+    izq.append(tit, sub);
+    const pts = document.createElement('div');
+    const n = Number(m.puntos || 0);
+    pts.style.cssText = `font-family:'Archivo',sans-serif;font-size:1rem;white-space:nowrap;color:${n > 0 ? 'var(--amarillo)' : 'var(--suave)'};`;
+    pts.textContent = (n > 0 ? '+' : '') + n.toLocaleString('es-MX') + ' pts';
+    fila.append(izq, pts);
+    cont.appendChild(fila);
+  }
 }
 
 // ── Panel admin: reglas del Crunchy Club (solo admin estricto, no mostrador) ──
@@ -9383,7 +9389,7 @@ async function renderClubAdminCfg() {
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
       <div style="font-size:0.72rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Reglas del Club (admin)</div>
-      ${fila('Puntos por peso', '0.01 = 1 punto por cada $100', inp('cfg-ppp', g.puntos_por_peso, '0.01'))}
+      ${fila('Puntos por peso', '0.1 = 1 punto por cada $10 de producto, sin envío', inp('cfg-ppp', g.puntos_por_peso, '0.01'))}
       ${fila('Valor del punto al canjear ($)', 'cuánto descuenta 1 punto', inp('cfg-vpm', r.valor_punto_mxn, '0.01'))}
       ${fila('% máx. del pedido con puntos', 'nunca llega a 100%', inp('cfg-pct', r.pct_max_pedido, '1'))}
       ${fila('Pago mínimo en $', 'siempre debe quedar un cobro real', inp('cfg-pmin', r.pago_minimo_mxn, '1'))}
@@ -9395,7 +9401,8 @@ async function renderClubAdminCfg() {
 window.guardarLealtadCfg = async function() {
   const num = (id) => { const v = parseFloat(document.getElementById(id)?.value); return isNaN(v) ? null : v; };
   const payload = {
-    generacion: { activo: true, base: 'total', puntos_por_peso: num('cfg-ppp') },
+    // 'neto' = producto menos descuentos, sin envío (Club fase 1). Con 'total' contaba el envío.
+    generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp') },
     redencion:  { activo: true, valor_punto_mxn: num('cfg-vpm'), pct_max_pedido: num('cfg-pct'), pago_minimo_mxn: num('cfg-pmin') }
   };
   try {
