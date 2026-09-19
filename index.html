@@ -6426,6 +6426,8 @@ function avisoEnvioCDMX() {
 function repintarInfoEntrega() {
   if (metodoEntrega === 'paqueteria') setEntrega('paqueteria');
 }
+// El oninput del C.P. la llama desde el HTML: sin esto, ReferenceError en consola.
+window.repintarInfoEntrega = repintarInfoEntrega;
 
 window.setEntrega = function(id) {
   // Si intenta elegir paquetería, validar mínimo
@@ -7628,6 +7630,12 @@ Sampling, Consumo, Demo, Regalo o Merma.`
     // v2.8: registrar pedido via Supabase RPC crear_pedido (atómico)
     const payload = {
       canal,
+      // 18 sep 2026: con sesión de vendedor, crear_pedido cobra el nivel que dice
+      // esta clave (sin ella, consumidor). Faltaba: una venta de vendedor a tienda
+      // o el 500g de mostrador volvían con precio_cambiado. Mismo criterio que getPrecio.
+      tipoCliente: !esVendedor ? tipoPedido
+        : (['tienda', 'restaurante', 'mayorista'].includes(tipoPedido) ? tipoPedido
+          : ((tipoPedido === 'mostrador' || vendedorInfo?.rol === 'Mostrador') ? 'mostrador' : 'consumidor')),
       idempotencyKey,
       idCliente: idCliente || null,
       nombreCliente: nombre,
@@ -7640,8 +7648,8 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       descuento: descuentoCupon,
       cuponCodigo: _cuponEnCarrito?.codigo || '',
       tokenCliente: (typeof tokenCliente === 'function' ? tokenCliente() : ''),
-      // 17 sep 2026: crear_pedido cobra el env�o por esta clave. Sin ella el
-      // servidor calculaba $0 de env�o y rechazaba con precio_cambiado.
+      // 17 sep 2026: crear_pedido cobra el envío por esta clave. Sin ella el
+      // servidor calculaba $0 de envío y rechazaba con precio_cambiado.
       metodoEntrega: (tipoPedido === 'consumidor' && !esPedidoInterno) ? metodoEntrega : 'coordinar',
       // v2.10: notas enriquecidas con método de entrega (solo consumidor)
       notas: (() => {
@@ -14024,13 +14032,14 @@ function repartoFila(p, acciones) {
   const pagado = (p.estatusPago || '') === 'Pagado';
   const est = p.estatusPedido === 'Entregado' ? '<span style="color:#4caf50;font-weight:800;">Entregado</span>'
     : p.estatusPedido === 'En camino' ? '<span style="color:var(--amarillo);font-weight:800;">En camino</span>' : '';
-  const armado = p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>';
+  // La marca de Armado solo importa antes de salir: en camino o entregado ya no se enseña.
+  const armado = p.estatusPedido !== 'En proceso' ? '' : (p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>');
   const dist = p.entregaDistanciaM != null ? (p.entregaFueraDelPunto
     ? `<span style="color:var(--rojo);">fuera del punto, a ${p.entregaDistanciaM} m</span>` : `a ${p.entregaDistanciaM} m`) : '';
   return `<div style="display:flex;gap:10px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid var(--gris3);">
     <div style="flex:1;min-width:0;cursor:pointer;" onclick="verDetallePedido(${p.id})">
       <div style="font-weight:800;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.consecutivo || '')} · ${rutaEsc(p.cliente || '')}</div>
-      <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--amarillo);">cobrar</b>'} · ${armado}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
+      <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--amarillo);">cobrar</b>'}${armado ? ' · ' + armado : ''}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
     </div>
     ${acciones || ''}
   </div>`;
@@ -16411,8 +16420,9 @@ async function aplicarPermisosNavbar() {
       : ['catalogo','premia','pedidos','cuenta'];
   }
 
-  // Para admin SIEMPRE mostrar todo (no se restringe)
-  if (esAdmin && esAdmin()) {
+  // Para admin SIEMPRE mostrar todo (no se restringe). Estricto: el mostrador
+  // ve su lista, no toda la barra (esAdmin() lo incluye para otras cosas).
+  if (esAdminEstricto()) {
     _seccionesPermitidas = Object.keys(NAV_ITEM_POR_SECCION);
   }
 

@@ -87,6 +87,10 @@ await rpc('registrar_o_actualizar_cliente', { p_data: { telefono: tel, nombre: '
 const leerClientes = async () => (await rpc('obtener_clientes', { p_data: { token: ana?.token, limit: 500 } })).json?.clientes || [];
 const cli = (await leerClientes()).find(c => c.telefono === tel);
 await rpc('aprobar_cliente_b2b', { p_id_cliente: Number(cli?.id), p_aprobar: true, p_actor: 'probar-ruta-del-dia', p_token: ana?.token });
+// Un prospecto nuevo por corrida: cada corrida visita uno y el descanso de 6 días lo saca de la
+// lista, así que con los del seed la prueba se quedaba sin prospectos que visitar.
+const nuevo = (await rpc('crear_prospecto', { p_data: { token: ana?.token, nombre_negocio: 'Prospecto ruta prueba ' + tel, tipo_negocio: 'Tienda', codigo_postal: '08300', colonia: 'Santa Anita', municipio: 'Iztacalco', estado: 'CDMX', latitud: 19.3985, longitud: -99.1125, coordenadas: '19.3985,-99.1125', score: 5, estatus: 'pendiente', num_visitas: 0, origen: 'prueba' } })).json;
+ok(nuevo?.ok === true && nuevo.id, `prospecto fresco de la corrida: ${nuevo?.id ?? nuevo?.error}`);
 const a1 = (await rpc('ruta_del_dia', { p_data: { token: ana?.token, idRuta: R?.id, fecha: hoy } })).json;
 const clientesDeR = (await leerClientes()).filter(c => Number(c.id_ruta) === Number(R?.id) && c.aprobado_b2b && [2, 3, 4].includes(Number(c.tipo_id))).length;
 const cliEnLista = (a1?.paradas || []).filter(p => p.tipo === 'cliente');
@@ -94,7 +98,8 @@ ok(a1?.ok === true && a1.veTodas === true && a1.ruta?.id === R?.id, `Ana ve ${a1
 ok(cliEnLista.length === Math.min(clientesDeR, 60) && cliEnLista.some(p => p.id === cli?.id), `clientes de la ruta en la lista: ${cliEnLista.length} de ${clientesDeR}, incluido el de prueba`);
 
 // 8. Check del día: visitar un prospecto lo marca y no lo saca de la lista.
-const objetivo = (a1?.paradas || []).find(p => p.tipo === 'prospecto' && !p.visitadaHoy && p.lat != null);
+const objetivo = (a1?.paradas || []).find(p => p.tipo === 'prospecto' && Number(p.id) === Number(nuevo?.id));
+ok(!!objetivo && !objetivo.visitadaHoy, `el prospecto fresco entra en la lista de ${R?.nombre}`);
 const antes = a1?.avance?.visitadas ?? 0;
 const vp = (await rpc('registrar_visita', { p_data: { token: ana?.token, idProspecto: objetivo?.id, resultado: 'no_estaba', lat: objetivo?.lat, lng: objetivo?.lng } })).json;
 const a2 = (await rpc('ruta_del_dia', { p_data: { token: ana?.token, idRuta: R?.id, fecha: hoy } })).json;

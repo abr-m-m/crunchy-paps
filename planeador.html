@@ -205,7 +205,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   // ── Datos ─────────────────────────────────────────────────────────────
   async function cargar() {
     const r = await rpc('planeador_datos', { p_data: { token } });
-    if (!r || !r.ok) { salir(); $('l-err').textContent = (r && r.error) === 'No autorizado' ? 'Esta página es solo para el dueño.' : ((r && r.error) || 'No se pudieron cargar los datos.'); return; }
+    if (!r || !r.ok) { salir(); $('l-err').textContent = (r && r.error) === 'No autorizado' ? 'Tu sesión venció o esta cuenta no es la del dueño. Entra de nuevo.' : ((r && r.error) || 'No se pudieron cargar los datos.'); return; }
     datos = r;
     if (!zona) zona = await (await fetch('/datos-cp-zona.json')).json();
     universo = [...new Set([...datos.cps.map(x => x.cp), ...Object.keys(zona)])].sort();
@@ -382,6 +382,9 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     });
     $('btn-guardar').disabled = true;
     const r = await rpc('set_rutas', { p_data: { token, rutas } });
+    // La sesión dura 12 horas: con la página abierta desde ayer, guardar decía «No autorizado» y nada
+    // más. Los cambios ya están en localStorage; al volver a entrar, cargar() ofrece conservarlos.
+    if (r && r.error === 'No autorizado') { guardarLocal(); salir(); $('l-err').textContent = 'Tu sesión venció (dura 12 horas). Entra de nuevo: tus cambios se conservan y luego pulsa Guardar.'; return; }
     if (!r || !r.ok) { toast('No se guardó: ' + ((r && r.error) || 'sin respuesta')); $('btn-guardar').disabled = false; return; }
     try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {}
     await cargar();
