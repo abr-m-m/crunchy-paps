@@ -800,6 +800,27 @@ select.inp { appearance: none; cursor: pointer; }
 .club-canjear { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
 .club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
 .club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave); line-height:1.55; }
+.club-retos { padding:0 0 14px; }
+.club-retos h3 { padding:0 16px; }
+.club-retos-pista { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; padding:0 16px 6px; scrollbar-width:none; }
+.club-retos-pista::-webkit-scrollbar { display:none; }
+.club-reto { flex:0 0 85%; scroll-snap-align:center; background:var(--gris); border:1px solid var(--gris3); border-radius:14px; overflow:hidden; }
+.club-reto-cab { background:var(--amarillo); color:#111; padding:18px 14px; min-height:88px; display:flex; align-items:flex-end; }
+.club-reto-cab b { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.25rem; line-height:1.15; }
+.club-reto-cuerpo { padding:12px 14px; }
+.club-reto-desc { font-size:0.78rem; font-weight:600; color:var(--suave); margin-bottom:8px; }
+.club-reto-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.club-reto-pill { font-size:0.7rem; font-weight:800; padding:4px 9px; border-radius:999px; border:1px solid var(--gris3); color:var(--blanco); }
+.club-reto-pill.bono { border-color:var(--amarillo); color:var(--amarillo); }
+.club-reto-pill.ok { border-color:#4caf50; color:#4caf50; }
+.club-reto-prog { font-size:0.72rem; font-weight:600; color:var(--suave); margin-bottom:5px; }
+.club-reto-prog b { color:var(--blanco); }
+.club-reto-barra { background:var(--gris3); border-radius:5px; height:6px; overflow:hidden; }
+.club-reto-barra div { background:var(--amarillo); height:100%; }
+.club-reto.cumplido .club-reto-barra div { background:#4caf50; }
+.club-retos-puntos { display:flex; justify-content:center; gap:6px; margin-top:8px; }
+.club-retos-puntos span { width:6px; height:6px; border-radius:50%; background:var(--gris3); }
+.club-retos-puntos span.on { background:var(--amarillo); }
 .club-como strong { color:var(--amarillo); }
 .club-como-tit { font-size:0.95rem; font-weight:800; color:var(--blanco); margin-bottom:6px; }
 #s-club-movs { background:var(--negro); }
@@ -1821,6 +1842,11 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <div class="pv" id="p-total-pedidos">0</div><div class="pv" id="p-total-compras">$0</div>
     <div class="pv" id="p-mes">$0</div><div class="pv" id="p-ultimo">—</div>
   </div>
+  <div class="club-retos club-cliente" id="club-retos" style="display:none">
+    <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin:14px 0 10px;">RETOS</h3>
+    <div class="club-retos-pista" id="club-retos-lista"></div>
+    <div class="club-retos-puntos" id="club-retos-puntos"></div>
+  </div>
   <div class="premia-beneficios club-cliente">
     <h3>CÓMO GANAR PUNTOS</h3>
     <div class="club-como">
@@ -1848,7 +1874,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         <option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option><option value="0">Todo</option>
       </select>
       <select id="club-f-tipo" aria-label="Tipo de movimiento" onchange="pintarMovimientos()">
-        <option value="">Todos</option><option value="generacion">Generados</option><option value="canje">Canjes</option><option value="devolucion">Devoluciones</option><option value="reversion">Cancelados</option><option value="vencimiento">Vencidos</option><option value="ajuste">Ajustes</option>
+        <option value="">Todos</option><option value="generacion">Generados</option><option value="canje">Canjes</option><option value="devolucion">Devoluciones</option><option value="reversion">Cancelados</option><option value="vencimiento">Vencidos</option><option value="reto">Retos</option><option value="ajuste">Ajustes</option>
       </select>
     </div>
     <div id="club-movs"></div>
@@ -9416,7 +9442,7 @@ function renderPremia() {
 // ── Crunchy Club: tarjeta de puntos y estado de cuenta (mis_puntos) ──
 // A la manera de Premia Juntos+: saludo, tarjeta con saldo, «Mis movimientos» y un estado de cuenta
 // por mes con filtros. El saldo es la suma del ledger, como en el servidor.
-const MIS_PUNTOS_TIPO = { generacion: 'Generados', reversion: 'Cancelado', canje: 'Canje', devolucion: 'Devuelto', vencimiento: 'Vencido', ajuste: 'Ajuste' };
+const MIS_PUNTOS_TIPO = { generacion: 'Generados', reversion: 'Cancelado', canje: 'Canje', devolucion: 'Devuelto', vencimiento: 'Vencido', reto: 'Reto', ajuste: 'Ajuste' };
 let _misPuntos = null;
 let _valorPunto = 0;
 async function cargarMisPuntos() {
@@ -9442,6 +9468,42 @@ async function cargarMisPuntos() {
   }
   pintarEquivalencia();
   pintarMovimientos();
+  pintarRetos();
+}
+// Retos vigentes del cliente (mis_puntos.retos): avance medido en el servidor; el bono lo escribe el trigger.
+const RETO_UNIDAD = { frecuencia: ['pedido', 'pedidos'], producto: ['pieza', 'piezas'], monto: ['peso', 'pesos'], surtido: ['sabor', 'sabores'] };
+function pintarRetos() {
+  const sec = document.getElementById('club-retos'), pista = document.getElementById('club-retos-lista'), puntosEl = document.getElementById('club-retos-puntos');
+  if (!sec || !pista) return;
+  const retos = _misPuntos && !_misPuntos.error && Array.isArray(_misPuntos.retos) ? _misPuntos.retos : [];
+  sec.style.display = retos.length ? '' : 'none';
+  pista.innerHTML = ''; if (puntosEl) puntosEl.innerHTML = '';
+  const fmt = (r, n) => r.tipo === 'monto' ? '$' + Number(n).toLocaleString('es-MX') : Number(n).toLocaleString('es-MX');
+  const hoy = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' }) + 'T12:00:00');
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  // Tarjetas tipo «Desafíos» (Premia Juntos+): franja con el nombre, píldoras de bono y plazo, progreso con barra.
+  retos.forEach((r, i) => {
+    const meta = Number(r.meta) || 0, av = Math.min(Number(r.avance) || 0, meta);
+    const dias = Math.round((new Date(String(r.hasta) + 'T12:00:00') - hoy) / 864e5);
+    const u = RETO_UNIDAD[r.tipo] || ['', ''];
+    const card = mk('div', 'club-reto' + (r.cumplido ? ' cumplido' : ''));
+    const cab = mk('div', 'club-reto-cab'); cab.appendChild(mk('b', null, r.nombre)); card.appendChild(cab);
+    const cuerpo = mk('div', 'club-reto-cuerpo');
+    if (r.descripcion) cuerpo.appendChild(mk('div', 'club-reto-desc', r.descripcion));
+    const pills = mk('div', 'club-reto-pills');
+    pills.appendChild(mk('span', 'club-reto-pill ' + (r.cumplido ? 'ok' : 'bono'), (r.cumplido ? 'Cumplido, +' : '+') + Number(r.bono).toLocaleString('es-MX') + ' puntos'));
+    pills.appendChild(mk('span', 'club-reto-pill', dias <= 0 ? 'Último día' : dias === 1 ? 'Termina mañana' : 'Termina en ' + dias + ' días'));
+    cuerpo.appendChild(pills);
+    const prog = mk('div', 'club-reto-prog', 'Progreso del reto ');
+    prog.appendChild(mk('b', null, fmt(r, av) + ' de ' + fmt(r, meta) + ' ' + (meta === 1 ? u[0] : u[1]) + (r.sabor ? ' de ' + r.sabor : '')));
+    cuerpo.appendChild(prog);
+    const barra = mk('div', 'club-reto-barra'); const fill = mk('div'); fill.style.width = (meta > 0 ? Math.round(av / meta * 100) : 0) + '%'; barra.appendChild(fill);
+    cuerpo.appendChild(barra); card.appendChild(cuerpo); pista.appendChild(card);
+    if (puntosEl && retos.length > 1) puntosEl.appendChild(mk('span', i === 0 ? 'on' : ''));
+  });
+  if (puntosEl && retos.length > 1) {
+    pista.onscroll = () => { const i = Math.round(pista.scrollLeft / ((pista.firstChild ? pista.firstChild.offsetWidth : 0) + 10 || 1)); [...puntosEl.children].forEach((d, k) => d.classList.toggle('on', k === i)); };
+  }
 }
 function pintarEquivalencia() {
   const eq = document.getElementById('p-equiv');
@@ -9503,12 +9565,12 @@ window.pintarMovimientos = function() {
     const linea = document.createElement('div'); linea.className = 'club-mov-fila';
     const tit = document.createElement('div'); tit.className = 'club-mov-tit';
     tit.textContent = m.tipo === 'generacion' ? 'Compra' : m.tipo === 'reversion' ? 'Pedido cancelado' : m.tipo === 'ajuste' ? 'Reinicio del Club'
-                    : m.tipo === 'canje' ? 'Canje de producto' : m.tipo === 'devolucion' ? 'Devolución de canje' : m.tipo === 'vencimiento' ? 'Puntos vencidos' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
+                    : m.tipo === 'canje' ? 'Canje de producto' : m.tipo === 'devolucion' ? 'Devolución de canje' : m.tipo === 'vencimiento' ? 'Puntos vencidos' : m.tipo === 'reto' ? 'Reto: ' + String(m.premio || '') : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
     const pts = document.createElement('div'); pts.className = 'club-mov-pts' + (n > 0 ? ' gen' : '');
     pts.textContent = (n > 0 ? '+ ' : '− ') + Math.abs(n).toLocaleString('es-MX');
     linea.append(tit, pts);
     const sub = document.createElement('div'); sub.className = 'club-mov-sub';
-    sub.textContent = [m.consecutivo ? 'Pedido ' + m.consecutivo : '', m.tipo === 'generacion' && Number(m.monto) > 0 ? '$' + Number(m.monto).toLocaleString('es-MX') + ' de producto' : '', m.tipo === 'ajuste' ? 'Reglas nuevas: 1 punto por cada $10' : m.tipo === 'vencimiento' ? String(m.nota || '') : ''].filter(Boolean).join(' · ');
+    sub.textContent = [m.consecutivo ? 'Pedido ' + m.consecutivo : '', m.tipo === 'generacion' && Number(m.monto) > 0 ? '$' + Number(m.monto).toLocaleString('es-MX') + ' de producto' : '', m.tipo === 'ajuste' ? 'Reglas nuevas: 1 punto por cada $10' : m.tipo === 'vencimiento' || m.tipo === 'reto' ? String(m.nota || '') : ''].filter(Boolean).join(' · ');
     fila.append(chips, linea, sub);
     cont.appendChild(fila);
   }

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retos · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --papel:#f7f6f2; --panel:#fffffe; --tinta:#14150f; --tinta2:#5d6055; --linea:#dedbd0;
+  --amarillo:#ffd200; --sombra:0 1px 2px rgba(20,21,15,.06);
+  --r1:#e8a91d; --r2:#4f9d69; --r3:#4a86c5;
+  --r1s:#fdf1d2; --r2s:#e0f0e5; --r3s:#dfeaf6;
+  --aviso:#b3261e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+    --sombra:0 1px 2px rgba(0,0,0,.4);
+    --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
+    --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
+    --aviso:#ff6b6b;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+  --sombra:0 1px 2px rgba(0,0,0,.4);
+  --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
+  --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
+  --aviso:#ff6b6b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-block:24px;padding-left:18px;padding-right:18px}
+h1,h2{font-family:Archivo,Inter,sans-serif;margin:0;text-wrap:balance}
+h1{font-size:clamp(1.5rem,3.4vw,2.1rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta2)}
+p{margin:0}
+.sub{color:var(--tinta2);margin-top:6px;max-width:70ch;font-size:.92rem}
+header{border-bottom:2px solid var(--tinta);padding-bottom:14px}
+.tot{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:16px}
+.tot .caja{background:var(--panel);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;box-shadow:var(--sombra)}
+.tot .caja.r1{border-left:4px solid var(--r1)}
+.tot .caja.r2{border-left:4px solid var(--r2)}
+.tot .caja.r3{border-left:4px solid var(--r3)}
+.tot b{font-family:Archivo,sans-serif;font-size:1.45rem;display:block;font-variant-numeric:tabular-nums;line-height:1.1}
+.tot span{font-size:.72rem;color:var(--tinta2);text-transform:uppercase;letter-spacing:.06em}
+.tot i{font-style:normal;font-size:.74rem;color:var(--tinta2);display:block;margin-top:2px}
+section{margin-top:26px}
+.rutas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}
+.ruta{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px;box-shadow:var(--sombra)}
+.ruta.r1{border-top:3px solid var(--r1)}
+.ruta.r2{border-top:3px solid var(--r2)}
+.ruta.r3{border-top:3px solid var(--r3)}
+.ruta input[type=text]{width:100%;font-family:Archivo,sans-serif;font-weight:700;font-size:1rem;background:transparent;border:0;border-bottom:1px dashed var(--linea);color:var(--tinta);padding:4px 0;min-width:0}
+.dias{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.dias label{display:flex;align-items:center;gap:3px;font-size:.74rem;border:1px solid var(--linea);border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--tinta2)}
+.dias label.on{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
+.dias input{margin:0;width:12px;height:12px;accent-color:#14150f}
+.rcount{margin-top:10px;font-size:.78rem;color:var(--tinta2);font-variant-numeric:tabular-nums}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 8px}
+button{font-family:Inter,sans-serif;font-size:.82rem;font-weight:600;border-radius:8px;border:1px solid var(--linea);background:var(--panel);color:var(--tinta);padding:8px 12px;cursor:pointer;min-height:38px}
+button.primario{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
+button:hover{border-color:var(--tinta2)}
+input[type=search]{flex:1 1 180px;min-width:0;background:var(--panel);border:1px solid var(--linea);border-radius:8px;padding:8px 10px;color:var(--tinta);font-size:.85rem;min-height:38px}
+.tabla-caja{overflow-x:auto;background:var(--panel);border:1px solid var(--linea);border-radius:12px;box-shadow:var(--sombra)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--tinta2);padding:10px;border-bottom:1px solid var(--linea);white-space:nowrap;position:sticky;top:0;background:var(--panel)}
+td{padding:8px 10px;border-bottom:1px solid var(--linea);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.cp{font-family:Archivo,sans-serif;font-weight:700;white-space:nowrap}
+.cols{color:var(--tinta2);font-size:.8rem}
+tr.a1{background:var(--r1s)}
+tr.a2{background:var(--r2s)}
+tr.a3{background:var(--r3s)}
+.seg{display:inline-flex;border:1px solid var(--linea);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:32px;padding:4px 9px;font-size:.76rem;background:transparent;color:var(--tinta2)}
+.seg button+button{border-left:1px solid var(--linea)}
+.seg button[aria-pressed=true]{font-weight:700;color:#14150f}
+.seg button.b1[aria-pressed=true]{background:var(--r1)}
+.seg button.b2[aria-pressed=true]{background:var(--r2)}
+.seg button.b3[aria-pressed=true]{background:var(--r3)}
+.seg button.b0[aria-pressed=true]{background:var(--linea);color:var(--tinta)}
+pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);border-radius:12px;overflow-x:auto;font-size:.78rem;line-height:1.5;max-height:340px;white-space:pre}
+.nota{font-size:.82rem;color:var(--tinta2);margin-top:8px}
+:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}
+.mapa-caja{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:10px;box-shadow:var(--sombra);margin-top:10px}
+#mapa{width:100%;height:auto;display:block}
+#mapa path.fondo{fill:var(--linea);fill-opacity:.35;stroke:var(--papel);stroke-width:1}
+#mapa path.cp{stroke:var(--panel);stroke-width:1.5;cursor:pointer}
+#mapa path.cp:hover{stroke:var(--tinta);stroke-width:2.5}
+.leyenda{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:.82rem;color:var(--tinta2)}
+.leyenda span{display:flex;align-items:center;gap:6px}
+.leyenda i{width:14px;height:14px;border-radius:3px;display:inline-block}
+@media(max-width:820px){.rutas{grid-template-columns:1fr}}
+/* Planeador E3.1 */
+.login{max-width:360px;margin:60px auto;background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:20px}
+.login input{width:100%;min-height:42px;border:1px solid var(--linea);border-radius:8px;padding:8px 10px;font-size:1rem;margin-top:8px;background:var(--papel);color:var(--tinta)}
+.err{color:var(--aviso);font-size:.85rem;margin-top:8px;min-height:1.2em}
+.cambios{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:.88rem}
+.cambios ul{margin:6px 0 0 18px;padding:0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--tinta);color:var(--papel);padding:10px 16px;border-radius:10px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.paleta{display:flex;gap:6px;margin-top:8px}
+.paleta button{width:22px;height:22px;min-height:0;padding:0;border-radius:50%;border:2px solid transparent}
+.paleta button[aria-pressed=true]{border-color:var(--tinta)}
+[hidden]{display:none!important}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+.retos{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.reto{border:1px solid var(--borde,#ddd);border-radius:10px;padding:12px}
+.reto h3{margin:0 0 4px;font-size:1rem}
+.reto .meta{font-size:.85rem;opacity:.85}
+.reto .nums{display:flex;gap:14px;margin:8px 0;font-size:.85rem}
+.reto .nums b{font-size:1.1rem;display:block}
+.reto .acciones{display:flex;gap:6px;flex-wrap:wrap}
+.reto.pausado{opacity:.6}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.85rem}
+.form input,.form select,.form textarea{padding:8px;border:1px solid var(--borde,#ccc);border-radius:8px;font:inherit}
+.form .ancho{grid-column:1/-1}
+.prev td.mal{color:#b3261e;font-weight:600}
+.prev td.bien{color:#2e7d32}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <h1 style="font-size:1.3rem">Retos del Crunchy Club</h1>
+  <p class="sub">Solo para el dueño. Entra con tu teléfono y tu PIN de la app.</p>
+  <input id="l-tel" type="tel" inputmode="numeric" placeholder="Teléfono" aria-label="Teléfono" autocomplete="tel">
+  <input id="l-pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="PIN" maxlength="6">
+  <div class="err" id="l-err"></div>
+  <button class="primario" id="l-btn" type="button" style="margin-top:10px;width:100%">Entrar</button>
+</div>
+
+<div class="wrap" id="app" hidden>
+<header>
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">
+    <h1>Retos del Crunchy Club</h1>
+    <div class="nota"><button type="button" id="btn-recargar">Recargar</button> · <button type="button" id="btn-salir">Salir</button></div>
+  </div>
+  <p class="sub">Un reto da un bono de puntos al cliente que llega a la meta dentro del periodo. Se evalúa solo cuando un pedido pasa a Pagado (consumidor) o Entregado (tienda). Pausar apaga el reto sin quitar bonos ya dados.</p>
+</header>
+
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+    <h2>Retos</h2>
+    <div class="barra" style="margin:0"><button class="primario" type="button" id="btn-nuevo">Nuevo reto</button><button type="button" id="btn-plantilla">Descargar plantilla</button><label style="display:inline-block"><span class="nota">Cargar plantilla</span> <input type="file" id="f-plantilla" accept=".xlsx,.xls,.csv"></label></div>
+  </div>
+  <div class="retos" id="lista"></div>
+</section>
+
+<section id="sec-form" hidden>
+  <h2 id="form-tit">Nuevo reto</h2>
+  <div class="form">
+    <label class="ancho">Nombre (lo ve el cliente)<input id="f-nombre" type="text" maxlength="80"></label>
+    <label class="ancho">Descripción<input id="f-desc" type="text" maxlength="160"></label>
+    <label>Tipo<select id="f-tipo"><option value="frecuencia">Frecuencia (pedidos)</option><option value="producto">Producto o sabor (piezas)</option><option value="monto">Monto (pesos, neto)</option><option value="surtido">Surtido (sabores distintos)</option></select></label>
+    <label>Meta<input id="f-meta" type="number" min="1" step="1"></label>
+    <label id="l-sabor" hidden>Sabor<select id="f-sabor"></select></label>
+    <label id="l-pres" hidden>Presentación (opcional)<select id="f-pres"><option value="">Cualquiera</option></select></label>
+    <label>Bono (puntos)<input id="f-bono" type="number" min="1" step="1"></label>
+    <label>Desde<input id="f-desde" type="date"></label>
+    <label>Hasta<input id="f-hasta" type="date"></label>
+    <label>Público<select id="f-publico"><option value="todos">Todos</option><option value="consumidores">Consumidores</option><option value="tiendas">Tiendas y restaurantes</option></select></label>
+    <label>Estado<select id="f-activo"><option value="true">Activo</option><option value="false">Pausado</option></select></label>
+  </div>
+  <div class="err" id="f-err"></div>
+  <div class="barra"><button class="primario" type="button" id="btn-guardar">Guardar reto</button><button type="button" id="btn-cancelar">Cancelar</button></div>
+</section>
+
+<section id="sec-prev" hidden>
+  <h2>Plantilla cargada</h2>
+  <p class="nota" id="prev-nota"></p>
+  <div class="tabla-caja"><table class="prev"><thead><tr><th>#</th><th>Nombre</th><th>Tipo</th><th>Meta</th><th>Sabor</th><th>Bono</th><th>Desde</th><th>Hasta</th><th>Público</th><th>Revisión</th></tr></thead><tbody id="prev-filas"></tbody></table></div>
+  <div class="barra"><button class="primario" type="button" id="btn-crear-prev">Crear retos</button><button type="button" id="btn-cerrar-prev">Cerrar</button></div>
+</section>
+
+<section id="sec-avance" hidden>
+  <h2 id="avance-tit">Avance</h2>
+  <div class="tabla-caja"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Avance</th><th>Meta</th><th>Cumplido</th><th>Fecha del bono</th></tr></thead><tbody id="avance-filas"></tbody></table></div>
+  <div class="barra"><button type="button" id="btn-cerrar-avance">Cerrar</button></div>
+</section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = window.__CP_CONFIG__ || {};
+  const URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  const LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  const TIPOS = { frecuencia: 'Frecuencia', producto: 'Producto', monto: 'Monto', surtido: 'Surtido' };
+  const UNIDAD = { frecuencia: 'pedidos', producto: 'piezas', monto: 'pesos', surtido: 'sabores' };
+  const PUBLICO = { todos: 'Todos', consumidores: 'Consumidores', tiendas: 'Tiendas y restaurantes' };
+  const CABECERAS = ['nombre', 'descripcion', 'tipo', 'meta', 'sabor', 'presentacion', 'bono', 'desde', 'hasta', 'publico'];
+  let token = sessionStorage.getItem('cp-retos-token') || '';
+  let datos = null;        // respuesta de retos_admin
+  let editando = null;     // id del reto en edición, o null
+  let prev = [];           // filas de la plantilla, ya revisadas
+
+  const $ = (id) => document.getElementById(id);
+  const num = (n) => Number(n || 0).toLocaleString('es-MX');
+  const hoyCDMX = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+  function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 3000); }
+  async function rpc(nombre, cuerpo) {
+    const r = await fetch(URL_API + nombre, { method: 'POST', headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' }, body: JSON.stringify(cuerpo || {}) });
+    return r.json().catch(() => null);
+  }
+  // Nodo con texto: nunca innerHTML con datos.
+  const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+
+  // ── Login ──
+  async function entrar() {
+    $('l-err').textContent = '';
+    const r = await rpc('validar_vendedor_pin', { p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value } });
+    if (!r || !r.token) { $('l-err').textContent = (r && r.error) || 'Teléfono o PIN incorrectos.'; return; }
+    token = r.token; sessionStorage.setItem('cp-retos-token', token);
+    await cargar();
+  }
+  function salir() { token = ''; sessionStorage.removeItem('cp-retos-token'); $('app').hidden = true; $('login').hidden = false; }
+
+  // ── Datos ──
+  async function cargar() {
+    const r = await rpc('retos_admin', { p_data: { token } });
+    if (!r || !r.ok) { salir(); $('l-err').textContent = (r && r.error) === 'No autorizado' ? 'Tu sesión venció o esta cuenta no es la del dueño. Entra de nuevo.' : ((r && r.error) || 'No se pudieron cargar los retos.'); return; }
+    datos = r;
+    $('login').hidden = true; $('app').hidden = false;
+    llenarCatalogo(); pintar();
+  }
+  function llenarCatalogo() {
+    const s = $('f-sabor'); s.replaceChildren(); for (const x of (datos.sabores || [])) { const o = el('option', x); o.value = x; s.appendChild(o); }
+    const p = $('f-pres'); p.replaceChildren(el('option', 'Cualquiera')); p.firstChild.value = ''; for (const x of (datos.presentaciones || [])) { const o = el('option', x); o.value = x; p.appendChild(o); }
+  }
+  function estadoDe(r) { if (!r.activo) return 'pausado'; return r.hasta < hoyCDMX() ? 'terminado' : 'activo'; }
+  function pintar() {
+    const cont = $('lista'); cont.replaceChildren();
+    if (!(datos.retos || []).length) { cont.appendChild(el('p', 'Todavía no hay retos. Crea uno o carga la plantilla.', 'nota')); return; }
+    for (const r of datos.retos) {
+      const card = el('div', null, 'reto' + (r.activo ? '' : ' pausado'));
+      card.appendChild(el('h3', r.nombre));
+      const est = estadoDe(r);
+      card.appendChild(el('div', `${TIPOS[r.tipo] || r.tipo} · meta ${num(r.meta)} ${UNIDAD[r.tipo] || ''}${r.sabor ? ' de ' + r.sabor + (r.presentacion ? ' ' + r.presentacion : '') : ''} · +${num(r.bono)} puntos`, 'meta'));
+      card.appendChild(el('div', `${r.desde} → ${r.hasta} · ${PUBLICO[r.publico] || r.publico} · ${est}`, 'meta'));
+      if (r.descripcion) card.appendChild(el('div', r.descripcion, 'meta'));
+      const nums = el('div', null, 'nums');
+      for (const [lbl, v] of [['participantes', r.participantes], ['cumplidos', r.cumplidos], ['puntos dados', r.puntos_dados]]) { const d = el('div', lbl); d.prepend(el('b', num(v))); nums.appendChild(d); }
+      card.appendChild(nums);
+      const acc = el('div', null, 'acciones');
+      const bE = el('button', 'Editar'); bE.type = 'button'; bE.addEventListener('click', () => abrirForm(r)); acc.appendChild(bE);
+      const bP = el('button', r.activo ? 'Pausar' : 'Activar'); bP.type = 'button'; bP.addEventListener('click', () => guardar({ id: r.id, activo: !r.activo })); acc.appendChild(bP);
+      const bA = el('button', 'Avance'); bA.type = 'button'; bA.addEventListener('click', () => verAvance(r)); acc.appendChild(bA);
+      if (Number(r.puntos_dados) === 0 && Number(r.cumplidos) === 0) { const bB = el('button', 'Borrar'); bB.type = 'button'; bB.addEventListener('click', () => borrar(r)); acc.appendChild(bB); }
+      card.appendChild(acc);
+      cont.appendChild(card);
+    }
+  }
+
+  // ── Formulario ──
+  function abrirForm(r) {
+    editando = r ? r.id : null;
+    $('form-tit').textContent = r ? 'Editar reto' : 'Nuevo reto';
+    $('f-nombre').value = r ? r.nombre : ''; $('f-desc').value = r ? r.descripcion : '';
+    $('f-tipo').value = r ? r.tipo : 'frecuencia'; $('f-meta').value = r ? r.meta : '';
+    $('f-sabor').value = r && r.sabor ? r.sabor : ($('f-sabor').options[0]?.value || ''); $('f-pres').value = r && r.presentacion ? r.presentacion : '';
+    $('f-bono').value = r ? r.bono : ''; $('f-desde').value = r ? r.desde : hoyCDMX(); $('f-hasta').value = r ? r.hasta : '';
+    $('f-publico').value = r ? r.publico : 'todos'; $('f-activo').value = r ? String(r.activo) : 'true';
+    $('f-err').textContent = ''; tipoCambio();
+    $('sec-form').hidden = false; $('sec-form').scrollIntoView({ behavior: 'smooth' });
+  }
+  function tipoCambio() { const esP = $('f-tipo').value === 'producto'; $('l-sabor').hidden = !esP; $('l-pres').hidden = !esP; }
+  function leerForm() {
+    return { id: editando, nombre: $('f-nombre').value.trim(), descripcion: $('f-desc').value.trim(), tipo: $('f-tipo').value,
+      meta: $('f-meta').value, sabor: $('f-tipo').value === 'producto' ? $('f-sabor').value : '', presentacion: $('f-tipo').value === 'producto' ? $('f-pres').value : '',
+      bono: $('f-bono').value, desde: $('f-desde').value, hasta: $('f-hasta').value, publico: $('f-publico').value, activo: $('f-activo').value === 'true' };
+  }
+  async function guardar(reto) {
+    const r = await rpc('guardar_reto', { p_data: { token, reto } });
+    if (!r || !r.ok) { const m = (r && (r.mensaje || r.error)) || 'No se pudo guardar.'; if (!$('sec-form').hidden) $('f-err').textContent = m; else toast(m); return false; }
+    toast('Guardado.'); $('sec-form').hidden = true; await cargar(); return true;
+  }
+  async function borrar(r) {
+    if (!confirm(`¿Borrar el reto «${r.nombre}»?`)) return;
+    const x = await rpc('borrar_reto', { p_data: { token, id: r.id } });
+    if (!x || !x.ok) { toast((x && (x.mensaje || x.error)) || 'No se pudo borrar.'); return; }
+    toast('Borrado.'); await cargar();
+  }
+
+  // ── Avance ──
+  async function verAvance(r) {
+    const x = await rpc('retos_avance', { p_data: { token, id: r.id } });
+    if (!x || !x.ok) { toast((x && (x.mensaje || x.error)) || 'No se pudo cargar el avance.'); return; }
+    $('avance-tit').textContent = `Avance · ${r.nombre}`;
+    const tb = $('avance-filas'); tb.replaceChildren();
+    if (!(x.clientes || []).length) tb.appendChild(el('tr')).appendChild(el('td', 'Nadie ha avanzado todavía.')).colSpan = 6;
+    for (const c of (x.clientes || [])) {
+      const tr = el('tr');
+      for (const v of [c.nombre, c.tipo, num(c.avance), num(c.meta), c.cumplido ? 'Sí' : 'No', c.fecha_bono ? new Date(c.fecha_bono).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City' }) : '—']) tr.appendChild(el('td', v));
+      tb.appendChild(tr);
+    }
+    $('sec-avance').hidden = false; $('sec-avance').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ── Plantilla (D6) ──
+  function descargarPlantilla() {
+    const ejemplo = [{ nombre: 'Dos pedidos en octubre', descripcion: 'Haz 2 pedidos y gana 50 puntos', tipo: 'frecuencia', meta: 2, sabor: '', presentacion: '', bono: 50, desde: '2026-10-01', hasta: '2026-10-31', publico: 'todos' }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ejemplo, { header: CABECERAS }), 'Retos');
+    const opciones = [];
+    const filas = Math.max(4, 3, (datos.sabores || []).length, (datos.presentaciones || []).length);
+    const tipos = Object.keys(TIPOS), pubs = Object.keys(PUBLICO);
+    for (let i = 0; i < filas; i++) opciones.push({ tipo: tipos[i] || '', publico: pubs[i] || '', sabor: (datos.sabores || [])[i] || '', presentacion: (datos.presentaciones || [])[i] || '', fechas: i === 0 ? 'AAAA-MM-DD o fecha de Excel' : '' });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(opciones), 'Opciones');
+    XLSX.writeFile(wb, 'retos-plantilla.xlsx');
+  }
+  // Fecha de Excel (número de serie) o texto → 'AAAA-MM-DD'. Devuelve '' si no se entiende.
+  function fechaDe(v) {
+    if (v == null || v === '') return '';
+    if (typeof v === 'number') { const d = XLSX.SSF.parse_date_code(v); return d ? `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}` : ''; }
+    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    const s = String(v).trim(); const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    const m2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m2) return `${m2[3]}-${m2[2].padStart(2, '0')}-${m2[1].padStart(2, '0')}`;
+    return '';
+  }
+  // Filas de la hoja (objetos con las cabeceras) → [{reto, errores}]. Misma validación que el servidor, para avisar antes.
+  function leerFilasPlantilla(filas) {
+    const norm = (o) => { const r = {}; for (const k of Object.keys(o)) r[String(k).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')] = o[k]; return r; };
+    return filas.map(norm).filter(f => CABECERAS.some(k => String(f[k] ?? '').trim() !== '')).map(f => {
+      const reto = { nombre: String(f.nombre ?? '').trim(), descripcion: String(f.descripcion ?? '').trim(), tipo: String(f.tipo ?? '').trim().toLowerCase(),
+        meta: Number(f.meta), sabor: String(f.sabor ?? '').trim(), presentacion: String(f.presentacion ?? '').trim(), bono: Number(f.bono),
+        desde: fechaDe(f.desde), hasta: fechaDe(f.hasta), publico: String(f.publico ?? 'todos').trim().toLowerCase() || 'todos', activo: true };
+      const errores = [];
+      if (!reto.nombre) errores.push('sin nombre');
+      if (!TIPOS[reto.tipo]) errores.push('tipo inválido');
+      if (!(reto.meta > 0)) errores.push('meta debe ser > 0');
+      if (!(Number.isInteger(reto.bono) && reto.bono > 0)) errores.push('bono debe ser entero > 0');
+      if (!reto.desde || !reto.hasta) errores.push('fechas AAAA-MM-DD'); else if (reto.hasta < reto.desde) errores.push('hasta antes de desde');
+      if (!PUBLICO[reto.publico]) errores.push('público inválido');
+      if (reto.tipo === 'producto' && !reto.sabor) errores.push('producto sin sabor');
+      if (reto.tipo === 'producto' && reto.sabor && datos && !(datos.sabores || []).some(s => s.toLowerCase() === reto.sabor.toLowerCase())) errores.push('sabor no está en el catálogo');
+      return { reto, errores };
+    });
+  }
+  async function cargarPlantilla(archivo) {
+    const buf = await archivo.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array', cellDates: false });
+    const hoja = wb.Sheets[wb.SheetNames.includes('Retos') ? 'Retos' : wb.SheetNames[0]];
+    prev = leerFilasPlantilla(XLSX.utils.sheet_to_json(hoja, { defval: '' }));
+    const tb = $('prev-filas'); tb.replaceChildren();
+    prev.forEach((p, i) => {
+      const tr = el('tr');
+      for (const v of [i + 1, p.reto.nombre, p.reto.tipo, p.reto.meta, p.reto.sabor, p.reto.bono, p.reto.desde, p.reto.hasta, p.reto.publico]) tr.appendChild(el('td', String(v ?? '')));
+      tr.appendChild(el('td', p.errores.length ? p.errores.join('; ') : 'ok', p.errores.length ? 'mal' : 'bien'));
+      tb.appendChild(tr);
+    });
+    const buenas = prev.filter(p => !p.errores.length).length;
+    $('prev-nota').textContent = `${prev.length} fila(s): ${buenas} lista(s) para crear, ${prev.length - buenas} con error (no se enviarán).`;
+    $('btn-crear-prev').textContent = `Crear ${buenas} reto(s)`; $('btn-crear-prev').disabled = buenas === 0;
+    $('sec-prev').hidden = false; $('sec-prev').scrollIntoView({ behavior: 'smooth' });
+  }
+  async function crearDesdePrev() {
+    let hechos = 0, fallos = [];
+    for (const p of prev.filter(p => !p.errores.length)) {
+      const r = await rpc('guardar_reto', { p_data: { token, reto: p.reto } });
+      if (r && r.ok) hechos++; else fallos.push(`${p.reto.nombre}: ${(r && (r.mensaje || r.error)) || 'sin respuesta'}`);
+    }
+    toast(`${hechos} reto(s) creado(s)${fallos.length ? '; ' + fallos.length + ' rechazado(s)' : ''}.`);
+    if (fallos.length) $('prev-nota').textContent = 'Rechazados por el servidor: ' + fallos.join(' · ');
+    else $('sec-prev').hidden = true;
+    $('f-plantilla').value = '';
+    await cargar();
+  }
+
+  // ── Eventos ──
+  $('l-btn').addEventListener('click', entrar);
+  $('l-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+  $('btn-salir').addEventListener('click', salir);
+  $('btn-recargar').addEventListener('click', cargar);
+  $('btn-nuevo').addEventListener('click', () => abrirForm(null));
+  $('f-tipo').addEventListener('change', tipoCambio);
+  $('btn-guardar').addEventListener('click', () => guardar(leerForm()));
+  $('btn-cancelar').addEventListener('click', () => { $('sec-form').hidden = true; });
+  $('btn-plantilla').addEventListener('click', descargarPlantilla);
+  $('f-plantilla').addEventListener('change', (e) => { if (e.target.files[0]) cargarPlantilla(e.target.files[0]).catch(() => toast('No se pudo leer el archivo.')); });
+  $('btn-crear-prev').addEventListener('click', crearDesdePrev);
+  $('btn-cerrar-prev').addEventListener('click', () => { $('sec-prev').hidden = true; $('f-plantilla').value = ''; });
+  $('btn-cerrar-avance').addEventListener('click', () => { $('sec-avance').hidden = true; });
+  if (token) cargar(); else $('login').hidden = false;
+})();
+</script>
+</body>
+</html>
