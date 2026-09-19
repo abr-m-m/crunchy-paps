@@ -7684,7 +7684,8 @@ Sampling, Consumo, Demo, Regalo o Merma.`
       tipoInterno: esPedidoInterno ? window._pedidoInterno.tipo : '',
       cp, colonia, municipio: mun, estado: est, direccion: dir,
       zonaEntrega: window._zonaEntrega?.zona || 'cdmx',
-      fechaEntrega: fechaEntregaFinal ? new Date(fechaEntregaFinal).toISOString() : null,
+      // Mediodía de CDMX: new Date('AAAA-MM-DD') es medianoche UTC, que en México ya es el día anterior.
+      fechaEntrega: fechaEntregaFinal ? new Date(fechaEntregaFinal + 'T12:00:00-06:00').toISOString() : null,
       coordenadas: dirCoords ? `${dirCoords.lat},${dirCoords.lng}` : '',
       productos: items.map(i => ({
         idProducto: i.idProducto || '', sabor: i.sabor, presentacion: i.presentacion,
