@@ -821,6 +821,35 @@ select.inp { appearance: none; cursor: pointer; }
 .club-mov-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.15rem; white-space:nowrap; color:var(--suave); }
 .club-mov-pts.gen { color:var(--verde); }
 .club-mov-sub { font-size:0.72rem; font-weight:600; color:var(--suave); margin-top:3px; }
+/* Tienda de canje */
+#s-club-canje { background:var(--negro); }
+#s-club-canje .header { justify-content:flex-start; gap:10px; }
+.tc-info { font-size:0.76rem; font-weight:600; color:var(--suave); line-height:1.45; margin-bottom:12px; }
+.tc-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tc-card { background:var(--gris); border:1px solid var(--gris3); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:6px; }
+/* Sin saldo: la foto se queda, en gris (Abraham); el precio se apaga y el «+» se desactiva. */
+.tc-card.sin-saldo .tc-img { filter:grayscale(1); }
+.tc-card.sin-saldo .tc-pts { color:var(--suave); }
+.tc-card.sin-saldo .tc-nom { color:var(--suave); }
+.tc-img { aspect-ratio:1; border-radius:10px; background:var(--gris2); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.tc-img img { width:100%; height:100%; object-fit:cover; }
+.tc-nom { font-size:0.86rem; font-weight:800; color:var(--blanco); line-height:1.2; }
+.tc-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.2rem; color:var(--amarillo); }
+.tc-pts small { font-size:0.7rem; font-family:'Inter',sans-serif; }
+.tc-paso { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:auto; }
+.tc-paso button { width:32px; height:32px; border-radius:50%; border:none; font-size:1.1rem; font-weight:900; cursor:pointer; background:var(--amarillo); color:var(--negro); }
+.tc-paso button:disabled { background:var(--gris3); color:#666; cursor:default; }
+.tc-paso span { flex:1; text-align:center; background:var(--gris2); border-radius:8px; padding:5px 0; font-weight:800; font-size:0.85rem; }
+.tc-barra { position:fixed; left:0; right:0; bottom:calc(66px + env(safe-area-inset-bottom)); z-index:140; background:var(--gris); border-top:1px solid var(--gris3); }
+.tc-barra-top { display:flex; justify-content:space-between; padding:8px 16px; font-size:0.78rem; font-weight:800; color:var(--negro); background:var(--amarillo); }
+.tc-barra-bot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 16px; }
+.tc-total-lbl { font-size:0.72rem; font-weight:700; color:var(--suave); }
+.tc-total { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.3rem; color:var(--blanco); }
+.tc-ir { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:12px 22px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.9rem; cursor:pointer; }
+.tc-ir:disabled { background:var(--gris3); color:#777; cursor:default; }
+/* En la tienda de canje manda su barra: el mini carrito flotante tapaba «Ir a carrito». */
+body:has(#s-club-canje.active) #mini-cart { display:none; }
+.cart-aviso-canje { background:#2a1f00; border:1px dashed rgba(255,210,0,0.5); border-radius:10px; padding:10px 12px; font-size:0.78rem; font-weight:700; color:var(--amarillo); margin:6px 0; }
 
 /* PEDIDOS */
 #s-pedidos { background:var(--negro); padding:16px 16px 80px; }
@@ -1780,7 +1809,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
           <div class="club-card-num" id="p-puntos">0</div>
           <div class="club-card-eq" id="p-equiv"></div>
         </div>
-        <button type="button" class="club-canjear" onclick="aplicarCanje()">Canjear puntos</button>
+        <button type="button" class="club-canjear" onclick="abrirTiendaCanje()">Canjear puntos</button>
       </div>
       <button type="button" class="club-link" onclick="abrirMovimientos()">Mis movimientos <span aria-hidden="true">›</span></button>
     </div>
@@ -1816,10 +1845,30 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         <option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option><option value="0">Todo</option>
       </select>
       <select id="club-f-tipo" aria-label="Tipo de movimiento" onchange="pintarMovimientos()">
-        <option value="">Todos</option><option value="generacion">Generados</option><option value="reversion">Cancelados</option><option value="ajuste">Ajustes</option>
+        <option value="">Todos</option><option value="generacion">Generados</option><option value="canje">Canjes</option><option value="devolucion">Devoluciones</option><option value="reversion">Cancelados</option><option value="ajuste">Ajustes</option>
       </select>
     </div>
     <div id="club-movs"></div>
+  </div>
+</div>
+
+<!-- Crunchy Club: tienda de canje (a la manera de la tienda de Premia Juntos+). Las piezas canjeadas
+     entran al carrito como líneas de canje; el servidor decide los puntos (crear_pedido). -->
+<div class="screen" id="s-club-canje">
+  <div class="header">
+    <button type="button" class="club-volver" onclick="volverAlClub()" aria-label="Volver al Crunchy Club"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></button>
+    <div class="club-movs-tit">Canjear puntos</div>
+  </div>
+  <div style="padding:14px 16px 170px;">
+    <div class="tc-info" id="tc-info"></div>
+    <div class="tc-grid" id="tc-grid"></div>
+  </div>
+  <div class="tc-barra">
+    <div class="tc-barra-top"><span>Puntos disponibles</span><strong id="tc-disp">0 pts</strong></div>
+    <div class="tc-barra-bot">
+      <div><div class="tc-total-lbl">Total</div><div class="tc-total"><span id="tc-total">0</span> pts</div></div>
+      <button type="button" class="tc-ir" id="tc-ir" onclick="abrirCarrito()">Ir a carrito</button>
+    </div>
   </div>
 </div>
 
@@ -6018,7 +6067,9 @@ function renderDrawer() {
       : `${i.gramos}g c/u`;
     // Paso 4 (II): la cantidad se cambia desde el carrito (solo piezas; el
     // granel se quita entero). cambiarQty ya redibuja el cajón si está abierto.
-    const qtyHTML = i.caja
+    const qtyHTML = i.canje
+      ? `<div class="ci-qty"><button class="ci-btn" onclick="cambiarCanje('${i.idProducto}',-1)" aria-label="Quitar una pieza canjeada">−</button><span class="ci-num">${i.qty}</span><button class="ci-btn" onclick="cambiarCanje('${i.idProducto}',1)" aria-label="Canjear otra pieza">+</button></div>`
+      : i.caja
       ? `<div class="ci-qty"><button class="ci-btn" onclick="cambiarCaja('${i.keyProd}',${i.caja},-1)" aria-label="Quitar una caja">−</button><span class="ci-num">${i.cajas} caja${i.cajas === 1 ? '' : 's'}</span><button class="ci-btn" onclick="cambiarCaja('${i.keyProd}',${i.caja},1)" aria-label="Agregar una caja">+</button></div>`
       : esPieza
       ? `<div class="ci-qty"><button class="ci-btn" onclick="cambiarQty('${i.key}',-1)" aria-label="Quitar uno">−</button><span class="ci-num">${i.qty}</span><button class="ci-btn" onclick="cambiarQty('${i.key}',1)" aria-label="Agregar uno">+</button></div>`
@@ -6028,13 +6079,19 @@ function renderDrawer() {
       ${saborDot(i.sabor, 12)}
       <div class="cart-item-info">
         <div class="cart-item-nom">${i.sabor} · ${i.presentacion}</div>
-        <div class="cart-item-sub">${esInternoModo ? descInterno : desc}</div>
+        <div class="cart-item-sub">${i.canje ? `Canje · ${i.puntos} pts c/u` : esInternoModo ? descInterno : desc}</div>
         ${qtyHTML}
       </div>
-      <span class="cart-item-precio">${esInternoModo ? `${(grsLinea/1000).toFixed(3)}kg` : `$${sub}`}</span>
+      <span class="cart-item-precio">${i.canje ? `${(i.qty * i.puntos).toLocaleString('es-MX')} pts` : esInternoModo ? `${(grsLinea/1000).toFixed(3)}kg` : `$${sub}`}</span>
       <button class="del-btn" onclick="eliminarItem('${i.key}')" aria-label="Quitar del pedido">${ICONO_X}</button>
     </div>`;
   }).join('');
+  // Canje: un pedido nunca es solo de canje (crear_pedido lo rechaza con canje_sin_compra).
+  if (lineasCanje().length && !items.some(i => !i.canje)) {
+    ci.innerHTML += '<div class="cart-aviso-canje">Para canjear puntos, agrega al menos un producto comprado.</div>';
+  } else if (lineasCanje().length) {
+    ci.innerHTML += `<div class="cart-aviso-canje">Puntos usados en este pedido: ${puntosCanjeCarrito().toLocaleString('es-MX')}</div>`;
+  }
 
   // Selector de tipo de pedido interno (solo cuando modo=interno)
   if (esInternoModo) {
@@ -7379,7 +7436,7 @@ function esCanalMayorista() {
 }
 function sumarCarritoPorPresentacion() {
   const sumas = {};
-  Object.values(carrito).forEach(it => { const pres = it.presentacion || ''; sumas[pres] = (sumas[pres] || 0) + (it.qty || 0); });
+  Object.values(carrito).forEach(it => { if (it.canje) return; const pres = it.presentacion || ''; sumas[pres] = (sumas[pres] || 0) + (it.qty || 0); });
   return sumas;
 }
 function validarMinimosMayoreo() {
@@ -7714,7 +7771,9 @@ Sampling, Consumo, Demo, Regalo o Merma.`
         descuento: i.descuento || 0,
         gramos: i.gramos || 0,
         subtotal: subLinea(i),
+        canje: !!i.canje, puntos: i.canje ? (Number(i.puntos) || 0) : 0,
       })),
+      puntosCanje: puntosCanjeCarrito(),
     };
     rp = await supabaseCall('POST', 'rpc/crear_pedido', { p_data: payload });
   } catch(e) {
@@ -7764,6 +7823,9 @@ Sampling, Consumo, Demo, Regalo o Merma.`
         boton: 'Verificar ahora'
       });
       try { ir('s-otp'); } catch (_e) {}
+    } else if (['canje_sin_compra', 'canje_maximo', 'saldo_insuficiente', 'puntos_cambiados', 'canje_no_disponible', 'canje_sin_cliente'].includes(_err)) {
+      await avisar({ titulo: 'Revisa tu canje de puntos', cuerpo: _msg || 'No se pudo aplicar el canje.', boton: 'Revisar mi carrito' });
+      if (_err === 'puntos_cambiados' || _err === 'saldo_insuficiente') { try { await abrirTiendaCanje(); abrirCarrito(); } catch (_e) {} }
     } else if (_err === 'producto_no_encontrado' || _err === 'granel_sin_precio') {
       await avisar({
         titulo: 'Un producto ya no está disponible',
@@ -7842,6 +7904,7 @@ Sampling, Consumo, Demo, Regalo o Merma.`
   const lineas     = items.map(i=>{
     const sub = subLinea(i);
     const desc = i.tipoVenta==='A granel'?`${i.gramos}g`:(i.caja?`${i.cajas} caja${i.cajas===1?'':'s'} de ${i.caja} (${i.qty} pz)`:`×${i.qty}`);
+    if (i.canje) return `• *${i.sabor}* ${i.presentacion} ${desc} = canje · ${(i.qty * i.puntos).toLocaleString('es-MX')} pts`;
     return `• *${i.sabor}* ${i.presentacion} ${desc} = $${sub}`;
   }).join('\n');
 
@@ -7959,6 +8022,10 @@ _Pedido registrado #${consec}_`;
   document.getElementById('g-puntos').textContent = ptosGanados>0 ? `+${ptosGanados} puntos al confirmar tu pago` : '';
   pintarGraciasB2B(esB2BPedido && !esPedidoInterno, asesorActivo);
   document.getElementById('gracias-overlay').classList.add('visible');
+  // El pedido ya está registrado: el carrito se vacía aquí, no solo al cerrar «¡Gracias!». Si el
+  // cliente cerraba la app en esta pantalla, al volver le reaparecía el pedido completo (y con el
+  // canje, piezas «canjeadas» con puntos que ya no tiene). El resumen de WhatsApp ya va armado.
+  carrito = {}; actualizarBadge();
 
   // v2.11.1: refrescar stats del cliente en background para que historial y "Mi cuenta" se actualicen
   if (telefonoVerif && !esPedidoInterno) {
@@ -9393,6 +9460,21 @@ window.pintarMovimientos = function() {
   const movs = (_misPuntos.movimientos || []).filter(m => (!tipo || m.tipo === tipo) && (!desde || new Date(m.fecha) >= desde));
   if (!movs.length) { nota((_misPuntos.movimientos || []).length ? 'No hay movimientos con estos filtros.' : 'Aún no tienes movimientos. Tus puntos aparecerán aquí con cada compra.'); return; }
   const tz = { timeZone: 'America/Mexico_City' };
+  // Canje de un pedido cancelado en validación: todavía no suma al saldo.
+  const pend = _misPuntos.pendientes || [];
+  if (pend.length && (!tipo || tipo === 'devolucion')) {
+    const h = document.createElement('div'); h.className = 'club-mes'; h.textContent = 'En revisión'; cont.appendChild(h);
+    for (const d of pend) {
+      const fila = document.createElement('div'); fila.className = 'club-mov';
+      const linea = document.createElement('div'); linea.className = 'club-mov-fila';
+      const tit = document.createElement('div'); tit.className = 'club-mov-tit'; tit.textContent = 'Devolución en revisión';
+      const pts = document.createElement('div'); pts.className = 'club-mov-pts'; pts.textContent = Number(d.puntos || 0).toLocaleString('es-MX') + ' pts';
+      linea.append(tit, pts);
+      const sub = document.createElement('div'); sub.className = 'club-mov-sub';
+      sub.textContent = (d.consecutivo ? 'Pedido ' + d.consecutivo + ' cancelado · ' : '') + 'los puntos regresan cuando se valide';
+      fila.append(linea, sub); cont.appendChild(fila);
+    }
+  }
   let mesActual = '';
   for (const m of movs) {
     const f = new Date(m.fecha);
@@ -9409,7 +9491,8 @@ window.pintarMovimientos = function() {
     chips.append(c1, c2);
     const linea = document.createElement('div'); linea.className = 'club-mov-fila';
     const tit = document.createElement('div'); tit.className = 'club-mov-tit';
-    tit.textContent = m.tipo === 'generacion' ? 'Compra' : m.tipo === 'reversion' ? 'Pedido cancelado' : m.tipo === 'ajuste' ? 'Reinicio del Club' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
+    tit.textContent = m.tipo === 'generacion' ? 'Compra' : m.tipo === 'reversion' ? 'Pedido cancelado' : m.tipo === 'ajuste' ? 'Reinicio del Club'
+                    : m.tipo === 'canje' ? 'Canje de producto' : m.tipo === 'devolucion' ? 'Devolución de canje' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
     const pts = document.createElement('div'); pts.className = 'club-mov-pts' + (n > 0 ? ' gen' : '');
     pts.textContent = (n > 0 ? '+ ' : '− ') + Math.abs(n).toLocaleString('es-MX');
     linea.append(tit, pts);
@@ -9419,6 +9502,86 @@ window.pintarMovimientos = function() {
     cont.appendChild(fila);
   }
 };
+
+// ── Crunchy Club: tienda de canje ──
+// El precio en puntos lo manda el servidor (canje_catalogo) con la misma fórmula que cobra
+// crear_pedido. Las piezas canjeadas viven en el carrito como líneas { canje: true, puntos }.
+const CANJE_MAX_PIEZAS = 5;
+let _canjeCat = null;
+function lineasCanje() { return Object.values(carrito).filter(i => i.canje); }
+function puntosCanjeCarrito() { return lineasCanje().reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.puntos) || 0), 0); }
+function piezasCanjeCarrito() { return lineasCanje().reduce((s, i) => s + (Number(i.qty) || 0), 0); }
+function saldoCanje() { return _misPuntos && !_misPuntos.error ? Number(_misPuntos.saldo || 0) : 0; }
+window.abrirTiendaCanje = async function() {
+  ir('s-club-canje');
+  try { window.scrollTo(0, 0); } catch (_e) {}
+  const grid = document.getElementById('tc-grid');
+  if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--suave);padding:30px 0;font-size:0.85rem;">Cargando…</div>';
+  const [cat] = await Promise.all([
+    supabaseCall('POST', 'rpc/canje_catalogo', {}).catch(() => null),
+    tokenCliente() ? supabaseCall('POST', 'rpc/mis_puntos', { p_token: tokenCliente() }).then(r => { if (r && r.ok) _misPuntos = r; }).catch(() => {}) : Promise.resolve(),
+  ]);
+  _canjeCat = (cat && cat.ok) ? (cat.productos || []) : null;
+  // Si el servidor cambió el precio en puntos, el carrito toma el nuevo.
+  if (_canjeCat) for (const i of lineasCanje()) { const p = _canjeCat.find(x => String(x.id) === String(i.idProducto)); if (p) i.puntos = p.puntos; }
+  pintarTiendaCanje();
+};
+window.cambiarCanje = function(id, delta) {
+  const p = (_canjeCat || []).find(x => String(x.id) === String(id));
+  const key = 'canje-' + id;
+  const linea = carrito[key];
+  if (delta > 0) {
+    if (!p) return;
+    if (piezasCanjeCarrito() >= CANJE_MAX_PIEZAS) { mostrarToast('Puedes canjear hasta 5 piezas por pedido'); return; }
+    if (saldoCanje() - puntosCanjeCarrito() < p.puntos) { mostrarToast('No te alcanzan los puntos'); return; }
+    if (!linea) carrito[key] = { key, idProducto: p.id, sabor: p.sabor, presentacion: p.presentacion, precio: 0, precioOriginal: 0, descuento: 0, gramos: p.gramos, tipoVenta: 'Por Pieza', qty: 0, canje: true, puntos: p.puntos };
+    carrito[key].qty += 1;
+    try { track('canje_agregado', { sabor: p.sabor, presentacion: p.presentacion, puntos: p.puntos }); } catch (e) {}
+  } else if (linea) {
+    linea.qty = Math.max(0, linea.qty - 1);
+    if (!linea.qty) delete carrito[key];
+  }
+  actualizarBadge();
+  pintarTiendaCanje();
+  if (document.getElementById('drawer').classList.contains('open')) renderDrawer();
+};
+function pintarTiendaCanje() {
+  const grid = document.getElementById('tc-grid');
+  if (!grid) return;
+  const saldo = saldoCanje(), usados = puntosCanjeCarrito(), piezas = piezasCanjeCarrito();
+  const disp = saldo - usados;
+  const dispEl = document.getElementById('tc-disp'); if (dispEl) dispEl.textContent = disp.toLocaleString('es-MX') + ' pts';
+  const totEl = document.getElementById('tc-total'); if (totEl) totEl.textContent = usados.toLocaleString('es-MX');
+  const irEl = document.getElementById('tc-ir'); if (irEl) irEl.disabled = !piezas;
+  const info = document.getElementById('tc-info');
+  if (!_canjeCat) {
+    grid.innerHTML = '';
+    const d = document.createElement('div'); d.style.cssText = 'grid-column:1/-1;text-align:center;color:var(--suave);padding:30px 0;font-size:0.85rem;';
+    d.textContent = !tokenCliente() ? 'Verifica tu número para canjear tus puntos.' : 'No se pudo cargar la tienda de canje.';
+    grid.appendChild(d); if (info) info.textContent = ''; return;
+  }
+  if (info) info.textContent = `Hay ${_canjeCat.length} productos. Canjea hasta ${CANJE_MAX_PIEZAS} piezas por pedido; tu pedido debe llevar al menos un producto comprado.`;
+  grid.innerHTML = '';
+  for (const p of _canjeCat) {
+    const qty = Number(carrito['canje-' + p.id]?.qty || 0);
+    const alcanza = disp >= p.puntos && piezas < CANJE_MAX_PIEZAS;
+    const card = document.createElement('div');
+    card.className = 'tc-card' + (!alcanza && !qty ? ' sin-saldo' : '');
+    const img = document.createElement('div'); img.className = 'tc-img';
+    if (p.imagen) { const im = document.createElement('img'); im.src = p.imagen; im.alt = p.sabor + ' ' + p.presentacion; im.loading = 'lazy'; img.appendChild(im); }
+    else img.innerHTML = saborDot(p.sabor, 40);
+    const nom = document.createElement('div'); nom.className = 'tc-nom'; nom.textContent = p.sabor + ' · ' + p.presentacion;
+    const pts = document.createElement('div'); pts.className = 'tc-pts'; pts.textContent = Number(p.puntos).toLocaleString('es-MX') + ' ';
+    const sm = document.createElement('small'); sm.textContent = 'pts'; pts.appendChild(sm);
+    const paso = document.createElement('div'); paso.className = 'tc-paso';
+    const menos = document.createElement('button'); menos.type = 'button'; menos.textContent = '−'; menos.disabled = !qty; menos.setAttribute('aria-label', 'Quitar una pieza de ' + nom.textContent); menos.onclick = () => cambiarCanje(p.id, -1);
+    const n = document.createElement('span'); n.textContent = qty;
+    const mas = document.createElement('button'); mas.type = 'button'; mas.textContent = '+'; mas.disabled = !alcanza; mas.setAttribute('aria-label', 'Canjear una pieza de ' + nom.textContent); mas.onclick = () => cambiarCanje(p.id, 1);
+    paso.append(menos, n, mas);
+    card.append(img, nom, pts, paso);
+    grid.appendChild(card);
+  }
+}
 
 // ── Panel admin: reglas del Crunchy Club (solo admin estricto, no mostrador) ──
 function esAdminEstricto() {
