@@ -785,6 +785,42 @@ select.inp { appearance: none; cursor: pointer; }
 .bene-titulo { font-weight:900; font-size:0.85rem; }
 .bene-desc { font-size:0.73rem; color:var(--suave); font-weight:600; }
 .bene-lock { margin-left:auto; font-size:0.72rem; font-weight:800; color:#444; white-space:nowrap; }
+/* Crunchy Club a la manera de Premia Juntos+ (18 sep 2026) */
+.club-top { background:linear-gradient(135deg,#FFD200,#f0a800); padding:22px 20px 58px; text-align:center; color:var(--negro); }
+.club-hola { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.25rem; }
+.club-act { font-size:0.7rem; font-weight:700; opacity:0.7; margin-top:2px; }
+.club-card-wrap { padding:0 16px; margin-top:-44px; position:relative; }
+.club-card { background:var(--gris); border:1px solid var(--gris3); border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
+.club-card-lbl { display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:800; color:var(--suave); }
+.club-card-lbl svg { width:16px; height:16px; color:var(--amarillo); }
+.club-card-fila { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:4px; }
+.club-card-num { font-family:'Archivo',sans-serif; font-weight:800; font-size:2.4rem; color:var(--blanco); line-height:1.1; }
+.club-card-eq { font-size:0.72rem; font-weight:700; color:var(--suave); }
+.club-canjear { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+.club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
+.club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave); line-height:1.55; }
+.club-como strong { color:var(--amarillo); }
+.club-como-tit { font-size:0.95rem; font-weight:800; color:var(--blanco); margin-bottom:6px; }
+#s-club-movs { background:var(--negro); }
+#s-club-movs .header { justify-content:flex-start; gap:10px; }
+.club-volver { background:none; border:none; color:var(--blanco); padding:6px; margin-left:-6px; cursor:pointer; display:flex; }
+.club-volver svg { width:24px; height:24px; }
+.club-movs-tit { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.15rem; color:var(--blanco); }
+.club-card-mini { padding:12px 16px; }
+.club-card-mini .club-card-num { font-size:1.8rem; }
+.club-filtros { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 6px; }
+.club-filtros select { background:var(--gris); color:var(--blanco); border:1px solid var(--gris3); border-radius:50px; padding:10px 14px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.8rem; min-width:0; }
+.club-mes { font-family:'Archivo',sans-serif; font-weight:800; font-size:1rem; color:var(--blanco); margin:18px 0 6px; }
+.club-mov { padding:12px 0; border-bottom:1px solid var(--gris3); }
+.club-mov-chips { display:flex; gap:6px; margin-bottom:6px; }
+.club-chip { font-size:0.68rem; font-weight:800; border-radius:6px; padding:2px 8px; background:var(--gris2); color:var(--suave); }
+.club-chip.gen { background:transparent; border:1px solid var(--verde); color:var(--verde); }
+.club-chip.neg { background:transparent; border:1px solid var(--gris3); color:var(--suave); }
+.club-mov-fila { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.club-mov-tit { font-size:0.88rem; font-weight:700; color:var(--blanco); }
+.club-mov-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.15rem; white-space:nowrap; color:var(--suave); }
+.club-mov-pts.gen { color:var(--verde); }
+.club-mov-sub { font-size:0.72rem; font-weight:600; color:var(--suave); margin-top:3px; }
 
 /* PEDIDOS */
 #s-pedidos { background:var(--negro); padding:16px 16px 80px; }
@@ -1729,65 +1765,61 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
   </div>
   <div id="club-admin-cfg" style="display:none;"></div>
   <div id="mayoreo-admin-cfg" style="display:none;"></div>
-  <!-- Sin niveles (Abraham, 18 sep): compras y generas puntos. Los niveles prometían descuentos
-       que ningún cobro aplicaba. -->
-  <div class="premia-hero">
-    <div class="premia-num" id="p-puntos">0</div>
-    <div class="premia-lbl">PUNTOS DISPONIBLES</div>
-    <div id="p-equiv" style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-top:6px;position:relative;"></div>
+  <!-- Crunchy Club (18 sep, a la manera de Premia Juntos+ de FEMSA): saludo, tarjeta de puntos con
+       «Mis movimientos» y «Canjear», y cómo se ganan. Sin niveles: prometían descuentos que ningún
+       cobro aplicaba. El estado de cuenta vive en #s-club-movs. -->
+  <div class="club-cliente club-top">
+    <div class="club-hola">¡Hola<span id="club-hola-nombre"></span>!</div>
+    <div class="club-act" id="club-actualizado"></div>
   </div>
-  <div class="premia-stats">
-    <div class="premia-stat">
-      <div class="pv" id="p-total-pedidos">0</div>
-      <div class="pl">Pedidos totales</div>
-    </div>
-    <div class="premia-stat">
-      <div class="pv" id="p-total-compras">$0</div>
-      <div class="pl">Total comprado</div>
-    </div>
-    <div class="premia-stat">
-      <div class="pv" id="p-mes">$0</div>
-      <div class="pl">Este mes</div>
-    </div>
-    <div class="premia-stat">
-      <div class="pv" id="p-ultimo">—</div>
-      <div class="pl">Último pedido</div>
+  <div class="club-cliente club-card-wrap">
+    <div class="club-card">
+      <div class="club-card-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>Puntos Crunchy</div>
+      <div class="club-card-fila">
+        <div>
+          <div class="club-card-num" id="p-puntos">0</div>
+          <div class="club-card-eq" id="p-equiv"></div>
+        </div>
+        <button type="button" class="club-canjear" onclick="aplicarCanje()">Canjear puntos</button>
+      </div>
+      <button type="button" class="club-link" onclick="abrirMovimientos()">Mis movimientos <span aria-hidden="true">›</span></button>
     </div>
   </div>
-  <div class="premia-beneficios">
-    <h3>CÓMO FUNCIONA</h3>
-    <div style="background:var(--gris);border-radius:12px;padding:14px;font-size:0.8rem;font-weight:600;color:var(--suave);line-height:1.55;">
-      <div style="font-size:0.95rem;font-weight:800;color:var(--blanco);margin-bottom:6px;">Compras y generas puntos.</div>
-      Ganas <strong style="color:var(--amarillo)">1 punto</strong> por cada <strong style="color:var(--amarillo)">$10</strong> de producto (sin envío).<br>
+  <!-- Las cifras de compras las llena cargarDatosCliente; no se enseñan en el Club nuevo. -->
+  <div class="premia-stats" style="display:none;">
+    <div class="pv" id="p-total-pedidos">0</div><div class="pv" id="p-total-compras">$0</div>
+    <div class="pv" id="p-mes">$0</div><div class="pv" id="p-ultimo">—</div>
+  </div>
+  <div class="premia-beneficios club-cliente">
+    <h3>CÓMO GANAR PUNTOS</h3>
+    <div class="club-como">
+      <div class="club-como-tit">Compras y generas puntos.</div>
+      Ganas <strong>1 punto</strong> por cada <strong>$10</strong> de producto (sin envío). <span id="canje-equiv">10 puntos = $3 en producto.</span><br>
       Si pagas en línea, llegan al momento; si pagas al recibir, cuando se registra tu pago. En tiendas, al entregar el pedido.
     </div>
   </div>
+</div>
 
-  <!-- Canje de puntos -->
-  <div style="padding:0 16px 16px;">
-    <div style="background:var(--gris);border-radius:14px;padding:16px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">CANJEAR PUNTOS</div>
-      <div id="canje-equiv" style="font-size:0.78rem;font-weight:700;color:var(--suave);margin-bottom:14px;">10 puntos = $3 en producto</div>
-      <div style="background:var(--gris2);border-radius:10px;padding:12px;text-align:center;">
-        <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);line-height:1;"><span id="canje-disponibles">0</span></div>
-        <div style="font-size:0.68rem;font-weight:800;color:var(--suave);letter-spacing:1px;">PUNTOS ACUMULADOS</div>
-      </div>
-      <div style="font-size:0.74rem;font-weight:700;color:var(--suave);text-align:center;margin-top:10px;line-height:1.45;">
-        El canje estará disponible muy pronto.<br>
-        <span style="color:#777;font-weight:600;">Tus puntos se siguen acumulando y no caducan.</span>
-      </div>
-    </div>
+<!-- Crunchy Club: estado de cuenta (mis_puntos) -->
+<div class="screen" id="s-club-movs">
+  <div class="header">
+    <button type="button" class="club-volver" onclick="volverAlClub()" aria-label="Volver al Crunchy Club"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></button>
+    <div class="club-movs-tit">Estado de cuenta</div>
   </div>
-
-  <!-- Movimientos de puntos: cuántos dio cada pedido y el saldo (mis_puntos) -->
-  <div class="club-cliente" style="padding:0 16px 90px;">
-    <div style="background:var(--gris);border-radius:14px;padding:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;">MIS PUNTOS</div>
-        <div style="font-size:0.78rem;font-weight:800;color:var(--blanco);margin-bottom:6px;">Saldo: <span id="club-movs-saldo" style="color:var(--amarillo);">0</span></div>
-      </div>
-      <div id="club-movs"></div>
+  <div style="padding:14px 16px 90px;">
+    <div class="club-card club-card-mini">
+      <div class="club-card-lbl">Puntos Crunchy</div>
+      <div class="club-card-num" id="club-movs-saldo">0</div>
     </div>
+    <div class="club-filtros">
+      <select id="club-f-periodo" aria-label="Periodo" onchange="pintarMovimientos()">
+        <option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option><option value="0">Todo</option>
+      </select>
+      <select id="club-f-tipo" aria-label="Tipo de movimiento" onchange="pintarMovimientos()">
+        <option value="">Todos</option><option value="generacion">Generados</option><option value="reversion">Cancelados</option><option value="ajuste">Ajustes</option>
+      </select>
+    </div>
+    <div id="club-movs"></div>
   </div>
 </div>
 
@@ -9301,9 +9333,7 @@ window.navegar = function(seccion) {
 function renderPremia() {
   // Admin: ocultar las tarjetas de cliente y mostrar solo el panel de reglas.
   const _esAdminCfg = (typeof esAdminEstricto === 'function' && esAdminEstricto());
-  ['.premia-hero', '.premia-stats', '.premia-beneficios', '.club-cliente'].forEach(sel => {
-    const el = document.querySelector(sel); if (el) el.style.display = _esAdminCfg ? 'none' : '';
-  });
+  document.querySelectorAll('#s-premia .club-cliente').forEach(el => { el.style.display = _esAdminCfg ? 'none' : ''; });
   if (_esAdminCfg) { renderClubAdminCfg(); renderMayoreoAdminCfg(); return; }
   cargarMisPuntos();
 
@@ -9313,52 +9343,82 @@ function renderPremia() {
   renderClubAdminCfg();
 }
 
-// ── Crunchy Club: saldo y movimientos del cliente (mis_puntos) ──
-// Cada pedido dice cuántos puntos dio; el saldo es la suma del ledger, como en el servidor.
-const MIS_PUNTOS_TIPO = { generacion: 'Pedido', reversion: 'Cancelación', canje: 'Canje', devolucion: 'Devolución de canje', vencimiento: 'Vencimiento', ajuste: 'Ajuste' };
+// ── Crunchy Club: tarjeta de puntos y estado de cuenta (mis_puntos) ──
+// A la manera de Premia Juntos+: saludo, tarjeta con saldo, «Mis movimientos» y un estado de cuenta
+// por mes con filtros. El saldo es la suma del ledger, como en el servidor.
+const MIS_PUNTOS_TIPO = { generacion: 'Generados', reversion: 'Cancelado', canje: 'Canje', devolucion: 'Devuelto', vencimiento: 'Vencido', ajuste: 'Ajuste' };
+let _misPuntos = null;
+let _valorPunto = 0;
 async function cargarMisPuntos() {
-  const cont = document.getElementById('club-movs');
-  const saldoEl = document.getElementById('club-movs-saldo');
-  if (!cont) return;
-  const nota = (txt) => { cont.innerHTML = ''; const d = document.createElement('div'); d.style.cssText = 'font-size:0.78rem;font-weight:600;color:var(--suave);text-align:center;padding:10px 0;'; d.textContent = txt; cont.appendChild(d); };
-  // La equivalencia del canje sale de las reglas, no de un texto fijo.
+  const nombre = String(clienteActual?.nombre || '').trim().split(/\s+/)[0];
+  const hola = document.getElementById('club-hola-nombre'); if (hola) hola.textContent = nombre ? ', ' + nombre : '';
+  const act = document.getElementById('club-actualizado');
+  if (act) act.textContent = 'Actualizado ' + new Date().toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit' });
+  // La equivalencia sale de las reglas, no de un texto fijo.
   supabaseCall('POST', 'rpc/get_lealtad_config', {}).then(cfg => {
-    const v = Number(cfg?.redencion?.valor_punto_mxn), el = document.getElementById('canje-equiv');
-    if (el && v > 0) el.textContent = `10 puntos = $${(10 * v).toLocaleString('es-MX', { maximumFractionDigits: 2 })} en producto`;
-    const eq = document.getElementById('p-equiv');
-    if (eq && v > 0) eq.textContent = `Equivalen a $${(puntos * v).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} en producto`;
+    _valorPunto = Number(cfg?.redencion?.valor_punto_mxn) || 0;
+    const el = document.getElementById('canje-equiv');
+    if (el && _valorPunto > 0) el.textContent = `10 puntos = $${(10 * _valorPunto).toLocaleString('es-MX', { maximumFractionDigits: 2 })} en producto.`;
+    pintarEquivalencia();
   }).catch(() => {});
-  if (!tokenCliente()) { nota('Verifica tu número para ver tus puntos.'); return; }
-  nota('Cargando…');
+  if (!tokenCliente()) { _misPuntos = { error: 'Verifica tu número para ver tus puntos.' }; pintarMovimientos(); return; }
   let r;
   try { r = await supabaseCall('POST', 'rpc/mis_puntos', { p_token: tokenCliente() }); } catch (e) { r = null; }
-  if (!r || !r.ok) { nota(sesionExpirada(r) ? 'Tu sesión venció. Vuelve a entrar para ver tus puntos.' : 'No se pudieron cargar tus puntos.'); return; }
-  if (saldoEl) saldoEl.textContent = Number(r.saldo || 0).toLocaleString('es-MX');
-  const movs = r.movimientos || [];
-  if (!movs.length) { nota('Aún no tienes movimientos. Tus puntos aparecerán aquí con cada pedido.'); return; }
+  _misPuntos = (r && r.ok) ? r : { error: sesionExpirada(r) ? 'Tu sesión venció. Vuelve a entrar para ver tus puntos.' : 'No se pudieron cargar tus puntos.' };
+  if (r && r.ok) {
+    const n = Number(r.saldo || 0).toLocaleString('es-MX');
+    const pp = document.getElementById('p-puntos'); if (pp) pp.textContent = n;
+    const ms = document.getElementById('club-movs-saldo'); if (ms) ms.textContent = n;
+  }
+  pintarEquivalencia();
+  pintarMovimientos();
+}
+function pintarEquivalencia() {
+  const eq = document.getElementById('p-equiv');
+  const saldo = _misPuntos && !_misPuntos.error ? Number(_misPuntos.saldo || 0) : Number(puntos || 0);
+  if (eq) eq.textContent = _valorPunto > 0 ? `Equivalen a $${(saldo * _valorPunto).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} en producto` : '';
+}
+window.abrirMovimientos = function() { ir('s-club-movs'); pintarMovimientos(); try { window.scrollTo(0, 0); } catch (_e) {} };
+window.volverAlClub = function() { if ((window._navStack || []).length > 1) history.back(); else navegar('premia'); };
+window.pintarMovimientos = function() {
+  const cont = document.getElementById('club-movs');
+  if (!cont) return;
   cont.innerHTML = '';
+  const nota = (txt) => { const d = document.createElement('div'); d.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--suave);text-align:center;padding:24px 0;'; d.textContent = txt; cont.appendChild(d); };
+  if (!_misPuntos) { nota('Cargando…'); return; }
+  if (_misPuntos.error) { nota(_misPuntos.error); return; }
+  const meses = Number(document.getElementById('club-f-periodo')?.value || 3);
+  const tipo = document.getElementById('club-f-tipo')?.value || '';
+  const desde = meses ? new Date(Date.now() - meses * 30.44 * 864e5) : null;
+  const movs = (_misPuntos.movimientos || []).filter(m => (!tipo || m.tipo === tipo) && (!desde || new Date(m.fecha) >= desde));
+  if (!movs.length) { nota((_misPuntos.movimientos || []).length ? 'No hay movimientos con estos filtros.' : 'Aún no tienes movimientos. Tus puntos aparecerán aquí con cada compra.'); return; }
+  const tz = { timeZone: 'America/Mexico_City' };
+  let mesActual = '';
   for (const m of movs) {
-    const fila = document.createElement('div');
-    fila.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--gris3);';
-    const izq = document.createElement('div');
-    const tit = document.createElement('div');
-    tit.style.cssText = 'font-size:0.8rem;font-weight:700;color:var(--blanco);';
-    tit.textContent = (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento') + (m.consecutivo ? ' ' + m.consecutivo : '');
-    const sub = document.createElement('div');
-    sub.style.cssText = 'font-size:0.68rem;font-weight:600;color:var(--suave);margin-top:2px;';
-    const cuando = m.fecha ? new Date(m.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-    const detalle = m.tipo === 'generacion' && Number(m.monto) > 0 ? `$${Number(m.monto).toLocaleString('es-MX')} de producto`
-                  : m.tipo === 'ajuste' ? 'Reinicio del Club con las reglas nuevas' : '';
-    sub.textContent = [cuando, detalle].filter(Boolean).join(' · ');
-    izq.append(tit, sub);
-    const pts = document.createElement('div');
+    const f = new Date(m.fecha);
+    const mes = f.toLocaleDateString('es-MX', { ...tz, month: 'long', year: 'numeric' });
+    if (mes !== mesActual) {
+      mesActual = mes;
+      const h = document.createElement('div'); h.className = 'club-mes'; h.textContent = mes.charAt(0).toUpperCase() + mes.slice(1); cont.appendChild(h);
+    }
     const n = Number(m.puntos || 0);
-    pts.style.cssText = `font-family:'Archivo',sans-serif;font-size:1rem;white-space:nowrap;color:${n > 0 ? 'var(--amarillo)' : 'var(--suave)'};`;
-    pts.textContent = (n > 0 ? '+' : '') + n.toLocaleString('es-MX') + ' pts';
-    fila.append(izq, pts);
+    const fila = document.createElement('div'); fila.className = 'club-mov';
+    const chips = document.createElement('div'); chips.className = 'club-mov-chips';
+    const c1 = document.createElement('span'); c1.className = 'club-chip'; c1.textContent = f.toLocaleDateString('es-MX', { ...tz, day: 'numeric', month: 'short' });
+    const c2 = document.createElement('span'); c2.className = 'club-chip ' + (n > 0 ? 'gen' : 'neg'); c2.textContent = MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento';
+    chips.append(c1, c2);
+    const linea = document.createElement('div'); linea.className = 'club-mov-fila';
+    const tit = document.createElement('div'); tit.className = 'club-mov-tit';
+    tit.textContent = m.tipo === 'generacion' ? 'Compra' : m.tipo === 'reversion' ? 'Pedido cancelado' : m.tipo === 'ajuste' ? 'Reinicio del Club' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
+    const pts = document.createElement('div'); pts.className = 'club-mov-pts' + (n > 0 ? ' gen' : '');
+    pts.textContent = (n > 0 ? '+ ' : '− ') + Math.abs(n).toLocaleString('es-MX');
+    linea.append(tit, pts);
+    const sub = document.createElement('div'); sub.className = 'club-mov-sub';
+    sub.textContent = [m.consecutivo ? 'Pedido ' + m.consecutivo : '', m.tipo === 'generacion' && Number(m.monto) > 0 ? '$' + Number(m.monto).toLocaleString('es-MX') + ' de producto' : '', m.tipo === 'ajuste' ? 'Reglas nuevas: 1 punto por cada $10' : ''].filter(Boolean).join(' · ');
+    fila.append(chips, linea, sub);
     cont.appendChild(fila);
   }
-}
+};
 
 // ── Panel admin: reglas del Crunchy Club (solo admin estricto, no mostrador) ──
 function esAdminEstricto() {
