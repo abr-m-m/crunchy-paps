@@ -796,6 +796,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-card-fila { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:4px; }
 .club-card-num { font-family:'Archivo',sans-serif; font-weight:800; font-size:2.4rem; color:var(--blanco); line-height:1.1; }
 .club-card-eq { font-size:0.72rem; font-weight:700; color:var(--suave); }
+.club-card-vence { font-size:0.72rem; font-weight:800; color:var(--amarillo); margin-top:2px; }
 .club-canjear { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
 .club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
 .club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave); line-height:1.55; }
@@ -1808,6 +1809,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         <div>
           <div class="club-card-num" id="p-puntos">0</div>
           <div class="club-card-eq" id="p-equiv"></div>
+          <div class="club-card-vence" id="p-vence" style="display:none"></div>
         </div>
         <button type="button" class="club-canjear" onclick="abrirTiendaCanje()">Canjear puntos</button>
       </div>
@@ -1824,7 +1826,8 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <div class="club-como">
       <div class="club-como-tit">Compras y generas puntos.</div>
       Ganas <strong>1 punto</strong> por cada <strong>$10</strong> de producto (sin envío). <span id="canje-equiv">10 puntos = $3 en producto.</span><br>
-      Si pagas en línea, llegan al momento; si pagas al recibir, cuando se registra tu pago. En tiendas, al entregar el pedido.
+      Si pagas en línea, llegan al momento; si pagas al recibir, cuando se registra tu pago. En tiendas, al entregar el pedido.<br>
+      Tus puntos vencen a los 12 meses. Al canjear se usan primero los más viejos.
     </div>
   </div>
 </div>
@@ -1845,7 +1848,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
         <option value="3">Últimos 3 meses</option><option value="6">Últimos 6 meses</option><option value="12">Últimos 12 meses</option><option value="0">Todo</option>
       </select>
       <select id="club-f-tipo" aria-label="Tipo de movimiento" onchange="pintarMovimientos()">
-        <option value="">Todos</option><option value="generacion">Generados</option><option value="canje">Canjes</option><option value="devolucion">Devoluciones</option><option value="reversion">Cancelados</option><option value="ajuste">Ajustes</option>
+        <option value="">Todos</option><option value="generacion">Generados</option><option value="canje">Canjes</option><option value="devolucion">Devoluciones</option><option value="reversion">Cancelados</option><option value="vencimiento">Vencidos</option><option value="ajuste">Ajustes</option>
       </select>
     </div>
     <div id="club-movs"></div>
@@ -9051,7 +9054,7 @@ window.calcCanje = function(val) {
 // era `pts > puntos` contra una variable local, y cualquiera con la consola
 // abierta se habría regalado el descuento.
 window.aplicarCanje = function() {
-  avisar({ titulo: 'Muy pronto', cuerpo: 'El canje de puntos estará disponible muy pronto. Tus puntos se siguen acumulando y no caducan.' });
+  avisar({ titulo: 'Muy pronto', cuerpo: 'El canje de puntos estará disponible muy pronto. Tus puntos se siguen acumulando y vencen 12 meses después de ganarlos.' });
 };
 
 
@@ -9444,6 +9447,14 @@ function pintarEquivalencia() {
   const eq = document.getElementById('p-equiv');
   const saldo = _misPuntos && !_misPuntos.error ? Number(_misPuntos.saldo || 0) : Number(puntos || 0);
   if (eq) eq.textContent = _valorPunto > 0 ? `Equivalen a $${(saldo * _valorPunto).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} en producto` : '';
+  // Lo que vence en los próximos 30 días (mis_puntos.por_vencer); sin nada por vencer, la línea no se ve.
+  const ve = document.getElementById('p-vence');
+  const pv = _misPuntos && !_misPuntos.error ? _misPuntos.por_vencer : null;
+  const nv = Number(pv?.puntos || 0);
+  if (ve) {
+    ve.style.display = nv > 0 ? '' : 'none';
+    ve.textContent = nv > 0 ? `${nv.toLocaleString('es-MX')} ${nv === 1 ? 'punto vence' : 'puntos vencen'} el ${new Date(pv.fecha).toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit' })}` : '';
+  }
 }
 window.abrirMovimientos = function() { ir('s-club-movs'); pintarMovimientos(); try { window.scrollTo(0, 0); } catch (_e) {} };
 window.volverAlClub = function() { if ((window._navStack || []).length > 1) history.back(); else navegar('premia'); };
@@ -9492,12 +9503,12 @@ window.pintarMovimientos = function() {
     const linea = document.createElement('div'); linea.className = 'club-mov-fila';
     const tit = document.createElement('div'); tit.className = 'club-mov-tit';
     tit.textContent = m.tipo === 'generacion' ? 'Compra' : m.tipo === 'reversion' ? 'Pedido cancelado' : m.tipo === 'ajuste' ? 'Reinicio del Club'
-                    : m.tipo === 'canje' ? 'Canje de producto' : m.tipo === 'devolucion' ? 'Devolución de canje' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
+                    : m.tipo === 'canje' ? 'Canje de producto' : m.tipo === 'devolucion' ? 'Devolución de canje' : m.tipo === 'vencimiento' ? 'Puntos vencidos' : (MIS_PUNTOS_TIPO[m.tipo] || 'Movimiento');
     const pts = document.createElement('div'); pts.className = 'club-mov-pts' + (n > 0 ? ' gen' : '');
     pts.textContent = (n > 0 ? '+ ' : '− ') + Math.abs(n).toLocaleString('es-MX');
     linea.append(tit, pts);
     const sub = document.createElement('div'); sub.className = 'club-mov-sub';
-    sub.textContent = [m.consecutivo ? 'Pedido ' + m.consecutivo : '', m.tipo === 'generacion' && Number(m.monto) > 0 ? '$' + Number(m.monto).toLocaleString('es-MX') + ' de producto' : '', m.tipo === 'ajuste' ? 'Reglas nuevas: 1 punto por cada $10' : ''].filter(Boolean).join(' · ');
+    sub.textContent = [m.consecutivo ? 'Pedido ' + m.consecutivo : '', m.tipo === 'generacion' && Number(m.monto) > 0 ? '$' + Number(m.monto).toLocaleString('es-MX') + ' de producto' : '', m.tipo === 'ajuste' ? 'Reglas nuevas: 1 punto por cada $10' : m.tipo === 'vencimiento' ? String(m.nota || '') : ''].filter(Boolean).join(' · ');
     fila.append(chips, linea, sub);
     cont.appendChild(fila);
   }
