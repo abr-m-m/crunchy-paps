@@ -15,6 +15,16 @@
      Si no carga, index.html tiene respaldo y falla en voz alta fuera de
      producción en vez de escribir en la base real. -->
 <script src="/api/config.js"></script>
+<script>
+// 18 sep 2026: la fecha del día se calcula en hora de CDMX, no en UTC. Con toISOString() la app
+// marcaba «mañana» desde las 18:00 (gasto, jornada, caja, vigencia de cupones, mínimo de entrega).
+function fechaCDMX(d) {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d || new Date()); }
+  catch (e) { return (d || new Date()).toISOString().slice(0, 10); }
+}
+// Un valor de columna `date` ('AAAA-MM-DD') se deja tal cual; un instante se pasa a su día en CDMX.
+function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) ? v : fechaCDMX(new Date(v)); }
+</script>
 
 <!-- ═══════ GA4 + captura de UTM (R1 medición) ═══════ -->
 <script>
@@ -5887,7 +5897,7 @@ async function cargarFechaEntrega() {
     if (inp && yyyymmdd) inp.value = yyyymmdd;
     // Mínimo = la fecha sugerida: solo se permite esa fecha o posterior (nunca antes)
     if (inp) {
-      const hoyStr = new Date().toISOString().split('T')[0];
+      const hoyStr = fechaCDMX();
       inp.min = yyyymmdd || hoyStr;
     }
   };
@@ -5896,7 +5906,7 @@ async function cargarFechaEntrega() {
   const esMostrador = esVendedor && vendedorInfo?.rol === 'Mostrador';
   if (esMostrador) {
     const hoy = new Date();
-    const hoyStr = hoy.toISOString().split('T')[0];
+    const hoyStr = fechaCDMX(hoy);
     wrap.style.display = 'block';
     lbl.textContent = hoy.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'});
     msg.textContent = 'Entrega inmediata — punto de venta';
@@ -8814,7 +8824,7 @@ async function renderProduccion() {
 
     // v2.9: Próxima producción desde produccion_diaria
     try {
-      const hoy = new Date().toISOString().slice(0,10);
+      const hoy = fechaCDMX();
       const _rp1 = await supabaseCall('POST', 'rpc/obtener_produccion', { p_data: { proximaFecha: true } });
       const proxArr = (_rp1 && _rp1.ok) ? _rp1.filas : [];
       if (Array.isArray(proxArr) && proxArr.length > 0 && proxArr[0].fecha_siguiente) {
@@ -8841,7 +8851,7 @@ async function renderProduccion() {
 window.inicializarSaboresProduccion = async function() {
   if (!(await confirmar({ titulo: 'Crear los 7 sabores', cuerpo: 'Se crean en producción con 0 kg cada uno.', aceptar: 'Crear' }))) return;
   const SABORES_DEFAULT = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
-  const fechaHoy = new Date().toISOString().slice(0,10);
+  const fechaHoy = fechaCDMX();
   try {
     const calls = SABORES_DEFAULT.map(sabor =>
       supabaseCall('POST', 'rpc/registrar_produccion_sabor', {
@@ -10747,7 +10757,7 @@ window.exportarResumenCSV = function() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'resumen-pedidos-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = 'resumen-pedidos-' + fechaCDMX() + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -14843,7 +14853,7 @@ window.abrirNuevoGasto = function() {
 
   // Reset form
   document.getElementById('ng-titulo').textContent = 'Nuevo gasto';
-  document.getElementById('ng-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ng-fecha').value = fechaCDMX();
   document.getElementById('ng-categoria').value = '';
   document.getElementById('ng-subcategoria').innerHTML = '<option value="">Selecciona categoría primero</option>';
   document.getElementById('ng-concepto').value = '';
@@ -15169,7 +15179,7 @@ window.editarGastoUI = function(id) {
   abrirNuevoGasto();
   _editandoGasto = id;
   document.getElementById('ng-titulo').textContent = 'Editar gasto';
-  document.getElementById('ng-fecha').value = g.fecha ? new Date(g.fecha).toISOString().split('T')[0] : '';
+  document.getElementById('ng-fecha').value = g.fecha ? fechaDeValorCDMX(g.fecha) : '';
   document.getElementById('ng-categoria').value = g.categoria;
   actualizarSubcategorias();
   setTimeout(() => { document.getElementById('ng-subcategoria').value = g.subcategoria || ''; }, 50);
@@ -15221,7 +15231,7 @@ function mostrarNavCaja() {
 }
 
 function fechaYYYYMMDD(d) {
-  return d.toISOString().slice(0, 10);
+  return fechaCDMX(d);
 }
 
 window.cajaHoy = function() {
@@ -16839,8 +16849,8 @@ async function pintarReporteAdmin() {
   try {
     // v2.9: leer jornadas del mes actual desde Supabase y agregar en frontend
     const ahora = new Date();
-    const mesIni = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString().slice(0,10);
-    const mesFin = new Date(ahora.getFullYear(), ahora.getMonth()+1, 0).toISOString().slice(0,10);
+    const mesIni = fechaCDMX(new Date(ahora.getFullYear(), ahora.getMonth(), 1));
+    const mesFin = fechaCDMX(new Date(ahora.getFullYear(), ahora.getMonth()+1, 0));
     const _rjm = await supabaseCall('POST', 'rpc/obtener_jornadas',
       { p_data: { desde: mesIni, hasta: mesFin, limit: 500 } });
     const arr = (_rjm && _rjm.ok) ? _rjm.jornadas : null;
@@ -17023,7 +17033,7 @@ window.confirmarIniciarJornada = async function() {
 
     const payload = {
       // Igual que en gastos: el vendedor sale del token en guardar_jornada.
-      fecha: new Date().toISOString().slice(0, 10),
+      fecha: fechaCDMX(),
       hora_inicio: new Date().toISOString(),
       coords_entrada: lat && lng ? `${lat},${lng}` : null,
       en_planta_entrada: dentroPlanta,
@@ -17956,7 +17966,7 @@ window.abrirNuevoCupon = function() {
   document.getElementById('cf-tipo').value = 'descuento_pct';
   document.getElementById('cf-valor').value = '';
   document.getElementById('cf-descripcion').value = '';
-  document.getElementById('cf-vig-inicio').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cf-vig-inicio').value = fechaCDMX();
   document.getElementById('cf-vig-fin').value = '';
   document.getElementById('cf-usos-max').value = '';
   document.getElementById('cf-min-compra').value = '';
@@ -17975,8 +17985,8 @@ window.editarCupon = function(id) {
   document.getElementById('cf-tipo').value = c.tipo || 'descuento_pct';
   document.getElementById('cf-valor').value = c.valor || '';
   document.getElementById('cf-descripcion').value = c.descripcion || '';
-  if (c.vigencia_inicio) document.getElementById('cf-vig-inicio').value = new Date(c.vigencia_inicio).toISOString().split('T')[0];
-  if (c.vigencia_fin) document.getElementById('cf-vig-fin').value = new Date(c.vigencia_fin).toISOString().split('T')[0];
+  if (c.vigencia_inicio) document.getElementById('cf-vig-inicio').value = fechaDeValorCDMX(c.vigencia_inicio);
+  if (c.vigencia_fin) document.getElementById('cf-vig-fin').value = fechaDeValorCDMX(c.vigencia_fin);
   document.getElementById('cf-usos-max').value = c.usos_maximos || '';
   document.getElementById('cf-min-compra').value = c.min_compra || '';
   document.getElementById('cf-segmento').value = c.segmento || 'todos';
