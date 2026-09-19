@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/sheets", "destination": "/api/sheets" },
-    { "source": "/planeador", "destination": "/planeador.html" }
+    { "source": "/planeador", "destination": "/planeador.html" },
+    { "source": "/privacidad", "destination": "/privacidad.html" }
   ],
   "crons": [
     { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" }
