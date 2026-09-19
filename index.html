@@ -17922,7 +17922,8 @@ function pintarListaCupones() {
     const inactivo = c.activo === false;
     const ahora = new Date();
     const vigFin = c.vigencia_fin ? new Date(c.vigencia_fin) : null;
-    const expirado = vigFin && ahora > vigFin;
+    // vigencia_fin es el último día a las 00:00 de CDMX; «Hasta» incluye ese día entero.
+    const expirado = vigFin && ahora.getTime() >= vigFin.getTime() + 864e5;
     const agotado = c.usos_maximos > 0 && c.usos_actuales >= c.usos_maximos;
 
     let estado = '';
