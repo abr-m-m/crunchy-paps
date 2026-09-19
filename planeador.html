@@ -174,6 +174,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
 
   let token = sessionStorage.getItem('cp-planeador-token') || '';
   let datos = null;            // respuesta de planeador_datos
+  let vendedores = [];         // activos, para el selector «Vendedor» de cada ruta
   let zona = null;             // datos-cp-zona.json
   let universo = [];           // todos los CP conocidos: los de los datos y los del mapa
   // estado: rutas; asignado { cp: clave } (cobertura por CP); colonias { coloniaNormalizada: clave };
@@ -207,6 +208,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     const r = await rpc('planeador_datos', { p_data: { token } });
     if (!r || !r.ok) { salir(); $('l-err').textContent = (r && r.error) === 'No autorizado' ? 'Tu sesión venció o esta cuenta no es la del dueño. Entra de nuevo.' : ((r && r.error) || 'No se pudieron cargar los datos.'); return; }
     datos = r;
+    try { const v = await rpc('obtener_vendedores', { p_data: { token } }); vendedores = ((v && v.vendedores) || []).filter(x => x.activo !== false); } catch (e) { vendedores = []; }
     if (!zona) zona = await (await fetch('/datos-cp-zona.json')).json();
     universo = [...new Set([...datos.cps.map(x => x.cp), ...Object.keys(zona)])].sort();
     estado = estadoDesde(datos);
@@ -282,7 +284,8 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
         <div class="nota" style="margin-top:8px">Preventa ${pre.length ? '' : '<i>(sin capturar: visita los días de reparto)</i>'}</div><div class="dias">${casillas('diasPreventa', pre)}</div>
         ${cols.length ? `<div class="nota" style="margin-top:8px">Por colonia (manda sobre el CP): ${cols.map(k => `${esc(estado.colonias[k].texto)} <button type="button" data-quitarcol="${esc(k)}" aria-label="Quitar la colonia ${esc(estado.colonias[k].texto)}" style="min-height:0;padding:0 6px">×</button>`).join(' ')}</div>` : ''}
         ${rgs.length ? `<div class="nota" style="margin-top:4px">Rangos: ${rgs.map(g => g.desde + '–' + g.hasta).join(', ')}</div>` : ''}
-        <div class="rcount">${num(t[r.clave].p)} prospectos · ${t[r.clave].n} CP · ${t[r.clave].ti} tiendas${r.vendedor ? ' · ' + esc(r.vendedor) : ''}</div>
+        ${r.id ? `<label class="nota" style="display:flex;gap:8px;align-items:center;margin-top:8px">Vendedor <select data-vend="${r.id}" aria-label="Vendedor de la ruta" style="flex:1;min-height:34px;border:1px solid var(--linea);border-radius:8px;background:var(--papel);color:var(--tinta)"><option value="">Sin asignar</option>${vendedores.map(v => `<option value="${v.id}" ${String(v.id) === String(r.idVendedor) ? 'selected' : ''}>${esc(v.nombre)}</option>`).join('')}</select></label>` : '<div class="nota" style="margin-top:8px">Guarda la ruta para asignarle vendedor.</div>'}
+        <div class="rcount">${num(t[r.clave].p)} prospectos · ${t[r.clave].n} CP · ${t[r.clave].ti} tiendas</div>
         <div class="barra" style="margin:8px 0 0"><button type="button" data-sel="${r.clave}" aria-pressed="${estado.sel === r.clave}">${estado.sel === r.clave ? 'Seleccionada para el mapa' : 'Seleccionar para el mapa'}</button><button type="button" data-quitar="${r.clave}">Quitar ruta</button></div>
       </div>`;
     }).join('');
@@ -413,7 +416,18 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
       estado.rutas = estado.rutas.filter(r => r.clave !== k); if (estado.sel === k) estado.sel = estado.rutas[0] ? estado.rutas[0].clave : null; pintar();
     }
   });
-  $('rutas').addEventListener('change', (e) => {
+  $('rutas').addEventListener('change', async (e) => {
+    // Vendedor: se asigna al momento, aparte de «Guardar» (asignar_vendedor_ruta, solo dueño).
+    const sv = e.target.closest('select[data-vend]');
+    if (sv) {
+      const res = await rpc('asignar_vendedor_ruta', { p_data: { token, idRuta: Number(sv.dataset.vend), idVendedor: sv.value ? Number(sv.value) : null } });
+      if (res && res.error === 'No autorizado') { guardarLocal(); salir(); $('l-err').textContent = 'Tu sesión venció (dura 12 horas). Entra de nuevo.'; return; }
+      if (!res || !res.ok) { toast('No se asignó: ' + ((res && res.error) || 'sin respuesta')); pintar(); return; }
+      const rt = estado.rutas.find(x => String(x.id) === sv.dataset.vend); if (rt) { rt.idVendedor = res.idVendedor; rt.vendedor = res.vendedor || ''; }
+      const rb = base.rutas.find(x => String(x.id) === sv.dataset.vend); if (rb) { rb.idVendedor = res.idVendedor; rb.vendedor = res.vendedor || ''; }
+      toast(res.vendedor ? 'Ruta asignada a ' + res.vendedor : 'Ruta sin vendedor');
+      return;
+    }
     const c = e.target.closest('input[type=checkbox]'); if (!c) return;
     const r = rutaDe(c.dataset.r), k = Number(c.dataset.d);
     if (c.dataset.campo === 'dias') r.dias = (c.checked ? [...new Set([...r.dias, k])] : r.dias.filter(x => x !== k)).sort();

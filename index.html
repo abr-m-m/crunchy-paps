@@ -2224,8 +2224,6 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
     <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
   </div>
 
-  <div id="rutas-admin-cfg" style="display:none;"></div>
-
   <!-- Tabs B2B -->
   <div style="display:flex;gap:8px;padding:14px 16px 0;overflow-x:auto;">
     <button class="b2b-tab" id="b2b-tab-pend" onclick="filtrarB2B('pendiente')"
@@ -9449,7 +9447,6 @@ window.guardarHoraLimiteCfg = async function() {
 // get_rutas (público) y las fija set_rutas (solo dueño). El servidor asigna la
 // ruta a cada tienda por trigger y nunca pisa una puesta a mano desde aquí.
 window._rutasCache = null;   // activas, para selectores
-window._rutasEdit = null;    // copia editable (incluye inactivas), solo dueño
 async function cargarRutasCache() {
   try {
     const r = await supabaseCall('POST', 'rpc/get_rutas', { p_data: {} });
@@ -9458,100 +9455,9 @@ async function cargarRutasCache() {
   return window._rutasCache;
 }
 function nombreRuta(id) { const r = (window._rutasCache || []).find(x => String(x.id) === String(id)); return r ? r.nombre : ('Ruta ' + id); }
-const RUTA_DIAS = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
-const RUTA_DIAS_LARGO = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-async function renderRutasAdminCfg() {
-  const cont = document.getElementById('rutas-admin-cfg');
-  if (!cont) return;
-  if (!esAdminEstricto()) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
-  cont.style.display = 'block';
-  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;color:var(--suave);font-size:0.8rem;">Cargando rutas…</div>';
-  let r = null;
-  try { r = await supabaseCall('POST', 'rpc/get_rutas', { p_data: { incluirInactivas: true } }); } catch (e) { r = { ok: false, error: e.message }; }
-  if (!r || !r.ok) {
-    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;color:var(--suave);font-size:0.8rem;">Rutas: el servidor aún no las conoce (' + ((r && r.error) || 'sin respuesta') + ').</div>';
-    return;
-  }
-  window._rutasEdit = (r.rutas || []).map(x => ({ id: x.id, idVendedor: x.idVendedor || null, nombre: x.nombre, color: x.color || '#ffd200', dias: (x.dias || []).map(Number), activa: x.activa !== false, cobertura: (x.cobertura || []).map(c => ({ tipo: c.tipo, valor: c.valor, cpHasta: c.cpHasta || '' })) }));
-  try {
-    const v = await supabaseCall('POST', 'rpc/obtener_vendedores', { p_data: {} });
-    window._vendedoresRuta = ((v && v.vendedores) || []).filter(x => x.activo !== false);
-  } catch (_e) { window._vendedoresRuta = []; }
-  pintarRutasEdit();
-}
-function pintarRutasEdit() {
-  const cont = document.getElementById('rutas-admin-cfg');
-  if (!cont || !window._rutasEdit) return;
-  const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  const inp = 'background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;min-height:40px;min-width:0;max-width:100%;color:var(--blanco);font-family:\'Inter\',sans-serif;font-size:0.84rem;';
-  const filas = window._rutasEdit.map((rt, i) => `
-    <div style="border:1px solid var(--gris3);border-radius:12px;padding:12px;margin-bottom:10px;${rt.activa ? '' : 'opacity:.55;'}">
-      <div style="display:grid;grid-template-columns:1fr 52px;gap:8px;align-items:center;">
-        <input value="${esc(rt.nombre)}" placeholder="Nombre de la ruta" aria-label="Nombre" oninput="rutaCampo(${i}, 'nombre', this.value)" style="${inp}">
-        <input type="color" value="${esc(rt.color)}" aria-label="Color" oninput="rutaCampo(${i}, 'color', this.value)" style="width:52px;height:40px;border:1px solid var(--gris3);border-radius:8px;background:var(--gris2);padding:2px;">
-      </div>
-      ${rt.id ? `<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.76rem;color:var(--suave);">Vendedor
-        <select aria-label="Vendedor de la ruta" onchange="asignarVendedorRuta(${rt.id}, this.value)" style="${inp}flex:1 1 auto;">
-          <option value="">Sin asignar</option>
-          ${(window._vendedoresRuta || []).map(v => `<option value="${v.id}" ${String(v.id) === String(rt.idVendedor) ? 'selected' : ''}>${esc(v.nombre)}</option>`).join('')}
-        </select></label>` : ''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" role="group" aria-label="Días de reparto">
-        ${RUTA_DIAS.map((d, k) => `<label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;border:1px solid var(--gris3);border-radius:8px;font-size:0.78rem;color:var(--blanco);cursor:pointer;${rt.dias.includes(k) ? 'background:#2a2400;border-color:var(--amarillo);' : ''}"><input type="checkbox" ${rt.dias.includes(k) ? 'checked' : ''} onchange="rutaDia(${i}, ${k}, this.checked)" style="accent-color:var(--amarillo);"> ${d}</label>`).join('')}
-        <label style="display:flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;font-size:0.78rem;color:var(--suave);cursor:pointer;margin-left:auto;"><input type="checkbox" ${rt.activa ? 'checked' : ''} onchange="rutaCampo(${i}, 'activa', this.checked)" style="accent-color:var(--amarillo);"> activa</label>
-      </div>
-      <div style="margin-top:8px;font-size:0.72rem;color:var(--suave);text-transform:uppercase;letter-spacing:.06em;">Cobertura</div>
-      ${rt.cobertura.map((c, j) => `
-        <div style="display:grid;grid-template-columns:${c.tipo === 'cp' ? '96px minmax(0,1fr) minmax(0,1fr) 40px' : '96px minmax(0,1fr) 40px'};gap:6px;margin-top:6px;align-items:center;">
-          <select aria-label="Tipo" onchange="rutaCob(${i}, ${j}, 'tipo', this.value)" style="${inp}"><option value="colonia" ${c.tipo === 'colonia' ? 'selected' : ''}>Colonia</option><option value="cp" ${c.tipo === 'cp' ? 'selected' : ''}>CP</option></select>
-          <input value="${esc(c.valor)}" placeholder="${c.tipo === 'cp' ? 'CP desde' : 'Colonia'}" aria-label="Valor" oninput="rutaCob(${i}, ${j}, 'valor', this.value)" style="${inp}">
-          ${c.tipo === 'cp' ? `<input value="${esc(c.cpHasta)}" placeholder="hasta" aria-label="CP hasta" oninput="rutaCob(${i}, ${j}, 'cpHasta', this.value)" style="${inp}">` : ''}
-          <button type="button" onclick="rutaQuitarCobertura(${i}, ${j})" aria-label="Quitar" style="min-height:40px;background:transparent;border:1px solid var(--gris3);border-radius:8px;color:var(--suave);cursor:pointer;">×</button>
-        </div>`).join('')}
-      <button type="button" onclick="rutaAgregarCobertura(${i})" style="margin-top:8px;min-height:36px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 12px;color:var(--suave);font-family:'Inter',sans-serif;font-size:0.78rem;cursor:pointer;">+ colonia o CP</button>
-    </div>`).join('');
-  cont.innerHTML = `
-    <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px 0;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">RUTAS DE REPARTO</div>
-      <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Cada ruta es una zona (colonias o rangos de código postal) con sus días. Una tienda toma su ruta sola por su colonia o CP al darse de alta; en su tarjeta se puede cambiar. Una colonia o CP solo puede estar en una ruta.</div>
-      ${filas || '<div style="font-size:0.8rem;color:var(--suave);margin-bottom:10px;">Todavía no hay rutas.</div>'}
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <button type="button" onclick="rutaAgregarFila()" style="flex:1;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;">Añadir ruta</button>
-        <button type="button" onclick="guardarRutasCfg()" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;font-weight:800;font-size:0.84rem;color:var(--negro);cursor:pointer;">Guardar rutas</button>
-      </div>
-    </div>`;
-}
-window.rutaCampo = function(i, campo, valor) { const r = window._rutasEdit?.[i]; if (!r) return; r[campo] = valor; if (campo === 'activa') pintarRutasEdit(); };
-window.rutaDia = function(i, d, on) { const r = window._rutasEdit?.[i]; if (!r) return; r.dias = on ? [...new Set([...r.dias, d])].sort() : r.dias.filter(x => x !== d); pintarRutasEdit(); };
-window.rutaCob = function(i, j, campo, valor) { const c = window._rutasEdit?.[i]?.cobertura?.[j]; if (!c) return; c[campo] = valor; if (campo === 'tipo') pintarRutasEdit(); };
-window.rutaAgregarCobertura = function(i) { const r = window._rutasEdit?.[i]; if (!r) return; r.cobertura.push({ tipo: 'colonia', valor: '', cpHasta: '' }); pintarRutasEdit(); };
-window.rutaQuitarCobertura = function(i, j) { const r = window._rutasEdit?.[i]; if (!r) return; r.cobertura.splice(j, 1); pintarRutasEdit(); };
-window.rutaAgregarFila = function() { if (!window._rutasEdit) window._rutasEdit = []; window._rutasEdit.push({ nombre: '', color: '#ffd200', dias: [], activa: true, cobertura: [{ tipo: 'colonia', valor: '', cpHasta: '' }] }); pintarRutasEdit(); };
-window.guardarRutasCfg = async function() {
-  const rutas = (window._rutasEdit || []).map(r => ({ id: r.id || null, nombre: (r.nombre || '').trim(), color: r.color, dias: r.dias, activa: r.activa !== false, cobertura: r.cobertura.filter(c => (c.valor || '').trim()).map(c => ({ tipo: c.tipo, valor: c.valor.trim(), cpHasta: c.tipo === 'cp' ? (c.cpHasta || '').trim() : '' })) }));
-  if (rutas.some(r => !r.nombre)) { await avisar({ titulo: 'Falta un nombre', cuerpo: 'Cada ruta necesita nombre.' }); return; }
-  try {
-    const res = await supabaseCall('POST', 'rpc/set_rutas', { p_data: { rutas } });
-    if (res && res.ok) { mostrarToast('Rutas guardadas'); await cargarRutasCache(); renderRutasAdminCfg(); if (typeof renderB2BLista === 'function') renderB2BLista(); }
-    else await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: (res && res.error) || 'Sin respuesta' });
-  } catch (e) { await avisar({ titulo: 'No se pudieron guardar las rutas', cuerpo: e.message || '' }); }
-};
-window.asignarVendedorRuta = async function(idRuta, idVendedor) {
-  try {
-    const res = await supabaseCall('POST', 'rpc/asignar_vendedor_ruta', {
-      p_data: { idRuta: Number(idRuta), idVendedor: idVendedor ? Number(idVendedor) : null }
-    });
-    if (!res || !res.ok) {
-      await avisar({ titulo: 'No se pudo asignar el vendedor', cuerpo: (res && res.error) || 'Sin respuesta' });
-      renderRutasAdminCfg();
-      return;
-    }
-    const rt = (window._rutasEdit || []).find(x => String(x.id) === String(idRuta));
-    if (rt) rt.idVendedor = res.idVendedor;
-    mostrarToast(res.vendedor ? 'Ruta asignada a ' + res.vendedor : 'Ruta sin vendedor');
-  } catch (e) {
-    await avisar({ titulo: 'No se pudo asignar el vendedor', cuerpo: (e && e.message) || '' });
-  }
-};
+// 18 sep 2026: las rutas (zonas, días, preventa y vendedor) se definen solo en el planeador
+// (/planeador, en la computadora). La tarjeta «Rutas de reparto» de B2B se retiró (P-D9);
+// aquí queda corregir la ruta de UNA tienda desde su tarjeta.
 window.reasignarRuta = async function(idCliente, idRuta) {
   try {
     const res = await supabaseCall('POST', 'rpc/reasignar_ruta_cliente', { p_data: { idCliente: Number(idCliente), idRuta: idRuta ? Number(idRuta) : null } });
@@ -12551,7 +12457,6 @@ let _vendedoresActivos = [];
 
 async function renderB2B() {
   await cargarRutasCache();
-  renderRutasAdminCfg();
   const lista = document.getElementById('b2b-lista');
   lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader loader-w"></span> Cargando clientes...</div>';
 
