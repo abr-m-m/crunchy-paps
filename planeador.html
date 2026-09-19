@@ -146,6 +146,8 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   <div class="barra">
     <input type="search" id="q" placeholder="Filtrar por código postal o colonia" aria-label="Filtrar">
     <button type="button" id="btn-limpiar">Quitar asignaciones</button>
+    <button type="button" id="btn-cercania">Agrupar por cercanía</button>
+    <button type="button" id="btn-kml">Exportar KML</button>
   </div>
   <div class="tabla-caja"><table><thead><tr>
     <th>CP</th><th>Colonias</th><th style="text-align:right">Prospectos</th><th style="text-align:right">Tiendas</th><th style="text-align:right">Consumidores</th><th>Ruta</th>
@@ -157,6 +159,10 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   <h2>Guardar</h2>
   <div class="cambios" id="cambios"></div>
   <div class="barra"><button class="primario" type="button" id="btn-guardar">Guardar rutas</button><button type="button" id="btn-descartar">Descartar cambios</button></div>
+  <h2 style="margin-top:22px">Tiendas por cobertura</h2>
+  <p class="nota">Las tiendas guardan su ruta; cambiar la cobertura no las mueve solas. Aquí ves las aprobadas cuya ruta no coincide con la cobertura guardada y eliges a cuáles aplicar el cambio. Las que fijaste a mano en su tarjeta salen sin marcar.</p>
+  <div class="barra"><button type="button" id="btn-revisar">Revisar tiendas</button><button class="primario" type="button" id="btn-aplicar" disabled>Aplicar a las marcadas</button></div>
+  <div id="tiendas"></div>
 </section>
 </div>
 <div class="toast" id="toast"></div>
@@ -360,7 +366,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
       for (const k in base.colonias) if (base.colonias[k].clave === r.clave && !(estado.colonias[k] && estado.colonias[k].clave === r.clave)) items.push(`${esc(r.nombre)}: deja de cubrir la colonia ${esc(base.colonias[k].texto)}`);
     }
     for (const b of base.rutas) if (!estado.rutas.some(r => r.id === b.id)) items.push(`«${esc(b.nombre)}» se desactiva (sus pedidos la siguen citando)`);
-    $('cambios').innerHTML = items.length ? `<b>Qué cambia al guardar</b><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><p class="nota">Las tiendas que ya tienen ruta no cambian solas: eso es «Recalcular tiendas», que llega en la siguiente entrega.</p>` : '<b>Sin cambios.</b> Lo que ves es lo que está guardado.';
+    $('cambios').innerHTML = items.length ? `<b>Qué cambia al guardar</b><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul><p class="nota">Las tiendas que ya tienen ruta no cambian solas: después de guardar, usa «Revisar tiendas».</p>` : '<b>Sin cambios.</b> Lo que ves es lo que está guardado.';
     $('btn-guardar').disabled = !items.length;
   }
 
@@ -392,6 +398,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     try { localStorage.removeItem('cp-planeador-v3'); } catch (e) {}
     await cargar();
     toast(`Guardadas ${r.rutas} rutas.`);
+    revisarTiendas();
   }
 
   // ── Eventos ───────────────────────────────────────────────────────────
@@ -442,6 +449,117 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     asignarCp(cp, estado.asignado[cp] === estado.sel ? null : estado.sel);
     pintar();
   });
+
+  // ── Tiendas por cobertura (E3.2, P-D6) ────────────────────────────────
+  let tiendas = [];
+  async function revisarTiendas() {
+    $('tiendas').innerHTML = '<p class="nota">Revisando…</p>';
+    const r = await rpc('planeador_recalcular', { p_data: { token, simular: true } });
+    if (!r || !r.ok) { $('tiendas').innerHTML = `<p class="nota">No se pudo revisar: ${esc((r && r.error) || 'sin respuesta')}</p>`; return; }
+    tiendas = r.tiendas || [];
+    if (!tiendas.length) { $('tiendas').innerHTML = '<p class="nota">Todas las tiendas aprobadas están en la ruta que les toca por cobertura.</p>'; $('btn-aplicar').disabled = true; return; }
+    const nombreRuta = (x) => x ? esc(x.nombre) : '<i>sin ruta</i>';
+    $('tiendas').innerHTML = `<div class="tabla-caja"><table><thead><tr><th></th><th>Tienda</th><th>CP · colonia</th><th>Ruta actual</th><th>Por cobertura</th></tr></thead><tbody>${
+      tiendas.map(t => `<tr><td><input type="checkbox" data-tienda="${t.id}" ${t.fijada ? '' : 'checked'} aria-label="Aplicar a ${esc(t.nombre)}"></td><td>${esc(t.nombre)}${t.fijada ? ' <span class="nota">(fijada a mano)</span>' : ''}</td><td class="cols">${esc(t.cp || 'sin CP')} · ${esc(t.colonia || '')}</td><td>${nombreRuta(t.rutaActual)}</td><td>${nombreRuta(t.rutaNueva)}</td></tr>`).join('')
+    }</tbody></table></div><p class="nota">${tiendas.length} tienda${tiendas.length === 1 ? '' : 's'} con ruta distinta a su cobertura. Los pedidos ya hechos conservan su ruta.</p>`;
+    marcadasCambian();
+  }
+  function marcadas() { return [...document.querySelectorAll('#tiendas input[data-tienda]:checked')].map(i => Number(i.dataset.tienda)); }
+  function marcadasCambian() { const n = marcadas().length; $('btn-aplicar').disabled = !n; $('btn-aplicar').textContent = n ? `Aplicar a ${n} marcada${n === 1 ? '' : 's'}` : 'Aplicar a las marcadas'; }
+  async function aplicarTiendas() {
+    const ids = marcadas(); if (!ids.length) return;
+    if (!confirm(`¿Cambiar la ruta de ${ids.length} tienda${ids.length === 1 ? '' : 's'} a la que le toca por cobertura? Quedan sin fijar.`)) return;
+    $('btn-aplicar').disabled = true;
+    const r = await rpc('planeador_recalcular', { p_data: { token, simular: false, ids } });
+    if (!r || !r.ok) { toast('No se aplicó: ' + ((r && r.error) || 'sin respuesta')); marcadasCambian(); return; }
+    toast(`${r.cambiadas} tienda${r.cambiadas === 1 ? '' : 's'} cambiada${r.cambiadas === 1 ? '' : 's'} de ruta.`);
+    await cargar(); revisarTiendas();
+  }
+
+  // ── Agrupar por cercanía (E3.2, P-D10): k-means ponderado para N rutas ─
+  // Centro de cada CP: el promedio de sus prospectos si lo hay; si no, el del polígono.
+  function centroCp(x) {
+    if (x.lat != null && x.lng != null) return [x.lng, x.lat];
+    const poly = zona[x.cp]; if (!poly) return null;
+    let sx = 0, sy = 0, n = 0; for (const [lng, lat] of poly[0][0]) { sx += lng; sy += lat; n++; }
+    return n ? [sx / n, sy / n] : null;
+  }
+  const KMx = 111.32 * Math.cos(19.39 * Math.PI / 180), KMy = 110.57;
+  const km = (a, b) => Math.hypot((a[0] - b[0]) * KMx, (a[1] - b[1]) * KMy);
+  // Dispersión: distancia media ponderada de cada CP al centro de su grupo, en km.
+  function dispersion(puntos, grupoDe) {
+    const grupos = {};
+    for (const p of puntos) { const g = grupoDe(p); if (g == null) continue; (grupos[g] = grupos[g] || []).push(p); }
+    let coste = 0, W = 0;
+    for (const g in grupos) {
+      const G = grupos[g], w = G.reduce((s, p) => s + p.w, 0) || 1;
+      const c = [G.reduce((s, p) => s + p.c[0] * p.w, 0) / w, G.reduce((s, p) => s + p.c[1] * p.w, 0) / w];
+      for (const p of G) { coste += km(p.c, c) * p.w; W += p.w; }
+    }
+    return W ? coste / W : 0;
+  }
+  function agruparPorCercania() {
+    const N = estado.rutas.length;
+    if (N < 2) { toast('Hacen falta al menos dos rutas.'); return; }
+    // Solo los CP que hoy tienen ruta por CP: la herramienta reordena la cobertura, no la amplía.
+    const puntos = datos.cps.filter(x => estado.asignado[x.cp]).map(x => ({ cp: x.cp, c: centroCp(x), w: (x.prospectos + x.tiendas) || 1 })).filter(p => p.c);
+    if (puntos.length < N) { toast('No hay suficientes códigos con ruta para agrupar.'); return; }
+    const antes = dispersion(puntos, p => estado.asignado[p.cp]);
+    let mejor = null, mejorCoste = Infinity;
+    for (let s = 0; s < 40; s++) {
+      let c = Array.from({ length: N }, (_, k) => puntos[(s * (7 + 6 * k) + 3 * k) % puntos.length].c.slice());
+      const asig = new Map();
+      for (let it = 0; it < 60; it++) {
+        for (const p of puntos) { let k = 0, md = Infinity; c.forEach((cc, i) => { const v = km(p.c, cc); if (v < md) { md = v; k = i; } }); asig.set(p.cp, k); }
+        c = c.map((cc, k) => { const G = puntos.filter(p => asig.get(p.cp) === k); if (!G.length) return cc; const w = G.reduce((s2, p) => s2 + p.w, 0); return [G.reduce((s2, p) => s2 + p.c[0] * p.w, 0) / w, G.reduce((s2, p) => s2 + p.c[1] * p.w, 0) / w]; });
+      }
+      if (Array.from({ length: N }, (_, k) => k).some(k => !puntos.some(p => asig.get(p.cp) === k))) continue;
+      const coste = dispersion(puntos, p => asig.get(p.cp));
+      if (coste < mejorCoste) { mejorCoste = coste; mejor = asig; }
+    }
+    if (!mejor) { toast('No se encontró un agrupamiento con todas las rutas.'); return; }
+    // Cada grupo toma la ruta con la que más prospectos comparte hoy (voraz, de mayor a menor coincidencia).
+    const par = [];
+    for (let k = 0; k < N; k++) for (const r of estado.rutas) par.push({ k, clave: r.clave, s: puntos.filter(p => mejor.get(p.cp) === k && estado.asignado[p.cp] === r.clave).reduce((s2, p) => s2 + p.w, 0) });
+    par.sort((a, b) => b.s - a.s);
+    const deGrupo = {}, usada = new Set();
+    for (const x of par) if (deGrupo[x.k] == null && !usada.has(x.clave)) { deGrupo[x.k] = x.clave; usada.add(x.clave); }
+    const cambian = puntos.filter(p => estado.asignado[p.cp] !== deGrupo[mejor.get(p.cp)]).length;
+    if (!cambian) { toast(`Ya están agrupadas por cercanía (dispersión ${antes.toFixed(2)} km).`); return; }
+    if (!confirm(`Agrupar por cercanía mueve ${cambian} código${cambian === 1 ? '' : 's'}. Dispersión media: ${antes.toFixed(2)} km hoy → ${mejorCoste.toFixed(2)} km. Las reglas por colonia se quedan. ¿Aplicar? (No se guarda hasta que pulses «Guardar rutas».)`)) return;
+    for (const p of puntos) asignarCp(p.cp, deGrupo[mejor.get(p.cp)]);
+    pintar();
+    toast(`Movidos ${cambian} códigos: dispersión ${antes.toFixed(2)} → ${mejorCoste.toFixed(2)} km.`);
+  }
+
+  // ── Exportar KML para Google My Maps (E3.2, P-D10) ─────────────────────
+  function exportarKml() {
+    const kmlColor = (hex) => { const h = hex.replace('#', ''); return '99' + h.slice(4, 6) + h.slice(2, 4) + h.slice(0, 2); };   // aabbggrr, 60 % opaco
+    const anillo = (a) => a.map(([lng, lat]) => lng + ',' + lat + ',0').join(' ');
+    const poligono = (poly) => `<Polygon><outerBoundaryIs><LinearRing><coordinates>${anillo(poly[0])}</coordinates></LinearRing></outerBoundaryIs>${poly.slice(1).map(h => `<innerBoundaryIs><LinearRing><coordinates>${anillo(h)}</coordinates></LinearRing></innerBoundaryIs>`).join('')}</Polygon>`;
+    const xml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const porCp = Object.fromEntries(datos.cps.map(x => [x.cp, x]));
+    let out = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Rutas Crunchy Paps ${new Date().toISOString().slice(0, 10)}</name>`;
+    for (const r of estado.rutas) out += `<Style id="${r.clave}"><LineStyle><color>ff${kmlColor(r.color).slice(2)}</color><width>1.5</width></LineStyle><PolyStyle><color>${kmlColor(r.color)}</color></PolyStyle></Style>`;
+    for (const r of estado.rutas) {
+      const cps = Object.keys(estado.asignado).filter(cp => estado.asignado[cp] === r.clave && zona[cp]).sort();
+      out += `<Folder><name>${xml(r.nombre)} · reparto ${r.dias.map(k => DIAS[k]).join(' ')}${r.diasPreventa ? ' · preventa ' + r.diasPreventa.map(k => DIAS[k]).join(' ') : ''}</name>`;
+      for (const cp of cps) out += `<Placemark><name>${cp}</name><description>${num((porCp[cp] || {}).prospectos)} prospectos · ${xml(((porCp[cp] || {}).colonias || []).join(', '))}</description><styleUrl>#${r.clave}</styleUrl><MultiGeometry>${zona[cp].map(poligono).join('')}</MultiGeometry></Placemark>`;
+      out += '</Folder>';
+    }
+    out += '</Document></kml>';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([out], { type: 'application/vnd.google-earth.kml+xml' }));
+    a.download = `rutas-crunchy-paps-${new Date().toISOString().slice(0, 10)}.kml`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast('KML descargado. En Google My Maps: Importar y elige el archivo.');
+  }
+
+  $('btn-revisar').addEventListener('click', revisarTiendas);
+  $('btn-aplicar').addEventListener('click', aplicarTiendas);
+  $('tiendas').addEventListener('change', (e) => { if (e.target.closest('input[data-tienda]')) marcadasCambian(); });
+  $('btn-cercania').addEventListener('click', agruparPorCercania);
+  $('btn-kml').addEventListener('click', exportarKml);
 
   if (token) cargar(); else $('login').hidden = false;
 })();
