@@ -11,7 +11,13 @@
 //
 // Subir la versión obliga a los clientes instalados a tomar este worker y
 // borra las cachés anteriores (activate).
-const CACHE_NAME = 'crunchy-paps-v3';
+// v4 (20 sep 2026): el build de Vite emite assets con hash en el nombre
+// (`/assets/index-<hash>.js`, `index-<hash>.css`, `panel-<hash>.js`). Como el
+// nombre cambia con el contenido, son inmutables: se sirven de caché y se
+// guardan al PRIMER uso (no en `install`: pre-cargar `panel-*.js` costaría
+// 340 kB a cada consumidor que nunca abre el panel). Al cambiar de versión, los
+// que ya no nombra el index se podan.
+const CACHE_NAME = 'crunchy-paps-v4';
 const ASSETS_CACHE = [
   '/icon-192.png',
   '/icon-512.png',
@@ -60,6 +66,38 @@ async function esDistinta(guardada, nueva) {
   return t1 !== t2;
 }
 
+const RE_ASSET = /\/assets\/[A-Za-z0-9_.-]+/g;
+// Dentro del entry, los trozos que se importan bajo demanda se nombran
+// relativos: `import("./panel-<hash>.js")`. El index.html NO los nombra.
+const RE_TROZO = /\.\/([A-Za-z0-9_.-]+\.(?:js|css))/g;
+
+// Poda de assets con hash.
+// Corre AL SERVIR el index, no al detectar la versión nueva: en el instante de
+// detectarla la página vieja sigue viva en memoria y un vendedor que aún no
+// cargó el panel podría pedir su `panel-<viejo>.js` justo después de borrarlo.
+// Al servir, el HTML que se entrega es el que define qué assets viven.
+async function podarAssets(cache, html) {
+  const vivos = new Set(html.match(RE_ASSET) || []);
+  const enCache = (await cache.keys())
+    .map((req) => [req, new URL(req.url).pathname])
+    .filter(([, p]) => p.startsWith('/assets/'));
+  if (!enCache.some(([, p]) => !vivos.has(p))) return;   // nada que podar: ni se lee el entry
+  // El HTML solo nombra el entry; los trozos bajo demanda viven DENTRO de él.
+  // Antes de borrar nada, se mira el texto de los entries vivos que ya están
+  // en caché (tras un despliegue no hay ninguno: se poda todo lo viejo).
+  for (const [req, p] of enCache) {
+    if (!vivos.has(p) || !p.endsWith('.js')) continue;
+    const r = await cache.match(req);
+    if (!r) continue;
+    const txt = await r.text();
+    for (const m of txt.match(RE_ASSET) || []) vivos.add(m);
+    let t;
+    while ((t = RE_TROZO.exec(txt)) !== null) vivos.add('/assets/' + t[1]);
+    RE_TROZO.lastIndex = 0;
+  }
+  for (const [req, p] of enCache) if (!vivos.has(p)) await cache.delete(req);
+}
+
 function avisarVersionNueva() {
   return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
     lista.forEach((c) => { try { c.postMessage({ versionNueva: true }); } catch (_e) {} });
@@ -83,11 +121,19 @@ async function servirIndex(event) {
 
   if (guardada) {
     // Abre al instante con la copia; la revalidación sigue aunque la página ya pintó.
+    const paraPodar = guardada.clone();
     event.waitUntil(traer.catch(() => {}));
+    event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html)).catch(() => {}));
     return guardada;
   }
   // Sin copia: red, como siempre (si falla, falla a la vista, igual que antes).
-  return traer;
+  return traer.then((resp) => {
+    if (esHTMLValido(resp)) {
+      const paraPodar = resp.clone();
+      event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html)).catch(() => {}));
+    }
+    return resp;
+  });
 }
 
 self.addEventListener('fetch', (event) => {
@@ -98,6 +144,15 @@ self.addEventListener('fetch', (event) => {
   // index.html: caché primero, revalidación en segundo plano.
   if (esIndex(event.request, url)) {
     event.respondWith(servirIndex(event));
+    return;
+  }
+
+  // Assets con hash (Vite): inmutables → caché primero, se guardan al primer uso.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
+    event.respondWith(caches.open(CACHE_NAME).then((cache) => cache.match(event.request).then((r) => r || fetch(event.request).then((resp) => {
+      if (resp && resp.ok) cache.put(event.request, resp.clone());
+      return resp;
+    }))));
     return;
   }
 
