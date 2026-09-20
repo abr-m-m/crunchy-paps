@@ -11,7 +11,12 @@ const staging = {
   async configureServer(server) {
     // Import dinámico: `vite build` no debe cargar este módulo, que pide la llave al CLI de
     // Supabase en su nivel superior y aborta si no lo encuentra. En Vercel no hay CLI.
-    const { manejarStaging } = await import('./tools/staging-middleware.mjs');
+    // La ruta se arma en tiempo de ejecución a propósito: Vite empaqueta este archivo con
+    // esbuild, y un `import('./literal')` lo intenta resolver al construir; en Vercel
+    // `.vercelignore` quita `tools/` y el build moría con «Could not resolve» (preview del
+    // 20 sep 2026). Con la URL construida, esbuild lo deja pasar y solo se resuelve en `dev`.
+    const ruta = new URL('./tools/staging-middleware.mjs', import.meta.url).href;
+    const { manejarStaging } = await import(/* @vite-ignore */ ruta);
     server.middlewares.use((req, res, next) => {
       manejarStaging(req, res).then((h) => { if (!h) next(); }).catch(next);
     });
