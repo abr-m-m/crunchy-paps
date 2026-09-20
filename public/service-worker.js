@@ -66,34 +66,59 @@ async function esDistinta(guardada, nueva) {
   return t1 !== t2;
 }
 
-const RE_ASSET = /\/assets\/[A-Za-z0-9_.-]+/g;
-// Dentro del entry, los trozos que se importan bajo demanda se nombran
-// relativos: `import("./panel-<hash>.js")`. El index.html NO los nombra.
-const RE_TROZO = /\.\/([A-Za-z0-9_.-]+\.(?:js|css))/g;
+// Cualquier cadena entrecomillada que termine en .js o .css. Vite nombra un
+// asset de TRES formas y esta las coge todas:
+//   "/assets/index-<hash>.js"   en el HTML (src/href, siempre entrecomillado)
+//   "./panel-<hash>.js"         en el `import()` de dentro de un chunk
+//   "assets/panel-<hash>.css"   en `__vite__mapDeps([...])`, sin barra ni punto
+// (la tercera aparece cuando un chunk perezoso arrastra dependencias propias:
+// hoy el panel no arrastra ninguna, pero la Fase 2 —«CSS aparte»— pasa por ahí).
+const RE_CANDIDATO = /["'`]([^"'`\s]+\.(?:js|css))["'`]/g;
+const RAIZ = self.location.origin + '/';
+
+// `./x.js` y `../x.js` cuelgan del fichero que los nombra; `/assets/x.js` y el
+// `assets/x.css` de __vite__mapDeps cuelgan de la raíz del sitio (la `base` de
+// Vite). Resolver con URL evita inventar rutas concatenando cadenas.
+function anotarVivos(vivos, texto, base) {
+  RE_CANDIDATO.lastIndex = 0;
+  let m;
+  while ((m = RE_CANDIDATO.exec(texto)) !== null) {
+    let p;
+    try { p = new URL(m[1], /^\.{1,2}\//.test(m[1]) ? base : RAIZ).pathname; } catch (_e) { continue; }
+    if (p.startsWith('/assets/')) vivos.add(p);
+  }
+}
 
 // Poda de assets con hash.
 // Corre AL SERVIR el index, no al detectar la versión nueva: en el instante de
 // detectarla la página vieja sigue viva en memoria y un vendedor que aún no
 // cargó el panel podría pedir su `panel-<viejo>.js` justo después de borrarlo.
 // Al servir, el HTML que se entrega es el que define qué assets viven.
-async function podarAssets(cache, html) {
-  const vivos = new Set(html.match(RE_ASSET) || []);
+async function podarAssets(cache, html, baseHtml) {
+  const vivos = new Set();
+  anotarVivos(vivos, html, baseHtml || RAIZ);
   const enCache = (await cache.keys())
     .map((req) => [req, new URL(req.url).pathname])
     .filter(([, p]) => p.startsWith('/assets/'));
   if (!enCache.some(([, p]) => !vivos.has(p))) return;   // nada que podar: ni se lee el entry
-  // El HTML solo nombra el entry; los trozos bajo demanda viven DENTRO de él.
-  // Antes de borrar nada, se mira el texto de los entries vivos que ya están
-  // en caché (tras un despliegue no hay ninguno: se poda todo lo viejo).
-  for (const [req, p] of enCache) {
-    if (!vivos.has(p) || !p.endsWith('.js')) continue;
-    const r = await cache.match(req);
-    if (!r) continue;
-    const txt = await r.text();
-    for (const m of txt.match(RE_ASSET) || []) vivos.add(m);
-    let t;
-    while ((t = RE_TROZO.exec(txt)) !== null) vivos.add('/assets/' + t[1]);
-    RE_TROZO.lastIndex = 0;
+  // El HTML solo nombra el entry; los trozos bajo demanda viven DENTRO de él, y
+  // un trozo puede nombrar a otro. Se expande hasta que `vivos` deja de crecer,
+  // abriendo SOLO el texto de los .js que ya están vivos y en caché (a un
+  // consumidor no se le lee nunca el `panel-*.js` de 340 kB: no está en vivos).
+  // Tras un despliegue no hay ningún entry vivo en caché: se poda todo lo viejo.
+  const leidos = new Set();
+  let crecio = true;
+  while (crecio) {
+    crecio = false;
+    for (const [req, p] of enCache) {
+      if (leidos.has(p) || !vivos.has(p) || !p.endsWith('.js')) continue;
+      leidos.add(p);
+      const r = await cache.match(req);
+      if (!r) continue;
+      const antes = vivos.size;
+      anotarVivos(vivos, await r.text(), req.url);
+      if (vivos.size > antes) crecio = true;
+    }
   }
   for (const [req, p] of enCache) if (!vivos.has(p)) await cache.delete(req);
 }
@@ -123,14 +148,14 @@ async function servirIndex(event) {
     // Abre al instante con la copia; la revalidación sigue aunque la página ya pintó.
     const paraPodar = guardada.clone();
     event.waitUntil(traer.catch(() => {}));
-    event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html)).catch(() => {}));
+    event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html, event.request.url)).catch(() => {}));
     return guardada;
   }
   // Sin copia: red, como siempre (si falla, falla a la vista, igual que antes).
   return traer.then((resp) => {
     if (esHTMLValido(resp)) {
       const paraPodar = resp.clone();
-      event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html)).catch(() => {}));
+      event.waitUntil(paraPodar.text().then((html) => podarAssets(cache, html, event.request.url)).catch(() => {}));
     }
     return resp;
   });
@@ -150,7 +175,7 @@ self.addEventListener('fetch', (event) => {
   // Assets con hash (Vite): inmutables → caché primero, se guardan al primer uso.
   if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
     event.respondWith(caches.open(CACHE_NAME).then((cache) => cache.match(event.request).then((r) => r || fetch(event.request).then((resp) => {
-      if (resp && resp.ok) cache.put(event.request, resp.clone());
+      if (resp && resp.ok) event.waitUntil(cache.put(event.request, resp.clone()).catch(() => {}));
       return resp;
     }))));
     return;
