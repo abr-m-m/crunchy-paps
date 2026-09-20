@@ -158,10 +158,22 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   <div class="form">
     <label class="ancho">Nombre (lo ve el cliente)<input id="f-nombre" type="text" maxlength="80"></label>
     <label class="ancho">Descripción<input id="f-desc" type="text" maxlength="160"></label>
-    <label>Tipo<select id="f-tipo"><option value="frecuencia">Frecuencia (pedidos)</option><option value="producto">Producto o sabor (piezas)</option><option value="monto">Monto (pesos, neto)</option><option value="surtido">Surtido (sabores distintos)</option></select></label>
+    <label>Tipo<select id="f-tipo"><option value="frecuencia">Frecuencia (pedidos)</option><option value="producto">Piezas (de los productos participantes)</option><option value="monto">Monto (pesos, neto)</option><option value="surtido">Surtido (sabores distintos)</option></select></label>
     <label>Meta<input id="f-meta" type="number" min="1" step="1"></label>
-    <label id="l-sabor" hidden>Sabor<select id="f-sabor"></select></label>
-    <label id="l-pres" hidden>Presentación (opcional)<select id="f-pres"><option value="">Cualquiera</option></select></label>
+    <label class="ancho" id="l-productos">Productos participantes <span class="nota">(vacío = cuenta cualquier compra)</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select id="f-prod-sabor"></select>
+        <select id="f-prod-pres"><option value="">Cualquier presentación</option></select>
+        <button type="button" id="btn-prod-agregar">Agregar</button>
+      </div>
+      <div id="f-productos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+    </label>
+    <label class="ancho">Imagen <span class="nota">(JPG, PNG o WEBP, hasta 1.5 MB)</span>
+      <div style="display:flex;gap:10px;align-items:center"><input type="file" id="f-imagen" accept="image/jpeg,image/png,image/webp"><img id="f-imagen-prev" alt="" style="height:56px;border-radius:8px;display:none"><button type="button" id="btn-imagen-quitar" hidden>Quitar</button></div>
+      <input type="hidden" id="f-imagen-ruta">
+    </label>
+    <label class="ancho">Dinámica (en qué consiste)<textarea id="f-dinamica" rows="2" maxlength="400"></textarea></label>
+    <label class="ancho">Cómo participar (un paso por línea)<textarea id="f-pasos" rows="3" maxlength="600"></textarea></label>
     <label>Bono (puntos)<input id="f-bono" type="number" min="1" step="1"></label>
     <label>Desde<input id="f-desde" type="date"></label>
     <label>Hasta<input id="f-hasta" type="date"></label>
@@ -175,7 +187,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
 <section id="sec-prev" hidden>
   <h2>Plantilla cargada</h2>
   <p class="nota" id="prev-nota"></p>
-  <div class="tabla-caja"><table class="prev"><thead><tr><th>#</th><th>Nombre</th><th>Tipo</th><th>Meta</th><th>Sabor</th><th>Bono</th><th>Desde</th><th>Hasta</th><th>Público</th><th>Revisión</th></tr></thead><tbody id="prev-filas"></tbody></table></div>
+  <div class="tabla-caja"><table class="prev"><thead><tr><th>#</th><th>Nombre</th><th>Tipo</th><th>Meta</th><th>Productos</th><th>Bono</th><th>Desde</th><th>Hasta</th><th>Público</th><th>Revisión</th></tr></thead><tbody id="prev-filas"></tbody></table></div>
   <div class="barra"><button class="primario" type="button" id="btn-crear-prev">Crear retos</button><button type="button" id="btn-cerrar-prev">Cerrar</button></div>
 </section>
 
@@ -194,10 +206,10 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   const CFG = window.__CP_CONFIG__ || {};
   const URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
   const LLAVE = CFG.SUPABASE_ANON_KEY || '';
-  const TIPOS = { frecuencia: 'Frecuencia', producto: 'Producto', monto: 'Monto', surtido: 'Surtido' };
+  const TIPOS = { frecuencia: 'Frecuencia', producto: 'Piezas', monto: 'Monto', surtido: 'Surtido' };
   const UNIDAD = { frecuencia: 'pedidos', producto: 'piezas', monto: 'pesos', surtido: 'sabores' };
   const PUBLICO = { todos: 'Todos', consumidores: 'Consumidores', tiendas: 'Tiendas y restaurantes' };
-  const CABECERAS = ['nombre', 'descripcion', 'tipo', 'meta', 'sabor', 'presentacion', 'bono', 'desde', 'hasta', 'publico'];
+  const CABECERAS = ['nombre', 'descripcion', 'tipo', 'meta', 'productos', 'bono', 'desde', 'hasta', 'publico', 'imagen', 'dinamica', 'como_participar'];
   let token = sessionStorage.getItem('cp-retos-token') || '';
   let datos = null;        // respuesta de retos_admin
   let editando = null;     // id del reto en edición, o null
@@ -233,8 +245,8 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     llenarCatalogo(); pintar();
   }
   function llenarCatalogo() {
-    const s = $('f-sabor'); s.replaceChildren(); for (const x of (datos.sabores || [])) { const o = el('option', x); o.value = x; s.appendChild(o); }
-    const p = $('f-pres'); p.replaceChildren(el('option', 'Cualquiera')); p.firstChild.value = ''; for (const x of (datos.presentaciones || [])) { const o = el('option', x); o.value = x; p.appendChild(o); }
+    const ps = $('f-prod-sabor'); ps.replaceChildren(); for (const x of (datos.sabores || [])) { const o = el('option', x); o.value = x; ps.appendChild(o); }
+    llenarPresentaciones();
   }
   function estadoDe(r) { if (!r.activo) return 'pausado'; return r.hasta < hoyCDMX() ? 'terminado' : 'activo'; }
   function pintar() {
@@ -243,8 +255,9 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     for (const r of datos.retos) {
       const card = el('div', null, 'reto' + (r.activo ? '' : ' pausado'));
       card.appendChild(el('h3', r.nombre));
+      if (r.imagen) { const im = document.createElement('img'); im.src = urlImagen(r.imagen); im.alt = ''; im.style.cssText = 'width:100%;height:110px;object-fit:cover;border-radius:8px;margin:4px 0'; card.appendChild(im); }
       const est = estadoDe(r);
-      card.appendChild(el('div', `${TIPOS[r.tipo] || r.tipo} · meta ${num(r.meta)} ${UNIDAD[r.tipo] || ''}${r.sabor ? ' de ' + r.sabor + (r.presentacion ? ' ' + r.presentacion : '') : ''} · +${num(r.bono)} puntos`, 'meta'));
+      card.appendChild(el('div', `${TIPOS[r.tipo] || r.tipo} · meta ${num(r.meta)} ${UNIDAD[r.tipo] || ''}${Array.isArray(r.productos) && r.productos.length ? ' · ' + r.productos.length + ' producto(s)' : ''} · +${num(r.bono)} puntos`, 'meta'));
       card.appendChild(el('div', `${r.desde} → ${r.hasta} · ${PUBLICO[r.publico] || r.publico} · ${est}`, 'meta'));
       if (r.descripcion) card.appendChild(el('div', r.descripcion, 'meta'));
       const nums = el('div', null, 'nums');
@@ -266,16 +279,43 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     $('form-tit').textContent = r ? 'Editar reto' : 'Nuevo reto';
     $('f-nombre').value = r ? r.nombre : ''; $('f-desc').value = r ? r.descripcion : '';
     $('f-tipo').value = r ? r.tipo : 'frecuencia'; $('f-meta').value = r ? r.meta : '';
-    $('f-sabor').value = r && r.sabor ? r.sabor : ($('f-sabor').options[0]?.value || ''); $('f-pres').value = r && r.presentacion ? r.presentacion : '';
     $('f-bono').value = r ? r.bono : ''; $('f-desde').value = r ? r.desde : hoyCDMX(); $('f-hasta').value = r ? r.hasta : '';
     $('f-publico').value = r ? r.publico : 'todos'; $('f-activo').value = r ? String(r.activo) : 'true';
+    productosSel = Array.isArray(r && r.productos) ? r.productos.map(p => ({ id: p.id ?? null, sabor: p.sabor, presentacion: p.presentacion || null })) : []; pintarProductos();
+    $('f-dinamica').value = r ? (r.dinamica || '') : ''; $('f-pasos').value = r && Array.isArray(r.como_participar) ? r.como_participar.join('\n') : '';
+    quitarImagen(); if (r && r.imagen) { imagenRuta = r.imagen; $('f-imagen-ruta').value = r.imagen; $('f-imagen-prev').src = urlImagen(r.imagen); $('f-imagen-prev').style.display = ''; $('btn-imagen-quitar').hidden = false; }
     $('f-err').textContent = ''; tipoCambio();
     $('sec-form').hidden = false; $('sec-form').scrollIntoView({ behavior: 'smooth' });
   }
-  function tipoCambio() { const esP = $('f-tipo').value === 'producto'; $('l-sabor').hidden = !esP; $('l-pres').hidden = !esP; }
+  function tipoCambio() { $('l-productos').querySelector('.nota').textContent = $('f-tipo').value === 'producto' ? '(obligatorio en «Piezas»)' : '(vacío = cuenta cualquier compra)'; }
+  let productosSel = [];   // [{id|null, sabor, presentacion|null}]
+  let imagenRuta = '';
+  const URL_PUBLICA = (CFG.SUPABASE_URL || '') + '/storage/v1/object/public/contenido/';
+  const urlImagen = (v) => !v ? '' : /^https?:\/\//i.test(v) ? v : URL_PUBLICA + v;
+  const nombreProd = (p) => p.presentacion ? p.sabor + ' ' + p.presentacion + (p.id ? ' (SKU ' + p.id + ')' : '') : p.sabor + ' (cualquier presentación)';
+  function pintarProductos() {
+    const c = $('f-productos'); c.replaceChildren();
+    productosSel.forEach((p, i) => { const chip = el('span', nombreProd(p) + ' '); const x = el('button', '×'); x.type = 'button'; x.style.minHeight = '0'; x.style.padding = '0 6px'; x.addEventListener('click', () => { productosSel.splice(i, 1); pintarProductos(); }); chip.appendChild(x); chip.style.cssText = 'border:1px solid var(--borde,#ccc);border-radius:999px;padding:3px 8px;font-size:.85rem'; c.appendChild(chip); });
+  }
+  function llenarPresentaciones() {
+    const s = $('f-prod-sabor').value, p = $('f-prod-pres'); p.replaceChildren(el('option', 'Cualquier presentación')); p.firstChild.value = '';
+    for (const x of (datos.productos || []).filter(q => q.sabor === s)) { const o = el('option', x.presentacion + ' (SKU ' + x.id + ')'); o.value = String(x.id); p.appendChild(o); }
+  }
+  async function subirImagen(archivo) {
+    if (!archivo) return;
+    if (archivo.size > 1.5 * 1024 * 1024) { $('f-err').textContent = 'La imagen pesa más de 1.5 MB.'; $('f-imagen').value = ''; return; }
+    $('f-err').textContent = 'Subiendo imagen…';
+    const r = await fetch('/api/imagen-reto', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, mimeType: archivo.type }) }).then(x => x.json()).catch(() => null);
+    if (!r || !r.ok) { $('f-err').textContent = (r && r.error) || 'No se pudo preparar la subida.'; return; }
+    const put = await fetch(r.url, { method: 'PUT', headers: { 'content-type': archivo.type }, body: archivo }).catch(() => null);
+    if (!put || !put.ok) { $('f-err').textContent = 'No se pudo subir la imagen.'; return; }
+    imagenRuta = r.ruta; $('f-imagen-ruta').value = r.ruta; $('f-imagen-prev').src = urlImagen(r.ruta); $('f-imagen-prev').style.display = ''; $('btn-imagen-quitar').hidden = false; $('f-err').textContent = '';
+  }
+  function quitarImagen() { imagenRuta = ''; $('f-imagen-ruta').value = ''; $('f-imagen').value = ''; $('f-imagen-prev').style.display = 'none'; $('btn-imagen-quitar').hidden = true; }
   function leerForm() {
     return { id: editando, nombre: $('f-nombre').value.trim(), descripcion: $('f-desc').value.trim(), tipo: $('f-tipo').value,
-      meta: $('f-meta').value, sabor: $('f-tipo').value === 'producto' ? $('f-sabor').value : '', presentacion: $('f-tipo').value === 'producto' ? $('f-pres').value : '',
+      meta: $('f-meta').value, productos: productosSel.map(p => p.id ? { id: p.id } : { sabor: p.sabor }), imagen: imagenRuta, dinamica: $('f-dinamica').value.trim(),
+      como_participar: $('f-pasos').value.split('\n').map(s => s.trim()).filter(Boolean),
       bono: $('f-bono').value, desde: $('f-desde').value, hasta: $('f-hasta').value, publico: $('f-publico').value, activo: $('f-activo').value === 'true' };
   }
   async function guardar(reto) {
@@ -307,13 +347,14 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
 
   // ── Plantilla (D6) ──
   function descargarPlantilla() {
-    const ejemplo = [{ nombre: 'Dos pedidos en octubre', descripcion: 'Haz 2 pedidos y gana 50 puntos', tipo: 'frecuencia', meta: 2, sabor: '', presentacion: '', bono: 50, desde: '2026-10-01', hasta: '2026-10-31', publico: 'todos' }];
+    const ejemplo = [{ nombre: 'Tres de Habanero en octubre', descripcion: 'Compra 3 bolsas de Habanero', tipo: 'producto', meta: 3, productos: 'Habanero', bono: 30, desde: '2026-10-01', hasta: '2026-10-31', publico: 'consumidores', imagen: '', dinamica: 'Cada bolsa de Habanero cuenta, en cualquier presentación.', como_participar: 'Haz tu pedido|Que lleve Habanero|Al pagar, suma' }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ejemplo, { header: CABECERAS }), 'Retos');
-    const opciones = [];
-    const filas = Math.max(4, 3, (datos.sabores || []).length, (datos.presentaciones || []).length);
+    // Opciones: tipos, públicos y el catálogo por SKU. En «productos» se separan con | y vale el SKU, «Sabor» o «Sabor Presentación».
+    const cat = datos.productos || [];
     const tipos = Object.keys(TIPOS), pubs = Object.keys(PUBLICO);
-    for (let i = 0; i < filas; i++) opciones.push({ tipo: tipos[i] || '', publico: pubs[i] || '', sabor: (datos.sabores || [])[i] || '', presentacion: (datos.presentaciones || [])[i] || '', fechas: i === 0 ? 'AAAA-MM-DD o fecha de Excel' : '' });
+    const opciones = [];
+    for (let i = 0; i < Math.max(4, cat.length); i++) opciones.push({ tipo: tipos[i] || '', publico: pubs[i] || '', sku: cat[i] ? cat[i].id : '', producto: cat[i] ? cat[i].sabor + ' ' + cat[i].presentacion : '', notas: i === 0 ? 'productos: separa con | ; vale el SKU, «Habanero» (cualquier presentación) o «Habanero Bolsa 50g»' : i === 1 ? 'como_participar: pasos separados con |' : i === 2 ? 'imagen: ruta retos/... ya subida o URL https://' : i === 3 ? 'fechas: AAAA-MM-DD o fecha de Excel' : '' });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(opciones), 'Opciones');
     XLSX.writeFile(wb, 'retos-plantilla.xlsx');
   }
@@ -331,7 +372,8 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     const norm = (o) => { const r = {}; for (const k of Object.keys(o)) r[String(k).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')] = o[k]; return r; };
     return filas.map(norm).filter(f => CABECERAS.some(k => String(f[k] ?? '').trim() !== '')).map(f => {
       const reto = { nombre: String(f.nombre ?? '').trim(), descripcion: String(f.descripcion ?? '').trim(), tipo: String(f.tipo ?? '').trim().toLowerCase(),
-        meta: Number(f.meta), sabor: String(f.sabor ?? '').trim(), presentacion: String(f.presentacion ?? '').trim(), bono: Number(f.bono),
+        meta: Number(f.meta), productos: String(f.productos ?? '').split('|').map(s => s.trim()).filter(Boolean), bono: Number(f.bono),
+        imagen: String(f.imagen ?? '').trim(), dinamica: String(f.dinamica ?? '').trim(), como_participar: String(f.como_participar ?? '').split('|').map(s => s.trim()).filter(Boolean),
         desde: fechaDe(f.desde), hasta: fechaDe(f.hasta), publico: String(f.publico ?? 'todos').trim().toLowerCase() || 'todos', activo: true };
       const errores = [];
       if (!reto.nombre) errores.push('sin nombre');
@@ -340,8 +382,9 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
       if (!(Number.isInteger(reto.bono) && reto.bono > 0)) errores.push('bono debe ser entero > 0');
       if (!reto.desde || !reto.hasta) errores.push('fechas AAAA-MM-DD'); else if (reto.hasta < reto.desde) errores.push('hasta antes de desde');
       if (!PUBLICO[reto.publico]) errores.push('público inválido');
-      if (reto.tipo === 'producto' && !reto.sabor) errores.push('producto sin sabor');
-      if (reto.tipo === 'producto' && reto.sabor && datos && !(datos.sabores || []).some(s => s.toLowerCase() === reto.sabor.toLowerCase())) errores.push('sabor no está en el catálogo');
+      if (reto.tipo === 'producto' && !reto.productos.length) errores.push('piezas sin productos');
+      const cat = (datos && datos.productos) || [];
+      for (const t of reto.productos) if (!cat.some(c => String(c.id) === t || c.sabor.toLowerCase() === t.toLowerCase() || (c.sabor + ' ' + c.presentacion).toLowerCase() === t.toLowerCase())) errores.push('producto no está en el catálogo: ' + t);
       return { reto, errores };
     });
   }
@@ -353,7 +396,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     const tb = $('prev-filas'); tb.replaceChildren();
     prev.forEach((p, i) => {
       const tr = el('tr');
-      for (const v of [i + 1, p.reto.nombre, p.reto.tipo, p.reto.meta, p.reto.sabor, p.reto.bono, p.reto.desde, p.reto.hasta, p.reto.publico]) tr.appendChild(el('td', String(v ?? '')));
+      for (const v of [i + 1, p.reto.nombre, p.reto.tipo, p.reto.meta, p.reto.productos.join(' | '), p.reto.bono, p.reto.desde, p.reto.hasta, p.reto.publico]) tr.appendChild(el('td', String(v ?? '')));
       tr.appendChild(el('td', p.errores.length ? p.errores.join('; ') : 'ok', p.errores.length ? 'mal' : 'bien'));
       tb.appendChild(tr);
     });
@@ -382,6 +425,16 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
   $('btn-recargar').addEventListener('click', cargar);
   $('btn-nuevo').addEventListener('click', () => abrirForm(null));
   $('f-tipo').addEventListener('change', tipoCambio);
+  $('f-prod-sabor').addEventListener('change', llenarPresentaciones);
+  $('btn-prod-agregar').addEventListener('click', () => {
+    const s = $('f-prod-sabor').value, idSel = $('f-prod-pres').value;
+    const cat = (datos.productos || []).find(q => String(q.id) === idSel);
+    const nuevo = cat ? { id: cat.id, sabor: cat.sabor, presentacion: cat.presentacion } : { id: null, sabor: s, presentacion: null };
+    if (!nuevo.sabor) return;
+    if (!productosSel.some(x => (x.id || null) === (nuevo.id || null) && x.sabor === nuevo.sabor)) { productosSel.push(nuevo); pintarProductos(); }
+  });
+  $('f-imagen').addEventListener('change', (e) => subirImagen(e.target.files[0]));
+  $('btn-imagen-quitar').addEventListener('click', quitarImagen);
   $('btn-guardar').addEventListener('click', () => guardar(leerForm()));
   $('btn-cancelar').addEventListener('click', () => { $('sec-form').hidden = true; });
   $('btn-plantilla').addEventListener('click', descargarPlantilla);

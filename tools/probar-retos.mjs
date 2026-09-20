@@ -52,6 +52,7 @@ const bonos = (m, idReto) => (m?.movimientos || []).filter(x => x.tipo === 'reto
 const retoDe = (m, id) => (m?.retos || []).find(r => r.id === id);
 const crearReto = async (reto) => (await rpc('guardar_reto', { p_data: { token: ana?.token, reto } })).json;
 const P = Number(pA.precio_consumidor);
+const PB = Number(pB.precio_consumidor);
 const creados = [];
 
 // 1. Frecuencia: meta 2, bono 50, todos.
@@ -111,7 +112,6 @@ creados.push(rS?.reto?.id);
 const cS = await alta('Reto Surtido');
 const s1 = await pedido(cS, { total: P, productos: [linea(pA, 1, P)] }); await pagar(s1);
 const ms1 = await mis(cS);
-const PB = Number(pB.precio_consumidor);
 const s2 = await pedido(cS, { total: PB, productos: [linea(pB, 1, PB)] }); await pagar(s2);
 ok(retoDe(ms1, rS?.reto?.id)?.avance == 1 && bonos(await mis(cS), rS?.reto?.nombre) === 15, `surtido: 1 sabor → avance 1; 2 sabores → +${bonos(await mis(cS), rS?.reto?.nombre)} (15)`);
 
@@ -158,7 +158,8 @@ const gMal = (await rpc('guardar_reto', { p_data: { token: ana?.token, reto: { n
 const gBorrar = (await rpc('borrar_reto', { p_data: { token: ana?.token, id: rF?.reto?.id } })).json;
 const gBorrarX = (await rpc('borrar_reto', { p_data: { token: ana?.token, id: rX?.reto?.id } })).json;
 const priv = sqlOVacio(`select has_function_privilege('anon', 'public.evaluar_retos(bigint)', 'execute') as e, has_function_privilege('anon', 'public.avance_reto(bigint,bigint)', 'execute') as a`);
-ok(gC?.ok === false && gAnon.status >= 400 && gMal?.error === 'sabor_requerido' && gBorrar?.error === 'tiene_bonos' && gBorrarX?.ok === true && priv?.[0]?.e === false && priv?.[0]?.a === false,
+if (gMal?.ok) creados.push(gMal.reto?.id);   // si por error se creara, que se pause al final
+ok(gC?.ok === false && gAnon.status >= 400 && ['sabor_requerido', 'productos_requeridos'].includes(gMal?.error) && gBorrar?.error === 'tiene_bonos' && gBorrarX?.ok === true && priv?.[0]?.e === false && priv?.[0]?.a === false,
   `guardas: Carla ${gC?.error}; anon evaluar_retos ${gAnon.status}; producto sin sabor ${gMal?.error}; borrar con bonos ${gBorrar?.error}; borrar pausado ${gBorrarX?.ok}; privilegios ${JSON.stringify(priv?.[0] ?? 'sin funciones')}`);
 if (gBorrarX?.ok) creados.splice(creados.indexOf(rX?.reto?.id), 1);
 
@@ -171,12 +172,76 @@ const cli = (av?.clientes || []).find(c => c.id === cF.id);
 ok(adm?.ok === true && fila?.cumplidos >= 1 && fila?.puntos_dados === fila?.cumplidos * 50 && Array.isArray(adm?.sabores) && cli?.cumplido === true && Number(cli?.avance) === 2,
   `retos_admin: cumplidos ${fila?.cumplidos}, puntos ${fila?.puntos_dados}; retos_avance: ${cli?.nombre} ${cli?.avance}/${cli?.meta} cumplido ${cli?.cumplido}`);
 
+// 12. Lista de productos que restringe el conteo (D2). pA y pB son de sabores distintos.
+const presA = prods.filter(p => p.sabor === pA.sabor && Number(p.precio_consumidor) > 0);
+const pA2 = presA.find(p => p.id !== pA.id) || null;   // otra presentación del mismo sabor, si la hay
+const rL = await crearReto({ nombre: 'Lista ' + sufijo, descripcion: 'Solo ' + pA.sabor, tipo: 'frecuencia', meta: 1, bono: 11, desde: enDias(-1), hasta: enDias(7), publico: 'todos', activo: true,
+  dinamica: 'Compra ' + pA.sabor + ' en cualquier presentación.', como_participar: 'Haz tu pedido|Que lleve ' + pA.sabor + '|Recibe tus puntos', productos: [pA.sabor] });
+creados.push(rL?.reto?.id);
+ok(rL?.ok === true && Array.isArray(rL.reto?.como_participar) && rL.reto.como_participar.length === 3 && rL.reto?.productos?.[0]?.sabor === pA.sabor && rL.reto.productos[0].presentacion == null && rL.reto.productos[0].id == null,
+  `guardar_reto con lista general: pasos ${rL?.reto?.como_participar?.length}, productos ${JSON.stringify(rL?.reto?.productos)}`);
+const cL = await alta('Reto Lista');
+const l1 = await pedido(cL, { total: PB, productos: [linea(pB, 1, PB)] }); await pagar(l1);
+const ml1 = await mis(cL);
+ok(bonos(ml1, rL?.reto?.nombre) === 0 && retoDe(ml1, rL?.reto?.id)?.avance == 0, `lista: pedido de ${pB.sabor} no cuenta (avance ${retoDe(ml1, rL?.reto?.id)?.avance})`);
+const l2 = await pedido(cL, { total: P, productos: [linea(pA, 1, P)] }); await pagar(l2);
+ok(bonos(await mis(cL), rL?.reto?.nombre) === 11, `lista: pedido de ${pA.sabor} cuenta → +${bonos(await mis(cL), rL?.reto?.nombre)} (11)`);
+
+// 13. Lista específica (sabor + presentación): otra presentación del mismo sabor no cuenta.
+if (pA2) {
+  // Por SKU (número), como pide Abraham; el servidor devuelve id + sabor + presentación.
+  const rE = await crearReto({ nombre: 'Especifico ' + sufijo, descripcion: 'Solo ' + pA.sabor + ' ' + pA.presentacion, tipo: 'producto', meta: 1, bono: 12, desde: enDias(-1), hasta: enDias(7), publico: 'todos', activo: true, productos: [pA.id] });
+  creados.push(rE?.reto?.id);
+  ok(rE?.ok === true && rE.reto?.productos?.[0]?.id === pA.id && rE.reto.productos[0].presentacion === pA.presentacion, `guardar_reto por SKU ${pA.id} → ${JSON.stringify(rE?.reto?.productos)}`);
+  const cE = await alta('Reto Especifico');
+  const PA2 = Number(pA2.precio_consumidor);
+  const e1 = await pedido(cE, { total: PA2, productos: [linea(pA2, 1, PA2)] }); await pagar(e1);
+  const me1 = await mis(cE);
+  const e2 = await pedido(cE, { total: P, productos: [linea(pA, 1, P)] }); await pagar(e2);
+  ok(retoDe(me1, rE?.reto?.id)?.avance == 0 && bonos(await mis(cE), rE?.reto?.nombre) === 12, `específico: ${pA2.presentacion} no cuenta (avance ${retoDe(me1, rE?.reto?.id)?.avance}); ${pA.presentacion} sí → +${bonos(await mis(cE), rE?.reto?.nombre)}`);
+} else ok(true, `específico: (solo hay una presentación de ${pA.sabor} en staging; caso omitido)`);
+
+// 14. Monto con lista: suma solo esas líneas, no el neto del pedido.
+const rM2 = await crearReto({ nombre: 'MontoLista ' + sufijo, descripcion: 'Pesos de ' + pA.sabor, tipo: 'monto', meta: P * 2, bono: 13, desde: enDias(-1), hasta: enDias(7), publico: 'todos', activo: true, productos: [pA.sabor] });
+creados.push(rM2?.reto?.id);
+const cM2 = await alta('Reto MontoLista');
+const m2a = await pedido(cM2, { total: P + PB * 3, productos: [linea(pA, 1, P), linea(pB, 3, PB)] }); await pagar(m2a);
+const mm2 = await mis(cM2);
+ok(Number(retoDe(mm2, rM2?.reto?.id)?.avance) === P && bonos(mm2, rM2?.reto?.nombre) === 0, `monto con lista: avance ${retoDe(mm2, rM2?.reto?.id)?.avance} (= ${P}, solo la línea de ${pA.sabor}; el pedido fue $${P + PB * 3})`);
+
+// 15. Surtido con lista de dos sabores: un tercero no suma.
+const terceroSabor = sabores.find(s => s !== pA.sabor && s !== pB.sabor);
+const pC = terceroSabor ? porSabor[terceroSabor][0] : null;
+const rS2 = await crearReto({ nombre: 'SurtidoLista ' + sufijo, descripcion: 'Dos sabores', tipo: 'surtido', meta: 2, bono: 14, desde: enDias(-1), hasta: enDias(7), publico: 'todos', activo: true, productos: [pA.sabor, pB.sabor] });
+creados.push(rS2?.reto?.id);
+const cS2 = await alta('Reto SurtidoLista');
+if (pC) { const PC = Number(pC.precio_consumidor); const s2a = await pedido(cS2, { total: P + PC, productos: [linea(pA, 1, P), linea(pC, 1, PC)] }); await pagar(s2a); }
+else { const s2a = await pedido(cS2, { total: P, productos: [linea(pA, 1, P)] }); await pagar(s2a); }
+const ms2a = await mis(cS2);
+const s2b = await pedido(cS2, { total: PB, productos: [linea(pB, 1, PB)] }); await pagar(s2b);
+ok(retoDe(ms2a, rS2?.reto?.id)?.avance == 1 && bonos(await mis(cS2), rS2?.reto?.nombre) === 14, `surtido con lista: ${pC ? pC.sabor + ' no suma; ' : ''}avance 1 → luego ${pB.sabor} → +${bonos(await mis(cS2), rS2?.reto?.nombre)}`);
+
+// 16. Guardas y campos nuevos.
+const gDesc = (await rpc('guardar_reto', { p_data: { token: ana?.token, reto: { nombre: 'x', tipo: 'frecuencia', meta: 1, bono: 1, desde: hoy, hasta: hoy, publico: 'todos', productos: ['Sabor Inventado'] } } })).json;
+const gReq = (await rpc('guardar_reto', { p_data: { token: ana?.token, reto: { nombre: 'x', tipo: 'producto', meta: 1, bono: 1, desde: hoy, hasta: hoy, publico: 'todos' } } })).json;
+if (gDesc?.ok) creados.push(gDesc.reto?.id); if (gReq?.ok) creados.push(gReq.reto?.id);   // residuos: nunca dejar un reto activo
+const mlx = await mis(cL);
+const rlx = retoDe(mlx, rL?.reto?.id);
+const adm2 = (await rpc('retos_admin', { p_data: { token: ana?.token } })).json;
+ok(gDesc?.error === 'producto_desconocido' && gReq?.error === 'productos_requeridos'
+   && rlx && 'imagen' in rlx && rlx.dinamica?.startsWith('Compra') && Array.isArray(rlx.como_participar) && rlx.productos?.[0]?.sabor === pA.sabor && 'imagen_url' in (rlx.productos?.[0] || {})
+   && Array.isArray(adm2?.productos) && adm2.productos.some(p => p.sabor === pA.sabor),
+  `guardas: ${gDesc?.error}, ${gReq?.error}; mis_puntos trae imagen/dinamica/pasos/productos con imagen_url; retos_admin trae el catálogo`);
+
 // 11. Archivos.
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 let retosHtml = ''; try { retosHtml = readFileSync(new URL('../retos.html', import.meta.url), 'utf8'); } catch (_e) {}
 const vercel = readFileSync(new URL('../vercel.json', import.meta.url), 'utf8');
 ok(html.includes('id="club-retos"') && html.includes("reto: 'Reto'") && html.includes('<option value="reto">Retos</option>'), 'index.html: sección Retos, tipo reto y filtro');
-ok(retosHtml.includes('function leerFilasPlantilla') && retosHtml.includes("rpc('guardar_reto'") && /"source": "\/retos"/.test(vercel), 'retos.html con leerFilasPlantilla y guardar_reto; vercel.json con /retos');
+ok(retosHtml.includes('function leerFilasPlantilla') && retosHtml.includes("rpc('guardar_reto'") && /"source": "\/retos"/.test(vercel)
+   && retosHtml.includes("'imagen', 'dinamica', 'como_participar'") && retosHtml.includes('id="f-imagen"'),
+  'retos.html con plantilla ampliada e imagen; vercel.json con /retos');
+ok(html.includes('id="s-club-reto"') && html.includes('window.abrirReto = '), 'index.html: pantalla de detalle y abrirReto');
 
 // Limpieza: pausar los retos de prueba y desactivar el cupón.
 for (const id of creados.filter(Boolean)) await rpc('guardar_reto', { p_data: { token: ana?.token, reto: { id, activo: false } } });

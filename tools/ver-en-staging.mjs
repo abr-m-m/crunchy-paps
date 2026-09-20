@@ -42,6 +42,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 
 const REPO = dirname(dirname(fileURLToPath(import.meta.url)));
 const STAGING = 'https://dkwatbsaidlfjqjnfyrk.supabase.co';
@@ -69,6 +71,7 @@ function deEnvPush(clave) {
 }
 
 let LLAVE = process.env.SUPABASE_KEY;
+let LLAVE_SECRETA = process.env.SUPABASE_SECRET_KEY;
 if (!LLAVE) {
   try {
     // `--output-format json` explicito: sin el, el CLI decide el formato segun
@@ -77,13 +80,15 @@ if (!LLAVE) {
     // que se recorta desde el primer `{` o `[`.
     const out = execFileSync('supabase',
       ['projects', 'api-keys', '--project-ref', 'dkwatbsaidlfjqjnfyrk',
-       '--output-format', 'json'],
+       '--reveal', '--output-format', 'json'],
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     const ini = out.search(/[\[{]/);
     const j = JSON.parse(ini >= 0 ? out.slice(ini) : out);
     const lista = Array.isArray(j) ? j : (j.keys || j.data || []);
     LLAVE = lista.find((k) => k.type === 'publishable' || k.name === 'publishable' ||
                               String(k.api_key || '').startsWith('sb_publishable_'))?.api_key;
+    // La secreta solo sirve para correr /api/imagen-reto en proceso (probar /retos en local). Nunca se imprime.
+    LLAVE_SECRETA = LLAVE_SECRETA || lista.find((k) => k.type === 'secret' || String(k.api_key || '').startsWith('sb_secret_'))?.api_key;
   } catch (e) {
     // Solo el tipo de error: el mensaje de un JSON.parse fallido trae un trozo
     // de la salida, y ahi puede ir una llave.
@@ -154,6 +159,15 @@ createServer((req, res) => {
       res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       res.end(html);
     }).catch((e) => { res.writeHead(502); res.end('staging no responde: ' + (e && e.name)); });
+    return;
+  }
+  // /api/imagen-reto: la función de Vercel, en proceso, con la llave secreta de staging (solo para probar /retos).
+  if (ruta === '/api/imagen-reto') {
+    if (!LLAVE_SECRETA) { res.writeHead(503); res.end('sin llave secreta de staging'); return; }
+    process.env.SUPABASE_URL = STAGING; process.env.SUPABASE_SERVICE_ROLE_KEY = LLAVE_SECRETA;
+    const handler = require('../api/imagen-reto.js');
+    const shim = { setHeader: (k, v) => res.setHeader(k, v), status(s) { res.statusCode = s; return this; }, json(o) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(o)); } };
+    handler(req, shim).catch((e) => { res.writeHead(500); res.end(String(e && e.message)); });
     return;
   }
   // Vercel sirve esto por entorno; aquí se fabrica apuntando a staging.
