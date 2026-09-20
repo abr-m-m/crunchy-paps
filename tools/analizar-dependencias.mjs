@@ -3,6 +3,15 @@
 // analizar-dependencias.mjs — qué cruza la frontera consumidor ↔ panel
 // ══════════════════════════════════════════════════════════════════════════
 //
+// ⚠ HERRAMIENTA DE UNA SOLA VEZ. Sirvió para la Tarea 4 de
+// `cambios/2026-09-19-partir-monolito.md`, sobre el `src/app.js` de ANTES del corte
+// (árbol de `62fdb57`), para decidir qué se llevaba `src/panel.js`.
+// Tras el corte lee solo `src/app.js`, donde ya no vive ninguno de los 431 nombres de
+// `panel.json`: sus cinco bloques salen **0 sin dar error**. Eso NO significa que el panel
+// esté vacío — significa que la pregunta ya no aplica (patrón de la regla 16: un 0 sin
+// denominador no es un resultado). La guardia VIVA, la que corre en el CI y hay que creer,
+// es `tools/partir/comprobar-libres.mjs`.
+//
 // Regla única: PANEL = lo que una sesión de consumidor NUNCA ejecuta.
 //
 // Dos modos:
