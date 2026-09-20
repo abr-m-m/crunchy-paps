@@ -2777,6 +2777,9 @@ window.entrarConTel = async function() {
       if (lbl) {
         lbl.textContent = 'Hola, ' + vend.nombre.split(' ')[0] + ' — Ingresa tu PIN';
       }
+      // El teclado del PIN (focoPIN/retrocesoPIN/verificarPIN) vive en panel.js: sin panel cargado
+      // la pantalla es inerte. Se espera a tenerlo ANTES de pintarla.
+      if (window.cargarPanel) { try { await window.cargarPanel(); } catch (_e) {} }
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById('s-pin').classList.add('active');
       setTimeout(function() { document.getElementById('p0').focus(); }, 300);

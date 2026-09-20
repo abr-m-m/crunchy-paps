@@ -951,6 +951,10 @@ async function irAlCatalogo() {
 async function intentarRestaurarSesion() {
   if (!restaurarSesion()) return;
 
+  // Panel bajo demanda: el vendedor lo va a necesitar sí o sí, así que se pide ya, en paralelo
+  // con el catálogo. El consumidor nunca entra aquí, y por eso nunca descarga panel.js.
+  if (esVendedor) cargarPanel().catch(() => {});
+
   // Sesión encontrada — restaurar sin OTP
   if (!saborActivo) saborActivo = SABORES_ORDER[0];
   const telDisp = telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/, '$1 $2 $3');
@@ -4434,11 +4438,22 @@ window.togglePromosPerfil = async function(el) {
   }
 };
 
+// Las trece secciones que viven en panel.js. `premia` y `pedidos` NO están aquí: las usan también
+// los consumidores, y meterlas cargaría el panel a cada cliente. Esas dos se resuelven en su rama.
+const SECCIONES_PANEL = new Set(['produccion', 'b2b', 'prospeccion', 'ruta', 'reparto', 'entregas', 'armado', 'caja', 'gastos', 'jornadas', 'productos', 'cupones', 'resumen']);
+
 window.navegar = function(seccion) {
+  // Panel bajo demanda (cambios/2026-09-19-partir-monolito): si la sección vive en panel.js y aún no
+  // cargó, se carga y se vuelve a navegar. Un consumidor nunca llega aquí con esas secciones.
+  if (SECCIONES_PANEL.has(seccion) && !P) {
+    cargarPanel().then(() => navegar(seccion)).catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
+    return;
+  }
   const _perfH = perfStartNav(seccion);
   try { track('view_section', { seccion: seccion }); } catch(e) {}
   // Cola en vivo: al dejar Armado se detiene el refresco y el título vuelve.
-  if (seccion !== 'armado' && typeof P.armadoPararRefresco === 'function') { P.armadoPararRefresco(); document.title = ARMADO_TITULO_BASE; }
+  // `P &&` porque el consumidor navega sin panel: sin esa guardia, `P.x` revienta en el primer toque.
+  if (seccion !== 'armado' && P && typeof P.armadoPararRefresco === 'function') { P.armadoPararRefresco(); document.title = ARMADO_TITULO_BASE; }
   // Apagar pantallas sueltas (s-alta-negocio, s-ajustar-ubicacion, etc.):
   // si quedan activas se enciman con la sección destino
   document.querySelectorAll('.screen.active').forEach(s => {
@@ -4568,7 +4583,14 @@ function renderPremia() {
   // Admin: ocultar las tarjetas de cliente y mostrar solo el panel de reglas.
   const _esAdminCfg = (typeof esAdminEstricto === 'function' && esAdminEstricto());
   document.querySelectorAll('#s-premia .club-cliente').forEach(el => { el.style.display = _esAdminCfg ? 'none' : ''; });
-  if (_esAdminCfg) { renderClubAdminCfg(); P.renderMayoreoAdminCfg(); return; }
+  // Puerta compartida: `premia` la abren consumidor y admin. El panel se carga SOLO en la rama del
+  // admin; la del consumidor sigue sin tocarlo. Para el admin la promesa ya está resuelta (precarga).
+  if (_esAdminCfg) {
+    cargarPanel()
+      .then((p) => { renderClubAdminCfg(); p.renderMayoreoAdminCfg(); })
+      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
+    return;
+  }
   cargarMisPuntos();
 
   document.getElementById('p-puntos').textContent = puntos;
@@ -4910,8 +4932,11 @@ async function pintarRegalosCliente() {
 
 function renderPedidos() {
   // Si es vendedor, usar la vista de vendedor (resumen + cuota + sus pedidos)
+  // Puerta compartida: `pedidos` la abren los dos. El panel solo se carga en la rama del vendedor.
   if (esVendedor) {
-    P.renderPedidosVendedor();
+    cargarPanel()
+      .then((p) => p.renderPedidosVendedor())
+      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
     return;
   }
 
@@ -4998,6 +5023,11 @@ window.verDetallePedido = async function(idOrden) {
   // «Pedido no encontrado». Su detalle es la pantalla de seguimiento, que es
   // pública (get_tracking_pedido acepta id o consecutivo) y ya está rediseñada.
   if (!esVendedor) { abrirTracking(String(idOrden)); return; }
+  // El detalle lo pinta el panel. Se carga AQUÍ, antes de tocar `window._vendedoresReparto`:
+  // panel.js lo pone a null al evaluarse, así que cargarlo más abajo borraría la lista recién traída.
+  let _p;
+  try { _p = await cargarPanel(); }
+  catch (_e) { avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }); return; }
   // Abrir drawer
   document.getElementById('overlay-pedido').classList.add('visible');
   document.getElementById('drawer-pedido').classList.add('open');
@@ -5058,7 +5088,7 @@ window.verDetallePedido = async function(idOrden) {
     }));
     if (esAdmin() && !window._vendedoresReparto) { try { window._vendedoresReparto = await cargarVendedoresCheckout(); } catch (_e) { window._vendedoresReparto = []; } }
     _pedidoActual = { ok: true, orden, lineas };
-    P.pintarDetallePedido(_pedidoActual);
+    _p.pintarDetallePedido(_pedidoActual);
   } catch(e) {
     document.getElementById('dp-contenido').innerHTML =
       '<div style="text-align:center;color:var(--rojo);padding:30px;">Error: ' + e.message + '</div>';
@@ -6078,3 +6108,17 @@ export const N = {
 };
 export let P = null;
 export function cargarPanel() { return P ? Promise.resolve(P) : import('./panel.js').then((m) => (P = m)); }
+
+// El <script> vanilla de index.html (pantalla PIN) no es un módulo: necesita el cargador por window.
+window.cargarPanel = cargarPanel;
+
+// ── Envoltorios para los window.* del panel que cuelgan de una pantalla COMPARTIDA ──
+// `s-pin` (antes de que exista sesión de vendedor) y `s-cuenta` (los cinco botones de vendedor, que
+// se pintan mientras la precarga puede seguir en vuelo). Ninguno de estos nombres se EXPORTA desde
+// panel.js: solo son `window.X = …`, así que el envoltorio carga y vuelve a leer `window.X`, que para
+// entonces ya lo pisó el panel. Las pantallas que cuelgan de estos botones (`s-alta-negocio`,
+// `s-ajustar-ubicacion`, `#pin-form`) no necesitan envoltorio: solo se llega a ellas desde aquí.
+['verificarPIN', 'focoPIN', 'retrocesoPIN', 'abrirAltaNegocio', 'abrirAjustarUbicacion', 'abrirPermisos', 'abrirCambioPin', 'guardarPinPropio']
+  .forEach((nombre) => {
+    window[nombre] = function (...args) { return cargarPanel().then(() => window[nombre](...args)); };
+  });
