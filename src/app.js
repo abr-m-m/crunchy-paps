@@ -4442,12 +4442,22 @@ window.togglePromosPerfil = async function(el) {
 // los consumidores, y meterlas cargaría el panel a cada cliente. Esas dos se resuelven en su rama.
 const SECCIONES_PANEL = new Set(['produccion', 'b2b', 'prospeccion', 'ruta', 'reparto', 'entregas', 'armado', 'caja', 'gastos', 'jornadas', 'productos', 'cupones', 'resumen']);
 
+// La última sección que el usuario pidió. Mientras `panel.js` viaja, el usuario puede tocar otra
+// cosa; cuando llega, solo se navega si sigue queriendo ir donde pidió. Sin esto, tocar Armado y
+// arrepentirse acaba en Armado igual, medio segundo después.
+let _seccionPedida = null;
+
+// Devuelve `false` cuando NO pintó nada porque está esperando al panel. El envoltorio de historial
+// de abajo mira ese `false` para no empujar una entrada de una pantalla que nunca se mostró.
 window.navegar = function(seccion) {
+  _seccionPedida = seccion;
   // Panel bajo demanda (cambios/2026-09-19-partir-monolito): si la sección vive en panel.js y aún no
   // cargó, se carga y se vuelve a navegar. Un consumidor nunca llega aquí con esas secciones.
   if (SECCIONES_PANEL.has(seccion) && !P) {
-    cargarPanel().then(() => navegar(seccion)).catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
-    return;
+    cargarPanel()
+      .then(() => { if (_seccionPedida === seccion) navegar(seccion); })
+      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Recarga la app e inténtalo de nuevo.' }));
+    return false;
   }
   const _perfH = perfStartNav(seccion);
   try { track('view_section', { seccion: seccion }); } catch(e) {}
@@ -4558,7 +4568,10 @@ window.navegar = function(seccion) {
     try { history.pushState({ cp: true }, '', location.pathname + location.search); } catch(_e) {}
   }
   window.ir = function(id) { _irOrig(id); _navPush('ir', id); };
-  window.navegar = function(s) { _navOrig(s); _navPush('nav', s); };
+  // `navegar` devuelve `false` cuando se quedó esperando al panel sin pintar nada: esa navegación
+  // no ocurrió todavía, así que no entra en la pila. Cuando el panel llega vuelve a llamar a
+  // `navegar` (a este mismo envoltorio) y entonces sí se empuja.
+  window.navegar = function(s) { if (_navOrig(s) === false) return; _navPush('nav', s); };
   window.addEventListener('popstate', function() {
     // Si el drawer del carrito está abierto, el back lo cierra primero
     const dw = document.getElementById('drawer');
@@ -4588,7 +4601,7 @@ function renderPremia() {
   if (_esAdminCfg) {
     cargarPanel()
       .then((p) => { renderClubAdminCfg(); p.renderMayoreoAdminCfg(); })
-      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
+      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Recarga la app e inténtalo de nuevo.' }));
     return;
   }
   cargarMisPuntos();
@@ -4936,7 +4949,7 @@ function renderPedidos() {
   if (esVendedor) {
     cargarPanel()
       .then((p) => p.renderPedidosVendedor())
-      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }));
+      .catch(() => avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Recarga la app e inténtalo de nuevo.' }));
     return;
   }
 
@@ -5027,7 +5040,7 @@ window.verDetallePedido = async function(idOrden) {
   // panel.js lo pone a null al evaluarse, así que cargarlo más abajo borraría la lista recién traída.
   let _p;
   try { _p = await cargarPanel(); }
-  catch (_e) { avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Revisa tu conexión e inténtalo de nuevo.' }); return; }
+  catch (_e) { avisar({ titulo: 'Panel', cuerpo: 'No se pudo cargar el panel. Recarga la app e inténtalo de nuevo.' }); return; }
   // Abrir drawer
   document.getElementById('overlay-pedido').classList.add('visible');
   document.getElementById('drawer-pedido').classList.add('open');
@@ -6113,12 +6126,20 @@ export function cargarPanel() { return P ? Promise.resolve(P) : import('./panel.
 window.cargarPanel = cargarPanel;
 
 // ── Envoltorios para los window.* del panel que cuelgan de una pantalla COMPARTIDA ──
-// `s-pin` (antes de que exista sesión de vendedor) y `s-cuenta` (los cinco botones de vendedor, que
-// se pintan mientras la precarga puede seguir en vuelo). Ninguno de estos nombres se EXPORTA desde
-// panel.js: solo son `window.X = …`, así que el envoltorio carga y vuelve a leer `window.X`, que para
-// entonces ya lo pisó el panel. Las pantallas que cuelgan de estos botones (`s-alta-negocio`,
-// `s-ajustar-ubicacion`, `#pin-form`) no necesitan envoltorio: solo se llega a ellas desde aquí.
-['verificarPIN', 'focoPIN', 'retrocesoPIN', 'abrirAltaNegocio', 'abrirAjustarUbicacion', 'abrirPermisos', 'abrirCambioPin', 'guardarPinPropio']
-  .forEach((nombre) => {
-    window[nombre] = function (...args) { return cargarPanel().then(() => window[nombre](...args)); };
-  });
+// La regla, sin excepciones (regla 59): se envuelve TODO `window.X` del panel alcanzable desde una
+// pantalla compartida, esté o no gateado por rol en el DOM. Esconder un botón no es un permiso, y
+// tampoco es una garantía de que el panel ya llegó: la precarga puede seguir en vuelo.
+//   · `s-pin`   — antes de que exista sesión de vendedor.
+//   · `s-cuenta` — los cinco botones de vendedor de «Mi cuenta».
+//   · `#drawer` (carrito) — el buscador de cliente del mostrador y el selector de pedido interno.
+// Ninguno de estos nombres se EXPORTA desde panel.js: solo son `window.X = …`, así que el envoltorio
+// carga y vuelve a leer `window.X`, que para entonces ya lo pisó el panel. Las pantallas que cuelgan
+// de estos botones (`s-alta-negocio`, `s-ajustar-ubicacion`, `#pin-form`) no necesitan envoltorio:
+// solo se llega a ellas desde aquí.
+[
+  'verificarPIN', 'focoPIN', 'retrocesoPIN',
+  'abrirAltaNegocio', 'abrirAjustarUbicacion', 'abrirPermisos', 'abrirCambioPin', 'guardarPinPropio',
+  'elegirModoCliente', 'buscarCliente', 'habilitarEdicionCliente', 'setTipoInterno',
+].forEach((nombre) => {
+  window[nombre] = function (...args) { return cargarPanel().then(() => window[nombre](...args)); };
+});
