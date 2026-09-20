@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 // tools/ver-en-staging.mjs — Levanta la app de ESTA rama, tal como está en el
-// árbol de trabajo, apuntada a STAGING. Sirve para mirar un cambio de aspecto
-// antes de desplegarlo.
+// árbol de trabajo (o `dist/` si ya se corrió `npm run build`), apuntada a
+// STAGING, en el puerto 8794. Sirve para mirar un cambio de aspecto antes de
+// desplegarlo. Las rutas de sesión de prueba (`/entrar-como*`), `/api/config.js`
+// y `/api/imagen-reto`, junto con las llaves que necesitan, viven en
+// `manejarStaging()` de `tools/staging-middleware.mjs` (compartido con
+// `npm run dev`): este archivo solo levanta el servidor HTTP y le delega esas
+// rutas antes de caer al estático.
 //
 //   node tools/ver-en-staging.mjs
 //   → abre http://localhost:8794

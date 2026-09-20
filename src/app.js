@@ -6140,6 +6140,13 @@ window.cargarPanel = cargarPanel;
   'verificarPIN', 'focoPIN', 'retrocesoPIN',
   'abrirAltaNegocio', 'abrirAjustarUbicacion', 'abrirPermisos', 'abrirCambioPin', 'guardarPinPropio',
   'elegirModoCliente', 'buscarCliente', 'habilitarEdicionCliente', 'setTipoInterno',
+  'guardarLealtadCfg',
 ].forEach((nombre) => {
-  window[nombre] = function (...args) { return cargarPanel().then(() => window[nombre](...args)); };
+  const envoltorio = function (...args) {
+    return cargarPanel().then(() => {
+      if (window[nombre] === envoltorio) throw new Error('panel.js no define window.' + nombre);
+      return window[nombre](...args);
+    });
+  };
+  window[nombre] = envoltorio;
 });

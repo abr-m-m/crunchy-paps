@@ -2,7 +2,7 @@
 // pedidas al CLI, sesión de prueba (/entrar-como*), /api/config.js apuntando a staging y
 // /api/imagen-reto en proceso. Devuelve true si atendió la petición.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
