@@ -21,7 +21,20 @@
 //                         (deben ser CERO: se quitan de panel.json)
 //         5. `window.X` del panel referenciado desde app.js o desde un onclick
 //            de una pantalla que NO es del panel. `window` es global, así que
-//            la reescritura por AST no puede verlo: daría TypeError.
+//            la reescritura por AST no puede verlo: daría TypeError. Cuenta
+//            también el identificador PELADO (`foo()`) cuyo único declarador es
+//            `window.foo = …`: 193 de los ítems del panel son de esa forma, y
+//            ahí el fallo es ReferenceError, no `undefined`.
+//
+// QUÉ PRUEBA Y QUÉ NO. Los bloques 1–4 son estáticos y completos: salen de
+// resolver ámbitos sobre el AST. El bloque 5 no puede serlo, porque `window` es
+// un cajón de sastre. Para los `onclick` de index.html el análisis demuestra
+// «oculto al cargar» —el manejador nace dentro de algo con `display:none`, de
+// una `.screen` sin `.active` o de un `.overlay`/`.drawer` cerrado—, y eso NO
+// es lo mismo que «nunca se muestra»: no mira quién quita ese estado después.
+// Si alguien añade un `classList.add('open')` desde código del consumidor,
+// este script seguirá diciendo «0 a la vista» y estará equivocado. Esa mitad
+// se comprueba leyendo el código, y está anotada en clasificacion.md §2.
 //
 //   Banderas extra: --items (volcado de todos los ítems con su tramo),
 //                   --json (bloques en JSON), --html <ruta> (por defecto index.html)
@@ -312,7 +325,16 @@ function referencias(ast, items, porNombre) {
 
     if (!esReferencia(nodo, padre, abuelo)) return;
     const nombre = nodo.name;
-    if (!porNombre.has(nombre)) return;
+    // 193 de los ítems se declaran SÓLO como `window.foo = function…`, y su
+    // clave en porNombre es 'window.foo'. Un `foo()` pelado en app.js que llame
+    // a uno de ellos no es una MemberExpression, así que la rama de arriba no
+    // lo ve; si aquí lo descartáramos por no estar en porNombre, el cruce no
+    // caería en ningún bloque — y en ejecución es un ReferenceError hasta que
+    // el panel carga, que es justo lo que el bloque 5 existe para atrapar.
+    // Por eso se busca también la forma `window.<nombre>`.
+    const declarado = porNombre.has(nombre);
+    const soloWindow = !declarado && porNombre.has('window.' + nombre);
+    if (!declarado && !soloWindow) return;
     // ¿lo tapa un ámbito local?
     for (let i = ancestros.length - 2; i >= 0; i--) {
       const a = ancestros[i];
@@ -323,6 +345,13 @@ function referencias(ast, items, porNombre) {
     const raiz = itemEnPosicion(porPos, nodo.start);
     if (!raiz) return;
     const it = dueno.get(raiz.nodo) || raiz;
+    if (soloWindow) {
+      // Se atribuye al ítem `window.<nombre>`, y se marca como global: no es una
+      // referencia léxica, la reescritura por AST no puede convertirla en `P.x`.
+      usos.push({ desde: it, nombre: 'window.' + nombre, prop: nombre,
+        linea: nodo.loc.start.line, escritura: esEscritura(nodo, padre), esWindow: true, pelado: true });
+      return;
+    }
     usos.push({ desde: it, nombre, linea: nodo.loc.start.line, escritura: esEscritura(nodo, padre), esWindow: false });
   });
   return usos;
@@ -331,10 +360,13 @@ function referencias(ast, items, porNombre) {
 // ──────────────────────────────────────────────────────────────────────────
 // 5. onclick de index.html, con la pantalla en la que vive cada uno
 // ──────────────────────────────────────────────────────────────────────────
+// Las 14 pantallas del panel, tal y como existen en index.html. No hay
+// `s-permisos`: los permisos viven en el modal `drawer-permisos`, que este
+// análisis trata como cualquier otro cajón.
 const PANTALLAS_PANEL = new Set([
   's-produccion', 's-b2b', 's-prospeccion', 's-ruta', 's-reparto', 's-entregas',
   's-armado', 's-caja', 's-gastos', 's-jornadas', 's-productos', 's-cupones',
-  's-resumen', 's-pin', 's-permisos',
+  's-resumen', 's-pin',
 ]);
 
 const VACIAS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
@@ -397,10 +429,22 @@ function onclicksDe(html) {
     // contenedor con id más EXTERNO (el modal/drawer o la pantalla)
     let raiz = null;
     for (const e of conId) if (m.index > e.desde && m.index < e.hasta && (!raiz || e.desde < raiz.desde)) raiz = e;
-    // ¿El propio elemento o alguno de sus ancestros nace invisible? Tres vías:
-    // estilo en línea `display:none`, `.screen` sin `.active` (display:none por
-    // CSS) y `.overlay`/`.drawer` sin `.visible`/`.open` (pointer-events:none /
-    // fuera de la pantalla). Un manejador que no se puede tocar no rompe nada.
+    // ¿El propio elemento o alguno de sus ancestros nace invisible AL CARGAR?
+    // Tres vías, con su razón exacta en estilos.css:
+    //   · estilo en línea `display:none`;
+    //   · `.screen` sin `.active`  → `.screen{display:none}` (estilos.css:30);
+    //   · `.overlay` sin `.visible` → `pointer-events:none` (estilos.css:373);
+    //   · `.drawer` sin `.open`     → `transform:translateY(100%)`
+    //     (estilos.css:380): el cajón NO tiene pointer-events:none, está
+    //     desplazado entero por debajo del viewport fijo, y por eso no se puede
+    //     tocar. La distinción importa: quien cambie ese transform por otra
+    //     animación se lleva la garantía por delante.
+    //
+    // OJO CON LO QUE ESTO PRUEBA. Prueba «oculto al cargar», no «nunca se
+    // muestra». No mira quién quita después ese estado: un
+    // `classList.add('open')` o un `style.display=''` escrito desde código del
+    // consumidor dejaría el manejador a la vista y este análisis no se
+    // enteraría. Esa mitad se comprueba a mano (ver clasificacion.md §2, B5).
     let oculto = null;
     const marca = (e, razon) => { if (!oculto || e.desde > oculto.desde) oculto = { desde: e.desde, razon }; };
     for (const e of els) {
@@ -503,10 +547,10 @@ function analizar({ src, ast, items, porNombre }, lista, rutaHtml) {
   const b4 = new Map(); // VIOLACIÓN: var del panel usada por app
   const b5 = new Map(); // window.X del panel tocado desde app / onclick de consumidor
 
-  const anota = (mapa, nombre, u) => {
-    if (!mapa.has(nombre)) mapa.set(nombre, { nombre, usos: 0, escrituras: 0, desde: new Set(), lineas: [] });
+  const anota = (mapa, nombre, u, pelado) => {
+    if (!mapa.has(nombre)) mapa.set(nombre, { nombre, usos: 0, escrituras: 0, pelados: 0, desde: new Set(), lineas: [] });
     const e = mapa.get(nombre);
-    e.usos++; if (u.escritura) e.escrituras++;
+    e.usos++; if (u.escritura) e.escrituras++; if (pelado) e.pelados++;
     e.desde.add(u.desde.nombre); if (e.lineas.length < 6) e.lineas.push(u.linea);
   };
 
@@ -521,7 +565,10 @@ function analizar({ src, ast, items, porNombre }, lista, rutaHtml) {
       // ha cargado da `undefined`, no TypeError. Llamarlo, sí.
       const esFnW = (declW && declW.clase === 'window-funcion') || (declBare && (declBare.clase === 'funcion' || declBare.clase === 'clase'));
       const declaradoEnPanel = (declW && lado(declW) === 'panel') || (declBare && enPanel.has(declBare.nombre));
-      if (esFnW && declaradoEnPanel && ladoDesde === 'app') anota(b5, u.nombre, u);
+      // `u.pelado` = el uso es un identificador SIN `window.` cuyo único
+      // declarador es `window.X`. Ahí no hace falta que sea función: leer un
+      // nombre pelado que aún no existe es ReferenceError, no `undefined`.
+      if ((esFnW || u.pelado) && declaradoEnPanel && ladoDesde === 'app') anota(b5, u.nombre, u, u.pelado);
       continue;
     }
     if (!decl) continue;
@@ -619,9 +666,9 @@ function analizar({ src, ast, items, porNombre }, lista, rutaHtml) {
   console.log('\n' + '═'.repeat(74));
   const expuestos = onclickMalos.filter(o => !o.oculto);
   const ocultos = onclickMalos.filter(o => o.oculto);
-  console.log(`BLOQUE 5 — window.X del panel visto desde fuera  — AST ${b5.size} · onclick HTML ${onclickMalos.length} (${expuestos.length} a la vista) · onclick de app.js ${onclickJS.length}`);
+  console.log(`BLOQUE 5 — window.X del panel visto desde fuera  — AST ${b5.size} · onclick HTML ${onclickMalos.length} (${expuestos.length} a la vista al cargar) · onclick de app.js ${onclickJS.length}`);
   console.log('═'.repeat(74));
-  for (const e of orden(b5)) console.log('  [AST]      ' + e.nombre.padEnd(34) + String(e.usos).padStart(3) + ' usos · líneas ' + e.lineas.join(', ') + ' · desde: ' + [...e.desde].slice(0, 4).join(', '));
+  for (const e of orden(b5)) console.log('  [AST' + (e.pelados ? '-pelado' : '') + ']'.padEnd(e.pelados ? 3 : 10) + e.nombre.padEnd(34) + String(e.usos).padStart(3) + ' usos' + (e.pelados ? ' (' + e.pelados + ' sin window.)' : '') + ' · líneas ' + e.lineas.join(', ') + ' · desde: ' + [...e.desde].slice(0, 4).join(', '));
   for (const o of expuestos) console.log('  [html!]    ' + o.nombre.padEnd(34) + o.contenedor.padEnd(26) + 'index.html:' + o.linea);
   const porCont = new Map();
   for (const o of ocultos) {
