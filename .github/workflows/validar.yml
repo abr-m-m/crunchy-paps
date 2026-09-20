@@ -8,8 +8,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: node tools/validar.mjs index.html
-      # `vite build` NO detecta un identificador global roto: Rollup no resuelve globales.
-      # Esta es la única red contra una referencia que quedó colgando al partir el monolito.
-      - run: node tools/partir/comprobar-libres.mjs
-      - run: npm run build
+      # Un solo comando, el mismo que corre Vercel (`buildCommand` en vercel.json) y el que se
+      # teclea antes de empujar: validar.mjs + comprobar-libres.mjs + vite build. `vite build` NO
+      # detecta un identificador global roto (Rollup no resuelve globales); comprobar-libres sí, y
+      # desde el 20 sep 2026 es Vercel quien lo corre antes de publicar: el CI aquí es el espejo.
+      - run: npm run validar

@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run validar",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/sheets", "destination": "/api/sheets" },

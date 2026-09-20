@@ -21,8 +21,10 @@ DESPLIEGUE.md
 CLAUDE.md
 .claude/
 
-# ── Herramientas y base de datos: no son parte del sitio ────
-tools/
+# ── Base de datos: no es parte del sitio ─────────────────────
+# `tools/` SÍ viaja desde el 20 sep 2026: Vercel construye con `npm run validar`
+# (validar.mjs + comprobar-libres.mjs + vite build) y necesita esas dos herramientas.
+# No se sirve nada de ahí (`outputDirectory: dist`) y el repo es público.
 supabase/
 
 # ── Volcados del diagnóstico ────────────────────────────────
