@@ -1579,6 +1579,10 @@ window.agregarUnidad = function(key, delta) {
   const u = unidadDe(key);
   if (u === 1) cambiarQty(String(key), delta); else cambiarCaja(String(key), u, delta);
 };
+// De dónde se agregó al carrito, cuando no fue desde el catálogo (p. ej. `{ origen: 'reto', reto_id }`).
+// Lo pone quien llama a `agregarUnidad` y viaja en el `add_to_cart` de ese toque; se limpia solo.
+let _origenCarrito = null;
+const conOrigen = (p) => _origenCarrito ? Object.assign({}, p, _origenCarrito) : p;
 
 window.cambiarCaja = function(keyProd, piezas, delta) {
   const prod = catalogo.find(p => String(p.id) === keyProd);
@@ -1601,7 +1605,7 @@ window.cambiarCaja = function(keyProd, piezas, delta) {
   }
   if (delta > 0) {
     mostrarToast(`Caja de ${piezas} agregada`);
-    track('add_to_cart', { sabor: prod.sabor, presentacion: prod.presentacion, caja: piezas, value: Number(precio) * piezas || 0, currency: 'MXN' });
+    track('add_to_cart', conOrigen({ sabor: prod.sabor, presentacion: prod.presentacion, caja: piezas, value: Number(precio) * piezas || 0, currency: 'MXN' }));
   }
   actualizarBadge();
   renderCatalogo();
@@ -1621,7 +1625,7 @@ window.cambiarQty = function(key, delta) {
   }
   carrito[key].qty = Math.max(0, carrito[key].qty+delta);
   if (carrito[key].qty===0) { if (delta<0) { try{ track('remove_from_cart', { sabor: prod.sabor, presentacion: prod.presentacion }); }catch(e){} } delete carrito[key]; }
-  if (delta>0) { mostrarToast(); track('add_to_cart', { sabor: prod.sabor, presentacion: prod.presentacion, value: Number(precio) || 0, currency: 'MXN' }); }
+  if (delta>0) { mostrarToast(); track('add_to_cart', conOrigen({ sabor: prod.sabor, presentacion: prod.presentacion, value: Number(precio) || 0, currency: 'MXN' })); }
   actualizarBadge();
   renderCatalogo();
   if (document.getElementById('drawer').classList.contains('open')) renderDrawer();
@@ -4660,10 +4664,15 @@ window.abrirReto = function(id) {
   const fmt = (n) => r.tipo === 'monto' ? '$' + Number(n).toLocaleString('es-MX') : Number(n).toLocaleString('es-MX');
   const cab = mk('div', 'rd-cab' + (r.imagen ? ' foto' : ''));
   if (r.imagen) { const im = document.createElement('img'); im.src = urlImagenReto(r.imagen); im.alt = ''; cab.appendChild(im); } else { cab.style.minHeight = '120px'; }
-  const gana = mk('div', 'rd-gana', 'Gana'); gana.appendChild(mk('b', null, Number(r.bono).toLocaleString('es-MX') + ' pts')); cab.appendChild(gana);
   cont.appendChild(cab);
   cont.appendChild(mk('div', 'rd-tit', r.nombre));
-  cont.appendChild(mk('div', 'rd-sub', r.cumplido ? 'Cumplido: ya sumaste ' + Number(r.bono).toLocaleString('es-MX') + ' puntos' : (dias <= 0 ? 'Último día' : dias === 1 ? 'Termina mañana' : 'Termina en ' + dias + ' días')));
+  // La píldora del bono va debajo del nombre, junto al plazo: no tapa la imagen (decisión de Abraham, 20 sep 2026).
+  const sub = mk('div', 'rd-sub');
+  const gana = mk('span', 'rd-gana' + (r.cumplido ? ' ok' : ''), r.cumplido ? 'Cumplido ' : 'Gana ');
+  gana.appendChild(mk('b', null, (r.cumplido ? '+' : '') + Number(r.bono).toLocaleString('es-MX') + ' pts')); sub.appendChild(gana);
+  sub.appendChild(mk('span', null, dias <= 0 ? 'Último día' : dias === 1 ? 'Termina mañana' : 'Termina en ' + dias + ' días'));
+  cont.appendChild(sub);
+  try { track('view_reto', { reto_id: r.id, nombre: r.nombre, tipo: r.tipo, cumplido: !!r.cumplido }); } catch (_e) {}
   const prog = mk('div', 'rd-prog', 'Progreso del reto '); prog.appendChild(mk('b', null, fmt(av) + ' de ' + fmt(meta) + ' ' + (meta === 1 ? u[0] : u[1])));
   const barra = mk('div', 'club-reto-barra'); barra.style.margin = '6px 16px 0'; const fill = mk('div'); fill.style.width = (meta > 0 ? Math.round(av / meta * 100) : 0) + '%'; if (r.cumplido) fill.style.background = '#4caf50'; barra.appendChild(fill);
   cont.appendChild(prog); cont.appendChild(barra);
@@ -4676,12 +4685,29 @@ window.abrirReto = function(id) {
   const sec = mk('div', 'rd-sec'); sec.appendChild(mk('div', 'rd-tit2', 'Productos en el reto'));
   const lista = Array.isArray(r.productos) ? r.productos : [];
   sec.appendChild(mk('div', 'rd-n', lista.length ? lista.length + ' producto' + (lista.length === 1 ? '' : 's') + ' participante' + (lista.length === 1 ? '' : 's') : 'Cuenta cualquier compra de papas'));
+  // Fila con SKU: tocarla abre el detalle del producto y «Agregar» lo mete al carrito (una pieza, o la caja
+  // que tenga elegida una tienda). Fila de sabor sin presentación: abre el catálogo filtrado por ese sabor.
+  // Un producto que ya no está en el catálogo (desactivado o sin stock) se avisa, no se calla.
+  const enCatalogo = (p) => p.id != null && catalogo.some(x => String(x.id) === String(p.id));
+  const irAlCatalogo = (sabor) => { navegar('inicio'); try { if (sabor) cambiarSabor(sabor); window.scrollTo(0, 0); } catch (_e) {} };
   for (const p of lista) {
     const fila = mk('div', 'rd-prod');
     if (p.imagen_url) { const im = document.createElement('img'); im.src = p.imagen_url; im.alt = ''; im.loading = 'lazy'; fila.appendChild(im); } else fila.appendChild(mk('div', 'ph'));
     const n = mk('div', 'n', p.sabor); n.appendChild(mk('small', null, p.presentacion || 'cualquier presentación')); fila.appendChild(n);
-    fila.appendChild(mk('span', 'fl', '›'));
-    fila.addEventListener('click', () => { navegar('inicio'); try { window.scrollTo(0, 0); } catch (_e) {} });
+    if (p.id != null) {
+      const btn = mk('button', 'rd-add', 'Agregar'); btn.type = 'button';
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (!enCatalogo(p)) { mostrarToast('No disponible por ahora'); return; }
+        _origenCarrito = { origen: 'reto', reto_id: r.id };
+        try { agregarUnidad(String(p.id), 1); } finally { _origenCarrito = null; }
+      });
+      fila.appendChild(btn);
+      fila.addEventListener('click', () => { if (enCatalogo(p)) verProducto(String(p.id)); else mostrarToast('No disponible por ahora'); });
+    } else {
+      fila.appendChild(mk('span', 'fl', '›'));
+      fila.addEventListener('click', () => irAlCatalogo(p.sabor));
+    }
     sec.appendChild(fila);
   }
   cont.appendChild(sec);
@@ -4720,7 +4746,13 @@ function pintarRetos() {
     if (puntosEl && retos.length > 1) puntosEl.appendChild(mk('span', i === 0 ? 'on' : ''));
   });
   if (puntosEl && retos.length > 1) {
-    pista.onscroll = () => { const i = Math.round(pista.scrollLeft / ((pista.firstChild ? pista.firstChild.offsetWidth : 0) + 10 || 1)); [...puntosEl.children].forEach((d, k) => d.classList.toggle('on', k === i)); };
+    // `reto_swipe` se registra al cambiar de tarjeta (no por píxel): dice hasta qué reto llegan a ver.
+    let ultimo = 0;
+    pista.onscroll = () => {
+      const i = Math.round(pista.scrollLeft / ((pista.firstChild ? pista.firstChild.offsetWidth : 0) + 10 || 1));
+      [...puntosEl.children].forEach((d, k) => d.classList.toggle('on', k === i));
+      if (i !== ultimo && retos[i]) { ultimo = i; try { track('reto_swipe', { idx: i, total: retos.length, reto_id: retos[i].id }); } catch (_e) {} }
+    };
   }
 }
 function pintarEquivalencia() {

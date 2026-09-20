@@ -708,16 +708,18 @@ select.inp { appearance: none; cursor: pointer; }
 .club-reto-barra div { background:var(--amarillo); height:100%; }
 .club-reto.cumplido .club-reto-barra div { background:#4caf50; }
 .club-reto-cab.foto { padding:0; min-height:0; position:relative; background:var(--gris3); }
-.club-reto-cab.foto img { width:100%; height:110px; object-fit:cover; display:block; }
+.club-reto-cab.foto img { width:100%; height:auto; aspect-ratio:12 / 5; object-fit:cover; display:block; }
 .club-reto-cab.foto b { position:absolute; left:14px; right:14px; bottom:10px; color:var(--blanco); text-shadow:0 1px 6px rgba(0,0,0,.7); }
 .club-reto { cursor:pointer; }
 .rd-cab { background:var(--amarillo); color:#111; padding:16px; position:relative; }
 .rd-cab.foto { padding:0; background:var(--gris3); }
-.rd-cab.foto img { width:100%; height:180px; object-fit:cover; display:block; }
-.rd-cab .rd-gana { position:absolute; top:12px; left:12px; background:var(--blanco); color:#111; border-radius:8px; padding:6px 10px; font-size:0.72rem; font-weight:800; line-height:1.2; }
-.rd-cab .rd-gana b { display:block; font-size:1rem; color:var(--rojo); }
+.rd-cab.foto img { width:100%; height:auto; aspect-ratio:12 / 5; object-fit:cover; display:block; }
+.rd-gana { display:inline-flex; align-items:baseline; gap:4px; background:var(--gris); border:1px solid var(--gris3); color:var(--blanco); border-radius:999px; padding:3px 10px; font-size:0.72rem; font-weight:800; line-height:1.2; }
+.rd-gana b { font-size:0.9rem; color:var(--blanco); }
+.rd-gana.ok { background:#4caf50; color:var(--blanco); }
+.rd-gana.ok b { color:var(--blanco); }
 .rd-tit { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.3rem; color:var(--blanco); padding:14px 16px 4px; }
-.rd-sub { font-size:0.78rem; font-weight:700; color:var(--suave); padding:0 16px; }
+.rd-sub { display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; font-size:0.78rem; font-weight:700; color:var(--suave); padding:4px 16px 0; }
 .rd-prog { padding:10px 16px 0; font-size:0.74rem; font-weight:600; color:var(--suave); }
 .rd-prog b { color:var(--blanco); }
 .rd-sec { margin:14px 16px 0; background:var(--gris); border:1px solid var(--gris3); border-radius:12px; padding:12px 14px; }
@@ -733,6 +735,8 @@ select.inp { appearance: none; cursor: pointer; }
 .rd-prod .n { flex:1; font-size:0.82rem; font-weight:700; color:var(--blanco); }
 .rd-prod .n small { display:block; font-weight:600; color:var(--suave); }
 .rd-prod .fl { color:var(--suave); }
+.rd-prod .rd-add { flex:none; background:var(--amarillo); color:#111; border:0; border-radius:999px; padding:7px 12px; font:inherit; font-size:0.76rem; font-weight:800; cursor:pointer; }
+.rd-prod .rd-add:active { transform:scale(.96); }
 .club-retos-puntos { display:flex; justify-content:center; gap:6px; margin-top:8px; }
 .club-retos-puntos span { width:6px; height:6px; border-radius:50%; background:var(--gris3); }
 .club-retos-puntos span.on { background:var(--amarillo); }
