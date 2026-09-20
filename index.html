@@ -4,17 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Crunchy Paps — Pide tus papas</title>
+<!-- Conexiones adelantadas (19 sep 2026): TLS con Supabase y Google Fonts mientras
+     baja el HTML. El host de producción ya está escrito más abajo (CP_PROD_URL);
+     desde staging esto abre una conexión vacía y nada más. -->
+<link rel="preconnect" href="https://xbyzarzyxiugrucyjwfn.supabase.co">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <!-- ═══════ Configuración por entorno (Fase 1c) ═══════
      Define window.__CP_CONFIG__ con la URL y la llave anon de Supabase que
      correspondan a ESTE entorno (producción / preview / local), leídas de las
      variables de entorno de Vercel.
 
-     Es un script clásico a propósito: se ejecuta antes del bloque de tipo
-     "module" que arranca la app (los módulos son diferidos).
+     Es un script clásico con `defer` (19 sep 2026): baja sin bloquear el análisis
+     del HTML y aun así corre ANTES del bloque de tipo "module" que arranca la app,
+     porque los scripts diferidos y los módulos se ejecutan en orden de documento.
+     Ningún bloque vanilla lee window.__CP_CONFIG__: solo el módulo.
      Si no carga, index.html tiene respaldo y falla en voz alta fuera de
      producción en vez de escribir en la base real. -->
-<script src="/api/config.js"></script>
+<script src="/api/config.js" defer></script>
 <script>
 // 18 sep 2026: la fecha del día se calcula en hora de CDMX, no en UTC. Con toISOString() la app
 // marcaba «mañana» desde las 18:00 (gasto, jornada, caja, vigencia de cupones, mínimo de entrega).
@@ -107,7 +115,11 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <!-- QuaggaJS para lector de código de barras (carga bajo demanda al abrir escáner) -->
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Fuentes sin bloquear el primer pintado (19 sep 2026): la hoja baja como «print»
+     y se activa al llegar; en la primera apertura fría el texto sale un instante con
+     la fuente del sistema y luego cambia (display=swap). -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
 <style>
 :root {
   --amarillo: #FFD200;
@@ -7357,6 +7369,10 @@ async function cargarDatosCliente() {
     vendedorAsig = null;
 
     // Historial cliente (Supabase RPC)
+    // 19 sep 2026: las encuestas respondidas solo dependen del teléfono, no del
+    // historial, así que se piden A LA VEZ que el cliente (antes iban después:
+    // un viaje a Ohio más en serie en cada apertura con sesión).
+    const pEncuestas = supabaseCall('POST', 'rpc/obtener_encuestas_cliente', { p_data: { telefono: telefonoVerif } }).catch(() => null);
     const rc = await supabaseCall('POST', 'rpc/obtener_cliente_con_stats', { p_telefono: telefonoVerif, p_token: tokenParaConsultaCliente() });
     if (rc.ok && rc.existe) {
       clienteActual = rc.cliente;
@@ -7376,10 +7392,8 @@ async function cargarDatosCliente() {
       window._misPedidos = stats?.pedidos || (stats?.ultimoPedido ? [stats.ultimoPedido] : []);
 
       // Encuestas ya respondidas (para marcar "Evaluado" en Mi Cuenta)
-      try {
-        const _re = await supabaseCall('POST', 'rpc/obtener_encuestas_cliente', { p_data: { telefono: telefonoVerif } });
-        window._encuestadas = (_re && _re.ok && Array.isArray(_re.idsEncuestadas)) ? _re.idsEncuestadas : [];
-      } catch (_e) { window._encuestadas = window._encuestadas || []; }
+      const _re = await pEncuestas;
+      window._encuestadas = (_re && _re.ok && Array.isArray(_re.idsEncuestadas)) ? _re.idsEncuestadas : (window._encuestadas || []);
 
       if (stats && stats.totalPedidos>0) {
         // Aliases defensivos: el SQL devuelve totalGastado, totalCompras y comprasMes
@@ -17733,9 +17747,30 @@ function pintarTracking() {
   // restaure (intentarRestaurarSesion es asíncrona) y solo si hay vendedor.
   // Mensaje del service worker al tocar una notificación con la app ya abierta
   // (15 sep 2026): enfocar no basta, hay que navegar desde la propia página.
+  // Versión nueva (19 sep 2026): el worker sirve index.html desde caché y, si al
+  // revalidar en segundo plano bajó uno distinto, manda {versionNueva:true}. Se
+  // enseña una barra discreta; solo recarga si se toca «Actualizar». Nunca sola:
+  // podría ser en medio de un checkout. Si no se toca, la nueva entra en la
+  // siguiente apertura.
+  function mostrarBarraVersionNueva() {
+    if (document.getElementById('cp-version-nueva')) return;
+    // Ocupa el sitio del banner «Instalar»; si está, se quita: actualizar importa más.
+    const inst = document.getElementById('cp-ios-install-banner'); if (inst) inst.remove();
+    const b = document.createElement('div');
+    b.id = 'cp-version-nueva';
+    b.setAttribute('role', 'status');
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:300;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;background:var(--gris2);color:var(--blanco);border:1px solid var(--amarillo);box-shadow:0 8px 24px rgba(0,0,0,.4);font-family:Inter,sans-serif;font-size:.85rem;';
+    b.innerHTML = '<span style="flex:1">Hay una versión nueva de la app</span>' +
+      '<button type="button" id="cp-version-actualizar" style="background:var(--amarillo);color:var(--negro);border:0;border-radius:50px;padding:8px 14px;font-weight:800;font-family:inherit;font-size:.82rem;cursor:pointer">Actualizar</button>' +
+      '<button type="button" id="cp-version-cerrar" aria-label="Después" style="background:none;border:0;color:var(--suave);font-size:1.3rem;line-height:1;padding:4px 6px;cursor:pointer">×</button>';
+    document.body.appendChild(b);
+    document.getElementById('cp-version-actualizar').onclick = () => location.reload();
+    document.getElementById('cp-version-cerrar').onclick = () => b.remove();
+  }
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (e) => {
       if (e.data && e.data.ir === 'armado' && esVendedor && typeof navegar === 'function') navegar('armado');
+      if (e.data && e.data.versionNueva) mostrarBarraVersionNueva();
     });
   }
   if (url.searchParams.get('ir') === 'armado') {
@@ -18562,6 +18597,7 @@ window.addEventListener('load', () => {
     // En Android, si el navegador ya ofrece su prompt nativo, ese banner se encarga
     if (esAndroid && _deferredInstallPrompt) return;
     if (document.getElementById('cp-ios-install-banner')) return;
+    if (document.getElementById('cp-version-nueva')) return;   // la barra de versión ocupa el mismo sitio
       const banner = document.createElement('div');
       banner.id = 'cp-ios-install-banner';
       banner.style.cssText = `
