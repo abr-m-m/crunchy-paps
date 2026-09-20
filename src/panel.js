@@ -546,6 +546,10 @@ window.guardarConsumibles = async function() {
 // ══════════════════════════════════
 let _inventarioActual = [];
 
+// El filtro «Últimos 5 / 10 / Todos» del historial de lotes (index.html, `#lotes-filtro`) llama a
+// `renderProduccion()` por `onchange`; sin esta línea nunca fue global y el filtro no hacía nada
+// (desde antes del corte del monolito; 20 sep 2026).
+window.renderProduccion = renderProduccion;
 async function renderProduccion() {
   renderHoraLimiteCfg();
   const tabla    = document.getElementById('prod-tabla');
