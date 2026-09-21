@@ -396,3 +396,177 @@ begin
   end;
 end $$;
 grant execute on function public.editar_mi_pedido(jsonb) to anon, authenticated;
+
+-- ── T4. Compensaciones (caja, puntos), desarmado y editadoEn en la cola ─────────────────────────
+create or replace function public.editar_pedido_compensar(o public.ordenes, p_total_nuevo numeric, p_actor text, p_quien text)
+returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_avisos jsonb := '[]'::jsonb; v_caja jsonb := null; v_pts jsonb := null;
+  v_orig  caja_movimientos%rowtype; v_dif numeric; v_codigo text; v_id_punto bigint; v_id_caja bigint; v_id_mov bigint;
+  v_cfg jsonb; v_rate numeric; v_base text; v_neto numeric; v_obj integer; v_hay integer; v_dpts integer; v_id_led bigint;
+begin
+  if coalesce(o.tipo_interno, '') <> '' then
+    return jsonb_build_object('avisos', v_avisos, 'caja', null, 'puntos', null);
+  end if;
+
+  -- Caja: si ya hay venta asentada y el total cambió, asiento del MISMO tipo por la diferencia, emparejado.
+  -- o.estatus_caja = 'confirmado' es necesario además de la fila en caja_movimientos: el trigger
+  -- trg_caja_confirmar_pedido (AFTER INSERT OR UPDATE OF estatus_caja) compara con `<>` contra NULL
+  -- (falso, no verdadero, en la guarda `IF NEW.estatus_caja <> 'confirmado' THEN RETURN NEW`), así que
+  -- YA existe una fila «venta_%» desde el INSERT de CADA pedido en efectivo/transferencia, aunque nunca
+  -- se haya pagado ni confirmado (estatus_caja sigue NULL). Fuera de alcance de T4 tocar ese trigger
+  -- (regla del brief); esta guarda evita compensar una venta que nunca se asentó de verdad.
+  select * into v_orig from caja_movimientos where id_orden = o.id and tipo like 'venta_%' order by id limit 1;
+  v_dif := round(p_total_nuevo - coalesce(o.total, 0), 2);
+  if v_orig.id is not null and o.estatus_caja = 'confirmado' and v_dif <> 0 then
+    v_codigo := case when v_orig.tipo = 'venta_efectivo' then 'punto_venta' else 'cuenta_banco' end;
+    select id into v_id_punto from caja_puntos where codigo = v_codigo limit 1;
+    select id into v_id_caja from caja_dias where id_punto = v_id_punto and fecha = current_date and estatus = 'abierta' limit 1;
+    if v_id_punto is null or v_id_caja is null then
+      raise exception using errcode = 'P0001', message = 'caja_cerrada';
+    end if;
+    insert into caja_movimientos (id_caja_dia, id_punto, tipo, monto, id_orden, consecutivo_pedido, id_mov_pareja, descripcion, actor)
+    values (v_id_caja, v_id_punto, v_orig.tipo, v_dif, o.id, o.consecutivo, v_orig.id,
+            'Ajuste por edición de ' || o.consecutivo || ' (' || coalesce(o.total, 0)::text || ' → ' || p_total_nuevo::text || ')', coalesce(p_actor, 'sistema'))
+    returning id into v_id_mov;
+    v_caja := jsonb_build_object('id', v_id_mov, 'tipo', v_orig.tipo, 'monto', v_dif, 'id_mov_pareja', v_orig.id);
+  end if;
+
+  -- Puntos: si el pedido ya generó, ajuste por la diferencia contra el neto nuevo; luego evaluar_retos.
+  if o.id_cliente is not null and o.id_cliente <> 999999
+     and exists (select 1 from lealtad_movimientos where id_orden = o.id and tipo = 'generacion') then
+    select valor into v_cfg from config_produccion where clave = 'lealtad';
+    v_rate := coalesce((v_cfg->'generacion'->>'puntos_por_peso')::numeric, 0);
+    v_base := coalesce(v_cfg->'generacion'->>'base', 'total');
+    select subtotal, descuento into v_neto, v_dif from ordenes where id = o.id;   -- ya actualizados en el paso 5
+    v_neto := case v_base when 'neto' then greatest(0, coalesce(v_neto, 0) - coalesce(v_dif, 0))
+                          when 'subtotal' then coalesce(v_neto, 0) else p_total_nuevo end;
+    v_obj := floor(v_neto * v_rate)::integer;
+    select coalesce(sum(puntos), 0)::integer into v_hay from lealtad_movimientos
+     where id_orden = o.id and tipo in ('generacion', 'reversion', 'ajuste');
+    v_dpts := v_obj - v_hay;
+    if v_dpts <> 0 then
+      v_id_led := agregar_movimiento_lealtad(o.id_cliente, 'ajuste', v_dpts, o.id, o.consecutivo, null, null, v_neto,
+                    'Ajuste por edición de ' || o.consecutivo, coalesce(p_actor, 'sistema'));
+      v_pts := jsonb_build_object('id', v_id_led, 'puntos', v_dpts);
+    end if;
+    perform public.evaluar_retos(o.id_cliente);
+  end if;
+
+  -- Vendedor edita un pedido ya armado: vuelve a «Por armar».
+  if p_quien = 'vendedor' and o.armado_en is not null then
+    update ordenes set armado_en = null, armado_por = null where id = o.id;
+  end if;
+
+  return jsonb_build_object('avisos', v_avisos, 'caja', v_caja, 'puntos', v_pts);
+end $$;
+revoke all on function public.editar_pedido_compensar(public.ordenes, numeric, text, text) from public, anon, authenticated;
+
+-- cola_armado (copiada entera de 20260923000000_rutas.sql:254-359, con 'editadoEn'/'editadoPor' añadidos
+-- al jsonb_build_object de cada pedido, junto a 'armadoEn'/'armadoPor').
+create or replace function public.cola_armado(p_data jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $fn$
+declare
+  v_id bigint; v_rol text;
+  v_fecha date;
+  v_desde timestamptz;
+  v_cfg jsonb;
+  v_nuevos jsonb; v_resumen jsonb; v_pedidos jsonb; v_porconf jsonb; v_tot jsonb;
+begin
+  select s.id_vendedor, s.rol into v_id, v_rol
+    from public.sesion_exige_seccion(p_data->>'token', 'armado') s;
+  if v_id is null then
+    return jsonb_build_object('ok', false, 'error', 'No autorizado');
+  end if;
+  v_cfg   := public.get_hora_limite_config();
+  v_fecha := coalesce(nullif(p_data->>'fecha', '')::date,
+                      (now() at time zone 'America/Mexico_City')::date + 1);
+  v_desde := coalesce(nullif(p_data->>'desde', '')::timestamptz, now() - interval '24 hours');
+
+  select coalesce(jsonb_agg(r.fila order by r.fila->>'sabor', r.fila->>'presentacion'), '[]'::jsonb)
+    into v_resumen
+    from (
+      select jsonb_build_object(
+               'sabor', l.sabor, 'presentacion', l.presentacion,
+               'piezas', sum(l.piezas), 'kg', round(sum(l.kg)::numeric, 3),
+               'cajas', (select coalesce(jsonb_agg(jsonb_build_object('piezasPorCaja', c.ppc, 'cajas', c.n)), '[]'::jsonb)
+                           from (select l2.piezas_por_caja as ppc, sum(l2.cantidad / l2.piezas_por_caja) as n
+                                   from public.lineas_armado_interno(v_fecha) l2
+                                  where l2.sabor = l.sabor and l2.presentacion = l.presentacion
+                                    and coalesce(l2.piezas_por_caja, 0) > 0
+                                  group by l2.piezas_por_caja) c)
+             ) as fila
+        from public.lineas_armado_interno(v_fecha) l
+       group by l.sabor, l.presentacion
+    ) r;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'id', o.id, 'consecutivo', o.consecutivo, 'cliente', o.nombre_cliente,
+           'negocio', c.nombre_comercial, 'canal', o.canal, 'idVendedor', o.id_vendedor,
+           'vendedor', o.nombre_vendedor, 'tipoInterno', coalesce(o.tipo_interno, ''),
+           'total', o.total, 'fechaOrden', o.fecha_orden,
+           'armadoEn', o.armado_en, 'armadoPor', o.armado_por, 'editadoEn', o.editado_en, 'editadoPor', o.editado_por,
+           'idRuta', o.id_ruta, 'ruta', ru.nombre, 'rutaColor', ru.color, 'rutaOrden', ru.orden,
+           'lineas', (select coalesce(jsonb_agg(jsonb_build_object(
+                        'sabor', l.sabor, 'presentacion', l.presentacion, 'tipoVenta', l.tipo_venta,
+                        'cantidad', l.cantidad, 'piezasPorCaja', l.piezas_por_caja,
+                        'gramos', l.gramos_vendidos, 'kg', round(l.kg::numeric, 3)) order by l.sabor), '[]'::jsonb)
+                        from public.lineas_armado_interno(v_fecha) l where l.id_orden = o.id)
+         ) order by o.armado_en nulls first, ru.orden nulls last, o.fecha_orden), '[]'::jsonb)
+    into v_pedidos
+    from public.ordenes o
+    left join public.clientes c on c.id = o.id_cliente
+    left join public.rutas ru on ru.id = o.id_ruta
+   where o.fecha_entrega::date = v_fecha
+     and o.estatus_pedido = 'En proceso';
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'id', o.id, 'consecutivo', o.consecutivo, 'cliente', o.nombre_cliente,
+           'negocio', c.nombre_comercial, 'canal', o.canal, 'total', o.total, 'fechaOrden', o.fecha_orden,
+           'idRuta', o.id_ruta, 'ruta', ru.nombre, 'rutaColor', ru.color, 'rutaOrden', ru.orden
+         ) order by o.fecha_orden), '[]'::jsonb)
+    into v_porconf
+    from public.ordenes o
+    left join public.clientes c on c.id = o.id_cliente
+    left join public.rutas ru on ru.id = o.id_ruta
+   where o.fecha_entrega::date = v_fecha
+     and o.estatus_pedido = 'Pendiente';
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'id', o.id, 'consecutivo', o.consecutivo, 'fechaOrden', o.fecha_orden,
+           'cliente', o.nombre_cliente, 'negocio', c.nombre_comercial, 'canal', o.canal,
+           'total', o.total, 'estatus', o.estatus_pedido, 'fechaEntrega', o.fecha_entrega::date,
+           'idRuta', o.id_ruta, 'ruta', ru.nombre, 'rutaColor', ru.color, 'rutaOrden', ru.orden,
+           'lineasResumen', (select string_agg(trim_scale(d.cantidad)::text || ' × ' || d.sabor || ' ' || d.presentacion, ' · ')
+                               from public.ordenes_detalle d where d.id_orden = o.id)
+         ) order by o.fecha_orden desc), '[]'::jsonb)
+    into v_nuevos
+    from (select * from public.ordenes o2
+           where o2.fecha_orden > v_desde and o2.estatus_pedido <> 'Cancelado'
+           order by o2.fecha_orden desc limit 50) o
+    left join public.clientes c on c.id = o.id_cliente
+    left join public.rutas ru on ru.id = o.id_ruta;
+
+  select jsonb_build_object(
+           'pedidos', count(distinct o.id),
+           'armados', count(distinct o.id) filter (where o.armado_en is not null),
+           'kg', round(coalesce(sum(l.kg), 0)::numeric, 3),
+           'piezas', coalesce(sum(l.piezas), 0))
+    into v_tot
+    from public.ordenes o
+    left join public.lineas_armado_interno(v_fecha) l on l.id_orden = o.id
+   where o.fecha_entrega::date = v_fecha
+     and o.estatus_pedido = 'En proceso';
+
+  return jsonb_build_object(
+    'ok', true, 'fecha', to_char(v_fecha, 'YYYY-MM-DD'), 'horaLimite', v_cfg->>'hora',
+    'nuevos', v_nuevos, 'resumen', v_resumen, 'pedidos', v_pedidos,
+    'porConfirmar', v_porconf, 'totales', v_tot);
+end;
+$fn$;
+revoke all on function public.cola_armado(jsonb) from public;
+grant execute on function public.cola_armado(jsonb) to anon, authenticated;

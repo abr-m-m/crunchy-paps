@@ -294,7 +294,79 @@ if (corre('C')) {
   ok(r17?.error === 'sin_lote' && JSON.stringify([lineasDe(p5.idOrden), cab(p5.idOrden).total]) === antes17, `C17 sin lote: ${r17?.error}, y la cantidad 8 tampoco se aplicó`);
 }
 
-// (las secciones D-F van aquí)
+// ── D. compensaciones, desarmado, cola (T4) ─────────────────────────────────
+if (corre('D')) {
+  console.log('\nD. caja, puntos, armado');
+  // Fixtures de caja: punto 'punto_venta' (staging no lo tiene) y caja del día abierta.
+  // Nota: caja_puntos.tipo es NOT NULL sin default (staging: CENTRAL/MOSTRAD 'fijo', RUTA01 'movil');
+  // se inserta con tipo='fijo'.
+  let idPunto = Number(uno(`select id from caja_puntos where codigo = 'punto_venta'`).id || 0);
+  if (!idPunto) idPunto = Number(uno(`insert into caja_puntos (codigo, nombre, activo, tipo) values ('punto_venta', 'Punto de venta (prueba edit)', true, 'fijo') returning id`).id);
+  // Nota: caja_dias tiene unique (id_punto, fecha) — reabrir un día ya usado hoy es UPDATE, no INSERT
+  // (el brief original insertaba a ciegas y chocaba tras el primer cerrarCaja() de D2).
+  const abrirCaja = () => {
+    if (uno(`select id from caja_dias where id_punto = ${idPunto} and fecha = current_date and estatus = 'abierta'`).id) return;
+    const existente = uno(`select id from caja_dias where id_punto = ${idPunto} and fecha = current_date`).id;
+    if (existente) sql(`update caja_dias set estatus = 'abierta', abierta_por = 'probar-editar', fecha_apertura = now(), cerrada_por = null, fecha_cierre = null where id = ${existente}`);
+    else sql(`insert into caja_dias (id_punto, fecha, saldo_apertura, estatus, abierta_por, fecha_apertura) values (${idPunto}, current_date, 0, 'abierta', 'probar-editar', now())`);
+  };
+  const cerrarCaja = () => sql(`update caja_dias set estatus = 'cerrada', cerrada_por = 'probar-editar', fecha_cierre = now() where id_punto = ${idPunto} and fecha = current_date and estatus = 'abierta'`);
+  const movs = (id) => sql(`select id, tipo, monto, id_mov_pareja, descripcion from caja_movimientos where id_orden = ${id} order by id`);
+  abrirCaja();
+  const cD = await alta('Edit D');
+  // D1. Pagado en efectivo (mostrador por Ana → caja 'confirmado' al pagar), total baja: asiento negativo emparejado.
+  const p1 = await pedidoVend(ana, cD, 'mostrador', [linea(P100, '100g', 4, 35)], 140, { canal: 'mostrador' }); creados.push(p1?.idOrden);
+  await confirmar(p1); await pagar(p1);
+  const m0 = movs(p1.idOrden);
+  ok(m0.length === 1 && m0[0].tipo === 'venta_efectivo' && cerca(m0[0].monto, 140), `D1 venta asentada: ${m0[0]?.tipo} ${m0[0]?.monto} (140)`);
+  const r1 = (await editar(ana, p1.idOrden, [{ id: lineasDe(p1.idOrden)[0].id, cantidad: 3 }])).json; const m1 = movs(p1.idOrden);
+  ok(r1?.ok && m1.length === 2 && m1[1].tipo === 'venta_efectivo' && cerca(m1[1].monto, -35) && Number(m1[1].id_mov_pareja) === Number(m0[0].id) && /edici/i.test(m1[1].descripcion) && cerca(m1[0].monto, 140) && cerca(r1?.caja?.monto, -35),
+     `D1 4→3: asiento ${m1[1]?.tipo} ${m1[1]?.monto} (−35) pareja ${m1[1]?.id_mov_pareja}=${m0[0]?.id}; original intacto; respuesta caja.monto ${r1?.caja?.monto}`);
+  const r1b = (await editar(ana, p1.idOrden, [{ id: lineasDe(p1.idOrden)[0].id, cantidad: 3 }, { idProducto: String(P100), cantidad: 1 }])).json; const m1b = movs(p1.idOrden);
+  ok(r1b?.ok && m1b.length === 3 && cerca(m1b[2].monto, 35), `D1b subir el total: asiento +35 (${m1b[2]?.monto})`);
+  const r1c = (await editar(ana, p1.idOrden, lineasDe(p1.idOrden).map(l => ({ id: l.id })))).json;
+  ok(r1c?.ok && movs(p1.idOrden).length === 3, `D1c editar sin cambiar el total: sin asiento nuevo (${movs(p1.idOrden).length})`);
+  // D2. Caja cerrada: caja_cerrada y nada cambia.
+  cerrarCaja();
+  const antes2 = JSON.stringify([lineasDe(p1.idOrden), cab(p1.idOrden).total, movs(p1.idOrden).length]);
+  const r2 = (await editar(ana, p1.idOrden, [{ id: lineasDe(p1.idOrden)[0].id, cantidad: 1 }, { id: lineasDe(p1.idOrden)[1].id }])).json;
+  ok(r2?.error === 'caja_cerrada' && JSON.stringify([lineasDe(p1.idOrden), cab(p1.idOrden).total, movs(p1.idOrden).length]) === antes2, `D2 caja cerrada: ${r2?.error}, nada cambió`);
+  abrirCaja();
+  // D3. Consumidor pagado con puntos dados: ajuste por la diferencia; saldo cuadra.
+  const p3 = await pedidoCli(cD, [linea(P100, '100g', 10, 35)], 350); creados.push(p3?.idOrden); await confirmar(p3); await pagar(p3);
+  const gen = uno(`select coalesce(sum(puntos),0)::int s from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo = 'generacion'`).s;
+  ok(gen === 35, `D3 pagado: generación ${gen} (35 = floor(350 × 0.1))`);
+  const r3 = (await editar(ana, p3.idOrden, [{ id: lineasDe(p3.idOrden)[0].id, cantidad: 4 }])).json;
+  const aj = sql(`select puntos, nota from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo = 'ajuste'`);
+  const saldo = (await rpc('mis_puntos', { p_token: cD.token })).json?.saldo;
+  ok(r3?.ok && aj.length === 1 && Number(aj[0].puntos) === -21 && cerca(r3?.puntos?.puntos, -21) && Number(saldo) === Number(uno(`select coalesce(sum(puntos),0) s from lealtad_movimientos where id_cliente = ${cD.id}`).s),
+     `D3 350→140: ajuste ${aj[0]?.puntos} (−21), saldo ${saldo} = Σ ledger`);
+  const r3b = (await editar(ana, p3.idOrden, [{ id: lineasDe(p3.idOrden)[0].id, cantidad: 4 }, { idProducto: String(P100), cantidad: 6 }])).json;
+  const aj2 = uno(`select coalesce(sum(puntos),0)::int s from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo in ('generacion','reversion','ajuste')`).s;
+  ok(r3b?.ok && aj2 === 35, `D3b vuelve a 350: neto de puntos del pedido ${aj2} (35)`);
+  // D4. Reto que deja de cumplirse: el bono se compensa.
+  const reto = (await rpc('guardar_reto', { p_data: { token: ana.token, reto: { nombre: 'Monto edit ' + sufijo, descripcion: 'p', tipo: 'monto', meta: 300, bono: 40, desde: new Date(Date.now() - 864e5).toISOString().slice(0, 10), hasta: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10), publico: 'consumidores', activo: true } } })).json;
+  const cR = await alta('Edit D reto');
+  const p4 = await pedidoCli(cR, [linea(P100, '100g', 10, 35)], 350); creados.push(p4?.idOrden); await confirmar(p4); await pagar(p4);
+  const bono = () => Number(uno(`select coalesce(sum(puntos),0)::int s from lealtad_movimientos where id_cliente = ${cR.id} and tipo = 'reto' and id_premio = ${reto?.reto?.id || 0}`).s);
+  ok(bono() === 40, `D4 reto de monto 300 cumplido con 350: bono ${bono()} (40)`);
+  const r4 = (await editar(ana, p4.idOrden, [{ id: lineasDe(p4.idOrden)[0].id, cantidad: 5 }])).json;
+  ok(r4?.ok && bono() === 0, `D4 baja a 175: bono compensado (${bono()})`);
+  if (reto?.reto?.id) await rpc('guardar_reto', { p_data: { token: ana.token, reto: { ...reto.reto, activo: false } } });
+  // D5. Vendedor edita un pedido armado: vuelve a Por armar con editadoEn en la cola.
+  // marcar_armado y cola_armado (20260921000000_cola_armado.sql / 20260923000000_rutas.sql) usan
+  // 'id' (no 'idOrden') y la cola responde en la clave 'pedidos' (para estatus 'En proceso').
+  const fechaP5 = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  const p5 = await pedidoCli(cD, [linea(P100, '100g', 2, 35)], 70, { fechaEntrega: fechaP5 }); creados.push(p5?.idOrden); await confirmar(p5);
+  const rm = (await rpc('marcar_armado', { p_data: { token: ana.token, id: String(p5.idOrden), armado: true, actor: 'probar' } })).json;
+  ok(rm?.ok !== false && cab(p5.idOrden).armado_en, `D5 marcado armado (${cab(p5.idOrden).armado_en})`);
+  const r5 = (await editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 3 }])).json; const c5 = cab(p5.idOrden);
+  const cola = (await rpc('cola_armado', { p_data: { token: ana.token, fecha: fechaP5 } })).json;
+  ok(r5?.ok && c5.armado_en === null && (r5.avisos || []).includes('ya_armado') && JSON.stringify(cola).includes('"editadoEn"'), `D5 tras editar: armado_en ${c5.armado_en} (null), aviso ya_armado, cola_armado trae editadoEn`);
+  cerrarCaja();
+}
+
+// (las secciones E-F van aquí)
 
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { try { await cancelar({ idOrden: id }); } catch (_e) {} }
