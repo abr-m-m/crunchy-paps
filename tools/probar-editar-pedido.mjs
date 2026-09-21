@@ -38,7 +38,7 @@ const P100b = Number(uno(`insert into productos (sabor, presentacion, gramos, pr
 const idLote = `LOTE-EDIT-${sufijo}`;
 sql(`insert into lotes_produccion (id_lote, fecha, kilos_totales, kilos_vendidos, estatus) values ('${idLote}', current_date, 100, 0, 'Activo')`);
 const kgLote = () => Number(uno(`select kilos_vendidos from lotes_produccion where id_lote = '${idLote}'`).kilos_vendidos);
-const lineasDe = (id) => sql(`select id, sabor, presentacion, cantidad, gramos_vendidos, subtotal, descuento, kg_descontado_lote, id_lote_descontado, piezas_por_caja, puntos_canje from ordenes_detalle where id_orden = ${id} order by id`);
+const lineasDe = (id) => sql(`select id, id_producto, sabor, presentacion, cantidad, gramos_vendidos, subtotal, descuento, kg_descontado_lote, id_lote_descontado, piezas_por_caja, puntos_canje from ordenes_detalle where id_orden = ${id} order by id`);
 const cab = (id) => uno(`select id, consecutivo, subtotal, descuento, envio, descuento_envio, total, estatus_pedido, estatus_pago, armado_en, editado_en, editado_por, actualizado_por, fecha_actualizacion, cupon_codigo from ordenes where id = ${id}`);
 
 const alta = async (nombre, tipoId = 1) => {
@@ -94,6 +94,40 @@ if (corre('A')) {
   ok(cerca(kgLote(), kAntes), `A5 cancelar devuelve 0.9 sin doble conteo: ${kgLote()} (${kAntes})`);
   // A6. Columnas nuevas existen.
   ok(uno(`select count(*)::int n from information_schema.columns where table_name = 'ordenes' and column_name in ('editado_en','editado_por')`).n === 2, 'A6 ordenes.editado_en / editado_por');
+}
+
+// ── B. cotizar_linea ≡ crear_pedido (T2) ────────────────────────────────────
+if (corre('B')) {
+  console.log('\nB. cotizar_linea');
+  const cB = await alta('Edit B'); const tB = await alta('Edit B tienda', 3);
+  // Consumidor: pieza normal, pieza con descuento_pct.
+  const pB = await pedidoCli(cB, [linea(P100, '100g', 3, 35), linea(P100b, '100g', 2, 36)], 177); creados.push(pB?.idOrden);
+  // Tienda por Ana: caja de 6 con precio propio, y pieza suelta.
+  const pT = await pedidoVend(ana, tB, 'tienda', [linea(P250, '250g', 12, 45, 6), linea(P100, '100g', 4, 25)], 640); creados.push(pT?.idOrden);
+  ok(pB?.ok === true && pT?.ok === true, `B0 pedidos creados por crear_pedido (${pB?.consecutivo}, ${pT?.consecutivo})`);
+  // Nota (adaptación mínima): `linea()` manda siempre `sabor: 'EDIT-' + sufijo` sin importar qué
+  // producto es (P100 y P100b comparten esa etiqueta), así que resolver el producto por
+  // `sabor` + `presentacion` es ambiguo cuando dos productos distintos comparten presentación
+  // en el mismo pedido (caso pB: P100 y P100b, ambos '100g'). Se usa `id_producto` — que sí
+  // guarda `ordenes_detalle` por línea — y un set de líneas ya emparejadas para no reusar la misma.
+  const compara = (idOrden, nivel, casos) => {
+    const ls = lineasDe(idOrden);
+    const usados = new Set();
+    for (const [pres, caja, esperadoDescr] of casos) {
+      const l = ls.find(x => !usados.has(x.id) && x.presentacion === pres && Number(x.piezas_por_caja || 0) === caja);
+      if (l) usados.add(l.id);
+      const c = uno(`select public.cotizar_linea(${l ? l.id_producto : 0}, '${nivel}', ${l?.cantidad || 0}, ${caja}) c`).c;
+      const igual = l && c?.ok === true && cerca(c.subtotal, l.subtotal) && cerca(c.descuento, l.descuento) && (Number(c.piezasPorCaja || 0) === caja);
+      ok(igual, `B1 ${nivel} ${esperadoDescr}: cotizar ${c?.subtotal}/${c?.descuento} = línea ${l?.subtotal}/${l?.descuento}`);
+    }
+  };
+  compara(pB.idOrden, 'consumidor', [['100g', 0, 'pieza 3 × $35'], ['100g', 0, 'pieza con 10 % (2 × $36)']]);
+  compara(pT.idOrden, 'tienda', [['250g', 6, 'caja de 6 (2 cajas × $270)'], ['100g', 0, 'pieza suelta 4 × $25']]);
+  const cInv = uno(`select public.cotizar_linea(${P100}, 'consumidor', 0, 0) c`).c;
+  const cIna = uno(`select public.cotizar_linea(999999999, 'consumidor', 1, 0) c`).c;
+  ok(cInv?.error === 'cantidad_invalida' && cIna?.error === 'producto_no_disponible', `B2 rechazos: ${cInv?.error}, ${cIna?.error}`);
+  const cCons = uno(`select public.cotizar_linea(${P250}, 'consumidor', 12, 6) c`).c;
+  ok(cCons?.ok && cerca(cCons.subtotal, 12 * 70) && cCons.piezasPorCaja == null, `B3 consumidor con caja:6 paga por pieza (${cCons?.subtotal} = 840) y sin piezasPorCaja`);
 }
 
 // ── Limpieza ────────────────────────────────────────────────────────────────
