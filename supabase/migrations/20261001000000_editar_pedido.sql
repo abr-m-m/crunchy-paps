@@ -78,6 +78,9 @@ begin
   if v_p.id is null or not coalesce(v_p.activo, true) or coalesce(v_p.descontinuado, false) then
     return jsonb_build_object('ok', false, 'error', 'producto_no_disponible');
   end if;
+  if v_p.presentacion = 'Granel' or v_p.tipo_venta = 2 then
+    return jsonb_build_object('ok', false, 'error', 'granel_no_soportado');
+  end if;
   if p_cantidad is null or p_cantidad <= 0 or p_cantidad <> trunc(p_cantidad) then
     return jsonb_build_object('ok', false, 'error', 'cantidad_invalida');
   end if;
@@ -116,7 +119,7 @@ language plpgsql immutable set search_path = public, pg_temp as $$
 declare v_m text := '';
 begin
   if o.estatus_pedido = 'Cancelado' then v_m := 'cancelado';
-  elsif o.estatus_pedido = 'Entregado' and coalesce(o.tipo_interno, '') = '' then v_m := 'entregado';
+  elsif o.estatus_pedido = 'Entregado' and not (coalesce(o.tipo_interno, '') <> '' and p_quien = 'vendedor') then v_m := 'entregado';
   elsif lower(coalesce(o.estado_pago, '')) = 'pagado' or coalesce(o.stripe_payment_intent, '') <> '' then v_m := 'pagado_en_linea';
   elsif coalesce(o.stripe_session_id, '') <> '' and lower(coalesce(o.estado_pago, '')) = 'pendiente' then v_m := 'pago_en_linea_pendiente';
   elsif o.estatus_pedido = 'En camino' then v_m := 'en_camino';
@@ -216,17 +219,17 @@ begin
 
       if d.tipo_venta = 'A granel' then
         v_gramos := coalesce(nullif(v_in->>'gramos', '')::numeric, d.gramos_vendidos);
-        if v_gramos < 100 or v_gramos <> trunc(v_gramos) then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
+        if v_gramos < 100 or v_gramos <> trunc(v_gramos) or v_gramos > 50000 then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
         v_factor := case when coalesce(d.gramos_vendidos, 0) > 0 then v_gramos / d.gramos_vendidos else 0 end;
         v_cant := d.cantidad;
       elsif coalesce(d.piezas_por_caja, 0) > 0 then
         v_cajas := coalesce(nullif(v_in->>'cajas', '')::integer, (d.cantidad / d.piezas_por_caja)::integer);
-        if v_cajas < 1 then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
+        if v_cajas < 1 or v_cajas > 100 then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
         v_cant := v_cajas * d.piezas_por_caja; v_gramos := d.gramos_vendidos;
         v_factor := case when d.cantidad > 0 then v_cant / d.cantidad else 0 end;
       else
         v_cant := coalesce(nullif(v_in->>'cantidad', '')::numeric, d.cantidad);
-        if v_cant < 1 or v_cant <> trunc(v_cant) then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
+        if v_cant < 1 or v_cant <> trunc(v_cant) or v_cant > 1000 then return jsonb_build_object('ok', false, 'error', 'cantidad_invalida'); end if;
         v_gramos := d.gramos_vendidos;
         v_factor := case when d.cantidad > 0 then v_cant / d.cantidad else 0 end;
       end if;
@@ -246,6 +249,9 @@ begin
       v_caja  := case when (v_in->>'caja') in ('3', '6', '12') then (v_in->>'caja')::integer else 0 end;
       v_cajas := case when (v_in->>'cajas') ~ '^[0-9]+$' then (v_in->>'cajas')::integer else 0 end;
       v_cant  := case when v_caja > 0 then v_cajas * v_caja else coalesce(nullif(v_in->>'cantidad', '')::numeric, 0) end;
+      if (v_caja > 0 and v_cajas > 100) or v_cant > 1000 then
+        return jsonb_build_object('ok', false, 'error', 'cantidad_invalida');
+      end if;
       v_cot := public.cotizar_linea((v_in->>'idProducto')::bigint, v_nivel, v_cant, v_caja);
       if not coalesce((v_cot->>'ok')::boolean, false) then
         return jsonb_build_object('ok', false, 'error', v_cot->>'error');
