@@ -130,6 +130,132 @@ if (corre('B')) {
   ok(cCons?.ok && cerca(cCons.subtotal, 12 * 70) && cCons.piezasPorCaja == null, `B3 consumidor con caja:6 paga por pieza (${cCons?.subtotal} = 840) y sin piezasPorCaja`);
 }
 
+// ── C. editar_pedido: cotizar, aplicar, rechazos (T3) ───────────────────────
+if (corre('C')) {
+  console.log('\nC. editar_pedido');
+  const cC = await alta('Edit C'); const tC = await alta('Edit C tienda', 3);
+  // C1. Quitar una línea de un pedido En proceso: kg, líneas, cabecera, rastro.
+  const p1 = await pedidoCli(cC, [linea(P100, '100g', 2, 35), linea(P250, '250g', 2, 70)], 210); creados.push(p1?.idOrden);
+  await confirmar(p1); const k0 = kgLote(); const l1 = lineasDe(p1.idOrden);
+  const r1 = (await editar(ana, p1.idOrden, [{ id: l1[0].id }])).json;
+  const c1 = cab(p1.idOrden);
+  ok(r1?.ok === true && lineasDe(p1.idOrden).length === 1 && cerca(kgLote(), k0 - 0.5) && cerca(c1.subtotal, 70) && cerca(c1.total, 70) && c1.editado_por === 'Ana' && c1.editado_en && c1.actualizado_por === 'Ana',
+     `C1 quitar 250g×2: líneas 1, lote −0.5 (${kgLote()} vs ${k0}), total ${c1.total} (70), editado_por ${c1.editado_por}`);
+  ok(cerca(r1?.pedido?.total, 70) && Array.isArray(r1?.lineas) && r1.lineas.length === 1, `C1 la respuesta trae pedido.total ${r1?.pedido?.total} y ${r1?.lineas?.length} línea`);
+  // C2. Bajar y subir cantidad: diferencia de kg en el mismo lote; subtotal proporcional al precio pactado.
+  const r2 = (await editar(ana, p1.idOrden, [{ id: l1[0].id, cantidad: 5 }])).json; const l2 = lineasDe(p1.idOrden)[0];
+  ok(r2?.ok && Number(l2.cantidad) === 5 && cerca(l2.subtotal, 175) && cerca(l2.kg_descontado_lote, 0.5) && l2.id_lote_descontado === idLote && cerca(kgLote(), k0 - 0.5 + 0.3),
+     `C2 2→5 piezas: subtotal ${l2.subtotal} (175), kg ${l2.kg_descontado_lote} (0.5), lote ${kgLote()}`);
+  const r2b = (await editar(ana, p1.idOrden, [{ id: l1[0].id, cantidad: 1 }])).json;
+  ok(r2b?.ok && cerca(cab(p1.idOrden).total, 35) && cerca(kgLote(), k0 - 0.5 - 0.1), `C2 5→1: total ${cab(p1.idOrden).total} (35), lote ${kgLote()}`);
+  // C3. Línea de caja: 2 → 3 cajas.
+  const pT = await pedidoVend(ana, tC, 'tienda', [linea(P250, '250g', 12, 45, 6)], 540); creados.push(pT?.idOrden);
+  await confirmar(pT); const lT = lineasDe(pT.idOrden)[0];
+  const r3 = (await editar(ana, pT.idOrden, [{ id: lT.id, cajas: 3 }])).json; const lT2 = lineasDe(pT.idOrden)[0];
+  ok(r3?.ok && Number(lT2.cantidad) === 18 && Number(lT2.piezas_por_caja) === 6 && cerca(lT2.subtotal, 810) && cerca(lT2.descuento, 90) && cerca(lT2.kg_descontado_lote, 4.5),
+     `C3 caja 2→3: cantidad ${lT2.cantidad} (18), subtotal ${lT2.subtotal} (810), descuento ${lT2.descuento} (90), kg ${lT2.kg_descontado_lote} (4.5)`);
+  // C4. Agregar línea: precio del canal de hoy, kg por el trigger de INSERT.
+  const k4 = kgLote();
+  const r4 = (await editar(ana, pT.idOrden, [{ id: lT.id, cajas: 3 }, { idProducto: String(P100), cantidad: 4 }])).json;
+  const l4 = lineasDe(pT.idOrden).find(l => String(l.id_producto) === String(P100));
+  ok(r4?.ok && l4 && cerca(l4.subtotal, 100) && cerca(l4.kg_descontado_lote, 0.4) && l4.id_lote_descontado === idLote && cerca(kgLote(), k4 + 0.4) && cerca(cab(pT.idOrden).total, 910),
+     `C4 agregar 4 × 100g a tienda: subtotal ${l4?.subtotal} (100 = 4 × $25), kg ${l4?.kg_descontado_lote}, total ${cab(pT.idOrden).total} (910)`);
+  const r4b = (await editar(ana, pT.idOrden, [{ id: lT.id, cajas: 3 }, { id: l4.id }, { idProducto: String(P250), cajas: 1, caja: 6 }])).json;
+  const l4b = lineasDe(pT.idOrden).filter(l => l.presentacion === '250g');
+  ok(r4b?.ok && l4b.length === 2 && l4b.some(l => Number(l.cantidad) === 6 && cerca(l.subtotal, 270) && Number(l.piezas_por_caja) === 6), `C4b agregar 1 caja de 6: nueva línea 6 pz $270`);
+  // C5. Pendiente: líneas cambian, lote no; al confirmar descuenta lo nuevo.
+  const p5 = await pedidoCli(cC, [linea(P100, '100g', 2, 35)], 70); creados.push(p5?.idOrden); const k5 = kgLote();
+  const r5 = (await editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 6 }])).json;
+  ok(r5?.ok && cerca(kgLote(), k5) && cerca(cab(p5.idOrden).total, 210), `C5 Pendiente editado: lote igual (${kgLote()}), total 210`);
+  await confirmar(p5);
+  ok(cerca(kgLote(), k5 + 0.6), `C5 confirmar descuenta 0.6: ${kgLote()}`);
+  // C6. Cupón %: recalculado sobre el subtotal nuevo.
+  const cod = 'EDIT' + sufijo;
+  sql(`insert into cupones (codigo, descripcion, tipo, valor, vigencia_inicio, vigencia_fin, usos_maximos, usos_actuales, compra_minima, activo, un_uso_por_usuario) values ('${cod}', 'prueba', 'descuento_pct', 10, now() - interval '1 day', now() + interval '7 day', 0, 0, 100, true, true)`);
+  const p6 = await pedidoCli(cC, [linea(P100, '100g', 4, 35)], 126, { cuponCodigo: cod }); creados.push(p6?.idOrden);
+  ok(p6?.ok && cerca(cab(p6.idOrden).descuento, 14), `C6 pedido con cupón 10 %: descuento ${cab(p6?.idOrden).descuento} (14)`);
+  const r6 = (await editar(ana, p6.idOrden, [{ id: lineasDe(p6.idOrden)[0].id, cantidad: 6 }])).json; const c6 = cab(p6.idOrden);
+  ok(r6?.ok && cerca(c6.subtotal, 210) && cerca(c6.descuento, 21) && cerca(c6.total, 189), `C6 6 piezas: sub ${c6.subtotal}, desc ${c6.descuento} (21), total ${c6.total} (189)`);
+  // C7. Cupón con mínimo que deja de cumplirse: descuento 0, aviso, cupones_uso intacto.
+  const usos0 = uno(`select count(*)::int n from cupones_uso where id_orden = '${p6.idOrden}'`).n;
+  const r7 = (await editar(ana, p6.idOrden, [{ id: lineasDe(p6.idOrden)[0].id, cantidad: 2 }])).json; const c7 = cab(p6.idOrden);
+  ok(r7?.ok && cerca(c7.descuento, 0) && cerca(c7.total, 70) && (r7.avisos || []).includes('cupon_retirado') && uno(`select count(*)::int n from cupones_uso where id_orden = '${p6.idOrden}'`).n === usos0,
+     `C7 bajo el mínimo: descuento ${c7.descuento} (0), aviso ${JSON.stringify(r7?.avisos)}, cupones_uso intacto`);
+  // C8. Canje intacto / tocado / omitido.
+  const pc = (await rpc('canje_catalogo', {})).json?.productos?.[0];
+  if (pc) {
+    sql(`insert into lealtad_movimientos (id_cliente, tipo, puntos, nota, actor) values (${cC.id}, 'ajuste', 5000, '[edit] saldo de prueba', 'probar-editar')`);
+    const p8 = await pedidoCli(cC, [linea(P100, '100g', 2, 35), { idProducto: String(pc.id), sabor: pc.sabor, presentacion: pc.presentacion, tipoVenta: 'Por Pieza', cantidad: 1, gramos: 0, precio: 0, subtotal: 0, canje: true }], 70, { puntosCanje: pc.puntos }); creados.push(p8?.idOrden);
+    const l8 = lineasDe(p8?.idOrden || 0); const canje = l8.find(l => Number(l.puntos_canje) > 0); const compra = l8.find(l => Number(l.puntos_canje) === 0);
+    ok(p8?.ok && canje && compra, `C8 pedido con canje creado (${p8?.consecutivo})`);
+    const r8a = (await editar(ana, p8.idOrden, [{ id: compra.id, cantidad: 3 }, { id: canje.id }])).json;
+    const r8b = (await editar(ana, p8.idOrden, [{ id: compra.id }, { id: canje.id, cantidad: 2 }])).json;
+    const r8c = (await editar(ana, p8.idOrden, [{ id: compra.id }])).json;
+    ok(r8a?.ok === true && r8b?.error === 'canje_bloqueado' && r8c?.error === 'canje_bloqueado' && lineasDe(p8.idOrden).length === 2, `C8 canje intacto ok; tocado → ${r8b?.error}; omitido → ${r8c?.error}`);
+    const r8d = (await editar(ana, p8.idOrden, [{ id: canje.id }])).json;
+    ok(r8d?.error === 'pedido_vacio', `C8 quitar la única línea comprada con canje → ${r8d?.error}`);
+  } else ok(false, 'C8 no hay producto canjeable en staging');
+  // C9. Dejar el pedido sin líneas.
+  const r9 = (await editar(ana, p5.idOrden, [])).json;
+  ok(r9?.error === 'pedido_vacio' && lineasDe(p5.idOrden).length === 1, `C9 sin líneas → ${r9?.error}, nada cambió`);
+  // C10. Rechazos por estado.
+  const pE = await pedidoCli(cC, [linea(P100, '100g', 1, 35)], 35); creados.push(pE?.idOrden); await confirmar(pE); await estatus(pE.idOrden, { estatusPedido: 'Entregado' });
+  const rE = (await editar(ana, pE.idOrden, [{ id: lineasDe(pE.idOrden)[0].id, cantidad: 2 }])).json;
+  const pX = await pedidoCli(cC, [linea(P100, '100g', 1, 35)], 35); creados.push(pX?.idOrden); await cancelar(pX);
+  const rX = (await editar(ana, pX.idOrden, [{ id: lineasDe(pX.idOrden)[0].id, cantidad: 2 }])).json;
+  const pS = await pedidoCli(cC, [linea(P100, '100g', 1, 35)], 35); creados.push(pS?.idOrden);
+  sql(`update ordenes set estado_pago = 'pagado', stripe_payment_intent = 'pi_edit_${sufijo}' where id = ${pS.idOrden}`);
+  const rS = (await editar(ana, pS.idOrden, [{ id: lineasDe(pS.idOrden)[0].id, cantidad: 2 }])).json;
+  const pSp = await pedidoCli(cC, [linea(P100, '100g', 1, 35)], 35); creados.push(pSp?.idOrden);
+  sql(`update ordenes set estado_pago = 'pendiente', stripe_session_id = 'cs_edit_${sufijo}' where id = ${pSp.idOrden}`);
+  const rSp = (await editar(ana, pSp.idOrden, [{ id: lineasDe(pSp.idOrden)[0].id, cantidad: 2 }])).json;
+  ok(rE?.error === 'no_editable' && rE?.motivo === 'entregado' && rX?.motivo === 'cancelado' && rS?.motivo === 'pagado_en_linea' && rSp?.motivo === 'pago_en_linea_pendiente',
+     `C10 entregado ${rE?.motivo}, cancelado ${rX?.motivo}, stripe ${rS?.motivo}, stripe pendiente ${rSp?.motivo}`);
+  // C11. Vendedor ajeno vs dueño.
+  const rAj = (await editar(carla, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 7 }])).json;
+  ok(rAj?.error === 'no_editable' && rAj?.motivo === 'no_es_tu_pedido' && Number(lineasDe(p5.idOrden)[0].cantidad) === 6, `C11 Carla en pedido ajeno → ${rAj?.motivo}; cantidad sigue 6`);
+  // C12. Cliente: suyo y Pendiente/En proceso sin armar → sí; armado → no; en camino → no; ajeno → no_encontrado.
+  const rC1 = (await editarCli(cC, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 4 }])).json;
+  ok(rC1?.ok === true && Number(lineasDe(p5.idOrden)[0].cantidad) === 4 && cab(p5.idOrden).editado_por === 'cliente', `C12 cliente edita el suyo: cantidad 4, editado_por ${cab(p5.idOrden).editado_por}`);
+  sql(`update ordenes set armado_en = now(), armado_por = 'probar' where id = ${p5.idOrden}`);
+  const rC2 = (await editarCli(cC, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 5 }])).json;
+  sql(`update ordenes set armado_en = null, armado_por = null, estatus_pedido = 'En camino' where id = ${p5.idOrden}`);
+  const rC3 = (await editarCli(cC, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 5 }])).json;
+  sql(`update ordenes set estatus_pedido = 'En proceso' where id = ${p5.idOrden}`);
+  const otro = await alta('Edit C otro');
+  const rC4 = (await editarCli(otro, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 5 }])).json;
+  ok(rC2?.motivo === 'ya_armado' && rC3?.motivo === 'en_camino' && rC4?.error === 'no_encontrado' && Number(lineasDe(p5.idOrden)[0].cantidad) === 4,
+     `C12 armado ${rC2?.motivo}, en camino ${rC3?.motivo}, ajeno ${rC4?.error}; cantidad sigue 4`);
+  // C13. modo cotizar no escribe.
+  const antes13 = JSON.stringify([cab(p5.idOrden).fecha_actualizacion, lineasDe(p5.idOrden), kgLote()]);
+  const r13 = (await editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 9 }], 'cotizar')).json;
+  ok(r13?.ok && cerca(r13?.cotizacion?.total, 315) && cerca(r13?.cotizacion?.total_anterior, 140) && JSON.stringify([cab(p5.idOrden).fecha_actualizacion, lineasDe(p5.idOrden), kgLote()]) === antes13,
+     `C13 cotizar: total ${r13?.cotizacion?.total} (315) desde ${r13?.cotizacion?.total_anterior} (140); nada cambió`);
+  // C14. Dos ediciones concurrentes: la segunda aplica sobre la primera.
+  const [ra, rb] = await Promise.all([editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 2 }, { idProducto: String(P100b), cantidad: 1 }]), editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 3 }])]);
+  const l14 = lineasDe(p5.idOrden);
+  ok(ra.json?.ok && rb.json?.ok && (l14.length === 1 || l14.length === 2) && [2, 3].includes(Number(l14[0].cantidad)) && cerca(kgLote(), Number(uno(`select coalesce(sum(kg_descontado_lote),0) s from ordenes_detalle d join ordenes o on o.id = d.id_orden where d.id_lote_descontado = '${idLote}' and o.estatus_pedido not in ('Pendiente','Cancelado')`).s)),
+     `C14 concurrencia: las dos ok, ${l14.length} línea(s), cantidad ${l14[0].cantidad}, lote = Σ kg de sus líneas`);
+  // C15. Interno: se edita, total 0.
+  const pI = await pedidoVend(ana, cC, 'consumidor', [linea(P100, '100g', 2, 35)], 0, { tipoInterno: 'sampling' }); creados.push(pI?.idOrden);
+  const rI = (await editar(ana, pI.idOrden, [{ id: lineasDe(pI.idOrden)[0].id, cantidad: 5 }])).json; const cI = cab(pI.idOrden);
+  ok(rI?.ok && Number(lineasDe(pI.idOrden)[0].cantidad) === 5 && Number(cI.total) === 0 && Number(cI.subtotal) === 0, `C15 interno: cantidad 5, total ${cI.total} (0)`);
+  // C16. Rechazos de forma.
+  const rF1 = (await editar(ana, p5.idOrden, [{ id: 999999999 }])).json;
+  const rF2 = (await editar(ana, p5.idOrden, [{ id: l14[0].id, cantidad: 0 }])).json;
+  const rF3 = (await editar(ana, p5.idOrden, [{ id: l14[0].id }, { idProducto: '999999999', cantidad: 1 }])).json;
+  const rF4 = (await rpc('editar_pedido', { p_data: { idOrden: String(p5.idOrden), modo: 'aplicar', lineas: [] } })).json;
+  ok(rF1?.error === 'linea_ajena' && rF2?.error === 'cantidad_invalida' && rF3?.error === 'producto_no_disponible' && rF4?.error === 'no_autorizado', `C16 ${rF1?.error}, ${rF2?.error}, ${rF3?.error}, sin token ${rF4?.error}`);
+  // C17. Sin lote activo, agregar a un pedido confirmado se revierte entero.
+  sql(`update lotes_produccion set estatus = 'Cerrado' where id_lote = '${idLote}'`);
+  const antes17 = JSON.stringify([lineasDe(p5.idOrden), cab(p5.idOrden).total]);
+  const r17 = (await editar(ana, p5.idOrden, [{ id: l14[0].id, cantidad: 8 }, { idProducto: String(P250), cantidad: 1 }])).json;
+  sql(`update lotes_produccion set estatus = 'Activo' where id_lote = '${idLote}'`);
+  ok(r17?.error === 'sin_lote' && JSON.stringify([lineasDe(p5.idOrden), cab(p5.idOrden).total]) === antes17, `C17 sin lote: ${r17?.error}, y la cantidad 8 tampoco se aplicó`);
+}
+
+// (las secciones D-F van aquí)
+
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { try { await cancelar({ idOrden: id }); } catch (_e) {} }
 sql(`update lotes_produccion set estatus = 'Cerrado', fecha_cierre = now() where id_lote = '${idLote}'`);
