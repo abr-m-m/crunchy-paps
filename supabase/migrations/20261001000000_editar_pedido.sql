@@ -585,3 +585,142 @@ end;
 $fn$;
 revoke all on function public.cola_armado(jsonb) from public;
 grant execute on function public.cola_armado(jsonb) to anon, authenticated;
+
+-- ── T5. Lecturas: obtener_pedido y get_tracking_pedido con editable, motivo, nivel ──────────────
+-- obtener_pedido: copiada entera de 20260903010000_lecturas_pedidos_prospectos.sql:82-125; solo
+-- cambia el `return` final (añade editable_pedido con 'vendedor' y el nivel de precio del pedido).
+-- Los grants se conservan como estaban (sin GRANT/REVOKE explícito en el original: CREATE OR
+-- REPLACE los deja igual).
+create or replace function public.obtener_pedido(p_data jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  v_id_vend bigint;
+  v_rol     text;
+  v_admin   boolean;
+  v_ref     text := coalesce(p_data->>'ref', '');
+  v_pedido  jsonb;
+  v_id      bigint;
+  v_detalle jsonb;
+begin
+  select s.id_vendedor, s.rol into v_id_vend, v_rol
+    from public.sesion_exige_seccion(p_data->>'token', 'pedidos') s;
+  if v_id_vend is null then
+    return jsonb_build_object('ok', false, 'error', 'No autorizado');
+  end if;
+  if v_ref = '' then
+    return jsonb_build_object('ok', false, 'error', 'Falta la referencia del pedido');
+  end if;
+
+  v_admin := lower(trim(coalesce(v_rol,''))) in ('admin','administrador');
+
+  select to_jsonb(o), o.id into v_pedido, v_id
+    from public.ordenes o
+   where (o.consecutivo = v_ref
+          or (v_ref ~ '^[0-9]+$' and o.id = v_ref::bigint))
+     and (v_admin or o.id_vendedor = v_id_vend)
+   limit 1;
+
+  if v_pedido is null then
+    return jsonb_build_object('ok', false, 'error', 'Pedido no encontrado');
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(d) order by d.id), '[]'::jsonb)
+    into v_detalle
+    from public.ordenes_detalle d where d.id_orden = v_id;
+
+  return jsonb_build_object('ok', true, 'pedido', v_pedido, 'detalle', v_detalle)
+      || (select public.editable_pedido(o, 'vendedor') from public.ordenes o where o.id = v_id)
+      || jsonb_build_object('nivel', (
+           select case
+             when lower(coalesce(o.canal, '')) = 'mostrador' then 'mostrador'
+             when lower(coalesce(o.canal, '')) = 'b2b' or coalesce(c.aprobado_b2b, false) then
+               case c.tipo_id when 2 then 'restaurante' when 3 then 'tienda' when 4 then 'mayorista' else 'consumidor' end
+             else 'consumidor' end
+           from public.ordenes o left join public.clientes c on c.id = o.id_cliente and o.id_cliente <> 999999
+           where o.id = v_id));
+end;
+$$;
+
+-- get_tracking_pedido: copiada entera de 20260930000010_rpc_indexables.sql:44-118; cambian los
+-- items (añaden id/idProducto/puntosCanje/piezasPorCaja) y el objeto 'pedido' (añade
+-- editable/motivo). Pública, como antes (sin GRANT/REVOKE explícito: CREATE OR REPLACE conserva).
+create or replace function public.get_tracking_pedido(p_id_orden text)
+returns jsonb
+language plpgsql security definer set search_path = public, pg_temp as $fn$
+declare
+  v_orden  ordenes%rowtype;
+  v_items  jsonb;
+  v_mapa_estatus jsonb := '{
+    "pendiente":      "Recibido",
+    "confirmado":     "Recibido",
+    "en proceso":     "En preparación",
+    "en preparacion": "En preparación",
+    "en preparación": "En preparación",
+    "listo":          "En preparación",
+    "en camino":      "En camino",
+    "entregado":      "Entregado",
+    "cancelado":      "Cancelado"
+  }'::jsonb;
+  v_est_int text;
+  v_est_cli text;
+begin
+  -- 19 sep 2026: primero por consecutivo (índice único); si no está y la entrada son solo
+  -- dígitos, por id (clave primaria). Antes: consecutivo = p OR id::text = p, sin índice.
+  select * into v_orden from ordenes where consecutivo = p_id_orden;
+  if not found and p_id_orden ~ '^[0-9]{1,18}$' then
+    select * into v_orden from ordenes where id = p_id_orden::bigint;
+  end if;
+
+  if v_orden.id is null then
+    return jsonb_build_object('ok', false, 'error', 'Pedido no encontrado');
+  end if;
+
+  v_est_int := lower(coalesce(v_orden.estatus_pedido, 'pendiente'));
+  v_est_cli := coalesce(v_mapa_estatus->>v_est_int, 'Recibido');
+
+  -- Items
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', id, 'idProducto', id_producto,
+    'sabor', sabor, 'presentacion', presentacion, 'cantidad', cantidad,
+    'modo', case when tipo_venta = 'A granel' then 'granel' else 'pieza' end,
+    'subtotal', subtotal, 'gramos', gramos_vendidos,
+    'puntosCanje', coalesce(puntos_canje, 0), 'piezasPorCaja', piezas_por_caja
+  ) order by id), '[]'::jsonb) into v_items
+  from ordenes_detalle where id_orden = v_orden.id;
+
+  return jsonb_build_object(
+    'ok', true,
+    'pedido', jsonb_build_object(
+      'id', v_orden.id,
+      'consecutivo', v_orden.consecutivo,
+      'nombreCliente', v_orden.nombre_cliente,
+      'fecha', v_orden.fecha_orden,
+      'fechaEntrega', v_orden.fecha_entrega,
+      'fechaEntregaReal', v_orden.fecha_entrega_real,
+      'total', v_orden.total,
+      'subtotal', v_orden.subtotal,
+      'descuento', v_orden.descuento,
+      'cuponCodigo', v_orden.cupon_codigo,
+      'estatusInterno', v_orden.estatus_pedido,
+      'estatusCliente', v_est_cli,
+      'estatusPago', v_orden.estatus_pago,
+      'tipoPago', v_orden.tipo_pago,
+      'canal', v_orden.canal,
+      'direccion', v_orden.direccion,
+      'colonia', v_orden.colonia,
+      'cp', v_orden.cp,
+      'coordenadas', v_orden.coordenadas,
+      'notas', v_orden.notas,
+      'nombreVendedor', v_orden.nombre_vendedor,
+      'tipoInterno', v_orden.tipo_interno,
+      'items', v_items,
+      'editable', (public.editable_pedido(v_orden, 'cliente')->>'editable')::boolean,
+      'motivo', public.editable_pedido(v_orden, 'cliente')->>'motivo'
+    )
+  );
+end;
+$fn$;

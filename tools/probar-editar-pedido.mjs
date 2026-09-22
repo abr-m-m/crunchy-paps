@@ -408,7 +408,32 @@ if (corre('D')) {
   abrirCaja();   // deja la caja abierta: una corrida C posterior no debe heredarla cerrada.
 }
 
-// (las secciones E-F van aquí)
+// ── E. lecturas (T5) ─────────────────────────────────────────────────────────
+if (corre('E')) {
+  console.log('\nE. obtener_pedido y get_tracking_pedido');
+  const cE = await alta('Edit E'); const tE = await alta('Edit E tienda', 3);
+  const p1 = await pedidoCli(cE, [linea(P100, '100g', 2, 35)], 70); creados.push(p1?.idOrden);
+  const pT = await pedidoVend(ana, tE, 'tienda', [linea(P250, '250g', 6, 45, 6)], 270); creados.push(pT?.idOrden);
+  const oA = (await rpc('obtener_pedido', { p_data: { token: ana.token, ref: String(p1.idOrden) } })).json;
+  const oT = (await rpc('obtener_pedido', { p_data: { token: ana.token, ref: String(pT.idOrden) } })).json;
+  const oC = (await rpc('obtener_pedido', { p_data: { token: carla.token, ref: String(p1.idOrden) } })).json;
+  ok(oA?.ok && oA.editable === true && oA.motivo === '' && oA.nivel === 'consumidor' && oT?.nivel === 'tienda' && oA.detalle?.[0]?.puntos_canje === 0,
+     `E1 obtener_pedido: editable ${oA?.editable}, motivo '${oA?.motivo}', nivel ${oA?.nivel} / ${oT?.nivel}`);
+  ok(oC?.ok === false, `E1b Carla no ve el pedido ajeno (${oC?.error})`);
+  const tk = (await rpc('get_tracking_pedido', { p_id_orden: String(p1.idOrden) })).json;
+  ok(tk?.ok && tk.pedido.editable === true && tk.pedido.motivo === '' && tk.pedido.items[0].id > 0 && String(tk.pedido.items[0].idProducto) === String(P100) && tk.pedido.items[0].puntosCanje === 0,
+     `E2 tracking: editable ${tk?.pedido?.editable}, items con id/idProducto/puntosCanje`);
+  await confirmar(p1); sql(`update ordenes set armado_en = now(), armado_por = 'probar' where id = ${p1.idOrden}`);
+  const tk2 = (await rpc('get_tracking_pedido', { p_id_orden: String(p1.idOrden) })).json;
+  const oA2 = (await rpc('obtener_pedido', { p_data: { token: ana.token, ref: String(p1.idOrden) } })).json;
+  ok(tk2?.pedido?.editable === false && tk2?.pedido?.motivo === 'ya_armado' && oA2?.editable === true && oA2?.motivo === 'ya_armado',
+     `E3 armado: cliente ${tk2?.pedido?.editable}/${tk2?.pedido?.motivo}, vendedor ${oA2?.editable}/${oA2?.motivo}`);
+  await estatus(p1.idOrden, { estatusPedido: 'Entregado' });
+  const tk3 = (await rpc('get_tracking_pedido', { p_id_orden: String(p1.idOrden) })).json;
+  ok(tk3?.pedido?.editable === false && tk3?.pedido?.motivo === 'entregado', `E4 entregado: ${tk3?.pedido?.motivo}`);
+}
+
+// (la sección F va aquí)
 
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { try { await cancelar({ idOrden: id }); } catch (_e) {} }
