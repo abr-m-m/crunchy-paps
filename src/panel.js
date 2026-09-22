@@ -3337,7 +3337,7 @@ function pintarDetallePedido({ orden, lineas }) {
     <div style="margin-top:12px;">
       <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
       ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
-      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + orden.editado_por : ''}</div>` : ''}
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : `
     <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
 
