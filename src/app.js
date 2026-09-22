@@ -5286,6 +5286,137 @@ function actualizarMiniCarrito() {
 //   - URL ?track=PED-00123 (sin login, abierto)
 //   - Click desde "Mis pedidos" propios
 // ══════════════════════════════════════════════════════════════════
+// ── Editor de pedido (20 sep 2026, cambios/2026-09-20-editar-pedido/diseno.md) ──
+// Un solo editor para el drawer del vendedor y el tracking del cliente. No sabe quién lo abrió: recibe el
+// pedido, las líneas, el catálogo del canal y dos funciones (cotizar, aplicar) que llaman al RPC que toque.
+// No toca `carrito` ni ninguna otra global de sesión (regla 33). El total lo dice siempre el servidor.
+const MOTIVO_EDICION = {
+  vendedor: {
+    cancelado: 'No se puede editar: está cancelado', entregado: 'No se puede editar: ya se entregó',
+    pagado_en_linea: 'No se puede editar: pagado en línea (Stripe)', pago_en_linea_pendiente: 'No se puede editar: hay un pago en línea iniciado',
+    en_camino: 'Ya salió a reparto: avisa a quien lo lleva', ya_armado: 'Ya está armado: al guardar vuelve a «Por armar»',
+    no_es_tu_pedido: 'No se puede editar: no es tu pedido',
+  },
+  cliente: {
+    cancelado: 'Este pedido se canceló', entregado: 'Este pedido ya se entregó',
+    pagado_en_linea: 'Pagaste en línea; para cambios escríbenos por WhatsApp', pago_en_linea_pendiente: 'Tienes un pago en línea iniciado; para cambios escríbenos por WhatsApp',
+    en_camino: 'Tu pedido ya salió; para cambios escríbenos por WhatsApp', ya_armado: 'Tu pedido ya se está preparando; para cambios escríbenos por WhatsApp',
+  },
+};
+let _ep = null;   // estado del editor abierto: { pedido, lineas, catalogo, nivel, cotizar, aplicar, alGuardar, estado, cotizacion, timer }
+function abrirEditorPedido(o) {
+  const ov = document.getElementById('editor-pedido'); if (!ov) return;
+  _ep = { ...o, timer: null, cotizacion: null, guardando: false };
+  // Estado editable por línea: cantidad (piezas) / cajas / gramos; quitada; las de canje no se tocan.
+  _ep.estado = (o.lineas || []).map(l => ({
+    id: l.id, sabor: l.sabor, presentacion: l.presentacion, canje: Number(l.puntos_canje) > 0,
+    granel: l.tipo_venta === 'A granel', caja: Number(l.piezas_por_caja) || 0,
+    cantidad: Number(l.cantidad) || 0, cajas: Number(l.piezas_por_caja) ? Math.round(Number(l.cantidad) / Number(l.piezas_por_caja)) : 0,
+    gramos: Number(l.gramos) || 0, quitada: false, nueva: false,
+  }));
+  document.getElementById('ep-titulo').textContent = 'Editar ' + (o.pedido.consecutivo || 'pedido');
+  document.getElementById('ep-total-antes').textContent = '$' + Number(o.pedido.total || 0).toLocaleString('es-MX');
+  document.getElementById('ep-total-nuevo').textContent = '—';
+  document.getElementById('ep-avisos').innerHTML = '';
+  // Selectores de sabor y presentación del catálogo del canal (solo papas por pieza).
+  const papas = (o.catalogo || []).filter(p => (p.categoria || '') !== 'bebida' && p.tipo_venta !== 2 && p.presentacion && p.presentacion !== 'Granel');
+  const sabores = [...new Set(papas.map(p => p.sabor))];
+  const selS = document.getElementById('ep-sabor'), selP = document.getElementById('ep-pres'), selC = document.getElementById('ep-caja');
+  selS.innerHTML = sabores.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+  const pintarPres = () => { const pres = papas.filter(p => p.sabor === selS.value); selP.innerHTML = pres.map(p => `<option value="${p.id}">${p.presentacion}</option>`).join(''); };
+  selS.onchange = pintarPres; pintarPres();
+  selC.hidden = !(o.nivel === 'tienda' || o.nivel === 'mayorista'); selC.value = '0';
+  document.getElementById('ep-cant').value = '1';
+  editorPedidoPintar();
+  ov.hidden = false;
+  editorPedidoCotizar();
+}
+function editorPedidoLineasPayload() {
+  return _ep.estado.filter(l => !l.quitada).map(l => {
+    if (l.nueva) return l.caja ? { idProducto: String(l.idProducto), cajas: l.cajas, caja: l.caja } : { idProducto: String(l.idProducto), cantidad: l.cantidad };
+    if (l.canje) return { id: l.id };
+    if (l.granel) return { id: l.id, gramos: l.gramos };
+    if (l.caja) return { id: l.id, cajas: l.cajas };
+    return { id: l.id, cantidad: l.cantidad };
+  });
+}
+function editorPedidoPintar() {
+  const cont = document.getElementById('ep-lineas');
+  cont.innerHTML = _ep.estado.map((l, i) => {
+    const qty = l.canje ? `<b>${l.cantidad}</b>`
+      : l.granel ? `<input type="number" inputmode="numeric" min="100" step="50" value="${l.gramos}" aria-label="Gramos" onchange="editorPedidoGramos(${i}, this.value)"> g`
+      : `<button type="button" aria-label="Menos" onclick="editorPedidoMas(${i}, -1)">−</button><b>${l.caja ? l.cajas + ' caja' + (l.cajas === 1 ? '' : 's') : l.cantidad}</b><button type="button" aria-label="Más" onclick="editorPedidoMas(${i}, 1)">+</button>`;
+    const sub = l.caja ? `${l.presentacion} · caja de ${l.caja}` : (l.presentacion || '');
+    return `<div class="ep-linea${l.canje ? ' canje' : ''}${l.quitada ? ' quitada' : ''}">
+      <div class="n">${l.sabor}${l.nueva ? ' <span style="color:var(--amarillo)">nuevo</span>' : ''}<small>${sub}</small></div>
+      ${l.quitada ? '' : `<div class="ep-qty">${qty}</div>`}
+      ${l.canje ? '' : `<button type="button" class="ep-quitar${l.quitada ? ' deshacer' : ''}" onclick="editorPedidoQuitar(${i})">${l.quitada ? 'Deshacer' : 'Quitar'}</button>`}
+    </div>`;
+  }).join('') || '<div style="color:var(--suave);font-size:.8rem;padding:10px 0;">Sin productos</div>';
+}
+function editorPedidoCotizar() {
+  if (!_ep) return;
+  clearTimeout(_ep.timer);
+  _ep.timer = setTimeout(async () => {
+    const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+    let r = null;
+    try { r = await _ep.cotizar(editorPedidoLineasPayload()); } catch (_e) { r = null; }
+    if (!_ep) return;
+    const av = document.getElementById('ep-avisos'); av.innerHTML = '';
+    if (r && r.ok && r.cotizacion) {
+      _ep.cotizacion = r.cotizacion;
+      document.getElementById('ep-total-nuevo').textContent = '$' + Number(r.cotizacion.total || 0).toLocaleString('es-MX');
+      (r.avisos || []).forEach(a => { const t = a === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION.vendedor[a] || ''); if (t) av.innerHTML += `<div class="ep-aviso">${t}</div>`; });
+      btn.disabled = false;
+    } else {
+      _ep.cotizacion = null;
+      document.getElementById('ep-total-nuevo').textContent = '—';
+      av.innerHTML = `<div class="ep-aviso">${editorPedidoTextoError(r)}</div>`;
+    }
+  }, 300);
+}
+function editorPedidoTextoError(r) {
+  const e = (r && r.error) || '';
+  const T = { pedido_vacio: 'El pedido no puede quedar sin productos; para eso está Cancelar.', canje_bloqueado: 'Las piezas de canje no se pueden cambiar.',
+    producto_no_disponible: 'Ese producto no está disponible.', cantidad_invalida: 'Revisa las cantidades.', sin_lote: (r && r.mensaje) || 'No hay lote activo.',
+    caja_cerrada: (r && r.mensaje) || 'La caja del día está cerrada.', no_editable: 'Este pedido ya no se puede editar.', no_autorizado: 'Tu sesión venció; vuelve a entrar.',
+    granel_no_soportado: 'A granel no se puede editar por aquí; escríbenos por WhatsApp.', linea_ajena: 'Una de esas piezas no es de este pedido.',
+    linea_repetida: 'Hay un producto repetido; revisa las líneas.', caja_sin_ajuste: 'La caja del día ya está cerrada; el ajuste no se pudo aplicar.' };
+  return T[e] || (r && (r.mensaje || r.error)) || 'No se pudo calcular el total. Revisa tu conexión.';
+}
+window.editorPedidoMas = function (i, d) { const l = _ep.estado[i]; if (!l || l.canje) return; if (l.caja) l.cajas = Math.max(1, l.cajas + d); else l.cantidad = Math.max(1, l.cantidad + d); editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoGramos = function (i, v) { const l = _ep.estado[i]; if (!l) return; l.gramos = Math.max(100, Math.round(Number(v) || 0)); editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoQuitar = function (i) { const l = _ep.estado[i]; if (!l || l.canje) return; if (l.nueva) _ep.estado.splice(i, 1); else l.quitada = !l.quitada; editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoAgregar = function () {
+  const idProd = document.getElementById('ep-pres').value; const p = (_ep.catalogo || []).find(x => String(x.id) === String(idProd)); if (!p) return;
+  const caja = Number(document.getElementById('ep-caja').value) || 0; const n = Math.max(1, Math.round(Number(document.getElementById('ep-cant').value) || 1));
+  _ep.estado.push({ id: null, idProducto: p.id, sabor: p.sabor, presentacion: p.presentacion, canje: false, granel: false, caja, cantidad: caja ? n * caja : n, cajas: caja ? n : 0, gramos: 0, quitada: false, nueva: true });
+  document.getElementById('ep-cant').value = '1';
+  editorPedidoPintar(); editorPedidoCotizar();
+};
+window.editorPedidoCerrar = function () { if (_ep) clearTimeout(_ep.timer); _ep = null; const ov = document.getElementById('editor-pedido'); if (ov) ov.hidden = true; };
+window.editorPedidoGuardar = async function () {
+  if (!_ep || !_ep.cotizacion || _ep.guardando) return;
+  const c = _ep.cotizacion;
+  const cambios = (c.lineas || []).filter(l => l.accion !== 'igual').map(l => (l.accion === 'quitar' ? 'Quitar ' : l.accion === 'nueva' ? 'Agregar ' : 'Cambiar ') + l.sabor + ' ' + (l.presentacion || '') + (l.accion === 'quitar' ? '' : ' → ' + (l.gramos > 0 && l.accion !== 'nueva' && !l.piezasPorCaja ? l.gramos + ' g' : l.cantidad + ' pz')));
+  if (!cambios.length) { editorPedidoCerrar(); return; }
+  const sigue = await confirmar({ titulo: 'Guardar cambios', cuerpo: cambios.join('\n') + '\n\nNuevo total: $' + Number(c.total).toLocaleString('es-MX'), aceptar: 'Guardar', cancelar: 'Volver' });
+  if (!sigue || !_ep) return;
+  _ep.guardando = true; const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+  let r = null;
+  try { r = await _ep.aplicar(editorPedidoLineasPayload()); } catch (e) { r = { ok: false, error: e.message }; }
+  _ep.guardando = false;
+  if (!_ep) return;
+  if (r && r.ok) {
+    try { track('editar_pedido', { consecutivo: _ep.pedido.consecutivo, lineas_antes: (_ep.lineas || []).length, lineas_despues: (r.lineas || []).length, total_antes: Number(_ep.pedido.total) || 0, total_despues: Number(r.pedido && r.pedido.total) || 0 }); } catch (_e) {}
+    const cb = _ep.alGuardar; editorPedidoCerrar(); mostrarToast('Pedido actualizado'); if (cb) cb(r);
+  } else {
+    btn.disabled = false;
+    avisar({ titulo: 'No se guardó', cuerpo: editorPedidoTextoError(r) });
+    editorPedidoCotizar();
+  }
+};
+
 let _trackingPedidoActual = null;
 let _trackingAutoRefresh = null;
 
@@ -6119,6 +6250,7 @@ export const N = {
   get MAYOREO_MINIMOS() { return MAYOREO_MINIMOS; }, set MAYOREO_MINIMOS(valor) { MAYOREO_MINIMOS = valor; },
   get SALTO() { return SALTO; },
   get WHATSAPP_NUM() { return WHATSAPP_NUM; },
+  get MOTIVO_EDICION() { return MOTIVO_EDICION; },
   get _modoCliente() { return _modoCliente; }, set _modoCliente(valor) { _modoCliente = valor; },
   get _pedidoActual() { return _pedidoActual; }, set _pedidoActual(valor) { _pedidoActual = valor; },
   get canalVenta() { return canalVenta; }, set canalVenta(valor) { canalVenta = valor; },
@@ -6129,6 +6261,7 @@ export const N = {
   get telefonoVerif() { return telefonoVerif; }, set telefonoVerif(valor) { telefonoVerif = valor; },
   get tipoCliente() { return tipoCliente; }, set tipoCliente(valor) { tipoCliente = valor; },
   get vendedorInfo() { return vendedorInfo; }, set vendedorInfo(valor) { vendedorInfo = valor; },
+  abrirEditorPedido,
   abrirVentanaPendiente,
   actualizarBadge,
   bloquearCamposCliente,
