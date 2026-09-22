@@ -1864,6 +1864,34 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <!-- ══════════════════════════════════
      SCREEN: TRACKING DE PEDIDO (cliente)
 ══════════════════════════════════ -->
+<div id="editor-pedido" class="ep-overlay" hidden>
+  <div class="ep-hoja" role="dialog" aria-modal="true" aria-labelledby="ep-titulo">
+    <div class="ep-cab">
+      <button type="button" class="ep-cerrar" onclick="editorPedidoCerrar()" aria-label="Cerrar">×</button>
+      <div id="ep-titulo" class="ep-titulo">Editar pedido</div>
+    </div>
+    <div id="ep-lineas" class="ep-lineas"></div>
+    <div class="ep-agregar">
+      <div class="ep-etq">Agregar producto</div>
+      <div class="ep-agregar-fila">
+        <select id="ep-sabor" aria-label="Sabor"></select>
+        <select id="ep-pres" aria-label="Presentación"></select>
+        <select id="ep-caja" aria-label="Por caja" hidden><option value="0">Piezas</option><option value="3">Caja de 3</option><option value="6">Caja de 6</option><option value="12">Caja de 12</option></select>
+        <input id="ep-cant" type="number" inputmode="numeric" min="1" value="1" aria-label="Cantidad">
+        <button type="button" class="ep-btn-agregar" onclick="editorPedidoAgregar()">Agregar</button>
+      </div>
+    </div>
+    <div id="ep-avisos" class="ep-avisos"></div>
+    <div class="ep-pie">
+      <div class="ep-totales"><span>Total anterior <b id="ep-total-antes"></b></span><span>Nuevo total <b id="ep-total-nuevo"></b></span></div>
+      <div class="ep-acciones">
+        <button type="button" class="ep-btn-sec" onclick="editorPedidoCerrar()">Cancelar</button>
+        <button type="button" id="ep-guardar" class="ep-btn-pri" onclick="editorPedidoGuardar()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="screen" id="s-tracking">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>

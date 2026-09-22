@@ -1,5 +1,5 @@
 import { N } from './app.js';
-const { abrirVentanaPendiente, actualizarBadge, bloquearCamposCliente, cacheClear, cantidadConCajas, cerrarVentanaPendiente, esAdmin, esAdminEstricto, guardarSesion, initMaps, irAWhatsApp, irAlCatalogo, mostrarToast, renderClubAdminCfg, renderDrawer, saborDot, sesionExpirada, sheetsCall, supabaseCall, tokenVendedor, totalItems } = N;
+const { abrirEditorPedido, abrirVentanaPendiente, actualizarBadge, bloquearCamposCliente, cacheClear, cantidadConCajas, cerrarVentanaPendiente, esAdmin, esAdminEstricto, guardarSesion, initMaps, irAWhatsApp, irAlCatalogo, mostrarToast, renderClubAdminCfg, renderDrawer, saborDot, sesionExpirada, sheetsCall, supabaseCall, tokenVendedor, totalItems } = N;
 
 
 // ── Ajustar ubicación de un cliente existente (vendedor en sitio) ──
@@ -3331,7 +3331,17 @@ function pintarDetallePedido({ orden, lineas }) {
     </div>
   ` : '';
 
-  const accionesHTML = segPedidoHTML + reparteHTML + segPagoHTML;
+  // Editar pedido (20 sep 2026): el botón solo si el servidor dijo `editable`; si no, el motivo, nunca silencio.
+  const motivoTxt = (N.MOTIVO_EDICION.vendedor || {})[orden.motivo] || '';
+  const editarHTML = !puedeEditar || orden.editable === undefined ? '' : orden.editable ? `
+    <div style="margin-top:12px;">
+      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
+      ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
+    </div>` : `
+    <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
+
+  const accionesHTML = editarHTML + segPedidoHTML + reparteHTML + segPagoHTML;
 
   // Construcción final
   document.getElementById('dp-contenido').innerHTML = `
@@ -6804,9 +6814,18 @@ ARMADO_ESTILO.textContent = `
   .armado-tabla tr.hecho td{opacity:.6}
   .armado-tabla .folio{color:var(--suave);font-size:0.7rem}
   .armado-ruta{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--negro);white-space:nowrap}
+  .armado-editado{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--blanco);background:var(--rojo);white-space:nowrap}
   .armado-fila-btn{background:transparent;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px;display:block;width:100%}
 `;
 document.head.appendChild(ARMADO_ESTILO);
+// Regla 3 de la revisión final (spec cambios/2026-09-20-editar-pedido/diseno.md:287-290): un pedido
+// editado tras armarse vuelve a «Por armar» sin ninguna marca que lo distinga de uno nunca tocado, y
+// el push del webhook es solo-INSERT (no avisa de la edición). La etiqueta «Editado» es esa marca.
+function armadoEditadoBadge(p) {
+  if (!p || !p.editadoEn || (p.armadoEn && !(new Date(p.editadoEn) > new Date(p.armadoEn)))) return '';
+  const titulo = p.editadoPor ? `Editado por ${rutaEsc(p.editadoPor)}` : 'Editado';
+  return `<span class="armado-editado" title="${titulo}">Editado</span>`;
+}
 function armadoRutaBadge(p) { return p && p.ruta ? `<span class="armado-ruta" style="background:${p.rutaColor || 'var(--amarillo)'};">${p.ruta}</span>` : ''; }
 function armadoFechaCorta(iso, conDia = true) { if (!iso) return '—'; const d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso); return isNaN(d) ? '—' : d.toLocaleDateString('es-MX', conDia ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' }); }
 function armadoHora(iso) { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
@@ -6842,7 +6861,7 @@ function armadoPintarPedidos() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="min-width:0;">
             <div style="font-weight:800;color:var(--blanco);">${quien}</div>
-            <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''} ${armadoRutaBadge(p)}</div>
+            <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''} ${armadoRutaBadge(p)}${armadoEditadoBadge(p)}</div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:0.8rem;color:var(--blanco);white-space:nowrap;">
             <input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:24px;height:24px;accent-color:var(--amarillo);"> Armado
@@ -6877,7 +6896,7 @@ function armadoPintarPedidos() {
       ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
       : `<label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;font-size:0.76rem;color:var(--blanco);white-space:nowrap;"><input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:22px;height:22px;accent-color:var(--amarillo);"> ${hecho ? 'Armado' : 'Armar'}</label>`;
     return `<tr class="${hecho ? 'hecho' : ''}">
-      <td><button class="armado-fila-btn" onclick="verDetallePedido(${p.id})"><b>${quien}</b><div class="folio">${p.consecutivo} · ${p.tipoInterno ? 'Interno' : (ARMADO_CANAL[p.canal] || p.canal || '')}${hecho ? ' · ' + (p.armadoPor || '') : ''}</div></button></td>
+      <td><button class="armado-fila-btn" onclick="verDetallePedido(${p.id})"><b>${quien}</b><div class="folio">${p.consecutivo} · ${p.tipoInterno ? 'Interno' : (ARMADO_CANAL[p.canal] || p.canal || '')}${hecho ? ' · ' + (p.armadoPor || '') : ''}</div>${armadoEditadoBadge(p) ? '<div style="margin-top:3px;">' + armadoEditadoBadge(p) + '</div>' : ''}</button></td>
       <td style="white-space:nowrap;"><div class="folio">pedido</div>${armadoFechaCorta(p.fechaOrden, false)} · ${armadoHoraCorta(p.fechaOrden)}<div class="folio" style="margin-top:4px;">entrega</div>${armadoFechaCorta(p.fechaEntrega || window._armadoFecha)}${p.ruta ? '<div style="margin-top:3px;">' + armadoRutaBadge(p) + '</div>' : ''}</td>
       <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">${tipo === 'pendiente' ? '—' : piezas + '<div class="folio">' + kg.toFixed(2) + ' kg</div>'}</td>
       <td>${estado}</td>
@@ -9033,6 +9052,32 @@ window.guardarCupon = async function() {
   } catch(e) { avisar({ titulo: 'No se pudo guardar el cupón', cuerpo: e.message }); }
 };
 
+
+// Editar pedido desde el drawer (20 sep 2026): abre el editor compartido con el catálogo del canal del pedido.
+window.editarPedidoDesdeDrawer = function () {
+  const pa = N._pedidoActual; if (!pa || !pa.orden) return;
+  const o = pa.orden;
+  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_pedido', { p_data: { idOrden: String(o.id), actualizadoPor: N.vendedorInfo?.nombre || 'vendedor', modo, lineas } });
+  abrirEditorPedido({
+    pedido: { id: o.id, consecutivo: o.consecutivo, total: o.total, editable: o.editable, motivo: o.motivo },
+    lineas: pa.lineas || [],
+    catalogo: (N.catalogo || []),
+    nivel: o.nivel || 'consumidor',
+    audiencia: 'vendedor',
+    cotizar: llamar('cotizar'), aplicar: llamar('aplicar'),
+    alGuardar: (r) => {
+      // Regla 6 de la revisión final: si el total sube en un pedido en efectivo/transferencia ya
+      // marcado Pagado, estatus_pago se queda en 'Pagado' (decisión de Abraham: no lo toca el editor) y
+      // la diferencia nunca aparece como por cobrar — solo se nota como faltante al cerrar caja. El
+      // aviso aquí es la única señal de que falta cobrar esa diferencia.
+      if (r.caja && r.caja.monto) mostrarToast(r.caja.monto > 0
+        ? `Faltan por cobrar $${Number(r.caja.monto).toLocaleString('es-MX')} de este pedido`
+        : `Caja: ajuste de $${Number(r.caja.monto).toLocaleString('es-MX')}`);
+      if (r.puntos && r.puntos.puntos) mostrarToast(`Puntos: ajuste de ${r.puntos.puntos}`);
+      verDetallePedido(o.id);
+    },
+  });
+};
 
 // Lo que app.js llama del panel
 export { armadoPararRefresco, cargarCupones, cargarListaProductos, pintarDetallePedido, renderArmado, renderB2B, renderCaja, renderEntregas, renderGastos, renderJornadas, renderMayoreoAdminCfg, renderPedidosVendedor, renderProduccion, renderProspeccion, renderReparto, renderResumen, renderRuta };

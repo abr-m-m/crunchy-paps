@@ -5107,6 +5107,9 @@ window.verDetallePedido = async function(idOrden) {
       notas: o.notas, cupon_codigo: o.cupon_codigo, tipo_interno: o.tipo_interno,
       cp: o.cp, colonia: o.colonia, municipio: o.municipio, estado: o.estado,
       direccion: o.direccion, coordenadas: o.coordenadas, zona_entrega: o.zona_entrega,
+      armado_en: o.armado_en, editado_en: o.editado_en, editado_por: o.editado_por,
+      // Editar pedido (20 sep 2026): lo decide el servidor (regla 10). Sin migración, quedan undefined y no hay botón.
+      editable: _rp.editable, motivo: _rp.motivo || '', nivel: _rp.nivel || 'consumidor',
     };
     // Si líneas usan id_orden numérico en lugar de consecutivo
     let detalles = Array.isArray(detArr) ? detArr : [];
@@ -5130,6 +5133,7 @@ window.verDetallePedido = async function(idOrden) {
       subtotal: Number(d.subtotal) || 0,
       descuento: Number(d.descuento) || 0,
       piezas_por_caja: Number(d.piezas_por_caja) || 0,   // caja: «2 cajas de 12 (24 pz)»
+      puntos_canje: Number(d.puntos_canje) || 0,
     }));
     if (esAdmin() && !window._vendedoresReparto) { try { window._vendedoresReparto = await cargarVendedoresCheckout(); } catch (_e) { window._vendedoresReparto = []; } }
     _pedidoActual = { ok: true, orden, lineas };
@@ -5286,6 +5290,167 @@ function actualizarMiniCarrito() {
 //   - URL ?track=PED-00123 (sin login, abierto)
 //   - Click desde "Mis pedidos" propios
 // ══════════════════════════════════════════════════════════════════
+// ── Editor de pedido (20 sep 2026, cambios/2026-09-20-editar-pedido/diseno.md) ──
+// Un solo editor para el drawer del vendedor y el tracking del cliente. No sabe quién lo abrió: recibe el
+// pedido, las líneas, el catálogo del canal y dos funciones (cotizar, aplicar) que llaman al RPC que toque.
+// No toca `carrito` ni ninguna otra global de sesión (regla 33). El total lo dice siempre el servidor.
+// `audiencia: 'vendedor' | 'cliente'` (opcional, por defecto 'vendedor') decide el vocabulario de los
+// avisos no bloqueantes (MOTIVO_EDICION[audiencia][código]); no se adivina desde `nivel` porque un
+// vendedor puede estar editando el pedido de un cliente. Tasks 7 y 8 lo pasan explícito.
+const MOTIVO_EDICION = {
+  vendedor: {
+    cancelado: 'No se puede editar: está cancelado', entregado: 'No se puede editar: ya se entregó',
+    pagado_en_linea: 'No se puede editar: pagado en línea (Stripe)', pago_en_linea_pendiente: 'No se puede editar: hay un pago en línea iniciado',
+    en_camino: 'Ya salió a reparto: avisa a quien lo lleva', ya_armado: 'Ya está armado: al guardar vuelve a «Por armar»',
+    no_es_tu_pedido: 'No se puede editar: no es tu pedido',
+    caja_sin_ajuste: 'La caja de hoy ya está cerrada: no se pudo ajustar el movimiento de caja de este cambio.',
+  },
+  cliente: {
+    cancelado: 'Este pedido se canceló', entregado: 'Este pedido ya se entregó',
+    pagado_en_linea: 'Pagaste en línea; para cambios escríbenos por WhatsApp', pago_en_linea_pendiente: 'Tienes un pago en línea iniciado; para cambios escríbenos por WhatsApp',
+    en_camino: 'Tu pedido ya salió; para cambios escríbenos por WhatsApp', ya_armado: 'Tu pedido ya se está preparando; para cambios escríbenos por WhatsApp',
+  },
+};
+// Escapa texto de servidor/catálogo antes de meterlo en innerHTML (fix 1 de revisión): sabor,
+// presentación y mensajes de error viajan como texto, nunca como marcado.
+const epEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let _ep = null;   // estado del editor abierto: { pedido, lineas, catalogo, nivel, audiencia, cotizar, aplicar, alGuardar, estado, cotizacion, seq, timer, guardando }
+// Escape: cierra el editor completo. Se añade al abrir y se quita al cerrar (nunca queda pegado).
+function _epTeclaEscape(e) { if (e.key === 'Escape') { e.preventDefault(); window.editorPedidoCerrar(); } }
+function abrirEditorPedido(o) {
+  const ov = document.getElementById('editor-pedido'); if (!ov) return;
+  _ep = { ...o, audiencia: (o.audiencia === 'cliente' ? 'cliente' : 'vendedor'), timer: null, seq: 0, cotizacion: null, guardando: false };
+  // Estado editable por línea: cantidad (piezas) / cajas / gramos; quitada; las de canje no se tocan.
+  _ep.estado = (o.lineas || []).map(l => ({
+    id: l.id, sabor: l.sabor, presentacion: l.presentacion, canje: Number(l.puntos_canje) > 0,
+    granel: l.tipo_venta === 'A granel', caja: Number(l.piezas_por_caja) || 0,
+    cantidad: Number(l.cantidad) || 0, cajas: Number(l.piezas_por_caja) ? Math.round(Number(l.cantidad) / Number(l.piezas_por_caja)) : 0,
+    gramos: Number(l.gramos) || 0, quitada: false, nueva: false,
+  }));
+  document.getElementById('ep-titulo').textContent = 'Editar ' + (o.pedido.consecutivo || 'pedido');
+  document.getElementById('ep-total-antes').textContent = '$' + Number(o.pedido.total || 0).toLocaleString('es-MX');
+  document.getElementById('ep-total-nuevo').textContent = '—';
+  document.getElementById('ep-avisos').innerHTML = '';
+  // Selectores de sabor y presentación del catálogo del canal (solo papas por pieza).
+  const papas = (o.catalogo || []).filter(p => (p.categoria || '') !== 'bebida' && p.tipo_venta !== 2 && p.presentacion && p.presentacion !== 'Granel');
+  const sabores = [...new Set(papas.map(p => p.sabor))];
+  const selS = document.getElementById('ep-sabor'), selP = document.getElementById('ep-pres'), selC = document.getElementById('ep-caja');
+  selS.innerHTML = sabores.map(s => `<option value="${epEsc(s)}">${epEsc(s)}</option>`).join('');
+  const pintarPres = () => { const pres = papas.filter(p => p.sabor === selS.value); selP.innerHTML = pres.map(p => `<option value="${epEsc(p.id)}">${epEsc(p.presentacion)}</option>`).join(''); };
+  selS.onchange = pintarPres; pintarPres();
+  selC.hidden = !(o.nivel === 'tienda' || o.nivel === 'mayorista'); selC.value = '0';
+  document.getElementById('ep-cant').value = '1';
+  editorPedidoPintar();
+  ov.hidden = false;
+  document.removeEventListener('keydown', _epTeclaEscape);
+  document.addEventListener('keydown', _epTeclaEscape);
+  const cerrarBtn = ov.querySelector('.ep-cerrar'); if (cerrarBtn) cerrarBtn.focus();
+  editorPedidoCotizar();
+}
+function editorPedidoLineasPayload() {
+  return _ep.estado.filter(l => !l.quitada).map(l => {
+    if (l.nueva) return l.caja ? { idProducto: String(l.idProducto), cajas: l.cajas, caja: l.caja } : { idProducto: String(l.idProducto), cantidad: l.cantidad };
+    if (l.canje) return { id: l.id };
+    if (l.granel) return { id: l.id, gramos: l.gramos };
+    if (l.caja) return { id: l.id, cajas: l.cajas };
+    return { id: l.id, cantidad: l.cantidad };
+  });
+}
+function editorPedidoPintar() {
+  const cont = document.getElementById('ep-lineas');
+  cont.innerHTML = _ep.estado.map((l, i) => {
+    const qty = l.canje ? `<b>${l.cantidad}</b>`
+      : l.granel ? `<input type="number" inputmode="numeric" min="100" step="50" value="${l.gramos}" aria-label="Gramos" onchange="editorPedidoGramos(${i}, this.value)"> g`
+      : `<button type="button" aria-label="Menos" onclick="editorPedidoMas(${i}, -1)">−</button><b>${l.caja ? l.cajas + ' caja' + (l.cajas === 1 ? '' : 's') : l.cantidad}</b><button type="button" aria-label="Más" onclick="editorPedidoMas(${i}, 1)">+</button>`;
+    const sub = l.caja ? `${epEsc(l.presentacion)} · caja de ${l.caja}` : epEsc(l.presentacion || '');
+    return `<div class="ep-linea${l.canje ? ' canje' : ''}${l.quitada ? ' quitada' : ''}">
+      <div class="n">${epEsc(l.sabor)}${l.nueva ? ' <span style="color:var(--amarillo)">nuevo</span>' : ''}<small>${sub}</small></div>
+      ${l.quitada ? '' : `<div class="ep-qty">${qty}</div>`}
+      ${l.canje ? '' : `<button type="button" class="ep-quitar${l.quitada ? ' deshacer' : ''}" onclick="editorPedidoQuitar(${i})">${l.quitada ? 'Deshacer' : 'Quitar'}</button>`}
+    </div>`;
+  }).join('') || '<div style="color:var(--suave);font-size:.8rem;padding:10px 0;">Sin productos</div>';
+}
+function editorPedidoCotizar() {
+  if (!_ep) return;
+  clearTimeout(_ep.timer);
+  const miEp = _ep;
+  // Regla 2 de la revisión final: deshabilitar Guardar y tirar la cotización vieja YA, no dentro del
+  // setTimeout. Antes, durante los 300 ms de espera el botón seguía vivo con _ep.cotizacion de la
+  // cotización anterior: un clic en esa ventana abría el diálogo de confirmación con el total y las
+  // líneas de ANTES del cambio, mientras editorPedidoGuardar mandaba el payload de líneas ACTUAL — el
+  // cliente veía y aprobaba un número distinto del que el servidor (autoritativo) terminaba aplicando.
+  miEp.cotizacion = null;
+  const btnYa = document.getElementById('ep-guardar'); if (btnYa) btnYa.disabled = true;
+  miEp.timer = setTimeout(async () => {
+    const miSeq = ++miEp.seq;   // token de carrera: fix 1+2 de revisión (cotizaciones fuera de orden / entre sesiones)
+    const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+    let r = null;
+    try { r = await miEp.cotizar(editorPedidoLineasPayload()); } catch (_e) { r = null; }
+    if (_ep !== miEp || _ep.seq !== miSeq) return;   // otra edición (o un pedido distinto) ganó la carrera
+    const av = document.getElementById('ep-avisos'); av.innerHTML = '';
+    if (r && r.ok && r.cotizacion) {
+      _ep.cotizacion = r.cotizacion;
+      document.getElementById('ep-total-nuevo').textContent = '$' + Number(r.cotizacion.total || 0).toLocaleString('es-MX');
+      (r.avisos || []).forEach(a => { const t = a === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION[_ep.audiencia][a] || ''); if (t) av.innerHTML += `<div class="ep-aviso">${epEsc(t)}</div>`; });
+      btn.disabled = false;
+    } else {
+      _ep.cotizacion = null;
+      document.getElementById('ep-total-nuevo').textContent = '—';
+      av.innerHTML = `<div class="ep-aviso">${epEsc(editorPedidoTextoError(r))}</div>`;
+    }
+  }, 300);
+}
+function editorPedidoTextoError(r) {
+  const e = (r && r.error) || '';
+  const T = { pedido_vacio: 'El pedido no puede quedar sin productos; para eso está Cancelar.', canje_bloqueado: 'Las piezas de canje no se pueden cambiar.',
+    producto_no_disponible: 'Ese producto no está disponible.', cantidad_invalida: 'Revisa las cantidades.', sin_lote: (r && r.mensaje) || 'No hay lote activo.',
+    caja_cerrada: (r && r.mensaje) || 'La caja del día está cerrada.', no_editable: 'Este pedido ya no se puede editar.', no_autorizado: 'Tu sesión venció; vuelve a entrar.',
+    granel_no_soportado: 'A granel no se puede editar por aquí; escríbenos por WhatsApp.', linea_ajena: 'Una de esas piezas no es de este pedido.',
+    linea_repetida: 'Hay un producto repetido; revisa las líneas.', caja_sin_ajuste: 'La caja del día ya está cerrada; el ajuste no se pudo aplicar.' };
+  return T[e] || (r && (r.mensaje || r.error)) || 'No se pudo calcular el total. Revisa tu conexión.';
+}
+window.editorPedidoMas = function (i, d) { const l = _ep.estado[i]; if (!l || l.canje) return; if (l.caja) l.cajas = Math.max(1, l.cajas + d); else l.cantidad = Math.max(1, l.cantidad + d); editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoGramos = function (i, v) { const l = _ep.estado[i]; if (!l) return; l.gramos = Math.max(100, Math.round(Number(v) || 0)); editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoQuitar = function (i) { const l = _ep.estado[i]; if (!l || l.canje) return; if (l.nueva) _ep.estado.splice(i, 1); else l.quitada = !l.quitada; editorPedidoPintar(); editorPedidoCotizar(); };
+window.editorPedidoAgregar = function () {
+  const idProd = document.getElementById('ep-pres').value; const p = (_ep.catalogo || []).find(x => String(x.id) === String(idProd)); if (!p) return;
+  const caja = Number(document.getElementById('ep-caja').value) || 0; const n = Math.max(1, Math.round(Number(document.getElementById('ep-cant').value) || 1));
+  _ep.estado.push({ id: null, idProducto: p.id, sabor: p.sabor, presentacion: p.presentacion, canje: false, granel: false, caja, cantidad: caja ? n * caja : n, cajas: caja ? n : 0, gramos: 0, quitada: false, nueva: true });
+  document.getElementById('ep-cant').value = '1';
+  editorPedidoPintar(); editorPedidoCotizar();
+};
+window.editorPedidoCerrar = function () {
+  if (_ep) clearTimeout(_ep.timer);
+  _ep = null;
+  document.removeEventListener('keydown', _epTeclaEscape);
+  const ov = document.getElementById('editor-pedido'); if (ov) ov.hidden = true;
+};
+window.editorPedidoGuardar = async function () {
+  if (!_ep || !_ep.cotizacion || _ep.guardando) return;
+  const miEp = _ep;
+  miEp.guardando = true;   // fix 3 de revisión: se marca ANTES del confirm, así un doble clic no abre un segundo diálogo
+  const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+  const c = miEp.cotizacion;
+  const cambios = (c.lineas || []).filter(l => l.accion !== 'igual').map(l => (l.accion === 'quitar' ? 'Quitar ' : l.accion === 'nueva' ? 'Agregar ' : 'Cambiar ') + l.sabor + ' ' + (l.presentacion || '') + (l.accion === 'quitar' ? '' : ' → ' + (l.gramos > 0 && l.accion !== 'nueva' && !l.piezasPorCaja ? l.gramos + ' g' : l.cantidad + ' pz')));
+  if (!cambios.length) { editorPedidoCerrar(); return; }
+  const sigue = await confirmar({ titulo: 'Guardar cambios', cuerpo: cambios.join('\n') + '\n\nNuevo total: $' + Number(c.total).toLocaleString('es-MX'), aceptar: 'Guardar', cancelar: 'Volver' });
+  if (_ep !== miEp) return;   // el editor se cerró o cambió de pedido mientras el diálogo estaba abierto
+  if (!sigue) { miEp.guardando = false; btn.disabled = false; return; }   // cancelar limpia el reintento
+  miEp.seq++;   // invalida cualquier cotización en vuelo: ya no importa, se está aplicando
+  let r = null;
+  try { r = await miEp.aplicar(editorPedidoLineasPayload()); } catch (e) { r = { ok: false, error: e.message }; }
+  if (_ep !== miEp) return;   // igual, pero alrededor del aplicar
+  miEp.guardando = false;
+  if (r && r.ok) {
+    try { track('editar_pedido', { consecutivo: miEp.pedido.consecutivo, lineas_antes: (miEp.lineas || []).length, lineas_despues: (r.lineas || []).length, total_antes: Number(miEp.pedido.total) || 0, total_despues: Number(r.pedido && r.pedido.total) || 0 }); } catch (_e) {}
+    const cb = miEp.alGuardar; editorPedidoCerrar(); mostrarToast('Pedido actualizado'); if (cb) cb(r);
+  } else {
+    btn.disabled = false;
+    avisar({ titulo: 'No se guardó', cuerpo: editorPedidoTextoError(r) });
+    editorPedidoCotizar();
+  }
+};
+
 let _trackingPedidoActual = null;
 let _trackingAutoRefresh = null;
 
@@ -5418,6 +5583,12 @@ function pintarTracking() {
   const pagado = String(p.estatusPago || '').toLowerCase().includes('paga');
   const REFRESH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>';
 
+  // Editar pedido (20 sep 2026): solo si el servidor lo dice; si no, el motivo con el enlace a WhatsApp.
+  const motivoCli = (MOTIVO_EDICION.cliente || {})[p.motivo] || '';
+  const editarHTML = p.editable === undefined ? '' : (p.editable && tokenCliente() && !esVendedor)
+    ? `<button type="button" class="tk-btn" onclick="editarMiPedido()">Editar pedido</button>`
+    : (motivoCli ? `<div class="tk-nota" style="margin-top:10px;">${motivoCli}${/WhatsApp/.test(motivoCli) ? ` · <a href="#" onclick="editarMiPedidoWpp();return false;" style="color:var(--amarillo);">Abrir WhatsApp</a>` : ''}</div>` : '');
+
   cont.innerHTML = `
     <div class="tk-card">
       <div class="tk-cab">
@@ -5440,10 +5611,34 @@ function pintarTracking() {
         ${p.colonia ? `<div class="tk-suave">${p.colonia} ${p.cp ? '· CP '+p.cp : ''}</div>` : ''}
         ${fechaEnt && !fechaReal ? `<div class="tk-etq" style="margin-top:10px;">Entrega estimada</div><div class="tk-valor">${fechaEnt}</div>` : ''}
       </div>` : ''}
+    ${editarHTML}
     <button class="tk-btn" onclick="cargarTracking('${p.consecutivo}')">${REFRESH} Actualizar</button>
     <div class="tk-nota">Actualización automática cada 30 s</div>
   `;
 }
+
+// window.editarMiPedido y window.editarMiPedidoWpp: definidas después de pintarTracking, no dentro
+// (evita cerrar sobre `p` de una pintada vieja; siempre leen _trackingPedidoActual al momento del clic).
+window.editarMiPedido = function () {
+  const p = _trackingPedidoActual; if (!p) return;
+  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_mi_pedido', { p_data: { token: tokenCliente(), idOrden: String(p.id), modo, lineas } });
+  abrirEditorPedido({
+    pedido: { id: p.id, consecutivo: p.consecutivo, total: p.total, editable: p.editable, motivo: p.motivo },
+    lineas: (p.items || []).map(it => ({ id: it.id, sabor: it.sabor, presentacion: it.presentacion, tipo_venta: it.modo === 'granel' ? 'A granel' : 'Por Pieza', cantidad: it.cantidad, gramos: it.gramos, piezas_por_caja: it.piezasPorCaja, puntos_canje: it.puntosCanje, subtotal: it.subtotal })),
+    catalogo, nivel: 'consumidor', audiencia: 'cliente',
+    cotizar: llamar('cotizar'), aplicar: llamar('aplicar'),
+    alGuardar: () => cargarTracking(p.consecutivo),
+  });
+};
+
+// Enlace «Abrir WhatsApp» del motivo de no-edición: sin await entre el clic y abrir la pestaña
+// (no aplica la regla 51 aquí), así que basta pasar null como ventana (patrón de panel.js:167).
+window.editarMiPedidoWpp = function () {
+  const p = _trackingPedidoActual; if (!p) return false;
+  const msg = 'Hola, quiero cambiar mi pedido ' + (p.consecutivo || '');
+  irAWhatsApp(null, `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
+  return false;
+};
 
 // Detectar parámetro ?track=XXX al cargar y abrir tracking directo
 (function detectarTrackingURL() {
@@ -6116,9 +6311,11 @@ function mostrarPagoConfirmado(ok) {
 export const N = {
   get ARMADO_TITULO_BASE() { return ARMADO_TITULO_BASE; },
   get CACHE_KEYS() { return CACHE_KEYS; },
+  get catalogo() { return catalogo; },
   get MAYOREO_MINIMOS() { return MAYOREO_MINIMOS; }, set MAYOREO_MINIMOS(valor) { MAYOREO_MINIMOS = valor; },
   get SALTO() { return SALTO; },
   get WHATSAPP_NUM() { return WHATSAPP_NUM; },
+  get MOTIVO_EDICION() { return MOTIVO_EDICION; },
   get _modoCliente() { return _modoCliente; }, set _modoCliente(valor) { _modoCliente = valor; },
   get _pedidoActual() { return _pedidoActual; }, set _pedidoActual(valor) { _pedidoActual = valor; },
   get canalVenta() { return canalVenta; }, set canalVenta(valor) { canalVenta = valor; },
@@ -6129,6 +6326,7 @@ export const N = {
   get telefonoVerif() { return telefonoVerif; }, set telefonoVerif(valor) { telefonoVerif = valor; },
   get tipoCliente() { return tipoCliente; }, set tipoCliente(valor) { tipoCliente = valor; },
   get vendedorInfo() { return vendedorInfo; }, set vendedorInfo(valor) { vendedorInfo = valor; },
+  abrirEditorPedido,
   abrirVentanaPendiente,
   actualizarBadge,
   bloquearCamposCliente,
