@@ -337,13 +337,31 @@ if (corre('D')) {
   const gen = uno(`select coalesce(sum(puntos),0)::int s from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo = 'generacion'`).s;
   ok(gen === 35, `D3 pagado: generación ${gen} (35 = floor(350 × 0.1))`);
   const r3 = (await editar(ana, p3.idOrden, [{ id: lineasDe(p3.idOrden)[0].id, cantidad: 4 }])).json;
-  const aj = sql(`select puntos, nota from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo = 'ajuste'`);
+  // Regla 1 de la revisión final: el ajuste ahora se escribe con tipo 'generacion' (no 'ajuste'), así
+  // que se identifica por la nota (sigue siendo «Ajuste por edición de …», como antes) y no por el tipo.
+  const aj = sql(`select puntos, nota, tipo from lealtad_movimientos where id_orden = ${p3.idOrden} and nota like 'Ajuste por edici%'`);
   const saldo = (await rpc('mis_puntos', { p_token: cD.token })).json?.saldo;
-  ok(r3?.ok && aj.length === 1 && Number(aj[0].puntos) === -21 && cerca(r3?.puntos?.puntos, -21) && Number(saldo) === Number(uno(`select coalesce(sum(puntos),0) s from lealtad_movimientos where id_cliente = ${cD.id}`).s),
-     `D3 350→140: ajuste ${aj[0]?.puntos} (−21), saldo ${saldo} = Σ ledger`);
+  ok(r3?.ok && aj.length === 1 && aj[0].tipo === 'generacion' && Number(aj[0].puntos) === -21 && cerca(r3?.puntos?.puntos, -21) && Number(saldo) === Number(uno(`select coalesce(sum(puntos),0) s from lealtad_movimientos where id_cliente = ${cD.id}`).s),
+     `D3 350→140: ajuste ${aj[0]?.puntos} tipo ${aj[0]?.tipo} (−21, generacion), saldo ${saldo} = Σ ledger`);
   const r3b = (await editar(ana, p3.idOrden, [{ id: lineasDe(p3.idOrden)[0].id, cantidad: 4 }, { idProducto: String(P100), cantidad: 6 }])).json;
   const aj2 = uno(`select coalesce(sum(puntos),0)::int s from lealtad_movimientos where id_orden = ${p3.idOrden} and tipo in ('generacion','reversion','ajuste')`).s;
   ok(r3b?.ok && aj2 === 35, `D3b vuelve a 350: neto de puntos del pedido ${aj2} (35)`);
+  // D3c. Regla 1 de la revisión final: el ajuste de puntos de una edición se escribe como 'generacion'
+  // (no 'ajuste') para que revertir_puntos_al_cancelar lo vea — esa función, al cancelar, solo suma
+  // tipo in ('generacion','reversion') (20260930000006_club_canje.sql:502-515); un 'ajuste' le es
+  // invisible y la cancelación revertiría solo la generación original, dejando el neto del pedido
+  // distinto de cero en un ledger solo-INSERT que no se puede corregir después. Pedido NUEVO y
+  // dedicado (no p3, ya devuelto a 350 en D3b: cancelar ESE dejaría el ajuste neto en 0 por
+  // coincidencia — dos ajustes que se cancelan entre sí — y no distinguiría 'ajuste' de 'generacion').
+  // Aquí se cancela con un solo ajuste pendiente (350→140, sin volver a subir): bajo el bug, el
+  // trigger revierte solo la generación de 35 y dos filas 'ajuste' (−21) quedan colgadas fuera del
+  // alcance del reverso → neto −21, no 0.
+  const p3c = await pedidoCli(cD, [linea(P100, '100g', 10, 35)], 350); creados.push(p3c?.idOrden);
+  await confirmar(p3c); await pagar(p3c);
+  await editar(ana, p3c.idOrden, [{ id: lineasDe(p3c.idOrden)[0].id, cantidad: 4 }]);   // 350 → 140: ajuste −21
+  await cancelar(p3c);
+  const netoP3c = Number(uno(`select coalesce(sum(puntos),0) s from lealtad_movimientos where id_orden = ${p3c.idOrden}`).s);
+  ok(netoP3c === 0, `D3c cancelar tras un solo ajuste de edición (350→140): neto del ledger del pedido ${netoP3c} (0)`);
   // D4. Reto que deja de cumplirse: el bono se compensa.
   const reto = (await rpc('guardar_reto', { p_data: { token: ana.token, reto: { nombre: 'Monto edit ' + sufijo, descripcion: 'p', tipo: 'monto', meta: 300, bono: 40, desde: new Date(Date.now() - 864e5).toISOString().slice(0, 10), hasta: new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10), publico: 'consumidores', activo: true } } })).json;
   const cR = await alta('Edit D reto');

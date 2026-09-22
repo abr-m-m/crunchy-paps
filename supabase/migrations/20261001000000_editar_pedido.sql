@@ -133,13 +133,19 @@ revoke all on function public.editable_pedido(public.ordenes, text) from public,
 
 -- El descuento de un cupón para un subtotal dado, sin validar_cupon (que rechaza por un_uso_por_usuario el
 -- cupón de este mismo pedido). Mismas reglas de valor que crear_pedido (20260930000008:296-307).
+-- Regla 4 de la revisión final: NO se vuelve a comprobar `activo`. El precio pactado al crear el pedido
+-- se honra igual que ya se honraba una vigencia vencida (la función nunca miró vigencia_inicio/fin);
+-- desactivar un cupón después de la venta no debe quitarle el descuento a un pedido que ya lo tenía, lo
+-- mismo que dejarlo vencer no se lo quita. Lo único que SÍ se vuelve a comprobar es compra_minima, porque
+-- es lo único que la propia edición puede cambiar (el subtotal). Un cupón borrado (c.id is null) sigue
+-- contando como retirado.
 create or replace function public.descuento_cupon_para(p_codigo text, p_subtotal numeric) returns jsonb
 language plpgsql stable set search_path = public, pg_temp as $$
 declare c cupones%rowtype;
 begin
   if coalesce(p_codigo, '') = '' then return jsonb_build_object('descuento', 0, 'envio_gratis', false, 'retirado', false); end if;
   select * into c from cupones where codigo = upper(p_codigo) limit 1;
-  if c.id is null or not coalesce(c.activo, true) or coalesce(c.compra_minima, 0) > p_subtotal then
+  if c.id is null or coalesce(c.compra_minima, 0) > p_subtotal then
     return jsonb_build_object('descuento', 0, 'envio_gratis', false, 'retirado', true);
   end if;
   return jsonb_build_object(
@@ -208,6 +214,12 @@ begin
 
       if coalesce(d.puntos_canje, 0) > 0 then
         -- Canje: tiene que venir intacto.
+        -- Regla 7 de la revisión final: guarda de forma antes del cast, como en las líneas vecinas
+        -- (v_cajas de línea nueva, línea 256) — sin ella, {id, cantidad: "x"} tira
+        -- invalid_text_representation sin capturar → PostgREST responde 500 en vez de un error de forma.
+        if v_in ? 'cantidad' and (v_in->>'cantidad') !~ '^[0-9]+(\.[0-9]+)?$' then
+          return jsonb_build_object('ok', false, 'error', 'cantidad_invalida');
+        end if;
         if (v_in ? 'cantidad' and (v_in->>'cantidad')::numeric <> d.cantidad) or v_in ? 'cajas' or v_in ? 'gramos' then
           return jsonb_build_object('ok', false, 'error', 'canje_bloqueado');
         end if;
@@ -326,6 +338,12 @@ begin
      set subtotal = v_sub, descuento = v_desc, descuento_envio = v_desc_envio, total = v_total,
          editado_en = now(), editado_por = p_actor, actualizado_por = p_actor
    where id = o.id;
+
+  -- Regla 5 de la revisión final: crear_pedido escribe cupones_uso.monto_descuento como
+  -- v_desc + v_desc_envio (20260930000008_ingreso_bruto_neto.sql:432-435, id_orden en TEXT). La
+  -- edición recalcula el descuento del pedido pero dejaba esa fila con el valor de la creación:
+  -- el reporte de rendimiento de cupones quedaba desalineado con lo que el pedido realmente descontó.
+  update cupones_uso set monto_descuento = v_desc + v_desc_envio where id_orden = o.id::text;
 
   -- 6. Compensaciones y armado: T4.
   v_res := public.editar_pedido_compensar(o, v_total, p_actor, p_quien);
@@ -465,7 +483,13 @@ begin
        where id_orden = o.id and tipo in ('generacion', 'reversion', 'ajuste');
       v_dpts := v_obj - v_hay;
       if v_dpts <> 0 then
-        v_id_led := agregar_movimiento_lealtad(o.id_cliente, 'ajuste', v_dpts, o.id, o.consecutivo, null, null, v_neto,
+        -- Regla 1 de la revisión final: tipo 'generacion' (no 'ajuste'), porque
+        -- revertir_puntos_al_cancelar (20260930000006_club_canje.sql) solo suma
+        -- 'generacion' y 'reversion' al cancelar. Un ajuste escrito como 'ajuste' es invisible
+        -- para ese trigger: la cancelación revertiría solo lo generado al confirmar, dejando el
+        -- ajuste de la edición fuera del ledger para siempre (INSERT-only, sin forma de corregirlo
+        -- después). La nota deja identificable que este movimiento vino de una edición.
+        v_id_led := agregar_movimiento_lealtad(o.id_cliente, 'generacion', v_dpts, o.id, o.consecutivo, null, null, v_neto,
                       'Ajuste por edición de ' || o.consecutivo, coalesce(p_actor, 'sistema'));
         v_pts := jsonb_build_object('id', v_id_led, 'puntos', v_dpts);
       end if;

@@ -5374,6 +5374,13 @@ function editorPedidoCotizar() {
   if (!_ep) return;
   clearTimeout(_ep.timer);
   const miEp = _ep;
+  // Regla 2 de la revisión final: deshabilitar Guardar y tirar la cotización vieja YA, no dentro del
+  // setTimeout. Antes, durante los 300 ms de espera el botón seguía vivo con _ep.cotizacion de la
+  // cotización anterior: un clic en esa ventana abría el diálogo de confirmación con el total y las
+  // líneas de ANTES del cambio, mientras editorPedidoGuardar mandaba el payload de líneas ACTUAL — el
+  // cliente veía y aprobaba un número distinto del que el servidor (autoritativo) terminaba aplicando.
+  miEp.cotizacion = null;
+  const btnYa = document.getElementById('ep-guardar'); if (btnYa) btnYa.disabled = true;
   miEp.timer = setTimeout(async () => {
     const miSeq = ++miEp.seq;   // token de carrera: fix 1+2 de revisión (cotizaciones fuera de orden / entre sesiones)
     const btn = document.getElementById('ep-guardar'); btn.disabled = true;
