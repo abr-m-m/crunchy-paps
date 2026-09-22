@@ -38,24 +38,68 @@ create trigger trg_detalle_devolver_al_borrar
   after delete on public.ordenes_detalle
   for each row execute function public.trg_detalle_devolver_al_borrar();
 
--- BEFORE UPDATE OF cantidad, gramos_vendidos: si la línea ya descontó, aplica la diferencia al mismo lote
--- y deja kg_descontado_lote en el valor nuevo. Una línea sin descuento (pedido Pendiente) no se toca:
--- fn_reconciliar_pedido la descontará al confirmar. Las escrituras de esa función a kg_descontado_lote
--- no disparan este trigger (no tocan cantidad ni gramos_vendidos).
+-- BEFORE UPDATE OF cantidad, gramos_vendidos: si la línea ya descontó, aplica la diferencia. Una línea
+-- sin descuento (pedido Pendiente) no se toca: fn_reconciliar_pedido la descontará al confirmar. Las
+-- escrituras de esa función a kg_descontado_lote no disparan este trigger (no tocan cantidad ni
+-- gramos_vendidos).
+-- Decisión de Abraham (21 sep 2026), tras la revisión: una línea crecida por encima de lo ya
+-- descontado NO se queda cargando al lote con el que nació — puede estar cerrado, y su
+-- `kilos_disponibles` (GENERADA) se iría a negativo mientras el lote de hoy muestra más producto
+-- disponible del que hay. Al CRECER, los kg de más salen del lote ACTIVO de hoy (mismo criterio que
+-- fn_reconciliar_pedido, 20260830203059:1508-1510: el más reciente con estatus = 'Activo'): se le
+-- devuelve al lote de origen TODO lo que tenía de esta línea y se descuenta del activo el total nuevo
+-- — la línea se muda entera (una línea guarda un solo lote y un solo monto: no se puede partir sin una
+-- tabla nueva, fuera de alcance). Sin lote activo, no se puede completar el crecimiento: se rechaza con
+-- el mismo texto que usa fn_reconciliar_pedido para que el `like '%No hay LOTE ACTIVO%'` de
+-- editar_pedido_interno lo traduzca a {ok:false, error:'sin_lote'} sin tocar esa función.
+-- Al BAJAR (o quedar igual), la línea se queda donde ya estaba: ese lote es quien de verdad la sirvió,
+-- y ahí es donde hay que devolverle el kilaje.
+-- Caso borde: si el lote activo YA ES el de origen, es un solo ajuste neto (evita devolver-y-redescontar
+-- como dos UPDATE separados sobre el mismo renglón, que con el `greatest(0, ...)` de por medio podría
+-- perder kilos si el clamp se dispara a medio camino).
 create or replace function public.trg_detalle_ajustar_al_cambiar() returns trigger
 language plpgsql security definer set search_path = public, pg_temp as $$
-declare v_nuevo numeric;
+declare
+  v_nuevo numeric;
+  v_lote_activo text;
 begin
   if coalesce(OLD.kg_descontado_lote, 0) <= 0 or OLD.id_lote_descontado is null then
     return NEW;
   end if;
   v_nuevo := public.kg_de_linea(NEW.tipo_venta, NEW.presentacion, NEW.cantidad, NEW.gramos_vendidos);
-  if v_nuevo <> OLD.kg_descontado_lote then
+  if v_nuevo = OLD.kg_descontado_lote then
+    return NEW;
+  end if;
+
+  if v_nuevo > OLD.kg_descontado_lote then
+    select id_lote into v_lote_activo
+      from public.lotes_produccion
+     where estatus = 'Activo'
+     order by fecha desc, id desc
+     limit 1;
+    if v_lote_activo is null then
+      raise exception '⛔ No hay LOTE ACTIVO. Registra el lote de producción antes de aumentar esta línea (% kg por descontar).', round(v_nuevo, 3);
+    end if;
+    if v_lote_activo = OLD.id_lote_descontado then
+      update public.lotes_produccion
+         set kilos_vendidos = greatest(0, coalesce(kilos_vendidos, 0) + (v_nuevo - OLD.kg_descontado_lote))
+       where id_lote = OLD.id_lote_descontado;
+    else
+      update public.lotes_produccion
+         set kilos_vendidos = greatest(0, coalesce(kilos_vendidos, 0) - OLD.kg_descontado_lote)
+       where id_lote = OLD.id_lote_descontado;
+      update public.lotes_produccion
+         set kilos_vendidos = coalesce(kilos_vendidos, 0) + v_nuevo
+       where id_lote = v_lote_activo;
+      NEW.id_lote_descontado := v_lote_activo;
+    end if;
+  else
     update public.lotes_produccion
        set kilos_vendidos = greatest(0, coalesce(kilos_vendidos, 0) + (v_nuevo - OLD.kg_descontado_lote))
      where id_lote = OLD.id_lote_descontado;
-    NEW.kg_descontado_lote := v_nuevo;
   end if;
+
+  NEW.kg_descontado_lote := v_nuevo;
   return NEW;
 end $$;
 drop trigger if exists trg_detalle_ajustar_al_cambiar on public.ordenes_detalle;

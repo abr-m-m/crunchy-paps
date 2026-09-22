@@ -94,6 +94,68 @@ if (corre('A')) {
   ok(cerca(kgLote(), kAntes), `A5 cancelar devuelve 0.9 sin doble conteo: ${kgLote()} (${kAntes})`);
   // A6. Columnas nuevas existen.
   ok(uno(`select count(*)::int n from information_schema.columns where table_name = 'ordenes' and column_name in ('editado_en','editado_por')`).n === 2, 'A6 ordenes.editado_en / editado_por');
+
+  // ── A7-A10. Crecer mueve el kilaje al LOTE ACTIVO (decisión de Abraham, 21 sep 2026) ──────────
+  // Un segundo lote, para alternar cuál está Activo sin tocar el de A1-A6 (idLote/LOTE-A).
+  const idLoteB = `LOTE-EDIT-B-${sufijo}`;
+  sql(`insert into lotes_produccion (id_lote, fecha, kilos_totales, kilos_vendidos, estatus) values ('${idLoteB}', current_date, 100, 0, 'Cerrado')`);
+  const kgLoteB = () => Number(uno(`select kilos_vendidos from lotes_produccion where id_lote = '${idLoteB}'`).kilos_vendidos);
+
+  // A7/A8 setup: dos pedidos confirmados con LOTE-A activo (la única activa en este punto), luego
+  // se cierra LOTE-A y se activa LOTE-B — «switch de cuál está Activo» del brief.
+  const cA78 = await alta('Edit A78');
+  const pGrow = await pedidoCli(cA78, [linea(P100, '100g', 2, 35)], 70); creados.push(pGrow?.idOrden);
+  const pShrink = await pedidoCli(cA78, [linea(P100, '100g', 6, 35)], 210); creados.push(pShrink?.idOrden);
+  await confirmar(pGrow); await confirmar(pShrink);
+  const lGrow0 = lineasDe(pGrow.idOrden)[0];
+  const lShrink0 = lineasDe(pShrink.idOrden)[0];
+  ok(lGrow0.id_lote_descontado === idLote && cerca(lGrow0.kg_descontado_lote, 0.2) && lShrink0.id_lote_descontado === idLote && cerca(lShrink0.kg_descontado_lote, 0.6),
+     `A7/A8 setup: ambas líneas nacen en LOTE-A (${lGrow0.id_lote_descontado}, ${lShrink0.id_lote_descontado}) con 0.2 y 0.6 kg`);
+  const loteAantes = kgLote();
+  sql(`update lotes_produccion set estatus = 'Cerrado' where id_lote = '${idLote}'`);
+  sql(`update lotes_produccion set estatus = 'Activo' where id_lote = '${idLoteB}'`);
+
+  // A7. Crecer (2→7 piezas, 0.2→0.7 kg) con LOTE-A cerrada y LOTE-B activa: LOTE-A regresa a su
+  // valor previo (se le devuelve TODO lo que tenía de esta línea), LOTE-B se lleva el kilaje nuevo
+  // COMPLETO, y la línea se muda entera (id_lote_descontado pasa a LOTE-B).
+  sql(`update ordenes_detalle set cantidad = 7 where id = ${lGrow0.id}`);
+  const lGrow1 = lineasDe(pGrow.idOrden)[0];
+  ok(cerca(kgLote(), loteAantes - 0.2) && cerca(kgLoteB(), 0.7) && lGrow1.id_lote_descontado === idLoteB && cerca(lGrow1.kg_descontado_lote, 0.7),
+     `A7 crecer 2→7 con LOTE-A cerrada: LOTE-A ${kgLote()} (${loteAantes - 0.2}), LOTE-B ${kgLoteB()} (0.7), línea en ${lGrow1.id_lote_descontado} (LOTE-B)`);
+
+  // A8. Bajar (6→4 piezas, 0.6→0.4 kg) con LOTE-A cerrada, LOTE-B activa: LOTE-A absorbe la baja
+  // (es quien de verdad sirvió esos kg — comportamiento sin cambios), LOTE-B no se toca, la línea
+  // NO se muda.
+  const loteBantesA8 = kgLoteB();
+  sql(`update ordenes_detalle set cantidad = 4 where id = ${lShrink0.id}`);
+  const lShrink1 = lineasDe(pShrink.idOrden)[0];
+  ok(cerca(kgLote(), loteAantes - 0.2 - 0.2) && cerca(kgLoteB(), loteBantesA8) && lShrink1.id_lote_descontado === idLote && cerca(lShrink1.kg_descontado_lote, 0.4),
+     `A8 bajar 6→4 con LOTE-A cerrada: LOTE-A ${kgLote()} (${loteAantes - 0.4}), LOTE-B sin tocar ${kgLoteB()} (${loteBantesA8}), línea sigue en ${lShrink1.id_lote_descontado} (LOTE-A)`);
+
+  // A9. Crecer con el MISMO lote activo (LOTE-B, activa desde A7): delta neto sobre ese lote, sin
+  // mudar la línea — igual que el comportamiento de antes de esta regla (no primero devolver y
+  // luego re-descontar: un solo ajuste).
+  const cA9 = await alta('Edit A9');
+  const pSame = await pedidoCli(cA9, [linea(P100, '100g', 1, 35)], 35); creados.push(pSame?.idOrden);
+  await confirmar(pSame);   // LOTE-B sigue activa: la línea nace ahí.
+  const lSame0 = lineasDe(pSame.idOrden)[0];
+  ok(lSame0.id_lote_descontado === idLoteB, `A9 setup: línea nace en el lote activo ${lSame0.id_lote_descontado} (LOTE-B)`);
+  const loteBantesA9 = kgLoteB();
+  sql(`update ordenes_detalle set cantidad = 4 where id = ${lSame0.id}`);   // 1→4 piezas: 0.1→0.4 kg
+  const lSame1 = lineasDe(pSame.idOrden)[0];
+  ok(cerca(kgLoteB(), loteBantesA9 + 0.3) && lSame1.id_lote_descontado === idLoteB && cerca(lSame1.kg_descontado_lote, 0.4),
+     `A9 crecer con el mismo lote activo: LOTE-B ${kgLoteB()} (${loteBantesA9 + 0.3}, delta neto), línea sigue en ${lSame1.id_lote_descontado} (LOTE-B, sin mudar)`);
+
+  // A10. Crecer SIN lote activo (LOTE-A y LOTE-B, las dos cerradas): falla con sin_lote vía
+  // editar_pedido, y no cambia nada — ni las líneas, ni la cabecera, ni ninguno de los dos lotes.
+  sql(`update lotes_produccion set estatus = 'Cerrado' where id_lote = '${idLoteB}'`);
+  const antes10 = JSON.stringify([lineasDe(pSame.idOrden), cab(pSame.idOrden).total, kgLote(), kgLoteB()]);
+  const r10 = (await editar(ana, pSame.idOrden, [{ id: lSame1.id, cantidad: 9 }])).json;
+  ok(r10?.error === 'sin_lote' && JSON.stringify([lineasDe(pSame.idOrden), cab(pSame.idOrden).total, kgLote(), kgLoteB()]) === antes10,
+     `A10 sin lote activo: ${r10?.error}, nada cambió (líneas, cabecera, LOTE-A ${kgLote()}, LOTE-B ${kgLoteB()})`);
+
+  // Deja LOTE-A activa de nuevo: B/C/D/E la esperan así. LOTE-B se queda cerrada (limpieza al final).
+  sql(`update lotes_produccion set estatus = 'Activo' where id_lote = '${idLote}'`);
 }
 
 // ── B. cotizar_linea ≡ crear_pedido (T2) ────────────────────────────────────
@@ -455,7 +517,7 @@ if (corre('E')) {
 
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { try { await cancelar({ idOrden: id }); } catch (_e) {} }
-sql(`update lotes_produccion set estatus = 'Cerrado', fecha_cierre = now() where id_lote = '${idLote}'`);
+sql(`update lotes_produccion set estatus = 'Cerrado', fecha_cierre = now() where id_lote like 'LOTE-EDIT-%${sufijo}%'`);
 sql(`update productos set activo = false where sabor like 'EDIT-${sufijo}%'`);
 console.log(`\n${fallos} fallo(s).`);
 process.exit(fallos ? 1 : 0);
