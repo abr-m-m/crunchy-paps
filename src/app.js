@@ -5290,6 +5290,9 @@ function actualizarMiniCarrito() {
 // Un solo editor para el drawer del vendedor y el tracking del cliente. No sabe quién lo abrió: recibe el
 // pedido, las líneas, el catálogo del canal y dos funciones (cotizar, aplicar) que llaman al RPC que toque.
 // No toca `carrito` ni ninguna otra global de sesión (regla 33). El total lo dice siempre el servidor.
+// `audiencia: 'vendedor' | 'cliente'` (opcional, por defecto 'vendedor') decide el vocabulario de los
+// avisos no bloqueantes (MOTIVO_EDICION[audiencia][código]); no se adivina desde `nivel` porque un
+// vendedor puede estar editando el pedido de un cliente. Tasks 7 y 8 lo pasan explícito.
 const MOTIVO_EDICION = {
   vendedor: {
     cancelado: 'No se puede editar: está cancelado', entregado: 'No se puede editar: ya se entregó',
@@ -5303,10 +5306,15 @@ const MOTIVO_EDICION = {
     en_camino: 'Tu pedido ya salió; para cambios escríbenos por WhatsApp', ya_armado: 'Tu pedido ya se está preparando; para cambios escríbenos por WhatsApp',
   },
 };
-let _ep = null;   // estado del editor abierto: { pedido, lineas, catalogo, nivel, cotizar, aplicar, alGuardar, estado, cotizacion, timer }
+// Escapa texto de servidor/catálogo antes de meterlo en innerHTML (fix 1 de revisión): sabor,
+// presentación y mensajes de error viajan como texto, nunca como marcado.
+const epEsc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let _ep = null;   // estado del editor abierto: { pedido, lineas, catalogo, nivel, audiencia, cotizar, aplicar, alGuardar, estado, cotizacion, seq, timer, guardando }
+// Escape: cierra el editor completo. Se añade al abrir y se quita al cerrar (nunca queda pegado).
+function _epTeclaEscape(e) { if (e.key === 'Escape') { e.preventDefault(); window.editorPedidoCerrar(); } }
 function abrirEditorPedido(o) {
   const ov = document.getElementById('editor-pedido'); if (!ov) return;
-  _ep = { ...o, timer: null, cotizacion: null, guardando: false };
+  _ep = { ...o, audiencia: (o.audiencia === 'cliente' ? 'cliente' : 'vendedor'), timer: null, seq: 0, cotizacion: null, guardando: false };
   // Estado editable por línea: cantidad (piezas) / cajas / gramos; quitada; las de canje no se tocan.
   _ep.estado = (o.lineas || []).map(l => ({
     id: l.id, sabor: l.sabor, presentacion: l.presentacion, canje: Number(l.puntos_canje) > 0,
@@ -5322,13 +5330,16 @@ function abrirEditorPedido(o) {
   const papas = (o.catalogo || []).filter(p => (p.categoria || '') !== 'bebida' && p.tipo_venta !== 2 && p.presentacion && p.presentacion !== 'Granel');
   const sabores = [...new Set(papas.map(p => p.sabor))];
   const selS = document.getElementById('ep-sabor'), selP = document.getElementById('ep-pres'), selC = document.getElementById('ep-caja');
-  selS.innerHTML = sabores.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
-  const pintarPres = () => { const pres = papas.filter(p => p.sabor === selS.value); selP.innerHTML = pres.map(p => `<option value="${p.id}">${p.presentacion}</option>`).join(''); };
+  selS.innerHTML = sabores.map(s => `<option value="${epEsc(s)}">${epEsc(s)}</option>`).join('');
+  const pintarPres = () => { const pres = papas.filter(p => p.sabor === selS.value); selP.innerHTML = pres.map(p => `<option value="${epEsc(p.id)}">${epEsc(p.presentacion)}</option>`).join(''); };
   selS.onchange = pintarPres; pintarPres();
   selC.hidden = !(o.nivel === 'tienda' || o.nivel === 'mayorista'); selC.value = '0';
   document.getElementById('ep-cant').value = '1';
   editorPedidoPintar();
   ov.hidden = false;
+  document.removeEventListener('keydown', _epTeclaEscape);
+  document.addEventListener('keydown', _epTeclaEscape);
+  const cerrarBtn = ov.querySelector('.ep-cerrar'); if (cerrarBtn) cerrarBtn.focus();
   editorPedidoCotizar();
 }
 function editorPedidoLineasPayload() {
@@ -5346,9 +5357,9 @@ function editorPedidoPintar() {
     const qty = l.canje ? `<b>${l.cantidad}</b>`
       : l.granel ? `<input type="number" inputmode="numeric" min="100" step="50" value="${l.gramos}" aria-label="Gramos" onchange="editorPedidoGramos(${i}, this.value)"> g`
       : `<button type="button" aria-label="Menos" onclick="editorPedidoMas(${i}, -1)">−</button><b>${l.caja ? l.cajas + ' caja' + (l.cajas === 1 ? '' : 's') : l.cantidad}</b><button type="button" aria-label="Más" onclick="editorPedidoMas(${i}, 1)">+</button>`;
-    const sub = l.caja ? `${l.presentacion} · caja de ${l.caja}` : (l.presentacion || '');
+    const sub = l.caja ? `${epEsc(l.presentacion)} · caja de ${l.caja}` : epEsc(l.presentacion || '');
     return `<div class="ep-linea${l.canje ? ' canje' : ''}${l.quitada ? ' quitada' : ''}">
-      <div class="n">${l.sabor}${l.nueva ? ' <span style="color:var(--amarillo)">nuevo</span>' : ''}<small>${sub}</small></div>
+      <div class="n">${epEsc(l.sabor)}${l.nueva ? ' <span style="color:var(--amarillo)">nuevo</span>' : ''}<small>${sub}</small></div>
       ${l.quitada ? '' : `<div class="ep-qty">${qty}</div>`}
       ${l.canje ? '' : `<button type="button" class="ep-quitar${l.quitada ? ' deshacer' : ''}" onclick="editorPedidoQuitar(${i})">${l.quitada ? 'Deshacer' : 'Quitar'}</button>`}
     </div>`;
@@ -5357,21 +5368,23 @@ function editorPedidoPintar() {
 function editorPedidoCotizar() {
   if (!_ep) return;
   clearTimeout(_ep.timer);
-  _ep.timer = setTimeout(async () => {
+  const miEp = _ep;
+  miEp.timer = setTimeout(async () => {
+    const miSeq = ++miEp.seq;   // token de carrera: fix 1+2 de revisión (cotizaciones fuera de orden / entre sesiones)
     const btn = document.getElementById('ep-guardar'); btn.disabled = true;
     let r = null;
-    try { r = await _ep.cotizar(editorPedidoLineasPayload()); } catch (_e) { r = null; }
-    if (!_ep) return;
+    try { r = await miEp.cotizar(editorPedidoLineasPayload()); } catch (_e) { r = null; }
+    if (_ep !== miEp || _ep.seq !== miSeq) return;   // otra edición (o un pedido distinto) ganó la carrera
     const av = document.getElementById('ep-avisos'); av.innerHTML = '';
     if (r && r.ok && r.cotizacion) {
       _ep.cotizacion = r.cotizacion;
       document.getElementById('ep-total-nuevo').textContent = '$' + Number(r.cotizacion.total || 0).toLocaleString('es-MX');
-      (r.avisos || []).forEach(a => { const t = a === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION.vendedor[a] || ''); if (t) av.innerHTML += `<div class="ep-aviso">${t}</div>`; });
+      (r.avisos || []).forEach(a => { const t = a === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION[_ep.audiencia][a] || ''); if (t) av.innerHTML += `<div class="ep-aviso">${epEsc(t)}</div>`; });
       btn.disabled = false;
     } else {
       _ep.cotizacion = null;
       document.getElementById('ep-total-nuevo').textContent = '—';
-      av.innerHTML = `<div class="ep-aviso">${editorPedidoTextoError(r)}</div>`;
+      av.innerHTML = `<div class="ep-aviso">${epEsc(editorPedidoTextoError(r))}</div>`;
     }
   }, 300);
 }
@@ -5394,22 +5407,31 @@ window.editorPedidoAgregar = function () {
   document.getElementById('ep-cant').value = '1';
   editorPedidoPintar(); editorPedidoCotizar();
 };
-window.editorPedidoCerrar = function () { if (_ep) clearTimeout(_ep.timer); _ep = null; const ov = document.getElementById('editor-pedido'); if (ov) ov.hidden = true; };
+window.editorPedidoCerrar = function () {
+  if (_ep) clearTimeout(_ep.timer);
+  _ep = null;
+  document.removeEventListener('keydown', _epTeclaEscape);
+  const ov = document.getElementById('editor-pedido'); if (ov) ov.hidden = true;
+};
 window.editorPedidoGuardar = async function () {
   if (!_ep || !_ep.cotizacion || _ep.guardando) return;
-  const c = _ep.cotizacion;
+  const miEp = _ep;
+  miEp.guardando = true;   // fix 3 de revisión: se marca ANTES del confirm, así un doble clic no abre un segundo diálogo
+  const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+  const c = miEp.cotizacion;
   const cambios = (c.lineas || []).filter(l => l.accion !== 'igual').map(l => (l.accion === 'quitar' ? 'Quitar ' : l.accion === 'nueva' ? 'Agregar ' : 'Cambiar ') + l.sabor + ' ' + (l.presentacion || '') + (l.accion === 'quitar' ? '' : ' → ' + (l.gramos > 0 && l.accion !== 'nueva' && !l.piezasPorCaja ? l.gramos + ' g' : l.cantidad + ' pz')));
   if (!cambios.length) { editorPedidoCerrar(); return; }
   const sigue = await confirmar({ titulo: 'Guardar cambios', cuerpo: cambios.join('\n') + '\n\nNuevo total: $' + Number(c.total).toLocaleString('es-MX'), aceptar: 'Guardar', cancelar: 'Volver' });
-  if (!sigue || !_ep) return;
-  _ep.guardando = true; const btn = document.getElementById('ep-guardar'); btn.disabled = true;
+  if (_ep !== miEp) return;   // el editor se cerró o cambió de pedido mientras el diálogo estaba abierto
+  if (!sigue) { miEp.guardando = false; btn.disabled = false; return; }   // cancelar limpia el reintento
+  miEp.seq++;   // invalida cualquier cotización en vuelo: ya no importa, se está aplicando
   let r = null;
-  try { r = await _ep.aplicar(editorPedidoLineasPayload()); } catch (e) { r = { ok: false, error: e.message }; }
-  _ep.guardando = false;
-  if (!_ep) return;
+  try { r = await miEp.aplicar(editorPedidoLineasPayload()); } catch (e) { r = { ok: false, error: e.message }; }
+  if (_ep !== miEp) return;   // igual, pero alrededor del aplicar
+  miEp.guardando = false;
   if (r && r.ok) {
-    try { track('editar_pedido', { consecutivo: _ep.pedido.consecutivo, lineas_antes: (_ep.lineas || []).length, lineas_despues: (r.lineas || []).length, total_antes: Number(_ep.pedido.total) || 0, total_despues: Number(r.pedido && r.pedido.total) || 0 }); } catch (_e) {}
-    const cb = _ep.alGuardar; editorPedidoCerrar(); mostrarToast('Pedido actualizado'); if (cb) cb(r);
+    try { track('editar_pedido', { consecutivo: miEp.pedido.consecutivo, lineas_antes: (miEp.lineas || []).length, lineas_despues: (r.lineas || []).length, total_antes: Number(miEp.pedido.total) || 0, total_despues: Number(r.pedido && r.pedido.total) || 0 }); } catch (_e) {}
+    const cb = miEp.alGuardar; editorPedidoCerrar(); mostrarToast('Pedido actualizado'); if (cb) cb(r);
   } else {
     btn.disabled = false;
     avisar({ titulo: 'No se guardó', cuerpo: editorPedidoTextoError(r) });
