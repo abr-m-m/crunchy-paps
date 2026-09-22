@@ -8,7 +8,7 @@
 //   1. ¿Escribe? (INSERT / UPDATE / DELETE sobre tablas de negocio)
 //   2. ¿Comprueba algo? (PIN con crypt, token de sesión, o llamada a las
 //      funciones de sesión de la Etapa B)
-//   3. ¿La llama la app? (grep en index.html)
+//   3. ¿La llama la app? (index.html, src/, public/*.html y api/*.js)
 //
 // Una función que escribe, no comprueba nada y ES alcanzable por PostgREST es
 // una mutación abierta: cualquiera con la llave anon la ejecuta. Así se
@@ -23,14 +23,39 @@
 //
 // Uso:  node tools/auditar-mutaciones.mjs [ruta/al/esquema.sql]
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { HTML, APP, PANEL, leer } from './fuentes.mjs';
 
 const rutaEsquema = process.argv[2] ||
   'supabase/migrations/20260830203059_remote_schema.sql';
 
 const sql = readFileSync(rutaEsquema, 'utf8');
-let app = '';
-try { app = readFileSync('index.html', 'utf8'); } catch (_e) { app = ''; }
+
+// ── ¿Quién llama a cada función? ───────────────────────────────────────────
+// Esto se le preguntaba a index.html, que desde Vite (20 sep 2026) ya casi no
+// tiene JS, y encima dentro de un try/catch que dejaba `app = ''`: TODAS las
+// funciones salían como «no la llama nadie». Un falso «nadie la llama» aquí no
+// es ruido, es el peor error posible: alimenta la lista de «se pueden blindar
+// sin desplegar la app» y manda a cerrar una puerta que la app sí usa.
+//
+// Se leen TODAS las superficies que hablan con PostgREST, y sin try/catch: si
+// una falta, esto tiene que romperse, no aprobar con ''.
+//   index.html      los <script> clásicos (la pantalla de PIN/OTP)
+//   src/app.js      supabaseCall('POST', 'rpc/x', …)
+//   src/panel.js    ídem
+//   public/*.html   páginas sueltas (retos, planeador): llaman con rpc('x')
+//   api/*.js        funciones de Vercel (OTP, ticket, imagen de retos)
+const deCarpeta = (dir, ext) => readdirSync(new URL('../' + dir, import.meta.url))
+  .filter((f) => f.endsWith(ext)).map((f) => leer(dir + f));
+const FUENTES = [HTML, APP, PANEL, ...deCarpeta('public/', '.html'), ...deCarpeta('api/', '.js')].join('\n');
+
+// Dos maneras de nombrar la misma función: 'rpc/x' (supabaseCall y los fetch
+// directos) y rpc('x') (el ayudante de las páginas de public/).
+// Un nombre que es prefijo de otro (crear_pedido / crear_pedido_interno) puede
+// darse por llamado de más. Es el lado seguro del error: acorta la lista de las
+// que "se pueden blindar", no la alarga.
+const laLlamaLaApp = (n) => FUENTES.includes('rpc/' + n) ||
+  FUENTES.includes("rpc('" + n + "'") || FUENTES.includes('rpc("' + n + '"');
 
 // ── Trocear el volcado en funciones ────────────────────────────────────────
 // Los cuerpos vienen entre $$ ... $$; que es como los escribe pg_dump.
@@ -67,7 +92,7 @@ const filas = funciones.map((f) => {
   const escribe = ESCRIBE.test(f.cuerpo);
   const comprueba = COMPRUEBA.test(f.cuerpo);
   const trigger = ES_TRIGGER(f);
-  const usadaPorApp = app.includes(`rpc/${f.nombre}`);
+  const usadaPorApp = laLlamaLaApp(f.nombre);
   // Qué tablas toca al escribir (aproximación por nombre)
   const tablas = [...new Set(
     [...f.cuerpo.matchAll(/\b(?:insert\s+into|update|delete\s+from)\s+"?([a-z_]+)"?/gi)]
@@ -100,7 +125,7 @@ for (const f of protegidas.sort((a, b) => a.nombre.localeCompare(b.nombre))) {
 // Las que NO usa la app son las más fáciles de blindar: no rompen pantallas.
 const faciles = abiertas.filter((f) => !f.usadaPorApp);
 if (faciles.length) {
-  console.log(`\n💡 ${faciles.length} de esas NO las llama index.html.`);
+  console.log(`\n💡 ${faciles.length} de esas no las llama NADIE: ni index.html, ni src/, ni public/, ni api/.`);
   console.log(`   Se pueden blindar sin desplegar la app, como se hizo con cambiar_pin_vendedor:`);
   console.log(`   ${faciles.map((f) => f.nombre).join(', ')}`);
 }
