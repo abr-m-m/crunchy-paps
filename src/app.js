@@ -5576,6 +5576,12 @@ function pintarTracking() {
   const pagado = String(p.estatusPago || '').toLowerCase().includes('paga');
   const REFRESH = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>';
 
+  // Editar pedido (20 sep 2026): solo si el servidor lo dice; si no, el motivo con el enlace a WhatsApp.
+  const motivoCli = (MOTIVO_EDICION.cliente || {})[p.motivo] || '';
+  const editarHTML = p.editable === undefined ? '' : (p.editable && tokenCliente() && !esVendedor)
+    ? `<button type="button" class="tk-btn" onclick="editarMiPedido()">Editar pedido</button>`
+    : (motivoCli ? `<div class="tk-nota" style="margin-top:10px;">${motivoCli}${/WhatsApp/.test(motivoCli) ? ` · <a href="#" onclick="editarMiPedidoWpp();return false;" style="color:var(--amarillo);">Abrir WhatsApp</a>` : ''}</div>` : '');
+
   cont.innerHTML = `
     <div class="tk-card">
       <div class="tk-cab">
@@ -5598,10 +5604,34 @@ function pintarTracking() {
         ${p.colonia ? `<div class="tk-suave">${p.colonia} ${p.cp ? '· CP '+p.cp : ''}</div>` : ''}
         ${fechaEnt && !fechaReal ? `<div class="tk-etq" style="margin-top:10px;">Entrega estimada</div><div class="tk-valor">${fechaEnt}</div>` : ''}
       </div>` : ''}
+    ${editarHTML}
     <button class="tk-btn" onclick="cargarTracking('${p.consecutivo}')">${REFRESH} Actualizar</button>
     <div class="tk-nota">Actualización automática cada 30 s</div>
   `;
 }
+
+// window.editarMiPedido y window.editarMiPedidoWpp: definidas después de pintarTracking, no dentro
+// (evita cerrar sobre `p` de una pintada vieja; siempre leen _trackingPedidoActual al momento del clic).
+window.editarMiPedido = function () {
+  const p = _trackingPedidoActual; if (!p) return;
+  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_mi_pedido', { p_data: { token: tokenCliente(), idOrden: String(p.id), modo, lineas } });
+  abrirEditorPedido({
+    pedido: { id: p.id, consecutivo: p.consecutivo, total: p.total, editable: p.editable, motivo: p.motivo },
+    lineas: (p.items || []).map(it => ({ id: it.id, sabor: it.sabor, presentacion: it.presentacion, tipo_venta: it.modo === 'granel' ? 'A granel' : 'Por Pieza', cantidad: it.cantidad, gramos: it.gramos, piezas_por_caja: it.piezasPorCaja, puntos_canje: it.puntosCanje, subtotal: it.subtotal })),
+    catalogo, nivel: 'consumidor', audiencia: 'cliente',
+    cotizar: llamar('cotizar'), aplicar: llamar('aplicar'),
+    alGuardar: () => cargarTracking(p.consecutivo),
+  });
+};
+
+// Enlace «Abrir WhatsApp» del motivo de no-edición: sin await entre el clic y abrir la pestaña
+// (no aplica la regla 51 aquí), así que basta pasar null como ventana (patrón de panel.js:167).
+window.editarMiPedidoWpp = function () {
+  const p = _trackingPedidoActual; if (!p) return false;
+  const msg = 'Hola, quiero cambiar mi pedido ' + (p.consecutivo || '');
+  irAWhatsApp(null, `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
+  return false;
+};
 
 // Detectar parámetro ?track=XXX al cargar y abrir tracking directo
 (function detectarTrackingURL() {
