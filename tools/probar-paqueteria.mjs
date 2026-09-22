@@ -2,7 +2,7 @@
 // tools/probar-paqueteria.mjs — el servidor cobra el envío cuando el pedido va por
 // paquetería, y la app tiene que mandarle la clave. Necesita `node tools/ver-en-staging.mjs`.
 // Uso: node tools/probar-paqueteria.mjs
-import { readFileSync } from 'node:fs';
+import { APP } from './fuentes.mjs';
 const cfgTxt = await (await fetch('http://localhost:8794/api/config.js')).text();
 const { SUPABASE_URL, SUPABASE_ANON_KEY, ENTORNO } = JSON.parse(cfgTxt.replace(/^window\.__CP_CONFIG__ = /, '').replace(/;\s*$/, ''));
 if (ENTORNO !== 'staging') { console.error('No es staging'); process.exit(1); }
@@ -30,9 +30,8 @@ ok(sin?.ok === false && sin?.error === 'precio_cambiado', `sin la clave el servi
 const dom = (await rpc('crear_pedido', { p_data: { ...base, metodoEntrega: 'coordinar', total: precio, idempotencyKey: 'paq-' + tel + '-c' } })).json;
 ok(dom?.ok === true, `domicilio sin envío → ${dom?.consecutivo}`);
 // 4. La app manda la clave: se lee del archivo, no se supone.
-const html = readFileSync('index.html', 'utf8');
-const i = html.indexOf('tokenCliente: (typeof tokenCliente');
-ok(i > 0 && /metodoEntrega:[^\r\n]*[\r\n]/.test(html.slice(i, i + 400)), 'index.html: el payload del checkout lleva metodoEntrega');
+const i = APP.indexOf('tokenCliente: (typeof tokenCliente');
+ok(i > 0 && /metodoEntrega:[^\r\n]*[\r\n]/.test(APP.slice(i, i + 400)), 'app.js: el payload del checkout lleva metodoEntrega');
 
 console.log(fallos ? `\n${fallos} fallo(s).` : '\nTodo en orden.');
 process.exitCode = fallos ? 1 : 0;

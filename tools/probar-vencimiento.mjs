@@ -4,7 +4,8 @@
 // negativo consume los más viejos. Una RPC anónima no fabrica puntos de hace un año, así que los datos de
 // prueba se escriben en STAGING con `supabase db query` (escritura: con permiso de Abraham por ejecución).
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-vencimiento.mjs
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync } from 'node:fs';
+import { HTML, TODO } from './fuentes.mjs';
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -114,9 +115,8 @@ ok(job?.length === 1 && job[0].schedule === '10 6 * * *' && /vencer_puntos\(null
   `cron: ${JSON.stringify(job ?? 'sin pg_cron')}`);
 
 // 9. La app: aviso, filtro, y ningún «no caducan».
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes('id="p-vence"') && html.includes('<option value="vencimiento">Vencidos</option>') && !/no caducan/i.test(html) && html.includes('vencen a los 12 meses'),
-  'index.html: #p-vence, filtro Vencidos, sin «no caducan», «Cómo ganar puntos» avisa');
+ok(HTML.includes('id="p-vence"') && HTML.includes('<option value="vencimiento">Vencidos</option>') && !/no caducan/i.test(TODO) && HTML.includes('vencen a los 12 meses'),
+  'index.html: #p-vence, filtro Vencidos, «Cómo ganar puntos» avisa; «no caducan» en ningún archivo');
 
 console.log(fallos ? `\n${fallos} fallo(s).` : '\nTodo en orden.');
 process.exitCode = fallos ? 1 : 0;

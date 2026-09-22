@@ -4,7 +4,7 @@
 //   vence hoy → vale · venció ayer → «Cupón expirado» · empieza mañana → «aún no vigente».
 // Los cupones de prueba se desactivan al final.
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-cupon-vigencia.mjs
-import { readFileSync } from 'node:fs';
+import { PANEL } from './fuentes.mjs';
 const cfgTxt = await (await fetch('http://localhost:8794/api/config.js')).text();
 const { SUPABASE_URL, SUPABASE_ANON_KEY, ENTORNO } = JSON.parse(cfgTxt.replace(/^window\.__CP_CONFIG__ = /, '').replace(/;\s*$/, ''));
 if (ENTORNO !== 'staging') { console.error('No es staging: ' + SUPABASE_URL); process.exit(1); }
@@ -34,8 +34,7 @@ for (const c of CASOS) {
 }
 
 // La app marca EXPIRADO con la misma regla: se lee del archivo, no se supone.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes('const expirado = vigFin && ahora.getTime() >= vigFin.getTime() + 864e5;'), 'index.html: «EXPIRADO» hasta que termina el último día');
+ok(PANEL.includes('const expirado = vigFin && ahora.getTime() >= vigFin.getTime() + 864e5;'), 'panel.js: «EXPIRADO» hasta que termina el último día');
 
 // Limpieza: desactivar los cupones de prueba.
 const lista = (await rpc('obtener_cupones', { p_data: { token: ana?.token } })).json;

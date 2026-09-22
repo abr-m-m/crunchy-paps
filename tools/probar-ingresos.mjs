@@ -5,7 +5,8 @@
 // esperados salen de los precios del catálogo y de los cupones que crea, no de leer lo que escribió el servidor.
 // Escribe en STAGING (pedidos, cupones que desactiva al final, un asiento de puntos): con permiso de Abraham.
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-ingresos.mjs
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync } from 'node:fs';
+import { PANEL, TODO } from './fuentes.mjs';
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -137,9 +138,8 @@ const dF = (await rpc('dashboard_resumen', { p_data: { token: ana?.token, desde:
 ok(dF?.con_filtro === true && igual(dF?.cupones, 0) && igual(dF?.envio_tarifa, 0), `con filtro de sabor: ${JSON.stringify(dF)}`);
 
 // La app.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes('Ingreso neto del mes') && html.includes("card('Bruto y neto'") && !html.includes('Ventas del mes')
-   && html.includes('ventasMes += neto;'), 'index.html: «Ingreso neto del mes», tarjeta «Bruto y neto», sin «Ventas del mes», vendedor en neto');
+ok(PANEL.includes('Ingreso neto del mes') && PANEL.includes("card('Bruto y neto'") && !TODO.includes('Ventas del mes')
+   && PANEL.includes('ventasMes += neto;'), 'panel.js: «Ingreso neto del mes», tarjeta «Bruto y neto», vendedor en neto; «Ventas del mes» en ningún archivo');
 
 // Limpieza: desactivar los cupones de prueba.
 const lista = (await rpc('obtener_cupones', { p_data: { token: ana?.token } })).json;

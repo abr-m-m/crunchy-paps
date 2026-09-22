@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/probar-config.mjs — Prueba la resolución de configuración por entorno
-// que vive en index.html (Fase 1c). Extrae el bloque real del archivo y lo
+// que vive en src/app.js (Fase 1c; antes en index.html). Extrae el bloque real y lo
 // ejecuta con un window/location simulados, para verificar que:
 //
 //   1. Producción sigue funcionando aunque /api/config.js no cargue.
@@ -11,11 +11,11 @@
 // El punto 4 es el hallazgo 16: es la prueba de que un entorno de pruebas ya
 // no puede escribir sobre datos de clientes reales.
 //
-// Uso:  node tools/probar-config.mjs [ruta/al/index.html]
+// Uso:  node tools/probar-config.mjs [ruta/al/archivo]
 
 import { readFileSync } from 'node:fs';
 
-const archivo = process.argv[2] || 'index.html';
+const archivo = process.argv[2] || new URL('../src/app.js', import.meta.url);
 const src = readFileSync(archivo, 'utf8');
 
 const inicio = src.indexOf('const CP_PROD_URL');

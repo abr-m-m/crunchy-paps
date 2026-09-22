@@ -7,7 +7,7 @@
 //   - el panel de reglas de la app guarda base 'neto'.
 // El saldo se lee como la app: obtener_cliente_con_stats con la sesión del cliente.
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-club.mjs
-import { readFileSync } from 'node:fs';
+import { HTML, APP, PANEL } from './fuentes.mjs';
 const cfgTxt = await (await fetch('http://localhost:8794/api/config.js')).text();
 const { SUPABASE_URL, SUPABASE_ANON_KEY, ENTORNO } = JSON.parse(cfgTxt.replace(/^window\.__CP_CONFIG__ = /, '').replace(/;\s*$/, ''));
 if (ENTORNO !== 'staging') { console.error('No es staging: ' + SUPABASE_URL); process.exit(1); }
@@ -78,9 +78,8 @@ const t2 = await saldoT(); ok(t2 === esperadosT, `tienda Entregado → ${t2} pun
 await rpc('aprobar_cliente_b2b', { p_id_cliente: Number(altaT?.idCliente), p_aprobar: false, p_actor: 'probar-club', p_token: ana?.token });
 
 // 3. El panel de reglas de la app guarda la base neta: se lee del archivo, no se supone.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes("generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp') },"), "index.html: el panel de reglas guarda base 'neto'");
-ok(html.includes("supabaseCall('POST', 'rpc/mis_puntos', { p_token: tokenCliente() })") && html.includes('id="club-movs"'), 'index.html: Crunchy Club pide mis_puntos con la sesión del cliente y tiene dónde pintarlo');
+ok(PANEL.includes("generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp') },"), "panel.js: el panel de reglas guarda base 'neto'");
+ok(APP.includes("supabaseCall('POST', 'rpc/mis_puntos', { p_token: tokenCliente() })") && HTML.includes('id="club-movs"'), 'app.js: Crunchy Club pide mis_puntos con la sesión del cliente; index.html: dónde pintarlo');
 
 console.log(fallos ? `\n${fallos} fallo(s).` : '\nTodo en orden.');
 process.exitCode = fallos ? 1 : 0;

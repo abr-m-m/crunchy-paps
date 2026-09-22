@@ -6,10 +6,10 @@
 //      que manda una app vieja en caché) y otro a mediodía de CDMX (la app nueva).
 //   2. Los dos salen en cola_armado del día elegido, no del anterior.
 //   3. obtener_pedidos devuelve una fecha_entrega que, leída en CDMX, es el día elegido.
-//   4. index.html manda la fecha a mediodía de CDMX.
+//   4. src/app.js manda la fecha a mediodía de CDMX.
 //
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-fecha-de-dia.mjs
-import { readFileSync } from 'node:fs';
+import { APP } from './fuentes.mjs';
 const cfgTxt = await (await fetch('http://localhost:8794/api/config.js')).text();
 const { SUPABASE_URL, SUPABASE_ANON_KEY, ENTORNO } = JSON.parse(cfgTxt.replace(/^window\.__CP_CONFIG__ = /, '').replace(/;\s*$/, ''));
 if (ENTORNO !== 'staging') { console.error('No es staging: ' + SUPABASE_URL); process.exit(1); }
@@ -60,8 +60,7 @@ for (const p of peds) {
 }
 
 // 4. La app manda mediodía de CDMX: se lee del archivo, no se supone.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes("new Date(fechaEntregaFinal + 'T12:00:00-06:00').toISOString()"), 'index.html: el checkout manda la fecha a mediodía de CDMX');
+ok(APP.includes("new Date(fechaEntregaFinal + 'T12:00:00-06:00').toISOString()"), 'app.js: el checkout manda la fecha a mediodía de CDMX');
 
 console.log(fallos ? `\n${fallos} fallo(s).` : '\nTodo en orden.');
 process.exitCode = fallos ? 1 : 0;

@@ -3,7 +3,8 @@
 // Ana (dueña) crea los retos; clientes de prueba hacen pedidos; el bono es un asiento 'reto' que escriben los
 // triggers de puntos. Los retos de prueba se pausan al final. Escribe en STAGING: con permiso de Abraham.
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-retos.mjs
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync } from 'node:fs';
+import { HTML, APP, leer } from './fuentes.mjs';
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -234,14 +235,15 @@ ok(gDesc?.error === 'producto_desconocido' && gReq?.error === 'productos_requeri
   `guardas: ${gDesc?.error}, ${gReq?.error}; mis_puntos trae imagen/dinamica/pasos/productos con imagen_url; retos_admin trae el catálogo`);
 
 // 11. Archivos.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-let retosHtml = ''; try { retosHtml = readFileSync(new URL('../retos.html', import.meta.url), 'utf8'); } catch (_e) {}
-const vercel = readFileSync(new URL('../vercel.json', import.meta.url), 'utf8');
-ok(html.includes('id="club-retos"') && html.includes("reto: 'Reto'") && html.includes('<option value="reto">Retos</option>'), 'index.html: sección Retos, tipo reto y filtro');
+// retos.html se sirve desde public/ desde que hay Vite. Se lee SIN try/catch: si
+// el archivo no está donde se cree, esto tiene que romperse, no aprobar con ''.
+const retosHtml = leer('public/retos.html');
+const vercel = leer('vercel.json');
+ok(HTML.includes('id="club-retos"') && HTML.includes('<option value="reto">Retos</option>') && APP.includes("reto: 'Reto'"), 'index.html: sección Retos y filtro; app.js: tipo reto');
 ok(retosHtml.includes('function leerFilasPlantilla') && retosHtml.includes("rpc('guardar_reto'") && /"source": "\/retos"/.test(vercel)
    && retosHtml.includes("'imagen', 'dinamica', 'como_participar'") && retosHtml.includes('id="f-imagen"'),
-  'retos.html con plantilla ampliada e imagen; vercel.json con /retos');
-ok(html.includes('id="s-club-reto"') && html.includes('window.abrirReto = '), 'index.html: pantalla de detalle y abrirReto');
+  'public/retos.html con plantilla ampliada e imagen; vercel.json con /retos');
+ok(HTML.includes('id="s-club-reto"') && APP.includes('window.abrirReto = '), 'index.html: pantalla de detalle; app.js: abrirReto');
 
 // Limpieza: pausar los retos de prueba y desactivar el cupón.
 for (const id of creados.filter(Boolean)) await rpc('guardar_reto', { p_data: { token: ana?.token, reto: { id, activo: false } } });

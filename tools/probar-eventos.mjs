@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/probar-eventos.mjs — Comprueba la cola de eventos de §3.3 ejerciendo el
-// código REAL de index.html: `supabaseCall` y el bloque de la cola se RECORTAN
+// código REAL de src/app.js: `supabaseCall` y el bloque de la cola se RECORTAN
 // del archivo y se ejecutan tal cual, con un andamio mínimo que suple lo que da
 // el navegador (document, sessionStorage, location).
 //
@@ -23,7 +23,7 @@
 //
 // Sale con código 1 si algo falla. Tarda ~15 s: hay esperas reales de reloj.
 
-import fs from 'node:fs';
+import { HTML, APP } from './fuentes.mjs';
 
 const URL_BASE = process.env.SUPABASE_URL;
 const LLAVE = process.env.SUPABASE_KEY
@@ -40,16 +40,18 @@ if (URL_BASE.includes('xbyzarzyxiugrucyjwfn')) {
   process.exit(1);
 }
 
-const html = fs.readFileSync('index.html', 'utf8');
-const recortar = (desde, hasta) => {
-  const a = html.indexOf(desde);
-  const b = html.indexOf(hasta, a);
+// Desde Vite el código ya no está en un solo archivo: `supabaseCall` y la cola
+// viven en src/app.js, y el bloque de atribución sigue siendo un <script>
+// clásico del <head> de index.html. Cada recorte dice de dónde sale.
+const recortar = (desde, hasta, fuente = APP, nombre = 'src/app.js') => {
+  const a = fuente.indexOf(desde);
+  const b = fuente.indexOf(hasta, a);
   if (a < 0 || b < 0) {
-    console.error('No se pudo recortar el código de index.html. Si el archivo cambió,');
+    console.error('No se pudo recortar el código de ' + nombre + '. Si el archivo cambió,');
     console.error('actualiza las anclas de esta prueba: ' + JSON.stringify(desde.slice(0, 40)));
     process.exit(1);
   }
-  return html.slice(a, b);
+  return fuente.slice(a, b);
 };
 
 const fuenteLlamada = recortar(
@@ -96,7 +98,7 @@ const cola = [
 const fuente = andamio + fuenteLlamada + fuenteCola + '\n' + cola;
 const mod = await import('data:text/javascript;base64,' +
   Buffer.from(fuente).toString('base64')).catch((e) => {
-    console.error('El código recortado de index.html no compila: ' + e.message);
+    console.error('El código recortado de src/app.js no compila: ' + e.message);
     process.exit(1);
   });
 
@@ -129,7 +131,7 @@ async function esperar(n, msMax) {
 const pruebas = [];
 const comprobar = (nombre, ok, detalle) => pruebas.push({ nombre, ok, detalle });
 
-console.log('\nCola de eventos §3.3 — código real de index.html contra ' + URL_BASE + '\n');
+console.log('\nCola de eventos §3.3 — código real de src/app.js e index.html contra ' + URL_BASE + '\n');
 
 // ── 1. Eventos sueltos: esperan al temporizador, no salen de uno en uno ──
 mod.track('page_view', {});
@@ -186,7 +188,7 @@ comprobar('26 eventos = 2 peticiones, 26 filas (antes: 26 peticiones)',
 // Se recorta igual que la cola, y se envuelve en visitar(qs) para poder simular
 // varias llegadas. El almacén es un Map: si fuera sessionStorage de verdad, esto
 // no probaría nada — el fallo que se corrige es justamente que moría con él.
-const fuenteAtrib = recortar('var CP_UTM_DIAS = 30;', '// id de sesión first-party');
+const fuenteAtrib = recortar('var CP_UTM_DIAS = 30;', '// id de sesión first-party', HTML, 'index.html');
 
 const atrib = await import('data:text/javascript;base64,' + Buffer.from([
   'export const almacen = new Map();',

@@ -5,7 +5,7 @@
 // asiento va en la misma transacción; al cancelar, lo generado se revierte solo y lo canjeado queda en
 // una solicitud que solo el dueño (o el agente) resuelve.
 // Necesita `node tools/ver-en-staging.mjs`. Uso: node tools/probar-canje.mjs
-import { readFileSync } from 'node:fs';
+import { HTML, APP } from './fuentes.mjs';
 const cfgTxt = await (await fetch('http://localhost:8794/api/config.js')).text();
 const { SUPABASE_URL, SUPABASE_ANON_KEY, ENTORNO } = JSON.parse(cfgTxt.replace(/^window\.__CP_CONFIG__ = /, '').replace(/;\s*$/, ''));
 if (ENTORNO !== 'staging') { console.error('No es staging: ' + SUPABASE_URL); process.exit(1); }
@@ -107,8 +107,7 @@ const ap2 = (await rpc('resolver_devolucion_canje', { p_data: { token: ana?.toke
 ok(ap2?.ok === false && (await saldo(cli))?.saldo === s6?.saldo, `aprobar otra vez → ${ap2?.error}`);
 
 // 7. La app: tienda de canje, líneas y payload.
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-ok(html.includes("rpc/canje_catalogo") && html.includes('id="s-club-canje"') && html.includes('puntosCanje:'), 'index.html: tienda de canje, líneas de canje y puntosCanje en el payload');
+ok(APP.includes("rpc/canje_catalogo") && APP.includes('puntosCanje:') && HTML.includes('id="s-club-canje"'), 'app.js: tienda de canje y puntosCanje en el payload; index.html: líneas de canje');
 
 console.log(fallos ? `\n${fallos} fallo(s).` : '\nTodo en orden.');
 process.exitCode = fallos ? 1 : 0;
