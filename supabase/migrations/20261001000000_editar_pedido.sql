@@ -403,59 +403,74 @@ returns jsonb language plpgsql security definer set search_path = public, pg_tem
 declare
   v_avisos jsonb := '[]'::jsonb; v_caja jsonb := null; v_pts jsonb := null;
   v_orig  caja_movimientos%rowtype; v_dif numeric; v_codigo text; v_id_punto bigint; v_id_caja bigint; v_id_mov bigint;
-  v_cfg jsonb; v_rate numeric; v_base text; v_neto numeric; v_obj integer; v_hay integer; v_dpts integer; v_id_led bigint;
+  v_cfg jsonb; v_rate numeric; v_base text; v_neto numeric; v_desc numeric; v_obj integer; v_hay integer; v_dpts integer; v_id_led bigint;
 begin
+  -- Vendedor edita un pedido ya armado: vuelve a «Por armar». Corre para CUALQUIER pedido, incluidos los
+  -- internos (fix 1, ronda 1 de revisión: antes el early-return de interno lo dejaba fuera).
+  if p_quien = 'vendedor' and o.armado_en is not null then
+    update ordenes set armado_en = null, armado_por = null where id = o.id;
+  end if;
+
   if coalesce(o.tipo_interno, '') <> '' then
     return jsonb_build_object('avisos', v_avisos, 'caja', null, 'puntos', null);
   end if;
 
   -- Caja: si ya hay venta asentada y el total cambió, asiento del MISMO tipo por la diferencia, emparejado.
-  -- o.estatus_caja = 'confirmado' es necesario además de la fila en caja_movimientos: el trigger
-  -- trg_caja_confirmar_pedido (AFTER INSERT OR UPDATE OF estatus_caja) compara con `<>` contra NULL
-  -- (falso, no verdadero, en la guarda `IF NEW.estatus_caja <> 'confirmado' THEN RETURN NEW`), así que
-  -- YA existe una fila «venta_%» desde el INSERT de CADA pedido en efectivo/transferencia, aunque nunca
-  -- se haya pagado ni confirmado (estatus_caja sigue NULL). Fuera de alcance de T4 tocar ese trigger
-  -- (regla del brief); esta guarda evita compensar una venta que nunca se asentó de verdad.
+  -- El trigger trg_caja_confirmar_pedido (AFTER INSERT OR UPDATE OF estatus_caja) compara con `<>` contra
+  -- NULL en su guarda (`IF NEW.estatus_caja <> 'confirmado' THEN RETURN NEW`), que en plpgsql da falso, no
+  -- verdadero: por eso YA existe una fila «venta_%» desde el INSERT de CUALQUIER pedido en efectivo o
+  -- transferencia, aunque nunca se haya pagado ni confirmado (o.estatus_caja sigue null). Fuera de alcance
+  -- de T4 tocar ese trigger (regla del brief). Regla del controlador (fix 3, ronda 1 de revisión):
+  --   (a) o.estatus_caja = 'confirmado' + fila real + total cambió + caja del día abierta → compensar.
+  --       Sin caja del día abierta → 'caja_cerrada' (deshace todo editar_pedido, como antes).
+  --   (b) fila fantasma (o.estatus_caja distinto de 'confirmado') + total cambió: si hay caja del día
+  --       abierta para ese punto, se compensa igual (mismo asiento pareado, misma inserción que (a)); si
+  --       no la hay, NO se falla: se omite y se avisa 'caja_sin_ajuste'.
+  --   (c) sin fila «venta_%» → nada.
   select * into v_orig from caja_movimientos where id_orden = o.id and tipo like 'venta_%' order by id limit 1;
   v_dif := round(p_total_nuevo - coalesce(o.total, 0), 2);
-  if v_orig.id is not null and o.estatus_caja = 'confirmado' and v_dif <> 0 then
+  if v_orig.id is not null and v_dif <> 0 then
     v_codigo := case when v_orig.tipo = 'venta_efectivo' then 'punto_venta' else 'cuenta_banco' end;
     select id into v_id_punto from caja_puntos where codigo = v_codigo limit 1;
     select id into v_id_caja from caja_dias where id_punto = v_id_punto and fecha = current_date and estatus = 'abierta' limit 1;
-    if v_id_punto is null or v_id_caja is null then
+    if v_id_punto is not null and v_id_caja is not null then
+      insert into caja_movimientos (id_caja_dia, id_punto, tipo, monto, id_orden, consecutivo_pedido, id_mov_pareja, descripcion, actor)
+      values (v_id_caja, v_id_punto, v_orig.tipo, v_dif, o.id, o.consecutivo, v_orig.id,
+              'Ajuste por edición de ' || o.consecutivo || ' (' || coalesce(o.total, 0)::text || ' → ' || p_total_nuevo::text || ')', coalesce(p_actor, 'sistema'))
+      returning id into v_id_mov;
+      v_caja := jsonb_build_object('id', v_id_mov, 'tipo', v_orig.tipo, 'monto', v_dif, 'id_mov_pareja', v_orig.id);
+    elsif o.estatus_caja = 'confirmado' then
       raise exception using errcode = 'P0001', message = 'caja_cerrada';
+    else
+      v_avisos := v_avisos || to_jsonb('caja_sin_ajuste'::text);
     end if;
-    insert into caja_movimientos (id_caja_dia, id_punto, tipo, monto, id_orden, consecutivo_pedido, id_mov_pareja, descripcion, actor)
-    values (v_id_caja, v_id_punto, v_orig.tipo, v_dif, o.id, o.consecutivo, v_orig.id,
-            'Ajuste por edición de ' || o.consecutivo || ' (' || coalesce(o.total, 0)::text || ' → ' || p_total_nuevo::text || ')', coalesce(p_actor, 'sistema'))
-    returning id into v_id_mov;
-    v_caja := jsonb_build_object('id', v_id_mov, 'tipo', v_orig.tipo, 'monto', v_dif, 'id_mov_pareja', v_orig.id);
   end if;
 
-  -- Puntos: si el pedido ya generó, ajuste por la diferencia contra el neto nuevo; luego evaluar_retos.
+  -- Puntos: si el pedido ya generó, ajuste por la diferencia contra el neto nuevo — solo si la generación
+  -- sigue activa (fix 2, ronda 1 de revisión: espejo de otorgar_puntos_al_confirmar,
+  -- 20260930000009_retos.sql:175-179); luego evaluar_retos siempre, esté activa o no.
   if o.id_cliente is not null and o.id_cliente <> 999999
      and exists (select 1 from lealtad_movimientos where id_orden = o.id and tipo = 'generacion') then
     select valor into v_cfg from config_produccion where clave = 'lealtad';
-    v_rate := coalesce((v_cfg->'generacion'->>'puntos_por_peso')::numeric, 0);
-    v_base := coalesce(v_cfg->'generacion'->>'base', 'total');
-    select subtotal, descuento into v_neto, v_dif from ordenes where id = o.id;   -- ya actualizados en el paso 5
-    v_neto := case v_base when 'neto' then greatest(0, coalesce(v_neto, 0) - coalesce(v_dif, 0))
-                          when 'subtotal' then coalesce(v_neto, 0) else p_total_nuevo end;
-    v_obj := floor(v_neto * v_rate)::integer;
-    select coalesce(sum(puntos), 0)::integer into v_hay from lealtad_movimientos
-     where id_orden = o.id and tipo in ('generacion', 'reversion', 'ajuste');
-    v_dpts := v_obj - v_hay;
-    if v_dpts <> 0 then
-      v_id_led := agregar_movimiento_lealtad(o.id_cliente, 'ajuste', v_dpts, o.id, o.consecutivo, null, null, v_neto,
-                    'Ajuste por edición de ' || o.consecutivo, coalesce(p_actor, 'sistema'));
-      v_pts := jsonb_build_object('id', v_id_led, 'puntos', v_dpts);
+    if v_cfg is null or coalesce((v_cfg->'generacion'->>'activo')::boolean, false) = false then
+      perform public.evaluar_retos(o.id_cliente);
+    else
+      v_rate := coalesce((v_cfg->'generacion'->>'puntos_por_peso')::numeric, 0);
+      v_base := coalesce(v_cfg->'generacion'->>'base', 'total');
+      select subtotal, descuento into v_neto, v_desc from ordenes where id = o.id;   -- ya actualizados en el paso 5
+      v_neto := case v_base when 'neto' then greatest(0, coalesce(v_neto, 0) - coalesce(v_desc, 0))
+                            when 'subtotal' then coalesce(v_neto, 0) else p_total_nuevo end;
+      v_obj := floor(v_neto * v_rate)::integer;
+      select coalesce(sum(puntos), 0)::integer into v_hay from lealtad_movimientos
+       where id_orden = o.id and tipo in ('generacion', 'reversion', 'ajuste');
+      v_dpts := v_obj - v_hay;
+      if v_dpts <> 0 then
+        v_id_led := agregar_movimiento_lealtad(o.id_cliente, 'ajuste', v_dpts, o.id, o.consecutivo, null, null, v_neto,
+                      'Ajuste por edición de ' || o.consecutivo, coalesce(p_actor, 'sistema'));
+        v_pts := jsonb_build_object('id', v_id_led, 'puntos', v_dpts);
+      end if;
+      perform public.evaluar_retos(o.id_cliente);
     end if;
-    perform public.evaluar_retos(o.id_cliente);
-  end if;
-
-  -- Vendedor edita un pedido ya armado: vuelve a «Por armar».
-  if p_quien = 'vendedor' and o.armado_en is not null then
-    update ordenes set armado_en = null, armado_por = null where id = o.id;
   end if;
 
   return jsonb_build_object('avisos', v_avisos, 'caja', v_caja, 'puntos', v_pts);

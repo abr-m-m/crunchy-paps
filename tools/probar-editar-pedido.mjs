@@ -362,8 +362,50 @@ if (corre('D')) {
   ok(rm?.ok !== false && cab(p5.idOrden).armado_en, `D5 marcado armado (${cab(p5.idOrden).armado_en})`);
   const r5 = (await editar(ana, p5.idOrden, [{ id: lineasDe(p5.idOrden)[0].id, cantidad: 3 }])).json; const c5 = cab(p5.idOrden);
   const cola = (await rpc('cola_armado', { p_data: { token: ana.token, fecha: fechaP5 } })).json;
-  ok(r5?.ok && c5.armado_en === null && (r5.avisos || []).includes('ya_armado') && JSON.stringify(cola).includes('"editadoEn"'), `D5 tras editar: armado_en ${c5.armado_en} (null), aviso ya_armado, cola_armado trae editadoEn`);
+  // Fix 4 (ronda 1 de revisión): comprobar el VALOR de editadoEn/editadoPor en la cola, no solo que
+  // la clave aparezca en el JSON.
+  const enCola5 = (cola?.pedidos || []).find(x => x?.id === p5.idOrden);
+  const editadoIgual = !!(enCola5?.editadoEn && c5.editado_en && new Date(enCola5.editadoEn).toISOString() === new Date(c5.editado_en).toISOString());
+  ok(r5?.ok && c5.armado_en === null && (r5.avisos || []).includes('ya_armado') && editadoIgual && enCola5?.editadoPor === 'Ana',
+     `D5 tras editar: armado_en ${c5.armado_en} (null), aviso ya_armado, cola.editadoEn ${enCola5?.editadoEn} = cabecera ${c5.editado_en}, editadoPor ${enCola5?.editadoPor} (Ana)`);
+
+  // D6. Interno marcado armado a mano (marcar_armado exige 'En proceso'; los internos nacen 'Entregado'
+  // — ver C15 — así que se simula con SQL directo, igual que hace C12 para el caso no-interno): el
+  // desarmado corre para CUALQUIER pedido (fix 1, ronda 1: el early-return de interno estaba antes
+  // del reset, así que un interno armado nunca se desarmaba al editarlo).
+  const pI6 = await pedidoVend(ana, cD, 'consumidor', [linea(P100, '100g', 2, 35)], 0, { tipoInterno: 'sampling' }); creados.push(pI6?.idOrden);
+  sql(`update ordenes set armado_en = now(), armado_por = 'probar' where id = ${pI6.idOrden}`);
+  const r6 = (await editar(ana, pI6.idOrden, [{ id: lineasDe(pI6.idOrden)[0].id, cantidad: 5 }])).json;
+  ok(r6?.ok && cab(pI6.idOrden).armado_en === null, `D6 interno armado a mano: tras editar armado_en ${cab(pI6.idOrden).armado_en} (null)`);
+
+  // D7. generacion.activo=false: sin ajuste de puntos aunque el total cambie (fix 2, ronda 1: espejo de
+  // otorgar_puntos_al_confirmar). Restaura activo=true incluso si la aserción de abajo falla.
+  const p7 = await pedidoCli(cD, [linea(P100, '100g', 10, 35)], 350); creados.push(p7?.idOrden); await confirmar(p7); await pagar(p7);
+  sql(`update config_produccion set valor = jsonb_set(valor, '{generacion,activo}', 'false') where clave = 'lealtad'`);
+  try {
+    const r7 = (await editar(ana, p7.idOrden, [{ id: lineasDe(p7.idOrden)[0].id, cantidad: 4 }])).json;
+    const aj7 = uno(`select count(*)::int n from lealtad_movimientos where id_orden = ${p7.idOrden} and tipo = 'ajuste'`).n;
+    ok(r7?.ok && aj7 === 0, `D7 generacion.activo=false: edita sin escribir ajuste (${aj7} filas 'ajuste', 0 esperadas)`);
+  } finally {
+    sql(`update config_produccion set valor = jsonb_set(valor, '{generacion,activo}', 'true') where clave = 'lealtad'`);
+  }
+
+  // D8. Fila fantasma (bug preexistente del trigger, ver nota en T4): un pedido NUNCA pagado también
+  // trae un asiento venta_% desde su creación (o.estatus_caja sigue null). Con caja abierta se compensa
+  // igual (fix 3a/b, ronda 1); cerrada, se omite con aviso 'caja_sin_ajuste' en vez de fallar (fix 3c).
+  abrirCaja();
+  const p8 = await pedidoCli(cD, [linea(P100, '100g', 2, 35)], 70); creados.push(p8?.idOrden); await confirmar(p8);
+  const estCaja8 = uno(`select estatus_caja from ordenes where id = ${p8.idOrden}`).estatus_caja;
+  const m8antes = movs(p8.idOrden);
+  ok(estCaja8 === null && m8antes.length === 1 && m8antes[0].tipo === 'venta_efectivo', `D8 fantasma previa a editar: estatus_caja ${estCaja8} (null), fila ${m8antes[0]?.tipo} (venta_efectivo)`);
+  const r8 = (await editar(ana, p8.idOrden, [{ id: lineasDe(p8.idOrden)[0].id, cantidad: 3 }])).json;
+  const m8 = movs(p8.idOrden);
+  ok(r8?.ok && m8.length === 2 && cerca(m8[1].monto, 35) && Number(m8[1].id_mov_pareja) === Number(m8antes[0].id), `D8 caja abierta: fantasma se compensa igual, asiento ${m8[1]?.monto} (35) pareja ${m8[1]?.id_mov_pareja}=${m8antes[0]?.id}`);
   cerrarCaja();
+  const r8b = (await editar(ana, p8.idOrden, [{ id: lineasDe(p8.idOrden)[0].id, cantidad: 5 }])).json;
+  const m8b = movs(p8.idOrden);
+  ok(r8b?.ok && m8b.length === 2 && (r8b.avisos || []).includes('caja_sin_ajuste'), `D8b caja cerrada: sin asiento nuevo (${m8b.length} = 2, sigue como D8), aviso ${JSON.stringify(r8b?.avisos)}`);
+  abrirCaja();   // deja la caja abierta: una corrida C posterior no debe heredarla cerrada.
 }
 
 // (las secciones E-F van aquí)
