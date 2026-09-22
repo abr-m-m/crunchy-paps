@@ -1,5 +1,5 @@
 import { N } from './app.js';
-const { abrirVentanaPendiente, actualizarBadge, bloquearCamposCliente, cacheClear, cantidadConCajas, cerrarVentanaPendiente, esAdmin, esAdminEstricto, guardarSesion, initMaps, irAWhatsApp, irAlCatalogo, mostrarToast, renderClubAdminCfg, renderDrawer, saborDot, sesionExpirada, sheetsCall, supabaseCall, tokenVendedor, totalItems } = N;
+const { abrirEditorPedido, abrirVentanaPendiente, actualizarBadge, bloquearCamposCliente, cacheClear, cantidadConCajas, cerrarVentanaPendiente, esAdmin, esAdminEstricto, guardarSesion, initMaps, irAWhatsApp, irAlCatalogo, mostrarToast, renderClubAdminCfg, renderDrawer, saborDot, sesionExpirada, sheetsCall, supabaseCall, tokenVendedor, totalItems } = N;
 
 
 // ── Ajustar ubicación de un cliente existente (vendedor en sitio) ──
@@ -3331,7 +3331,17 @@ function pintarDetallePedido({ orden, lineas }) {
     </div>
   ` : '';
 
-  const accionesHTML = segPedidoHTML + reparteHTML + segPagoHTML;
+  // Editar pedido (20 sep 2026): el botón solo si el servidor dijo `editable`; si no, el motivo, nunca silencio.
+  const motivoTxt = (N.MOTIVO_EDICION.vendedor || {})[orden.motivo] || '';
+  const editarHTML = !puedeEditar || orden.editable === undefined ? '' : orden.editable ? `
+    <div style="margin-top:12px;">
+      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
+      ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + orden.editado_por : ''}</div>` : ''}
+    </div>` : `
+    <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
+
+  const accionesHTML = editarHTML + segPedidoHTML + reparteHTML + segPagoHTML;
 
   // Construcción final
   document.getElementById('dp-contenido').innerHTML = `
@@ -9033,6 +9043,26 @@ window.guardarCupon = async function() {
   } catch(e) { avisar({ titulo: 'No se pudo guardar el cupón', cuerpo: e.message }); }
 };
 
+
+// Editar pedido desde el drawer (20 sep 2026): abre el editor compartido con el catálogo del canal del pedido.
+window.editarPedidoDesdeDrawer = function () {
+  const pa = N._pedidoActual; if (!pa || !pa.orden) return;
+  const o = pa.orden;
+  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_pedido', { p_data: { idOrden: String(o.id), actualizadoPor: N.vendedorInfo?.nombre || 'vendedor', modo, lineas } });
+  abrirEditorPedido({
+    pedido: { id: o.id, consecutivo: o.consecutivo, total: o.total, editable: o.editable, motivo: o.motivo },
+    lineas: pa.lineas || [],
+    catalogo: (N.catalogo || []),
+    nivel: o.nivel || 'consumidor',
+    audiencia: 'vendedor',
+    cotizar: llamar('cotizar'), aplicar: llamar('aplicar'),
+    alGuardar: (r) => {
+      if (r.caja && r.caja.monto) mostrarToast(`Caja: ajuste de $${Number(r.caja.monto).toLocaleString('es-MX')}`);
+      if (r.puntos && r.puntos.puntos) mostrarToast(`Puntos: ajuste de ${r.puntos.puntos}`);
+      verDetallePedido(o.id);
+    },
+  });
+};
 
 // Lo que app.js llama del panel
 export { armadoPararRefresco, cargarCupones, cargarListaProductos, pintarDetallePedido, renderArmado, renderB2B, renderCaja, renderEntregas, renderGastos, renderJornadas, renderMayoreoAdminCfg, renderPedidosVendedor, renderProduccion, renderProspeccion, renderReparto, renderResumen, renderRuta };

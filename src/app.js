@@ -5107,6 +5107,9 @@ window.verDetallePedido = async function(idOrden) {
       notas: o.notas, cupon_codigo: o.cupon_codigo, tipo_interno: o.tipo_interno,
       cp: o.cp, colonia: o.colonia, municipio: o.municipio, estado: o.estado,
       direccion: o.direccion, coordenadas: o.coordenadas, zona_entrega: o.zona_entrega,
+      armado_en: o.armado_en, editado_en: o.editado_en, editado_por: o.editado_por,
+      // Editar pedido (20 sep 2026): lo decide el servidor (regla 10). Sin migración, quedan undefined y no hay botón.
+      editable: _rp.editable, motivo: _rp.motivo || '', nivel: _rp.nivel || 'consumidor',
     };
     // Si líneas usan id_orden numérico en lugar de consecutivo
     let detalles = Array.isArray(detArr) ? detArr : [];
@@ -5130,6 +5133,7 @@ window.verDetallePedido = async function(idOrden) {
       subtotal: Number(d.subtotal) || 0,
       descuento: Number(d.descuento) || 0,
       piezas_por_caja: Number(d.piezas_por_caja) || 0,   // caja: «2 cajas de 12 (24 pz)»
+      puntos_canje: Number(d.puntos_canje) || 0,
     }));
     if (esAdmin() && !window._vendedoresReparto) { try { window._vendedoresReparto = await cargarVendedoresCheckout(); } catch (_e) { window._vendedoresReparto = []; } }
     _pedidoActual = { ok: true, orden, lineas };
@@ -5299,6 +5303,7 @@ const MOTIVO_EDICION = {
     pagado_en_linea: 'No se puede editar: pagado en línea (Stripe)', pago_en_linea_pendiente: 'No se puede editar: hay un pago en línea iniciado',
     en_camino: 'Ya salió a reparto: avisa a quien lo lleva', ya_armado: 'Ya está armado: al guardar vuelve a «Por armar»',
     no_es_tu_pedido: 'No se puede editar: no es tu pedido',
+    caja_sin_ajuste: 'La caja de hoy ya está cerrada: no se pudo ajustar el movimiento de caja de este cambio.',
   },
   cliente: {
     cancelado: 'Este pedido se canceló', entregado: 'Este pedido ya se entregó',
@@ -6269,6 +6274,7 @@ function mostrarPagoConfirmado(ok) {
 export const N = {
   get ARMADO_TITULO_BASE() { return ARMADO_TITULO_BASE; },
   get CACHE_KEYS() { return CACHE_KEYS; },
+  get catalogo() { return catalogo; },
   get MAYOREO_MINIMOS() { return MAYOREO_MINIMOS; }, set MAYOREO_MINIMOS(valor) { MAYOREO_MINIMOS = valor; },
   get SALTO() { return SALTO; },
   get WHATSAPP_NUM() { return WHATSAPP_NUM; },
