@@ -2913,35 +2913,35 @@ function pintarVistaPedidosVendedor() {
     if (filtro === 'entregar') return p.estatus !== 'Entregado' && p.estatus !== 'Cancelado';
     if (filtro === 'cobrar')   return p.estatusPago !== 'Pagado' && p.estatus !== 'Cancelado' && !p.esInterno;
     if (filtro === 'internos') return !!p.esInterno;
+    if (filtro === 'cancelados') return p.estatus === 'Cancelado';
     return true;
   });
 
-  // Conteos para los chips
+  // Conteos para el desplegable
   const cTodos    = pedidos.length;
   const cNuevos   = pedidos.filter(p => (p.estatus === 'Pendiente' || !p.estatus) && p.estatus !== 'Cancelado' && !p.esInterno).length;
   const cEntregar = pedidos.filter(p => p.estatus !== 'Entregado' && p.estatus !== 'Cancelado').length;
   const cCobrar   = pedidos.filter(p => p.estatusPago !== 'Pagado' && p.estatus !== 'Cancelado' && !p.esInterno).length;
   const cInternos = pedidos.filter(p => !!p.esInterno).length;
+  const cCancel   = pedidos.filter(p => p.estatus === 'Cancelado').length;
 
-  const chip = (id, lbl, n, activo) => `
-    <button onclick="filtrarPedidosVendedor('${id}')" style="
-      flex:1;background:${activo?'var(--amarillo)':'var(--gris)'};
-      border:1px solid ${activo?'var(--amarillo)':'var(--gris3)'};
-      border-radius:50px;padding:8px 4px;
-      font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;
-      color:${activo?'var(--negro)':'var(--suave)'};
-      cursor:pointer;white-space:nowrap;">
-      ${lbl} <span style="opacity:0.7;font-weight:700;">(${n})</span>
-    </button>`;
+  const opcion = (id, lbl, n) => `
+    <option value="${id}"${filtro === id ? ' selected' : ''}>${lbl} (${n})</option>`;
 
-  // Mostrar chip "Internos" solo si hay alguno
+  // Desplegable en vez de chips: con seis filtros los chips se partían en dos
+  // renglones en el teléfono. "Internos" y "Cancelados" solo se ofrecen si hay
+  // alguno, igual que hacía el chip de internos.
   const filtrosHTML = pedidos.length > 0 ? `
-    <div style="display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap;">
-      ${chip('todos',    'Todos',          cTodos,    filtro==='todos')}
-      ${chip('nuevos',   'Nuevos',       cNuevos,   filtro==='nuevos')}
-      ${chip('entregar', 'Por entregar', cEntregar, filtro==='entregar')}
-      ${chip('cobrar',   'Por cobrar',   cCobrar,   filtro==='cobrar')}
-      ${cInternos > 0 ? chip('internos', 'Internos', cInternos, filtro==='internos') : ''}
+    <div style="margin:0 0 12px;">
+      <select class="inp" aria-label="Filtrar pedidos" style="width:100%;"
+              onchange="filtrarPedidosVendedor(this.value)">
+        ${opcion('todos',    'Todos',        cTodos)}
+        ${opcion('nuevos',   'Nuevos',       cNuevos)}
+        ${opcion('entregar', 'Por entregar', cEntregar)}
+        ${opcion('cobrar',   'Por cobrar',   cCobrar)}
+        ${cInternos > 0 ? opcion('internos',   'Internos',   cInternos) : ''}
+        ${cCancel   > 0 ? opcion('cancelados', 'Cancelados', cCancel)   : ''}
+      </select>
     </div>
   ` : '';
 
@@ -2959,6 +2959,7 @@ function pintarVistaPedidosVendedor() {
         filtro==='cobrar'   ? 'No tienes pedidos pendientes por cobrar' :
         filtro==='nuevos'   ? 'Sin pedidos nuevos por confirmar' :
         filtro==='internos' ? 'Sin pedidos internos' :
+        filtro==='cancelados' ? 'Sin pedidos cancelados' :
                               'Sin pedidos'}
     </div>`;
   } else {
@@ -2969,6 +2970,7 @@ function pintarVistaPedidosVendedor() {
              filtro==='entregar' ? 'POR ENTREGAR' :
              filtro==='cobrar'   ? 'POR COBRAR' :
              filtro==='internos' ? 'INTERNOS / SAMPLING' :
+             filtro==='cancelados' ? 'PEDIDOS CANCELADOS' :
                                    'PEDIDOS'} (${filtrados.length})
       </div>
       ${filtrados.map(p => pedidoCardVendedorHTML(p)).join('')}
