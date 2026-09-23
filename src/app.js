@@ -5110,6 +5110,7 @@ window.verDetallePedido = async function(idOrden) {
       armado_en: o.armado_en, editado_en: o.editado_en, editado_por: o.editado_por,
       // Editar pedido (20 sep 2026): lo decide el servidor (regla 10). Sin migración, quedan undefined y no hay botón.
       editable: _rp.editable, motivo: _rp.motivo || '', nivel: _rp.nivel || 'consumidor',
+      puedeForzar: _rp.puedeForzar === true,   // admin sobre un entregado que no sea de Stripe
     };
     // Si líneas usan id_orden numérico en lugar de consecutivo
     let detalles = Array.isArray(detArr) ? detArr : [];
@@ -5303,6 +5304,10 @@ const MOTIVO_EDICION = {
     pagado_en_linea: 'No se puede editar: pagado en línea (Stripe)', pago_en_linea_pendiente: 'No se puede editar: hay un pago en línea iniciado',
     en_camino: 'Ya salió a reparto: avisa a quien lo lleva', ya_armado: 'Ya está armado: al guardar vuelve a «Por armar»',
     no_es_tu_pedido: 'No se puede editar: no es tu pedido',
+    // El servidor manda el aviso 'entregado' en los dos casos, y hasta el 22 sep 2026 solo existía
+    // como bloqueo. Cuando el admin fuerza la edición el código es el mismo pero el sentido es el
+    // contrario, así que el editor lo traduce a este otro texto (ver `forzado` en abrirEditorPedido).
+    entregado_forzado: 'Ya se entregó: lo estás editando de todos modos. Se ajustarán la caja y los puntos del cliente.',
     caja_sin_ajuste: 'La caja de hoy ya está cerrada: no se pudo ajustar el movimiento de caja de este cambio.',
   },
   cliente: {
@@ -5391,7 +5396,11 @@ function editorPedidoCotizar() {
     if (r && r.ok && r.cotizacion) {
       _ep.cotizacion = r.cotizacion;
       document.getElementById('ep-total-nuevo').textContent = '$' + Number(r.cotizacion.total || 0).toLocaleString('es-MX');
-      (r.avisos || []).forEach(a => { const t = a === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION[_ep.audiencia][a] || ''); if (t) av.innerHTML += `<div class="ep-aviso">${epEsc(t)}</div>`; });
+      (r.avisos || []).forEach(a => {
+        const cod = (a === 'entregado' && _ep.pedido && _ep.pedido.forzado) ? 'entregado_forzado' : a;
+        const t = cod === 'cupon_retirado' ? 'El cupón ya no aplica con este total' : (MOTIVO_EDICION[_ep.audiencia][cod] || '');
+        if (t) av.innerHTML += `<div class="ep-aviso">${epEsc(t)}</div>`;
+      });
       btn.disabled = false;
     } else {
       _ep.cotizacion = null;

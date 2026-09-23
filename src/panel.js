@@ -3340,6 +3340,11 @@ function pintarDetallePedido({ orden, lineas }) {
       <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
       ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
       ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
+    </div>` : orden.puedeForzar ? `
+    <div style="margin-top:12px;">
+      <div style="font-size:0.76rem;color:var(--suave);margin-bottom:6px;">${motivoTxt || 'Este pedido no se puede editar'}</div>
+      <button type="button" onclick="editarPedidoDesdeDrawer(true)" style="width:100%;min-height:44px;background:transparent;border:1px dashed var(--suave);border-radius:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.8rem;cursor:pointer;">Editar de todos modos (admin)</button>
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : `
     <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
 
@@ -9056,12 +9061,22 @@ window.guardarCupon = async function() {
 
 
 // Editar pedido desde el drawer (20 sep 2026): abre el editor compartido con el catálogo del canal del pedido.
-window.editarPedidoDesdeDrawer = function () {
+// `forzar` solo lo manda el botón «Editar de todos modos», que a su vez solo se
+// pinta si el servidor dijo `puedeForzar`. Quien decide sigue siendo el servidor:
+// sin rol admin, `editar_pedido` ignora el flag y el pedido sigue bloqueado.
+window.editarPedidoDesdeDrawer = async function (forzar) {
   const pa = N._pedidoActual; if (!pa || !pa.orden) return;
   const o = pa.orden;
-  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_pedido', { p_data: { idOrden: String(o.id), actualizadoPor: N.vendedorInfo?.nombre || 'vendedor', modo, lineas } });
+  // `confirmar`, no `confirm`: los 23 confirm() se quitaron el 8 sep 2026 porque
+  // congelan la página (cambios/2026-09-08-los-23-confirm.md).
+  if (forzar && !(await confirmar({
+    titulo: 'Editar un pedido entregado',
+    cuerpo: `${o.consecutivo} ya está entregado. Al editarlo se recotiza, se ajusta la caja y los puntos del cliente.`,
+    aceptar: 'Editar de todos modos', cancelar: 'Dejarlo como está', peligroso: true,
+  }))) return;
+  const llamar = (modo) => (lineas) => supabaseCall('POST', 'rpc/editar_pedido', { p_data: { idOrden: String(o.id), actualizadoPor: N.vendedorInfo?.nombre || 'vendedor', modo, lineas, ...(forzar ? { forzar: true } : {}) } });
   abrirEditorPedido({
-    pedido: { id: o.id, consecutivo: o.consecutivo, total: o.total, editable: o.editable, motivo: o.motivo },
+    pedido: { id: o.id, consecutivo: o.consecutivo, total: o.total, editable: o.editable || !!forzar, motivo: forzar ? '' : o.motivo, forzado: !!forzar },
     lineas: pa.lineas || [],
     catalogo: (N.catalogo || []),
     nivel: o.nivel || 'consumidor',

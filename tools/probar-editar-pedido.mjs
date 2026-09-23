@@ -528,7 +528,95 @@ if (corre('E')) {
   ok(tk3?.pedido?.editable === false && tk3?.pedido?.motivo === 'entregado', `E4 entregado: ${tk3?.pedido?.motivo}`);
 }
 
-// (la sección F va aquí)
+// ── F. El admin fuerza la edición de un ENTREGADO (20261003000000) ───────────
+// Antes, 'Entregado' bloqueaba a TODO EL MUNDO: p_quien solo valía 'vendedor' o
+// 'cliente' y el v_admin de editar_pedido solo decide QUÉ pedidos alcanzas.
+// Ahora el admin puede, pero SOLO mandando `forzar: true`, SOLO sobre 'entregado'
+// y NUNCA si el pedido es de Stripe (el motivo 'entregado' lo tapa: la cadena de
+// elsif para en el primero y 'Entregado' va antes que los dos de Stripe).
+if (corre('F')) {
+  console.log('\nF. admin fuerza un entregado');
+  const cF = await alta('Edit F');
+  const entregado = async () => {
+    const p = await pedidoCli(cF, [linea(P100, '100g', 2, 35)], 70);
+    creados.push(p?.idOrden); await confirmar(p);
+    await estatus(p.idOrden, { estatusPedido: 'Entregado' });
+    return p;
+  };
+
+  // F1. Sin `forzar`, el admin sigue bloqueado igual que antes (no cambia nada).
+  const f1 = await entregado();
+  const r1 = (await editar(ana, f1.idOrden, [{ id: lineasDe(f1.idOrden)[0].id, cantidad: 3 }])).json;
+  ok(r1?.error === 'no_editable' && r1?.motivo === 'entregado' && Number(lineasDe(f1.idOrden)[0].cantidad) === 2,
+     `F1 admin sin forzar: ${r1?.motivo} (entregado), cantidad sigue ${lineasDe(f1.idOrden)[0].cantidad} (2)`);
+
+  // F2. Con `forzar`, edita; y caja/puntos se compensan por el camino de siempre.
+  const r2 = (await editar(ana, f1.idOrden, [{ id: lineasDe(f1.idOrden)[0].id, cantidad: 3 }], 'aplicar', { forzar: true })).json;
+  ok(r2?.ok === true && Number(lineasDe(f1.idOrden)[0].cantidad) === 3,
+     `F2 admin con forzar: ok=${r2?.ok}, cantidad ${lineasDe(f1.idOrden)[0]?.cantidad} (3)`);
+  const tot2 = uno(`select total, editado_por from ordenes where id = ${f1.idOrden}`);
+  ok(Number(tot2.total) === 105 && (tot2.editado_por || '') !== '',
+     `F2 total recotizado ${tot2.total} (105), editado_por "${tot2.editado_por}" (no vacío)`);
+
+  // F3. Entregado + Stripe: forzar NO lo abre. El motivo dice 'entregado' (lo tapa),
+  //     pero el candado de Stripe se evalúa aparte y gana.
+  const f3 = await entregado();
+  sql(`update ordenes set estado_pago = 'pagado', stripe_payment_intent = 'pi_f3_${sufijo}' where id = ${f3.idOrden}`);
+  const r3 = (await editar(ana, f3.idOrden, [{ id: lineasDe(f3.idOrden)[0].id, cantidad: 5 }], 'aplicar', { forzar: true })).json;
+  ok(r3?.error === 'no_editable' && Number(lineasDe(f3.idOrden)[0].cantidad) === 2,
+     `F3 entregado+Stripe con forzar: ${r3?.error}/${r3?.motivo} (no_editable), cantidad sigue ${lineasDe(f3.idOrden)[0].cantidad} (2)`);
+
+  // F3b. Lo mismo con sesión de Stripe pendiente.
+  const f3b = await entregado();
+  sql(`update ordenes set estado_pago = 'pendiente', stripe_session_id = 'cs_f3b_${sufijo}' where id = ${f3b.idOrden}`);
+  const r3b = (await editar(ana, f3b.idOrden, [{ id: lineasDe(f3b.idOrden)[0].id, cantidad: 5 }], 'aplicar', { forzar: true })).json;
+  ok(r3b?.error === 'no_editable' && Number(lineasDe(f3b.idOrden)[0].cantidad) === 2,
+     `F3b entregado+Stripe pendiente con forzar: ${r3b?.error} (no_editable), cantidad sigue ${lineasDe(f3b.idOrden)[0].cantidad} (2)`);
+
+  // F4. Cancelado sigue cerrado para todos, incluso forzando.
+  const f4 = await pedidoCli(cF, [linea(P100, '100g', 2, 35)], 70); creados.push(f4?.idOrden);
+  await confirmar(f4); await cancelar(f4);
+  const r4 = (await editar(ana, f4.idOrden, [{ id: lineasDe(f4.idOrden)[0].id, cantidad: 5 }], 'aplicar', { forzar: true })).json;
+  ok(r4?.error === 'no_editable' && r4?.motivo === 'cancelado',
+     `F4 cancelado con forzar: ${r4?.error}/${r4?.motivo} (no_editable/cancelado)`);
+
+  // F5. Un vendedor que NO es dueño no puede forzar su propio entregado:
+  //     v_dueno es false, así que p_quien se queda en 'vendedor'.
+  const f5 = await pedidoVend(carla, cF, 'consumidor', [linea(P100, '100g', 2, 35)], 70);
+  creados.push(f5?.idOrden); await confirmar(f5);
+  await estatus(f5.idOrden, { estatusPedido: 'Entregado' });
+  const r5 = (await editar(carla, f5.idOrden, [{ id: lineasDe(f5.idOrden)[0].id, cantidad: 4 }], 'aplicar', { forzar: true })).json;
+  ok(r5?.error === 'no_editable' && r5?.motivo === 'entregado' && Number(lineasDe(f5.idOrden)[0].cantidad) === 2,
+     `F5 vendedor no dueño con forzar: ${r5?.motivo} (entregado), cantidad sigue ${lineasDe(f5.idOrden)[0].cantidad} (2)`);
+
+  // F6. El cliente no tiene esa puerta: editar_mi_pedido ignora `forzar`.
+  const f6 = await entregado();
+  const r6 = (await rpc('editar_mi_pedido', { p_data: { token: cF.token, idOrden: String(f6.idOrden), modo: 'aplicar', forzar: true, lineas: [{ id: lineasDe(f6.idOrden)[0].id, cantidad: 4 }] } })).json;
+  ok(r6?.error === 'no_editable' && Number(lineasDe(f6.idOrden)[0].cantidad) === 2,
+     `F6 cliente con forzar: ${r6?.error}/${r6?.motivo} (no_editable), cantidad sigue ${lineasDe(f6.idOrden)[0].cantidad} (2)`);
+
+  // F7. Un entregado ARMADO que edita el admin se desarma (la rama del desarmado
+  //     comparaba p_quien = 'vendedor' y habría dejado armado_en puesto).
+  const f7 = await entregado();
+  sql(`update ordenes set armado_en = now(), armado_por = 'probar-editar' where id = ${f7.idOrden}`);
+  const r7 = (await editar(ana, f7.idOrden, [{ id: lineasDe(f7.idOrden)[0].id, cantidad: 3 }], 'aplicar', { forzar: true })).json;
+  const a7 = uno(`select armado_en from ordenes where id = ${f7.idOrden}`).armado_en;
+  ok(r7?.ok === true && a7 === null, `F7 entregado armado editado por admin: ok=${r7?.ok}, armado_en ${a7} (null)`);
+
+  // F8. obtener_pedido: puedeForzar solo para el admin, y solo donde aplica.
+  const f8 = await entregado();
+  const o8a = (await rpc('obtener_pedido', { p_data: { token: ana.token, ref: String(f8.idOrden) } })).json;
+  // Ojo: para F8b hay que usar un pedido que Carla SÍ alcance (f5 es suyo). Con uno
+  // ajeno, obtener_pedido devuelve «no encontrado» y puedeForzar sale undefined: la
+  // aserción pasaría por el alcance, no por el permiso, que es lo que se quiere probar.
+  const o8c = (await rpc('obtener_pedido', { p_data: { token: carla.token, ref: String(f5.idOrden) } })).json;
+  ok(o8a?.editable === false && o8a?.motivo === 'entregado' && o8a?.puedeForzar === true,
+     `F8 admin ve editable=${o8a?.editable} motivo=${o8a?.motivo} puedeForzar=${o8a?.puedeForzar} (false/entregado/true)`);
+  ok(o8c?.ok === true && o8c?.motivo === 'entregado' && o8c?.puedeForzar === false,
+     `F8b vendedor no dueño, pedido SUYO: ok=${o8c?.ok} motivo=${o8c?.motivo} puedeForzar=${o8c?.puedeForzar} (true/entregado/false)`);
+  const o8s = (await rpc('obtener_pedido', { p_data: { token: ana.token, ref: String(f3.idOrden) } })).json;
+  ok(o8s?.puedeForzar === false, `F8c entregado+Stripe: puedeForzar=${o8s?.puedeForzar} (false)`);
+}
 
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { try { await cancelar({ idOrden: id }); } catch (_e) {} }
