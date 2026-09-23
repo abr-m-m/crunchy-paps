@@ -142,6 +142,60 @@ creados.push(cero.id);
 const n5b = Number(uno(`select count(*)::int n from caja_movimientos where id_orden = ${cero.id}`).n);
 ok(n5b === 0, `C5b total 0: 0 filas (${n5b})`);
 
+
+// ── Caso 6: cancelar un pedido ya cobrado devuelve el dinero (20261004000000) ─
+// Al cancelar, los puntos ya se revertian y los kg volvian al lote; la caja no
+// hacia nada y el asiento de venta positivo se quedaba para siempre.
+console.log('\nCaso 6: cancelar un pedido cobrado escribe la devolución en caja');
+const ventas = (id) => sql(`select id, tipo, monto, id_punto, id_caja_dia, id_mov_pareja, fecha::date as fecha, descripcion, actor
+                              from caja_movimientos where id_orden = ${id} and tipo like 'venta_%' order by id`);
+const hoyISO = uno(`select current_date::text d`).d;
+
+// 6a. Cobrado y confirmado -> cancelar -> un asiento negativo, pareado, de hoy.
+const cSeis = await alta('Caja Cancela');
+const p6 = await pedidoVend(ana, cSeis, 'consumidor', [linea(4)], 140);
+creados.push(p6?.idOrden);
+await estatus(p6.idOrden, { estatusPago: 'Pagado' });
+await rpc('confirmar_caja_pedido', { p_data: { token: ana.token, idOrden: String(p6.idOrden), actor: 'probar-caja' } });
+const v6antes = ventas(p6.idOrden);
+ok(v6antes.length === 1 && Number(v6antes[0].monto) === 140, `C6 venta asentada antes de cancelar: ${v6antes.length} fila, ${v6antes[0]?.monto} (140)`);
+
+await estatus(p6.idOrden, { estatusPedido: 'Cancelado' });
+const v6 = ventas(p6.idOrden);
+const dev = v6[1] || {};
+ok(v6.length === 2 && Number(dev.monto) === -140, `C6 tras cancelar: ${v6.length} filas (2), devolución ${dev.monto} (−140)`);
+ok(dev.tipo === v6antes[0].tipo && Number(dev.id_punto) === Number(v6antes[0].id_punto),
+   `C6 mismo tipo y punto: ${dev.tipo}/${dev.id_punto} = ${v6antes[0].tipo}/${v6antes[0].id_punto}`);
+ok(Number(dev.id_mov_pareja) === Number(v6antes[0].id), `C6 pareada con el original: ${dev.id_mov_pareja} = ${v6antes[0].id}`);
+ok(dev.fecha === hoyISO, `C6 fecha de HOY, no la del original: ${dev.fecha} (${hoyISO})`);
+ok(Number(v6.reduce((a, m) => a + Number(m.monto), 0)) === 0, `C6 neto del pedido = 0 (${v6.reduce((a, m) => a + Number(m.monto), 0)})`);
+ok(Number(v6antes[0].monto) === Number(sql(`select monto from caja_movimientos where id = ${v6antes[0].id}`)[0].monto),
+   `C6 el original queda intacto (solo-altas): ${v6antes[0].monto}`);
+// Con una caja del día abierta, el asiento se engancha a ella. En producción no
+// habrá ninguna (no hay caja del día desde jun 2026) y quedará NULL; aquí la
+// prueba sí abrió una, así que este camino se prueba de verdad.
+ok(Number(dev.id_caja_dia) === idCajaHoy, `C6 id_caja_dia apunta a la caja abierta de hoy: ${dev.id_caja_dia} (${idCajaHoy})`);
+
+// 6b. Cancelar un pedido SIN cobrar no escribe nada.
+const p6b = await pedidoVend(ana, cSeis, 'consumidor', [linea(2)], 70);
+creados.push(p6b?.idOrden);
+await estatus(p6b.idOrden, { estatusPedido: 'Cancelado' });
+ok(ventas(p6b.idOrden).length === 0, `C6b sin cobrar: 0 filas (${ventas(p6b.idOrden).length})`);
+
+// 6c. Interno: nunca tuvo asiento, tampoco lo tiene al cancelar.
+const p6c = await pedidoVend(ana, cSeis, 'consumidor', [linea(2)], 0, { tipoInterno: 'sampling' });
+creados.push(p6c?.idOrden);
+await estatus(p6c.idOrden, { estatusPedido: 'Cancelado' });
+ok(ventas(p6c.idOrden).length === 0, `C6c interno: 0 filas (${ventas(p6c.idOrden).length})`);
+
+// 6d. Descancelar y volver a cancelar NO duplica: tras la primera reversión el
+// neto es 0, y la condición mira el neto, no la existencia del asiento.
+await estatus(p6.idOrden, { estatusPedido: 'Entregado' });
+await estatus(p6.idOrden, { estatusPedido: 'Cancelado' });
+const v6d = ventas(p6.idOrden);
+ok(v6d.length === 2 && Number(v6d.reduce((a, m) => a + Number(m.monto), 0)) === 0,
+   `C6d cancelar dos veces no duplica: ${v6d.length} filas (2), neto ${v6d.reduce((a, m) => a + Number(m.monto), 0)} (0)`);
+
 // ── Limpieza ────────────────────────────────────────────────────────────────
 for (const id of creados) { if (!id) continue; try { await estatus(id, { estatusPedido: 'Cancelado' }); } catch (_e) {} }
 sql(`update lotes_produccion set estatus = 'Cerrado', fecha_cierre = now() where id_lote = '${idLote}'`);
