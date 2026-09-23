@@ -470,21 +470,36 @@ if (corre('D')) {
     sql(`update config_produccion set valor = jsonb_set(valor, '{generacion,activo}', 'true') where clave = 'lealtad'`);
   }
 
-  // D8. Fila fantasma (bug preexistente del trigger, ver nota en T4): un pedido NUNCA pagado también
-  // trae un asiento venta_% desde su creación (o.estatus_caja sigue null). Con caja abierta se compensa
-  // igual (fix 3a/b, ronda 1); cerrada, se omite con aviso 'caja_sin_ajuste' en vez de fallar (fix 3c).
+  // D8. Pedido nunca pagado: desde el arreglo del trigger (20261002000000_caja_asiento_al_confirmar)
+  // ya NO nace con un asiento venta_%. Antes sí: la guarda comparaba `NEW.estatus_caja <> 'confirmado'`
+  // contra NULL, que da NULL y no corta. Es la rama (c) del controlador: sin fila venta_% previa no hay
+  // nada que compensar, y editarlo no debe inventar un asiento ni avisar 'caja_sin_ajuste'.
   abrirCaja();
   const p8 = await pedidoCli(cD, [linea(P100, '100g', 2, 35)], 70); creados.push(p8?.idOrden); await confirmar(p8);
   const estCaja8 = uno(`select estatus_caja from ordenes where id = ${p8.idOrden}`).estatus_caja;
   const m8antes = movs(p8.idOrden);
-  ok(estCaja8 === null && m8antes.length === 1 && m8antes[0].tipo === 'venta_efectivo', `D8 fantasma previa a editar: estatus_caja ${estCaja8} (null), fila ${m8antes[0]?.tipo} (venta_efectivo)`);
+  ok(estCaja8 === null && m8antes.length === 0, `D8 pedido sin cobrar NO nace con asiento: estatus_caja ${estCaja8} (null), ${m8antes.length} filas (0)`);
   const r8 = (await editar(ana, p8.idOrden, [{ id: lineasDe(p8.idOrden)[0].id, cantidad: 3 }])).json;
   const m8 = movs(p8.idOrden);
-  ok(r8?.ok && m8.length === 2 && cerca(m8[1].monto, 35) && Number(m8[1].id_mov_pareja) === Number(m8antes[0].id), `D8 caja abierta: fantasma se compensa igual, asiento ${m8[1]?.monto} (35) pareja ${m8[1]?.id_mov_pareja}=${m8antes[0]?.id}`);
+  ok(r8?.ok && m8.length === 0 && !(r8.avisos || []).includes('caja_sin_ajuste'), `D8 editarlo no inventa asiento: ${m8.length} filas (0), avisos ${JSON.stringify(r8?.avisos)} (sin caja_sin_ajuste)`);
+
+  // D8c. Fantasma HEREDADO. El arreglo del trigger no borra el pasado: los asientos que el trigger viejo
+  // dejó en producción (69 al 22 sep 2026) siguen ahí, y la rama (b) del controlador los compensa igual.
+  // Esa rama sigue viva y hay que probarla: se siembra a mano la fila que dejaba el trigger viejo
+  // (venta_efectivo, id_caja_dia null) sobre un pedido sin cobrar.
+  const p8c = await pedidoCli(cD, [linea(P100, '100g', 2, 35)], 70); creados.push(p8c?.idOrden); await confirmar(p8c);
+  sql(`insert into caja_movimientos (id_caja_dia, id_punto, tipo, monto, id_orden, consecutivo_pedido, descripcion, actor)
+       select null, ${idPunto}, 'venta_efectivo', 70, ${p8c.idOrden}, consecutivo, 'Venta ' || consecutivo || ' (fantasma heredado, prueba)', 'sistema'
+         from ordenes where id = ${p8c.idOrden}`);
+  const m8cantes = movs(p8c.idOrden);
+  ok(m8cantes.length === 1 && m8cantes[0].tipo === 'venta_efectivo', `D8c fantasma heredado sembrado (${m8cantes.length} fila, ${m8cantes[0]?.tipo})`);
+  const r8c = (await editar(ana, p8c.idOrden, [{ id: lineasDe(p8c.idOrden)[0].id, cantidad: 3 }])).json;
+  const m8c = movs(p8c.idOrden);
+  ok(r8c?.ok && m8c.length === 2 && cerca(m8c[1].monto, 35) && Number(m8c[1].id_mov_pareja) === Number(m8cantes[0].id), `D8c heredado, caja abierta: se compensa igual, asiento ${m8c[1]?.monto} (35) pareja ${m8c[1]?.id_mov_pareja}=${m8cantes[0]?.id}`);
   cerrarCaja();
-  const r8b = (await editar(ana, p8.idOrden, [{ id: lineasDe(p8.idOrden)[0].id, cantidad: 5 }])).json;
-  const m8b = movs(p8.idOrden);
-  ok(r8b?.ok && m8b.length === 2 && (r8b.avisos || []).includes('caja_sin_ajuste'), `D8b caja cerrada: sin asiento nuevo (${m8b.length} = 2, sigue como D8), aviso ${JSON.stringify(r8b?.avisos)}`);
+  const r8d = (await editar(ana, p8c.idOrden, [{ id: lineasDe(p8c.idOrden)[0].id, cantidad: 5 }])).json;
+  const m8d = movs(p8c.idOrden);
+  ok(r8d?.ok && m8d.length === 2 && (r8d.avisos || []).includes('caja_sin_ajuste'), `D8d heredado, caja cerrada: sin asiento nuevo (${m8d.length} = 2), aviso ${JSON.stringify(r8d?.avisos)}`);
   abrirCaja();   // deja la caja abierta: una corrida C posterior no debe heredarla cerrada.
 }
 
