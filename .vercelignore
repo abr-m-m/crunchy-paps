@@ -20,6 +20,7 @@ PROGRESO.md
 DESPLIEGUE.md
 CLAUDE.md
 .claude/
+docs/
 
 # ── Base de datos: no es parte del sitio ─────────────────────
 # `tools/` SÍ viaja desde el 20 sep 2026: Vercel construye con `npm run validar`

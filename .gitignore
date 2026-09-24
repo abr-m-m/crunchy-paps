@@ -119,3 +119,10 @@ crunchy-paps-docs/
 HISTORIA.md
 REGLAS.md
 ARQUITECTURA.md
+
+# docs/mapa/ — el mapa visual de la app (cambios/2026-09-23-mapa-visual/diseno.md).
+# Mismo criterio que CLAUDE.md, PROGRESO.md, PLAN.md y cambios/: el repo es PÚBLICO y el
+# mapa lleva la matriz de permisos, los nombres de cada RPC, capturas de producción y una
+# auditoría con huecos AÚN ABIERTOS. Publicarlo sería entregar el plano con las puertas
+# mal cerradas señaladas. Se respalda al repo privado con `node tools/respaldar-docs.mjs`.
+docs/mapa/
