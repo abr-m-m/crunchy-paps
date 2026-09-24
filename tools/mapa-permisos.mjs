@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // tools/mapa-permisos.mjs — genera docs/mapa/datos/permisos.js desde PRODUCCIÓN. Solo LEE.
-// La matriz de permisos es la parte del mapa que más deriva. Escrita a mano diría que el rol
-// administrador ve Armado, Caja, Ruta y Reparto — y no los ve: su lista personal SUSTITUYE a la
-// del rol (20260830203059_remote_schema.sql:1740). Generada no puede mentir.
+// La matriz de permisos es la parte del mapa que más deriva. Generada no puede mentir — pero
+// solo si modela la función que decide de verdad: ver la CORRECCIÓN del 23 sep, más abajo.
+// La lista personal sustituye a la del rol SALVO para los roles dueño, que lo ven todo.
 // El catálogo de secciones sale de NAV_ITEM_POR_SECCION y NO de las listas, porque una sección
 // que no está en ninguna lista (hoy `resumen`) tiene que salir igualmente, marcada como muerta.
 // Uso: node tools/mapa-permisos.mjs
@@ -32,11 +32,39 @@ rmSync(dir, { recursive: true, force: true });
 
 const porRol = Object.fromEntries(roles.map(r => [r.rol, r.secciones]));
 const tienePropia = (u) => Array.isArray(u.secciones) && u.secciones.length > 0;
-const efectivo = usuarios.map(u => ({
-  id: u.id, nombre: u.nombre, rol: u.rol,
-  fuente: tienePropia(u) ? 'individual' : 'rol',
-  secciones: tienePropia(u) ? u.secciones : (porRol[u.rol] || []),
-}));
+
+// CORRECCIÓN DEL 23 SEP 2026. Esta matriz decía que el rol administrador no podía abrir
+// Ruta, Reparto ni Resumen, y era FALSO: se había copiado la lógica de
+// `get_secciones_usuario`, que es la función VIEJA (la que recibía idVendedor y devolvía la
+// lista personal a secas; src/app.js:5197 explica por qué se sustituyó). Quien decide de
+// verdad es `sesion_secciones`, que usan `mis_secciones` —la que pinta la barra— y
+// `sesion_exige_seccion` —la que cierra cada RPC—, y ESA abre con:
+//     roles_dueno constant text[] := array['admin', 'administrador'];
+//     if v_rol_l = any(roles_dueno) then return todas; end if;
+// antes de mirar el override individual. Un dueño lo ve todo, tenga la lista personal que
+// tenga. Regla 4: copiar el código solo demuestra que la copia funciona — y aquí ni siquiera
+// se copió el código bueno. Se modela `sesion_secciones`, y solo esa.
+const ROLES_DUENO = ['admin', 'administrador'];   // EXACTOS: 'administrador2' NO está
+const resolver = (u) => {
+  if (ROLES_DUENO.includes(u.rol)) return { fuente: 'dueño', secciones: catalogo };
+  if (tienePropia(u))              return { fuente: 'individual', secciones: u.secciones };
+  const base = porRol[u.rol] || ['catalogo', 'pedidos', 'cuenta'];   // mínimo seguro
+  return { fuente: 'rol', secciones: base };
+};
+const efectivo = usuarios.map(u => {
+  const r = resolver(u);
+  // Mostrador recibe productos y cupones por añadido, no por lista (sesion_secciones lo hace
+  // con array_append al final, y la interfaz repite el mismo añadido).
+  const secciones = u.rol === 'mostrador'
+    ? [...r.secciones, ...['productos', 'cupones'].filter(s => !r.secciones.includes(s))]
+    : r.secciones;
+  // Qué le da su rol que su lista personal no tiene. Es lo que habría cazado el desfase el
+  // mismo día en vez de una semana después: las migraciones que reparten secciones nuevas
+  // actualizan `vendedores` filtrando por rol, y a quien no case se le queda la lista vieja.
+  const desfase = tienePropia(u) && !ROLES_DUENO.includes(u.rol)
+    ? (porRol[u.rol] || []).filter(s => !u.secciones.includes(s)) : [];
+  return { id: u.id, nombre: u.nombre, rol: u.rol, fuente: r.fuente, secciones, desfase };
+});
 
 const alcance = Object.fromEntries(
   catalogo.map(s => [s, efectivo.filter(u => u.secciones.includes(s)).map(u => u.nombre)]));
