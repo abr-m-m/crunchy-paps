@@ -95,7 +95,17 @@ for (const p of pendientes) {
   if (p.frecuencia && !FRECUENCIAS.includes(p.frecuencia)) mal(`${q}: frecuencia "${p.frecuencia}" desconocida`);
   if (p.severidad && !SEVERIDADES.includes(p.severidad)) mal(`${q}: severidad "${p.severidad}" desconocida`);
   if (p.esfuerzo && !ESFUERZOS.includes(p.esfuerzo)) mal(`${q}: esfuerzo "${p.esfuerzo}" desconocido`);
-  if (p.ficha && vistos.size && !vistos.has(p.ficha)) mal(`${q}: apunta a la ficha ${p.ficha}, que no existe`);
+  // La pregunta correcta no es «¿ya se escribió esa ficha?» (el mapa se escribe en fases, y un
+  // pendiente puede apuntar legítimamente a una pantalla cuya ficha llega en una fase posterior):
+  // es «¿apunta a una pantalla real de la app?». Mismo criterio que la comprobación 1 con `idsReales`,
+  // y la misma excepción para `tipo: 'pagina'` (esas no están en index.html).
+  if (p.ficha && html) {
+    const fichaCorrespondiente = fichas.find(f => f.id === p.ficha);
+    const esPagina = fichaCorrespondiente && fichaCorrespondiente.tipo === 'pagina';
+    if (!esPagina && !idsReales.has(p.ficha)) {
+      mal(`${q}: apunta a la ficha "${p.ficha}", que no existe en index.html`);
+    }
+  }
 }
 
 // Los de permisos y seguridad NO pueden estar en pendientes.js: ese archivo se publica (D8).

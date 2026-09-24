@@ -58,6 +58,7 @@ const casos = [
   ['id de ficha repetido',                      (m) => { m.comprar.fichas.push({ ...m.comprar.fichas[0] }); }, /repetid/i],
   ['pendiente que no existe',                   (m) => { m.comprar.fichas[0].pendientes = ['MAP-404']; }, /MAP-404/],
   ['pendiente sin impacto',                     (m) => { delete m.pendientes[0].impacto; },            /impacto/i],
+  ['pendiente que apunta a una ficha inventada', (m) => { m.pendientes[0].ficha = 's-inventado'; },     /s-inventado/],
   ['captura de producción sin pii declarado',   (m) => { delete m.comprar.fichas[0].capturas[0].pii; }, /datos personales/i],
 ];
 
@@ -74,6 +75,17 @@ const dd = montar(base(), false);
 const rr = correr(dd);
 ok(rr.codigo === 1 && /capturas\/x\.webp/.test(rr.salida), 'caza: captura que falta');
 rmSync(dd, { recursive: true, force: true });
+
+console.log('Caso 11: un pendiente apunta a una pantalla real cuya ficha aún no se escribió (pasa)');
+// El mapa se escribe en fases: un pendiente puede apuntar legítimamente a una pantalla real de
+// index.html (s-reparto) antes de que su ficha exista en datos/. Si alguien reintroduce la guarda
+// `vistos.size &&`, este caso se cae — es la protección del arreglo, no una prueba de "caza".
+const m11 = base();
+m11.pendientes[0].ficha = 's-reparto';
+const d11 = montar(m11);
+const r11 = correr(d11);
+ok(r11.codigo === 0, `pendiente a ficha real sin escribir: código ${r11.codigo}`);
+rmSync(d11, { recursive: true, force: true });
 
 console.log(fallos ? `\n${fallos} problema(s).\n` : `\nTodo en orden.\n`);
 process.exit(fallos ? 1 : 0);
