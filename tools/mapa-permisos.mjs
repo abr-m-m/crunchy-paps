@@ -42,7 +42,16 @@ const alcance = Object.fromEntries(
   catalogo.map(s => [s, efectivo.filter(u => u.secciones.includes(s)).map(u => u.nombre)]));
 const muertas = catalogo.filter(s => alcance[s].length === 0);
 
-const datos = { generado: new Date().toISOString().slice(0, 10), catalogo, porRol, efectivo, alcance, muertas };
+// Fecha LOCAL (CDMX), no UTC. `toISOString()` corriendo de noche fecha el mapa
+// en el día siguiente: esta misma herramienta, corrida a las 23:19 del 23 sep
+// 2026, escribió «generado: 2026-09-24», y de ahí se copiaron a mano 15 fechas
+// equivocadas a los datos. Es exactamente el fallo que ya tenía su cicatriz en
+// tools/respaldar-docs.mjs (los «Respaldo 2026-09-02» de commits del 1 sep):
+// regla 59, aplicar el arreglo en un sitio y olvidarlo en el de al lado.
+const d = new Date();
+const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const datos = { generado: hoy, catalogo, porRol, efectivo, alcance, muertas };
 writeFileSync('docs/mapa/datos/permisos.js',
   `window.MAPA = window.MAPA || {};\nwindow.MAPA.permisos = ${JSON.stringify(datos, null, 2)};\n`);
 

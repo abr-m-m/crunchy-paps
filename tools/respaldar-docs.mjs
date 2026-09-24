@@ -37,7 +37,17 @@ const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCES
 const CARPETAS = [
   { ruta: 'cambios',              ext: ['.md'] },
   { ruta: 'supabase/auditorias',  ext: ['.sql', '.csv'] },
+  // 24 sep 2026: el mapa visual de la app. Vive en docs/mapa/, fuera del repo
+  // (el repo es PÚBLICO y el mapa lleva la matriz de permisos de producción y
+  // los pendientes de seguridad). El espejo privado es el ÚNICO respaldo que
+  // tiene: si se borra la carpeta local, no está en ninguna otra parte.
+  { ruta: 'docs/mapa',            ext: ['.html', '.js', '.png'] },
 ];
+
+// Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe
+// («+48213 líneas» para una captura), así que los binarios se miden en KB.
+const BINARIOS = ['.png', '.jpg', '.webp', '.pdf'];
+const esBinario = (ruta) => BINARIOS.some((e) => ruta.endsWith(e));
 
 // 13 sep 2026: cada cambio puede traer una subcarpeta con sus parches, guiones
 // y SQL (cambios/2026-09-13-precio-por-caja/…). Se recorre un nivel más, con
@@ -96,13 +106,19 @@ for (const doc of DOCS) {
   const destino = join(DESTINO, doc);
   const viejo = existsSync(destino) ? readFileSync(destino) : null;
   if (viejo && viejo.equals(nuevo)) { console.log(`  ${doc.padEnd(42)} sin cambios`); continue; }
-  const lineas = nuevo.toString('utf8').split('\n').length;
-  const antes  = viejo ? viejo.toString('utf8').split('\n').length : 0;
-  // "nuevo líneas" se leía mal en la salida; un archivo que no existía antes
-  // dice cuántas trae, no cuántas cambió.
-  const delta  = viejo ? (lineas - antes >= 0 ? '+' : '') + (lineas - antes) + ' líneas'
-                       : `nuevo (${lineas} líneas)`;
-  cambios.push(`${doc} (${delta} líneas)`);
+  let delta;
+  if (esBinario(doc)) {
+    const kb = (n) => Math.round(n / 1024) + ' KB';
+    delta = viejo ? `${kb(viejo.length)} → ${kb(nuevo.length)}` : `nuevo (${kb(nuevo.length)})`;
+  } else {
+    const lineas = nuevo.toString('utf8').split('\n').length;
+    const antes  = viejo ? viejo.toString('utf8').split('\n').length : 0;
+    // "nuevo líneas" se leía mal en la salida; un archivo que no existía antes
+    // dice cuántas trae, no cuántas cambió.
+    delta = viejo ? (lineas - antes >= 0 ? '+' : '') + (lineas - antes) + ' líneas'
+                  : `nuevo (${lineas} líneas)`;
+  }
+  cambios.push(`${doc} (${delta})`);
   console.log(`  ${doc.padEnd(42)} ${delta}`);
   if (!soloRevisar) { mkdirSync(dirname(destino), { recursive: true }); writeFileSync(destino, nuevo); copiados++; }
 }

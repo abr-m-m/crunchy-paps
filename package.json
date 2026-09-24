@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "validar": "node tools/validar.mjs index.html && node tools/partir/comprobar-libres.mjs && vite build"
+    "validar": "node tools/validar.mjs index.html && node tools/partir/comprobar-libres.mjs && vite build",
+    "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-comprobar.mjs"
   },
   "dependencies": {
     "web-push": "^3.6.7"
