@@ -19,6 +19,7 @@ const base = () => ({
   comprar: { familia: { id: 'comprar', nombre: 'Comprar', orden: 2 }, fichas: [{
     id: 's-catalogo', nombre: 'Catálogo', tipo: 'pantalla', ruta: '#s-catalogo', seccion: 'catalogo',
     codigo: [{ archivo: 'src/app.js', desde: 1, hasta: 2 }], ven: ['consumidor'], madurez: 'completo',
+    entrada: 'Desde la pestaña Comprar de la barra inferior.',
     verificado: '2026-09-23', resumen: 'r',
     capturas: [{ archivo: 'capturas/x.webp', perfil: 'consumidor', entorno: 'produccion',
                  pii: 'tapada', pines: [{ n: 1, x: 0.1, y: 0.1 }] }],
@@ -60,6 +61,10 @@ const casos = [
   ['pendiente sin impacto',                     (m) => { delete m.pendientes[0].impacto; },            /impacto/i],
   ['pendiente que apunta a una ficha inventada', (m) => { m.pendientes[0].ficha = 's-inventado'; },     /s-inventado/],
   ['captura de producción sin pii declarado',   (m) => { delete m.comprar.fichas[0].capturas[0].pii; }, /datos personales/i],
+  ['pendiente con estado desconocido',          (m) => { m.pendientes[0].estado = 'archivado'; }, /estado "archivado"/],
+  ['pendiente cerrado sin fecha "cerrado"',     (m) => { m.pendientes[0].estado = 'cerrado'; m.pendientes[0].comoSeCerro = 'se corrigió con un UPDATE'; }, /MAP-900.*sin fecha "cerrado"/],
+  ['pendiente cerrado sin "comoSeCerro"',       (m) => { m.pendientes[0].estado = 'cerrado'; m.pendientes[0].cerrado = '2026-09-24'; }, /MAP-900.*sin "comoSeCerro"/],
+  ['ficha completa sin "entrada"',              (m) => { delete m.comprar.fichas[0].entrada; }, /s-catalogo.*sin "entrada"/],
 ];
 
 for (const [nombre, romper, patron] of casos) {
@@ -86,6 +91,33 @@ const d11 = montar(m11);
 const r11 = correr(d11);
 ok(r11.codigo === 0, `pendiente a ficha real sin escribir: código ${r11.codigo}`);
 rmSync(d11, { recursive: true, force: true });
+
+console.log('Caso 12: un pendiente con estado "abierto" explícito pasa');
+const m12 = base();
+m12.pendientes[0].estado = 'abierto';
+const d12 = montar(m12);
+const r12 = correr(d12);
+ok(r12.codigo === 0, `estado "abierto" explícito: código ${r12.codigo}`);
+rmSync(d12, { recursive: true, force: true });
+
+console.log('Caso 13: un pendiente cerrado, bien formado, pasa');
+const m13 = base();
+m13.pendientes[0].estado = 'cerrado';
+m13.pendientes[0].cerrado = '2026-09-24';
+m13.pendientes[0].comoSeCerro = 'se corrigió con un UPDATE sobre productos.precio_mayorista';
+const d13 = montar(m13);
+const r13 = correr(d13);
+ok(r13.codigo === 0, `pendiente cerrado bien formado: código ${r13.codigo}`);
+rmSync(d13, { recursive: true, force: true });
+
+console.log('Caso 14: una ficha a medias, sin "entrada", pasa (solo lo exige "completo")');
+const m14 = base();
+m14.comprar.fichas[0].madurez = 'parcial';
+delete m14.comprar.fichas[0].entrada;
+const d14 = montar(m14);
+const r14 = correr(d14);
+ok(r14.codigo === 0, `ficha "parcial" sin entrada: código ${r14.codigo}`);
+rmSync(d14, { recursive: true, force: true });
 
 console.log(fallos ? `\n${fallos} problema(s).\n` : `\nTodo en orden.\n`);
 process.exit(fallos ? 1 : 0);

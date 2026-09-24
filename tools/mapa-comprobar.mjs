@@ -55,6 +55,7 @@ for (const f of fichas) {
   for (const p of f.ven || []) if (!PERFILES.includes(p)) mal(`${q}: perfil desconocido "${p}"`);
   if (!MADUREZ.includes(f.madurez)) mal(`${q}: madurez "${f.madurez}" no es una de ${MADUREZ.join('/')}`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(f.verificado || '')) mal(`${q}: sin fecha de verificación`);
+  if (f.madurez === 'completo' && !f.entrada) mal(`${q}: madurez "completo" sin "entrada"`);
 
   const numeros = new Set((f.elementos || []).map(e => e.n));
   for (const c of f.capturas || []) {
@@ -95,6 +96,13 @@ for (const p of pendientes) {
   if (p.frecuencia && !FRECUENCIAS.includes(p.frecuencia)) mal(`${q}: frecuencia "${p.frecuencia}" desconocida`);
   if (p.severidad && !SEVERIDADES.includes(p.severidad)) mal(`${q}: severidad "${p.severidad}" desconocida`);
   if (p.esfuerzo && !ESFUERZOS.includes(p.esfuerzo)) mal(`${q}: esfuerzo "${p.esfuerzo}" desconocido`);
+  if (p.estado !== undefined && p.estado !== 'abierto' && p.estado !== 'cerrado') {
+    mal(`${q}: estado "${p.estado}" no es "abierto" ni "cerrado"`);
+  }
+  if (p.estado === 'cerrado') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.cerrado || '')) mal(`${q}: estado "cerrado" sin fecha "cerrado" válida (AAAA-MM-DD)`);
+    if (!p.comoSeCerro) mal(`${q}: estado "cerrado" sin "comoSeCerro"`);
+  }
   // La pregunta correcta no es «¿ya se escribió esa ficha?» (el mapa se escribe en fases, y un
   // pendiente puede apuntar legítimamente a una pantalla cuya ficha llega en una fase posterior):
   // es «¿apunta a una pantalla real de la app?». Mismo criterio que la comprobación 1 con `idsReales`,
