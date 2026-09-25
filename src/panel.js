@@ -5132,6 +5132,10 @@ async function renderRuta() {
     return;
   }
   window._rutaDia = r;
+  // El cierre del día va aparte de `ruta_del_dia` a propósito: este cuenta los pedidos LEVANTADOS,
+  // que no son paradas. Si falla, la ruta se pinta igual — no es dato crítico para caminar.
+  try { window._cierreDia = await supabaseCall('POST', 'rpc/cierre_del_dia', { p_data: r.fecha ? { fecha: r.fecha } : {} }); }
+  catch (e) { window._cierreDia = null; }
   if (r.veTodas && filtros && filtros.style.display === 'none') {
     if (!window._rutasCache) await cargarRutasCache();
     sel.innerHTML = '<option value="">La que toca ese día</option>' + (window._rutasCache || []).map(x => `<option value="${x.id}">${rutaEsc(x.nombre)}</option>`).join('');
@@ -5200,7 +5204,31 @@ function pintarRutaDia() {
     ? `<div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
     : '';
   const html = bloque('Clientes', paradas.filter(p => p.tipo === 'cliente')) + bloque('Prospectos', paradas.filter(p => p.tipo === 'prospecto'));
-  lista.innerHTML = html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>';
+  lista.innerHTML = (html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>') + cierreDelDiaHTML(a);
+}
+
+// El cierre del día. Si todavía no hay ninguna visita NO dice «0 de N»: dice que aún no sales. Un
+// cero se lee como «saliste y no vendiste», que es una acusación distinta y falsa por la mañana.
+function cierreDelDiaHTML(avance) {
+  const c = window._cierreDia;
+  if (!c || !c.ok) return '';
+  const hechas = Number(c.visitadas || 0);
+  const prog = Number((avance && avance.programadas) || 0);
+  const sinResultado = Math.max(0, prog - Number((avance && avance.visitadas) || 0));
+  const money = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!hechas) {
+    return `<div style="margin-top:16px;background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:14px;color:var(--suave);font-size:0.84rem;text-align:center;">Aún no sales. ${prog} parada${prog === 1 ? '' : 's'} te esperan.</div>`;
+  }
+  return `
+    <div style="margin-top:16px;background:var(--gris);border-radius:14px;padding:14px;border-left:4px solid var(--amarillo);">
+      <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Cierre del día</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${hechas}</div><div style="font-size:0.7rem;color:var(--suave);">visitas</div></div>
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${Number(c.pedidos || 0)}</div><div style="font-size:0.7rem;color:var(--suave);">pedidos</div></div>
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${money(c.monto)}</div><div style="font-size:0.7rem;color:var(--suave);">vendido</div></div>
+      </div>
+      ${sinResultado ? `<div style="margin-top:8px;font-size:0.78rem;color:var(--suave);">Te quedan <b style="color:var(--blanco);">${sinResultado}</b> parada${sinResultado === 1 ? '' : 's'} sin resultado.</div>` : ''}
+    </div>`;
 }
 
 // El detalle del prospecto usa la lista de Prospección: si no está cargada, se carga.
