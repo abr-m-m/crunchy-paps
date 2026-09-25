@@ -42,3 +42,10 @@ index.html.respaldo-*
 node_modules/
 .git/
 .vercel/
+
+# docs/mapa/ — el mapa visual de la app. El repo es PUBLICO y el mapa lleva la matriz de
+# permisos, los nombres de cada RPC, capturas de produccion y una auditoria con huecos AUN
+# ABIERTOS. Duplicado aqui a proposito: la proteccion nacio en la rama mapa-visual, que sigue
+# sin mezclar a main, asi que cualquier rama nacida de main deja docs/mapa/ sin rastrear y sin
+# ignorar, a un `git add -A` del repo publico. Asi entro CLAUDE.md en 3534dcb.
+docs/mapa/
