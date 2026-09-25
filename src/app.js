@@ -216,6 +216,44 @@ let wppUrlPend     = null;
 let catalogo       = []; // productos desde Sheets
 
 const TIPO_LABELS  = window.TIPO_LABELS = { consumidor:'Consumidor', tienda:'Tienda / Abarrotes', restaurante:'Restaurante', mayorista:'Mayorista', vendedor:'Vendedor', mostrador:'Mostrador' };
+
+// De qué canal es este cliente, en un solo sitio. Esto vivía suelto dentro del camino
+// de OTP y era su ÚNICA copia: al restaurar sesión el tipo salía de `cp_session`, que
+// dura 60 días, y no se le volvía a preguntar al servidor nunca. Por eso aprobar una
+// tienda en B2B no le cambiaba los precios hasta que cerrara sesión (MAP-003): seguía
+// viendo precios de consumidor y sin opción de caja, mientras en el panel todo se veía
+// correcto. Deriva del TEXTO `clientes.tipo`; el servidor deriva de `tipo_id` y además
+// exige `aprobado_b2b` al cobrar. Hoy las dos columnas coinciden en las 40 filas de
+// producción, y esa asimetría está anotada aparte (MAP-008). La aprobación NO se
+// decide aquí: la sigue resolviendo `enrutarTrasLoginB2B`.
+function tipoDesdeCliente(cliente) {
+  const tipo = String((cliente && cliente.tipo) || '').toLowerCase();
+  if (tipo.includes('tienda') || tipo.includes('abarrotes')) return 'tienda';
+  if (tipo.includes('restaurante')) return 'restaurante';
+  if (tipo.includes('mayorista') || tipo.includes('distribuidor')) return 'mayorista';
+  return 'consumidor';
+}
+
+// El banner del catálogo según el tipo. Estaba copiado en `irAlCatalogo` y en
+// `intentarRestaurarSesion`, y las copias YA SE HABÍAN SEPARADO: la de restaurar
+// sesión no tenía `mostrador`, así que al recargar, el punto de venta caía en el
+// banner de consumidor y leía «Tu pedido». Con una sola definición las dos rutas
+// —y el refresco de tipo de `cargarDatosCliente`— dicen lo mismo.
+function pintarBannerCatalogo() {
+  const banners = {
+    consumidor:  { tag:'Tu pedido',    titulo:tituloConsumidor() },
+    tienda:      { tag:'Abarrotes',    titulo:'Pedido para tu <span class="hl">tienda</span>' },
+    mayorista:   { tag:'Mayoreo',      titulo:'Pedido de <span class="hl">mayoreo</span>' },
+    restaurante: { tag:'Restaurante',  titulo:'Pedido para tu <span class="hl">cocina</span>' },
+    vendedor:    { tag:'Vendedor',     titulo:`Hola, <span class="hl">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
+    mostrador:   { tag:'Mostrador',    titulo:'Punto de <span class="hl">venta</span>' },
+  };
+  const b = banners[tipoCliente] || banners.consumidor;
+  const tag = document.getElementById('cat-tag');
+  const tit = document.getElementById('cat-titulo');
+  if (tag) tag.innerHTML = b.tag;
+  if (tit) tit.innerHTML = b.titulo;
+}
 const SABORES_ORDER = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
 // Rediseno visual, paso 3: en pantalla cada sabor es un punto de color, no un
 // emoji. El nombre va al lado siempre; el color solo acelera el reconocimiento.
@@ -416,11 +454,7 @@ window.verificarCodigo = async function() {
         clienteActual = resC.cliente;
         gaSetUser(clienteActual.id);
         puntos = resC.puntos || 0;
-        const tipo = resC.cliente.tipo?.toLowerCase() || 'consumidor';
-        if (tipo.includes('tienda') || tipo.includes('abarrotes')) tipoCliente = 'tienda';
-        else if (tipo.includes('restaurante')) tipoCliente = 'restaurante';
-        else if (tipo.includes('mayorista') || tipo.includes('distribuidor')) tipoCliente = 'mayorista';
-        else tipoCliente = 'consumidor';
+        tipoCliente = tipoDesdeCliente(resC.cliente);
         if (tipoCliente === 'tienda' || tipoCliente === 'restaurante' || tipoCliente === 'mayorista') {
           setTimeout(volverTrasVerificar(enrutarTrasLoginB2B), 400);   // gating B2B: catálogo solo si aprobada
         } else {
@@ -886,19 +920,7 @@ async function irAlCatalogo() {
   if (ht2) ht2.textContent = esVendedor ? 'Vendedor' : TIPO_LABELS[tipoCliente];
 
   // Banner
-  const banners = {
-    consumidor: { tag:'Tu pedido', titulo:tituloConsumidor() },
-    tienda:     { tag:'Abarrotes', titulo:'Pedido para tu <span class="hl">tienda</span>' },
-    mayorista:  { tag:'Mayoreo',   titulo:'Pedido de <span class="hl">mayoreo</span>' },
-    restaurante:{ tag:'Restaurante',titulo:'Pedido para tu <span class="hl">cocina</span>' },
-    vendedor:   { tag:'Vendedor',  titulo:`Hola, <span class="hl">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
-    mostrador:  { tag:'Mostrador', titulo:'Punto de <span class="hl">venta</span>' },
-  };
-  const b = banners[tipoCliente] || banners.consumidor;
-  const elCatTag = document.getElementById('cat-tag');
-  if (elCatTag) elCatTag.innerHTML = b.tag;
-  const elCatTit = document.getElementById('cat-titulo');
-  if (elCatTit) elCatTit.innerHTML = b.titulo;
+  pintarBannerCatalogo();
 
   // Modo venta (vendedor)
   if (esVendedor) {
@@ -985,18 +1007,7 @@ async function intentarRestaurarSesion() {
 
   // Restaurar banner
   mostrarCamposB2B();
-  const banners = {
-    consumidor:  { tag:'Tu pedido',   titulo:tituloConsumidor() },
-    tienda:      { tag:'Abarrotes',   titulo:'Pedido para tu <span class=\"hl\">tienda</span>' },
-    mayorista:   { tag:'Mayoreo',     titulo:'Pedido de <span class=\"hl\">mayoreo</span>' },
-    restaurante: { tag:'Restaurante', titulo:'Pedido para tu <span class=\"hl\">cocina</span>' },
-    vendedor:    { tag:'Vendedor',    titulo:`Hola, <span class=\"hl\">${vendedorInfo?.nombre?.split(' ')[0]||'vendedor'}</span>` },
-  };
-  const b = banners[tipoCliente] || banners.consumidor;
-  const catTag = document.getElementById('cat-tag');
-  const catTit = document.getElementById('cat-titulo');
-  if (catTag) catTag.innerHTML = b.tag;
-  if (catTit) catTit.innerHTML = b.titulo;
+  pintarBannerCatalogo();
 
   // Puerta B2B también al restaurar: una tienda sin datos o sin aprobar no ve
   // el catálogo de mayoreo (antes solo se comprobaba al entrar con OTP).
@@ -3221,6 +3232,39 @@ async function cargarDatosCliente() {
       gaSetUser(clienteActual.id);
       puntos        = rc.puntos || 0;
       const stats   = rc.stats;
+
+      // MAP-003: el tipo se vuelve a derivar del dato FRESCO que acaba de traer el
+      // servidor, no del que quedó en `cp_session` hace hasta 60 días. Sin esto,
+      // aprobar una tienda en B2B no le cambiaba los precios ni le abría la venta por
+      // caja hasta que cerrara sesión, y desde el panel no había forma de notarlo: el
+      // dato del servidor estaba bien, lo que no llegaba era al navegador del cliente.
+      // Esta función ya corría en cada entrada al catálogo y ya recibía `tipo` en la
+      // respuesta; lo único que faltaba era usarlo.
+      // Al vendedor no se le toca: su `tipoCliente` es 'vendedor' y su canal lo decide
+      // el selector «Venta para:», no la ficha del cliente al que le está vendiendo.
+      if (!esVendedor) {
+        const tipoFresco = tipoDesdeCliente(rc.cliente);
+        if (tipoFresco !== tipoCliente) {
+          tipoCliente = tipoFresco;
+          guardarSesion();
+          const elTipo  = document.getElementById('h-tipo');
+          if (elTipo)  elTipo.textContent  = TIPO_LABELS[tipoCliente];
+          const elTipo2 = document.getElementById('h-tipo2');
+          if (elTipo2) elTipo2.textContent = TIPO_LABELS[tipoCliente];
+          pintarBannerCatalogo();
+          mostrarCamposB2B();
+          // El catálogo cacheado guarda TODAS las columnas de precio y `getPrecio`
+          // elige la del canal al pintar, así que no hay que invalidar la caché:
+          // basta con volver a pintar.
+          if (window.renderTabs) window.renderTabs();
+          if (window.renderCatalogo) window.renderCatalogo();
+          // Si pasó a ser B2B, la puerta decide si puede quedarse aquí. Se llama con
+          // `true` (modo restaurar) a propósito: aprobada, no mueve nada; sin aprobar
+          // o sin datos, se la lleva. Sin ese `true` llamaría a `irAlCatalogo`, que
+          // vuelve a llamar a esta misma función.
+          if (tipoCliente !== 'consumidor') enrutarTrasLoginB2B(true);
+        }
+      }
 
       // Actualizar header con nombre — solo si NO es vendedor
       if (clienteActual.nombre && !esVendedor) {
