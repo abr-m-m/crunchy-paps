@@ -5064,6 +5064,8 @@ window.verDetalleProspecto = function(id) {
         <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
         <label for="visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
         <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+        <label for="visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
+        <input id="visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
         <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
@@ -5165,6 +5167,16 @@ function pintarRutaDia() {
       ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
     </div>`;
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  // La prioridad de `ruta_del_dia` NO reordena el recorrido —lo reordena la geografia, y eso esta
+  // bien cuando vas a pie—. Lo que si cambia algo al caminar es que la parada DIGA por que importa.
+  const recompra = (p) => {
+    if (p.tipo !== 'cliente' || !p.etapa) return '';
+    const d = p.diasSinComprar;
+    if (p.etapa === 'dormido') return `<b style="color:var(--rojo);">DORMIDA</b> · ${d} d sin pedido · `;
+    if (p.etapa === 'activo')  return `<b style="color:#4caf50;">Activa</b> · ${d} d sin pedido · `;
+    if (p.etapa === 'cliente') return `1ª compra · ${d} d · `;
+    return 'Aún no compra · ';
+  };
   const fila = (p) => {
     const accion = p.tipo === 'cliente' ? `abrirVisitaCliente(${p.id})` : `abrirParadaProspecto(${p.id})`;
     // El discurso cambia: a una parada NUEVA nadie la ha visitado; a una ya
@@ -5180,7 +5192,7 @@ function pintarRutaDia() {
       <span style="flex:0 0 30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;background:${p.visitadaHoy ? '#4caf50' : 'var(--gris3)'};color:${p.visitadaHoy ? '#000' : 'var(--blanco)'};">${p.visitadaHoy ? CHECK : p.orden}</span>
       <span style="min-width:0;flex:1 1 auto;">
         <span style="display:block;font-weight:700;font-size:0.88rem;overflow-wrap:anywhere;">${rutaEsc(p.nombre || 'Sin nombre')}</span>
-        <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
+        <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${recompra(p)}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
       </span>
     </button>`;
   };
@@ -5224,6 +5236,8 @@ window.abrirVisitaCliente = function(id) {
     </div>
     <label for="ruta-visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
     <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+    <label for="ruta-visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
+    <input id="ruta-visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
     <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
   hoja.hidden = false;
 };
@@ -5239,6 +5253,9 @@ window.registrarVisitaCliente = async function(id, codigo) {
   const r = RESULTADOS_VISITA_CLIENTE.find(x => x.codigo === codigo);
   if (!r) return;
   const nota = (document.getElementById('ruta-visita-nota')?.value || '').trim();
+  // Regla 59: este dato se manda desde los DOS llamadores de registrar_visita — aquí (cliente) y en
+  // elegirResultadoVisita (prospecto). Mandarlo en uno solo dejaría la mitad de las visitas sin él.
+  const anaquel = (document.getElementById('ruta-visita-anaquel')?.value || '').trim() || null;
   _visitaClienteEnCurso = true;
   try {
     mostrarToast('Tomando tu ubicación…');
@@ -5248,7 +5265,7 @@ window.registrarVisitaCliente = async function(id, codigo) {
       return;
     }
     const res = await supabaseCall('POST', 'rpc/registrar_visita', {
-      p_data: { idCliente: id, resultado: codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision }
+      p_data: { idCliente: id, resultado: codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, piezasEnAnaquel: anaquel }
     });
     if (!res || !res.ok) {
       await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });
@@ -5497,6 +5514,7 @@ window.elegirResultadoVisita = async function(id, codigo) {
   const r = RESULTADOS_VISITA.find(x => x.codigo === codigo);
   if (!p || !r) return;
   const nota = (document.getElementById('visita-nota')?.value || '').trim();
+  const anaquel = (document.getElementById('visita-anaquel')?.value || '').trim() || null;   // regla 59: ver registrarVisitaCliente
   const telefono = String(p.telefono || document.getElementById('visita-telefono')?.value || '').replace(/\D/g, '');
 
   if (r.codigo === 'convertido') {
@@ -5533,7 +5551,7 @@ window.elegirResultadoVisita = async function(id, codigo) {
     }
 
     const res = await supabaseCall('POST', 'rpc/registrar_visita', {
-      p_data: { idProspecto: id, resultado: r.codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, idCliente }
+      p_data: { idProspecto: id, resultado: r.codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, idCliente, piezasEnAnaquel: anaquel }
     });
     if (!res || !res.ok) {
       await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });
