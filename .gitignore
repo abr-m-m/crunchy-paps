@@ -48,16 +48,10 @@ index.html.respaldo-*
 PROGRESO.md
 DESPLIEGUE.md
 
-# Volcados del diagnóstico de solo lectura (sin datos personales, pero son
-# notas de trabajo, no código)
-1-*.txt
-2.*.txt
-3.*.txt
-4.*.txt
-5.*.txt
-A-indices.csv
-B-politicas.csv
-Supabase Snippet*.csv
+# Volcados del diagnóstico de solo lectura, respaldos sueltos y basura local.
+# Sin datos personales, pero son notas de trabajo, no código. Antes eran ocho
+# patrones de un solo uso; ahora todo se junta en una carpeta.
+_local/
 
 # Respaldos de la base: contienen DATOS PERSONALES de clientes reales.
 # Nunca al repo publico.
@@ -126,3 +120,8 @@ ARQUITECTURA.md
 # sin mezclar a main, asi que cualquier rama nacida de main deja docs/mapa/ sin rastrear y sin
 # ignorar, a un `git add -A` del repo publico. Asi entro CLAUDE.md en 3534dcb.
 docs/mapa/
+
+# Referencias visuales: capturas de apps ajenas + la direccion de diseno que
+# sale de ellas. Fuera del repo publico. Se consulta en local antes de tocar
+# una pantalla; el respaldo vive en crunchy-paps-docs si se quiere versionar.
+Design_reference/
