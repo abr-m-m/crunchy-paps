@@ -48,16 +48,10 @@ index.html.respaldo-*
 PROGRESO.md
 DESPLIEGUE.md
 
-# Volcados del diagnóstico de solo lectura (sin datos personales, pero son
-# notas de trabajo, no código)
-1-*.txt
-2.*.txt
-3.*.txt
-4.*.txt
-5.*.txt
-A-indices.csv
-B-politicas.csv
-Supabase Snippet*.csv
+# Volcados del diagnóstico de solo lectura, respaldos sueltos y basura local.
+# Sin datos personales, pero son notas de trabajo, no código. Antes eran ocho
+# patrones de un solo uso; ahora todo se junta en una carpeta.
+_local/
 
 # Respaldos de la base: contienen DATOS PERSONALES de clientes reales.
 # Nunca al repo publico.
@@ -120,14 +114,14 @@ HISTORIA.md
 REGLAS.md
 ARQUITECTURA.md
 
-# docs/mapa/ — el mapa visual de la app (cambios/2026-09-23-mapa-visual/diseno.md).
-# Mismo criterio que CLAUDE.md, PROGRESO.md, PLAN.md y cambios/: el repo es PUBLICO y el
-# mapa lleva la matriz de permisos, los nombres de cada RPC, capturas de produccion y una
-# auditoria con huecos AUN ABIERTOS. Publicarlo seria entregar el plano con las puertas
-# mal cerradas senaladas. Se respalda al repo privado con `node tools/respaldar-docs.mjs`.
-#
-# Duplicado a proposito en la rama costeo-margen (24 sep 2026): esta proteccion nacio en la
-# rama mapa-visual, que sigue sin mezclar a main. Al abrir esta rama DESDE main, docs/mapa/
-# quedaba sin rastrear y sin ignorar, a un `git add -A` del repo publico. Cuando mapa-visual
-# se mezcle, git resolvera el bloque repetido sin drama.
+# docs/mapa/ — el mapa visual de la app. El repo es PUBLICO y el mapa lleva la matriz de
+# permisos, los nombres de cada RPC, capturas de produccion y una auditoria con huecos AUN
+# ABIERTOS. Duplicado aqui a proposito: la proteccion nacio en la rama mapa-visual, que sigue
+# sin mezclar a main, asi que cualquier rama nacida de main deja docs/mapa/ sin rastrear y sin
+# ignorar, a un `git add -A` del repo publico. Asi entro CLAUDE.md en 3534dcb.
 docs/mapa/
+
+# Referencias visuales: capturas de apps ajenas + la direccion de diseno que
+# sale de ellas. Fuera del repo publico. Se consulta en local antes de tocar
+# una pantalla; el respaldo vive en crunchy-paps-docs si se quiere versionar.
+Design_reference/

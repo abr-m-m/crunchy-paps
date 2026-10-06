@@ -5064,6 +5064,8 @@ window.verDetalleProspecto = function(id) {
         <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
         <label for="visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
         <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+        <label for="visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
+        <input id="visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
         <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
@@ -5130,6 +5132,10 @@ async function renderRuta() {
     return;
   }
   window._rutaDia = r;
+  // El cierre del día va aparte de `ruta_del_dia` a propósito: este cuenta los pedidos LEVANTADOS,
+  // que no son paradas. Si falla, la ruta se pinta igual — no es dato crítico para caminar.
+  try { window._cierreDia = await supabaseCall('POST', 'rpc/cierre_del_dia', { p_data: r.fecha ? { fecha: r.fecha } : {} }); }
+  catch (e) { window._cierreDia = null; }
   if (r.veTodas && filtros && filtros.style.display === 'none') {
     if (!window._rutasCache) await cargarRutasCache();
     sel.innerHTML = '<option value="">La que toca ese día</option>' + (window._rutasCache || []).map(x => `<option value="${x.id}">${rutaEsc(x.nombre)}</option>`).join('');
@@ -5165,6 +5171,16 @@ function pintarRutaDia() {
       ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
     </div>`;
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  // La prioridad de `ruta_del_dia` NO reordena el recorrido —lo reordena la geografia, y eso esta
+  // bien cuando vas a pie—. Lo que si cambia algo al caminar es que la parada DIGA por que importa.
+  const recompra = (p) => {
+    if (p.tipo !== 'cliente' || !p.etapa) return '';
+    const d = p.diasSinComprar;
+    if (p.etapa === 'dormido') return `<b style="color:var(--rojo);">DORMIDA</b> · ${d} d sin pedido · `;
+    if (p.etapa === 'activo')  return `<b style="color:#4caf50;">Activa</b> · ${d} d sin pedido · `;
+    if (p.etapa === 'cliente') return `1ª compra · ${d} d · `;
+    return 'Aún no compra · ';
+  };
   const fila = (p) => {
     const accion = p.tipo === 'cliente' ? `abrirVisitaCliente(${p.id})` : `abrirParadaProspecto(${p.id})`;
     // El discurso cambia: a una parada NUEVA nadie la ha visitado; a una ya
@@ -5180,7 +5196,7 @@ function pintarRutaDia() {
       <span style="flex:0 0 30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;background:${p.visitadaHoy ? '#4caf50' : 'var(--gris3)'};color:${p.visitadaHoy ? '#000' : 'var(--blanco)'};">${p.visitadaHoy ? CHECK : p.orden}</span>
       <span style="min-width:0;flex:1 1 auto;">
         <span style="display:block;font-weight:700;font-size:0.88rem;overflow-wrap:anywhere;">${rutaEsc(p.nombre || 'Sin nombre')}</span>
-        <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
+        <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${recompra(p)}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
       </span>
     </button>`;
   };
@@ -5188,7 +5204,31 @@ function pintarRutaDia() {
     ? `<div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
     : '';
   const html = bloque('Clientes', paradas.filter(p => p.tipo === 'cliente')) + bloque('Prospectos', paradas.filter(p => p.tipo === 'prospecto'));
-  lista.innerHTML = html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>';
+  lista.innerHTML = (html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>') + cierreDelDiaHTML(a);
+}
+
+// El cierre del día. Si todavía no hay ninguna visita NO dice «0 de N»: dice que aún no sales. Un
+// cero se lee como «saliste y no vendiste», que es una acusación distinta y falsa por la mañana.
+function cierreDelDiaHTML(avance) {
+  const c = window._cierreDia;
+  if (!c || !c.ok) return '';
+  const hechas = Number(c.visitadas || 0);
+  const prog = Number((avance && avance.programadas) || 0);
+  const sinResultado = Math.max(0, prog - Number((avance && avance.visitadas) || 0));
+  const money = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!hechas) {
+    return `<div style="margin-top:16px;background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:14px;color:var(--suave);font-size:0.84rem;text-align:center;">Aún no sales. ${prog} parada${prog === 1 ? '' : 's'} te esperan.</div>`;
+  }
+  return `
+    <div style="margin-top:16px;background:var(--gris);border-radius:14px;padding:14px;border-left:4px solid var(--amarillo);">
+      <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Cierre del día</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${hechas}</div><div style="font-size:0.7rem;color:var(--suave);">visitas</div></div>
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${Number(c.pedidos || 0)}</div><div style="font-size:0.7rem;color:var(--suave);">pedidos</div></div>
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${money(c.monto)}</div><div style="font-size:0.7rem;color:var(--suave);">vendido</div></div>
+      </div>
+      ${sinResultado ? `<div style="margin-top:8px;font-size:0.78rem;color:var(--suave);">Te quedan <b style="color:var(--blanco);">${sinResultado}</b> parada${sinResultado === 1 ? '' : 's'} sin resultado.</div>` : ''}
+    </div>`;
 }
 
 // El detalle del prospecto usa la lista de Prospección: si no está cargada, se carga.
@@ -5224,6 +5264,8 @@ window.abrirVisitaCliente = function(id) {
     </div>
     <label for="ruta-visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
     <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+    <label for="ruta-visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
+    <input id="ruta-visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
     <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
   hoja.hidden = false;
 };
@@ -5239,6 +5281,9 @@ window.registrarVisitaCliente = async function(id, codigo) {
   const r = RESULTADOS_VISITA_CLIENTE.find(x => x.codigo === codigo);
   if (!r) return;
   const nota = (document.getElementById('ruta-visita-nota')?.value || '').trim();
+  // Regla 59: este dato se manda desde los DOS llamadores de registrar_visita — aquí (cliente) y en
+  // elegirResultadoVisita (prospecto). Mandarlo en uno solo dejaría la mitad de las visitas sin él.
+  const anaquel = (document.getElementById('ruta-visita-anaquel')?.value || '').trim() || null;
   _visitaClienteEnCurso = true;
   try {
     mostrarToast('Tomando tu ubicación…');
@@ -5248,7 +5293,7 @@ window.registrarVisitaCliente = async function(id, codigo) {
       return;
     }
     const res = await supabaseCall('POST', 'rpc/registrar_visita', {
-      p_data: { idCliente: id, resultado: codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision }
+      p_data: { idCliente: id, resultado: codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, piezasEnAnaquel: anaquel }
     });
     if (!res || !res.ok) {
       await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });
@@ -5497,6 +5542,7 @@ window.elegirResultadoVisita = async function(id, codigo) {
   const r = RESULTADOS_VISITA.find(x => x.codigo === codigo);
   if (!p || !r) return;
   const nota = (document.getElementById('visita-nota')?.value || '').trim();
+  const anaquel = (document.getElementById('visita-anaquel')?.value || '').trim() || null;   // regla 59: ver registrarVisitaCliente
   const telefono = String(p.telefono || document.getElementById('visita-telefono')?.value || '').replace(/\D/g, '');
 
   if (r.codigo === 'convertido') {
@@ -5533,7 +5579,7 @@ window.elegirResultadoVisita = async function(id, codigo) {
     }
 
     const res = await supabaseCall('POST', 'rpc/registrar_visita', {
-      p_data: { idProspecto: id, resultado: r.codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, idCliente }
+      p_data: { idProspecto: id, resultado: r.codigo, nota, lat: u.lat, lng: u.lng, precision: u.precision, idCliente, piezasEnAnaquel: anaquel }
     });
     if (!res || !res.ok) {
       await avisar({ titulo: 'No se pudo registrar la visita', cuerpo: (res && res.error) || 'Sin respuesta' });

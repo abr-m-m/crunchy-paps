@@ -21,7 +21,7 @@ const ORIGEN  = 'C:\\Proyectos\\crunchy-paps';
 // .gitignore del repo público; el guardia de abajo comprueba además que el
 // remoto sea crunchy-paps-docs antes de escribir.
 const DESTINO = 'C:\\Proyectos\\crunchy-paps\\crunchy-paps-docs';
-const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md',
+const FIJOS   = ['.claude/settings.json', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md', 'DESPLIEGUE.md', 'CLAUDE.md',
                  // Nacidos de la poda de CLAUDE.md del 15 sep 2026.
                  'HISTORIA.md', 'REGLAS.md', 'ARQUITECTURA.md'];
 
@@ -34,9 +34,15 @@ const FIJOS   = ['.claude/agents/altas-b2b.md', 'PLAN.md', 'PROGRESO.md', 'ACCES
 // auditoría dejó su SQL y sus CSV de resultados —con nombres de clientes— fuera
 // del repo público (bien) y también fuera del respaldo (mal), o sea existiendo
 // solo en este disco, que es exactamente lo que este guion vino a evitar.
+// 26 sep 2026: `.claude/agents/` pasa de archivo fijo a carpeta recorrida. Estaba
+// enumerado `altas-b2b.md` a mano y `devoluciones-puntos.md` llevaba dias sin
+// respaldarse: justo el fallo contra el que advierte el comentario de arriba. Un
+// subagente nuevo ya entra solo. `.claude/settings.json` se sumo a FIJOS el mismo
+// dia, por lo mismo: vivia solo en este disco.
 const CARPETAS = [
   { ruta: 'cambios',              ext: ['.md'] },
   { ruta: 'supabase/auditorias',  ext: ['.sql', '.csv'] },
+  { ruta: '.claude/agents',       ext: ['.md'] },
 ];
 
 // 13 sep 2026: cada cambio puede traer una subcarpeta con sus parches, guiones
