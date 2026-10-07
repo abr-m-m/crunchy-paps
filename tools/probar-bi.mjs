@@ -65,9 +65,18 @@ ok(vista.neto === real.neto, `Σ NETO cuadra EXACTO (${vista.neto} = ${real.neto
 
 if (entorno === 'produccion') {
   console.log('\nAnclas de produccion medidas el 23 sep 2026');
-  ok(vista.neto === '12215.00' || vista.neto === '12215', `Σ neto = 12,215 (dio ${vista.neto})`);
-  ok(real.lineas === '182', `182 lineas (dio ${real.lineas})`);
-  ok(real.desc_ === '323.00' || real.desc_ === '323', `cupon 323 (dio ${real.desc_})`);
+  // Anclas CORREGIDAS el 6 oct 2026 al correr esto contra produccion por primera vez. Las tres
+  // originales estaban mal escritas a mano el 24 sep, y las tres fallaban por mi error y no por la
+  // vista: el invariante de arriba pasaba exacto mientras estas tres decian que no.
+  //   · 12215 → 12215.20: redondee al anotarla.
+  //   · 323   → 322.80:   igual.
+  //   · 182   → 143:      182 son TODAS las lineas de ordenes_detalle; las de ventas reales
+  //                       —sin internos ni cancelados, que es lo que mide f_ventas— son 143.
+  //                       Confundir los dos conteos es el fallo de la regla 7: generalizar un
+  //                       numero sin comprobar que medía exactamente.
+  ok(vista.neto === '12215.20', `Σ neto = 12,215.20 (dio ${vista.neto})`);
+  ok(real.lineas === '143', `143 lineas de ventas reales (dio ${real.lineas})`);
+  ok(real.desc_ === '322.80', `cupon 322.80 (dio ${real.desc_})`);
 }
 
 console.log('\nPedidos que cuentan como venta pero no tienen ni una linea');
