@@ -39,8 +39,15 @@ const FIJOS   = ['.claude/settings.json', 'PLAN.md', 'PROGRESO.md', 'ACCESOS.md'
 // respaldarse: justo el fallo contra el que advierte el comentario de arriba. Un
 // subagente nuevo ya entra solo. `.claude/settings.json` se sumo a FIJOS el mismo
 // dia, por lo mismo: vivia solo en este disco.
+// 6 oct 2026: `cambios/` pasa de `.md` a incluir `.xlsx` y `.py`. El modelo de
+// capacidad de rutas (`2026-10-06-rutas-y-cierre/modelo-rutas.xlsx`) y el guion
+// que lo genera son la base de una decisión de contratación, y se quedaban
+// FUERA del respaldo por la extensión: vivían en un solo disco. Es la misma
+// cicatriz del 6 sep con las auditorías y la del 26 sep con los subagentes —
+// tercera vez que el filtro deja fuera justo lo que no está en ninguna otra
+// parte. El `.py` importa más que el `.xlsx`: regenera el libro entero.
 const CARPETAS = [
-  { ruta: 'cambios',              ext: ['.md'] },
+  { ruta: 'cambios',              ext: ['.md', '.xlsx', '.py'] },
   { ruta: 'supabase/auditorias',  ext: ['.sql', '.csv'] },
   { ruta: '.claude/agents',       ext: ['.md'] },
   // 24 sep 2026: el mapa visual de la app. Vive en docs/mapa/, fuera del repo
