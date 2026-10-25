@@ -55,6 +55,20 @@ const CARPETAS = [
   // los pendientes de seguridad). El espejo privado es el ÚNICO respaldo que
   // tiene: si se borra la carpeta local, no está en ninguna otra parte.
   { ruta: 'docs/mapa',            ext: ['.html', '.js', '.png'] },
+  // 25 oct 2026: la transcripción del cuaderno de producción (ene–jul 2026).
+  // Fuera del repo porque lleva nombres de clientes y el repo es PÚBLICO.
+  // CUARTA vez que este filtro deja fuera justo lo que no está en ninguna otra
+  // parte — tras las auditorías (6 sep), los subagentes (26 sep) y el .xlsx de
+  // rutas (6 oct). Aquí el costo de perderlo es releer 58 fotos a mano: el
+  // documento de `cambios/` CUENTA el trabajo, pero no lo contiene.
+  // El patrón se repite porque el filtro es una lista blanca y lo nuevo nace
+  // fuera de ella: al crear una carpeta que no va al repo, añadirla AQUÍ el
+  // mismo día, no cuando se eche de menos.
+  // `.mjs` y `.sql` van EXPLÍCITOS: las extensiones extra de abajo solo se
+  // aplican a subcarpetas, así que un guion en la RAÍZ de la carpeta se caía
+  // en silencio. Y aquí los guiones importan más que los datos — regeneran la
+  // carga entera, igual que el `.py` del 6 oct regenera su libro.
+  { ruta: 'historico',            ext: ['.md', '.json', '.ndjson', '.csv', '.mjs', '.sql'] },
 ];
 
 // Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe
