@@ -125,3 +125,13 @@ docs/mapa/
 # sale de ellas. Fuera del repo publico. Se consulta en local antes de tocar
 # una pantalla; el respaldo vive en crunchy-paps-docs si se quiere versionar.
 Design_reference/
+
+# Historico-fotos-pedidos/ e "imagenes gpt/" — fotos del cuaderno de produccion
+# (ene-jul 2026) con NOMBRES DE CLIENTES, montos de caja y domicilios implicitos.
+# El repo es PUBLICO. El 25 oct 2026 estaban sin rastrear Y SIN IGNORAR: un
+# `git add -A` las habria subido. Misma causa que docs/mapa/ en 3534dcb.
+# La transcripcion derivada (historico/) tambien queda fuera: es el mismo dato
+# en texto plano, y en texto plano es mas facil de indexar que en JPEG.
+Histórico-fotos-pedidos/
+imagenes gpt/
+historico/
