@@ -135,3 +135,10 @@ Design_reference/
 Histórico-fotos-pedidos/
 imagenes gpt/
 historico/
+
+# "Fotos crunchy-insumos-producción/" — tickets de compra de papa, aceite, gas e
+# insumos. Llevan proveedor, importes y a veces datos fiscales, y el repo es PUBLICO.
+# El 25 oct 2026 llegaron SIN IGNORAR, igual que Histórico-fotos-pedidos/ unas horas
+# antes: TERCERA vez el mismo dia. La regla quedo escrita en PROGRESO.md — una carpeta
+# que no va al repo se añade aqui EL MISMO DIA en que aparece, no cuando se note.
+Fotos crunchy-insumos-producción/
