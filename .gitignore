@@ -121,6 +121,20 @@ ARQUITECTURA.md
 # ignorar, a un `git add -A` del repo publico. Asi entro CLAUDE.md en 3534dcb.
 docs/mapa/
 
+# ── material/ — TODO el material fuente, ignorado en bloque ──────────────────
+# El 25 oct 2026 estas cuatro carpetas se juntaron aqui. Vivian sueltas en la raiz
+# y las tres primeras llegaron SIN IGNORAR el mismo dia, una tras otra (ver abajo).
+# La causa era que cada carpeta nueva nacia fuera de la lista blanca y habia que
+# acordarse de añadirla. Con `material/` ignorada en bloque, lo que se deje ahi
+# nace fuera del repo: el caso por defecto deja de ser el peligroso.
+# REGLA: material de origen (fotos, capturas, tickets, PDFs de terceros) va a
+# material/. No hace falta tocar este archivo para cada carpeta nueva.
+material/
+
+# Las cuatro rutas de abajo se quedan por si algo vuelve a la raiz por error, y
+# porque un patron sin barra inicial casa a cualquier profundidad: material/ y la
+# raiz quedan cubiertas las dos.
+
 # Referencias visuales: capturas de apps ajenas + la direccion de diseno que
 # sale de ellas. Fuera del repo publico. Se consulta en local antes de tocar
 # una pantalla; el respaldo vive en crunchy-paps-docs si se quiere versionar.

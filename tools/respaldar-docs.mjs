@@ -69,6 +69,13 @@ const CARPETAS = [
   // en silencio. Y aquí los guiones importan más que los datos — regeneran la
   // carga entera, igual que el `.py` del 6 oct regenera su libro.
   { ruta: 'historico',            ext: ['.md', '.json', '.ndjson', '.csv', '.mjs', '.sql', '.xlsx', '.py'] },
+  // 25 oct 2026: la direccion de diseno. `material/Design_reference/DIRECCION-DE-DISENO.md`
+  // son 215 lineas de criterio propio escritas el 23 sep, y llevaban un mes existiendo
+  // SOLO en este disco: la carpeta nunca entro en esta lista. QUINTA vez el mismo fallo
+  // (auditorias 6 sep, subagentes 26 sep, .xlsx de rutas 6 oct, historico/ hoy mismo).
+  // Solo .md a proposito: los .webp son capturas de una app ajena y se pueden volver a
+  // tomar; el razonamiento que sale de ellas, no.
+  { ruta: 'material/Design_reference', ext: ['.md'] },
 ];
 
 // Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe
