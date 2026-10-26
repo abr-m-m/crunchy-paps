@@ -68,7 +68,7 @@ const CARPETAS = [
   // aplican a subcarpetas, así que un guion en la RAÍZ de la carpeta se caía
   // en silencio. Y aquí los guiones importan más que los datos — regeneran la
   // carga entera, igual que el `.py` del 6 oct regenera su libro.
-  { ruta: 'historico',            ext: ['.md', '.json', '.ndjson', '.csv', '.mjs', '.sql'] },
+  { ruta: 'historico',            ext: ['.md', '.json', '.ndjson', '.csv', '.mjs', '.sql', '.xlsx', '.py'] },
 ];
 
 // Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe
