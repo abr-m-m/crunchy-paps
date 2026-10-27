@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run validar",
   "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/ig", "destination": "/?utm_source=instagram&utm_medium=bio&utm_campaign=perfil", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/sheets", "destination": "/api/sheets" },
     { "source": "/planeador", "destination": "/planeador.html" },
