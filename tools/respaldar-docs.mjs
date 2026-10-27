@@ -76,6 +76,15 @@ const CARPETAS = [
   // Solo .md a proposito: los .webp son capturas de una app ajena y se pueden volver a
   // tomar; el razonamiento que sale de ellas, no.
   { ruta: 'material/Design_reference', ext: ['.md'] },
+  // 26 oct 2026: la recuperacion de la cuenta de Instagram. `Instagram/` nacio hoy,
+  // fuera del repo porque lleva correos y telefonos personales de terceros. SEXTA vez
+  // el mismo fallo en puertas (auditorias 6 sep, subagentes 26 sep, .xlsx de rutas
+  // 6 oct, historico/ y Design_reference/ el 25 oct) — pero esta vez la carpeta se
+  // anade AQUI el mismo dia que nace, que es lo que el comentario de arriba pide y
+  // las cinco veces anteriores no se hizo. Lo que contiene no esta en ninguna otra
+  // parte: que perfil colgaba de que centro de cuentas, y por que cada codigo de 2FA
+  // salio rechazado.
+  { ruta: 'Instagram',            ext: ['.md'] },
 ];
 
 // Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe
