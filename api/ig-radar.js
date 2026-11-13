@@ -67,6 +67,24 @@ function analizarCuenta(medios, umbrales) {
   return { medianaVistas, medianaTasa, medios: salida };
 }
 
+// ── El endpoint ─────────────────────────────────────────────────────────────
+// Vercel trata CADA archivo de api/ como una funcion, asi que este archivo tiene
+// que exportar un handler aunque por dentro solo haya cuentas: sin el, el
+// despliegue falla o queda un endpoint que revienta al primer golpe.
+//
+// Hasta que existan el token de Meta y el resto de las tareas, contesta 503 y no
+// hace nada. Un endpoint que dice "todavia no" es honesto; uno que da 500 parece
+// roto, que es distinto.
+//
+// El modo ?dry=1 y la corrida de verdad entran en la tarea 3 del plan.
+module.exports = async (req, res) => {
+  return res.status(503).json({
+    ok: false,
+    error: 'no_configurado',
+    mensaje: 'El radar todavia no esta terminado: faltan el token de Meta y las tareas 3 a 8.',
+  });
+};
+
 module.exports.mediana = mediana;
 module.exports.analizarCuenta = analizarCuenta;
 module.exports.UMBRAL_RAZON = UMBRAL_RAZON;
