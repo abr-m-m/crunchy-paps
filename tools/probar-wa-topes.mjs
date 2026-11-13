@@ -44,8 +44,13 @@ const tel = '533' + String(Date.now()).slice(-7);
 const entra = (t, topeN, topeG) =>
   uno(`select wa_entrante('${t}', 'texto de prueba', ${topeN}, ${topeG}) as j`).j;
 
+// Los tres prefijos que usa esta prueba: 533 el numero principal, 534 el "otro numero",
+// 535 el del tope global. La primera version olvido el 535 y dejo una fila suelta en
+// staging; se vio contando las filas al terminar, no leyendo el codigo.
 const limpiar = () => {
-  try { sql(`delete from wa_mensajes where telefono like '533%' or telefono like '534%'`); } catch {}
+  try {
+    sql(`delete from wa_mensajes where telefono similar to '(533|534|535)%'`);
+  } catch {}
 };
 
 try {
