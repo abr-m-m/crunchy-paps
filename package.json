@@ -10,7 +10,9 @@
     "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-comprobar.mjs"
   },
   "dependencies": {
-    "web-push": "^3.6.7"
+    "@anthropic-ai/sdk": "^1.8.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "acorn": "^8.18.0",

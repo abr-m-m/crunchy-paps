@@ -24,6 +24,9 @@
   "functions": {
     "api/recordatorios-pago.js": {
       "maxDuration": 60
+    },
+    "api/whatsapp.js": {
+      "maxDuration": 60
     }
   }
 }
