@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap">
+<style>
+/* Los tokens son los mismos de public/retos.html, a proposito: dos paginas
+   privadas del dueno que se ven distintas se sienten como dos productos.
+   La gramatica viene de material/Design_reference/DIRECCION-DE-DISENO.md:
+   jerarquia por TAMANO y no por grosor, un solo acento usado con avaricia,
+   superficies casi planas, y la lista de especificacion (etiqueta a la
+   izquierda, valor a la derecha, divisor de 1px) para las cifras de cada reel. */
+:root{
+  --papel:#f7f6f2; --panel:#fffffe; --tinta:#14150f; --tinta2:#5d6055; --linea:#dedbd0;
+  --amarillo:#ffd200; --sombra:0 1px 2px rgba(20,21,15,.06);
+  --aviso:#b3261e; --aviso-s:#fdeceb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+    --sombra:0 1px 2px rgba(0,0,0,.4);
+    --aviso:#ff6b6b; --aviso-s:#3a1512;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
+  --sombra:0 1px 2px rgba(0,0,0,.4);
+  --aviso:#ff6b6b; --aviso-s:#3a1512;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:28px 18px 64px}
+h1{font-family:Archivo,Inter,sans-serif;margin:0;font-size:clamp(1.6rem,4vw,2.2rem);font-weight:400;letter-spacing:-.015em;text-wrap:balance}
+h2{font-size:.76rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--tinta2);margin:0 0 10px}
+p{margin:0}
+.sub{color:var(--tinta2);margin-top:8px;max-width:68ch;font-size:.93rem}
+header{border-bottom:1px solid var(--linea);padding-bottom:18px}
+section{margin-top:34px}
+
+/* Totales: tres cifras y nada mas. Sin color: no significan alerta. */
+.tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--linea);
+     border:1px solid var(--linea);border-radius:14px;overflow:hidden;margin-top:18px}
+.tot div{background:var(--panel);padding:14px 16px}
+.tot b{font-family:Archivo,sans-serif;font-size:1.7rem;font-weight:600;display:block;
+       font-variant-numeric:tabular-nums;line-height:1.1}
+.tot span{font-size:.72rem;color:var(--tinta2);text-transform:uppercase;letter-spacing:.08em}
+
+/* La tarjeta de un reel. Superficie casi plana: 1px de borde y nada mas. */
+.reel{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:18px;margin-top:14px;box-shadow:var(--sombra)}
+.reel .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.reel .usuario{font-family:Archivo,sans-serif;font-weight:700;font-size:1.05rem}
+.grupo{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta2);
+       border:1px solid var(--linea);border-radius:999px;padding:2px 9px}
+.razon{margin-left:auto;font-family:Archivo,sans-serif;font-size:1.5rem;font-weight:600;
+       font-variant-numeric:tabular-nums;color:var(--tinta)}
+.razon small{font-size:.7rem;font-weight:400;color:var(--tinta2);letter-spacing:.06em}
+
+/* El unico acento de la pantalla, y solo cuando significa algo. */
+.copiable{background:var(--amarillo);color:#14150f;border-radius:999px;padding:2px 10px;
+          font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+/* La sospecha de pago NO es un dato: es una sospecha, y se lee como tal. */
+.sospecha{margin-top:12px;border:1px solid var(--aviso);background:var(--aviso-s);color:var(--aviso);
+          border-radius:10px;padding:9px 12px;font-size:.84rem}
+.sospecha b{font-weight:700}
+
+/* Lista de especificacion: etiqueta izquierda, valor derecha, divisor de 1px. */
+.cifras{margin-top:14px;border-top:1px solid var(--linea)}
+.cifras div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--linea);font-size:.88rem}
+.cifras dt{color:var(--tinta2)}
+.cifras dd{margin:0;font-variant-numeric:tabular-nums}
+.texto{margin-top:14px;white-space:pre-wrap;font-size:.92rem;color:var(--tinta)}
+.pie{margin-top:12px;color:var(--tinta2);font-size:.85rem;overflow-wrap:anywhere}
+.enlace{display:inline-block;margin-top:10px;color:var(--tinta);font-size:.84rem}
+
+/* Las cuentas: una fila alta por cuenta, divisor de 1px, sin tarjetas anidadas. */
+.cuentas{border-top:1px solid var(--linea)}
+.cuentas div{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--linea)}
+.cuentas .u{font-weight:500}
+.cuentas .nota{color:var(--tinta2);font-size:.82rem;flex:1 1 220px;min-width:0}
+.est{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;border-radius:999px;padding:2px 9px;border:1px solid var(--linea);color:var(--tinta2)}
+.est.malo{border-color:var(--aviso);color:var(--aviso)}
+
+.vacio{background:var(--panel);border:1px dashed var(--linea);border-radius:16px;padding:28px;text-align:center;color:var(--tinta2)}
+.btn{font:inherit;font-weight:600;border:0;border-radius:999px;padding:11px 22px;background:var(--tinta);color:var(--papel);cursor:pointer}
+.btn.sec{background:transparent;color:var(--tinta2);border:1px solid var(--linea);font-weight:500;padding:7px 14px}
+label{display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta2);margin:14px 0 5px}
+input{font:inherit;width:100%;padding:11px 13px;border:1px solid var(--linea);border-radius:10px;background:var(--panel);color:var(--tinta)}
+#login{max-width:340px;margin:12vh auto}
+.err{color:var(--aviso);font-size:.86rem;margin-top:10px;min-height:1.2em}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+select{font:inherit;padding:7px 11px;border:1px solid var(--linea);border-radius:999px;background:var(--panel);color:var(--tinta)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div id="login">
+    <h1>Radar</h1>
+    <p class="sub">Qué reventó esta semana en el nicho, y por qué. Solo para el dueño.</p>
+    <label for="l-tel">Teléfono</label>
+    <input id="l-tel" type="tel" inputmode="numeric" autocomplete="username">
+    <label for="l-pin">PIN</label>
+    <input id="l-pin" type="password" inputmode="numeric" autocomplete="current-password">
+    <p class="err" id="l-err"></p>
+    <button class="btn" id="l-btn" style="margin-top:6px;width:100%">Entrar</button>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <h1>Radar de Instagram</h1>
+      <p class="sub" id="cabecera"></p>
+      <div class="barra">
+        <select id="sel-fecha" hidden></select>
+        <button class="btn sec" id="btn-salir">Salir</button>
+      </div>
+    </header>
+
+    <div class="tot" id="totales" hidden></div>
+
+    <section id="s-destacados">
+      <h2>Lo que reventó</h2>
+      <div id="destacados"></div>
+    </section>
+
+    <section id="s-texto" hidden>
+      <h2>Desmontaje</h2>
+      <div class="reel"><div class="texto" id="texto"></div></div>
+    </section>
+
+    <section>
+      <h2>Las cuentas</h2>
+      <div class="cuentas" id="cuentas"></div>
+    </section>
+  </div>
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = window.__CP_CONFIG__ || {};
+  const URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  const LLAVE = CFG.SUPABASE_ANON_KEY || '';
+
+  const GRUPOS = { artesanal: 'Artesanal', local: 'CDMX', grande: 'Marca grande', propia: 'Nuestra' };
+  const ESTADOS = {
+    por_comprobar: 'sin comprobar', ok: 'ok', no_existe: 'no existe',
+    no_es_negocio: 'no es de negocio', sin_datos: 'sin datos',
+  };
+  const ESTADO_MALO = { no_existe: 1, no_es_negocio: 1, sin_datos: 1 };
+
+  let token = sessionStorage.getItem('cp-radar-token') || '';
+  let datos = null;
+
+  const $ = (id) => document.getElementById(id);
+  const num = (n) => Number(n || 0).toLocaleString('es-MX');
+  // Nodo con texto: NUNCA innerHTML con datos. Los pies de foto son de cuentas
+  // ajenas y entran tal cual en esta pantalla.
+  const el = (tag, txt, cls) => {
+    const e = document.createElement(tag);
+    if (txt != null) e.textContent = txt;
+    if (cls) e.className = cls;
+    return e;
+  };
+
+  async function rpc(nombre, cuerpo) {
+    const r = await fetch(URL_API + nombre, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify(cuerpo || {}),
+    });
+    return r.json().catch(() => null);
+  }
+
+  // ── Login ──
+  async function entrar() {
+    $('l-err').textContent = '';
+    const r = await rpc('validar_vendedor_pin', {
+      p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value },
+    });
+    if (!r || !r.token) { $('l-err').textContent = (r && r.error) || 'Teléfono o PIN incorrectos.'; return; }
+    token = r.token;
+    sessionStorage.setItem('cp-radar-token', token);
+    await cargar();
+  }
+  function salir() {
+    token = '';
+    sessionStorage.removeItem('cp-radar-token');
+    $('app').hidden = true;
+    $('login').hidden = false;
+  }
+
+  // ── Datos ──
+  async function cargar(fecha) {
+    const r = await rpc('radar_informe', { p_data: { token, fecha: fecha || null } });
+    if (!r || !r.ok) {
+      salir();
+      $('l-err').textContent = (r && r.error) === 'No autorizado'
+        ? 'Tu sesión venció o esta cuenta no es la del dueño. Entra de nuevo.'
+        : ((r && r.error) || 'No se pudo cargar el radar.');
+      return;
+    }
+    datos = r;
+    $('login').hidden = true;
+    $('app').hidden = false;
+    pintar();
+  }
+
+  function pintarFechas() {
+    const sel = $('sel-fecha');
+    const fechas = datos.fechas || [];
+    sel.replaceChildren();
+    sel.hidden = fechas.length < 2;
+    for (const f of fechas) {
+      const o = el('option', f);
+      o.value = f;
+      sel.appendChild(o);
+    }
+    if (datos.informe) sel.value = datos.informe.fecha;
+  }
+
+  function pintarTotales(inf) {
+    const t = $('totales');
+    t.replaceChildren();
+    t.hidden = !inf;
+    if (!inf) return;
+    const cifras = [
+      [num(inf.cuentas_leidas), 'cuentas leídas'],
+      [num(inf.cuentas_fallidas), 'no se pudieron leer'],
+      [num((inf.destacados || []).length), 'reels destacados'],
+    ];
+    for (const [v, etq] of cifras) {
+      const d = el('div');
+      d.appendChild(el('b', v));
+      d.appendChild(el('span', etq));
+      t.appendChild(d);
+    }
+  }
+
+  function tarjetaReel(d) {
+    const c = el('div', null, 'reel');
+
+    const top = el('div', null, 'top');
+    top.appendChild(el('span', '@' + (d.usuario || ''), 'usuario'));
+    top.appendChild(el('span', GRUPOS[d.grupo] || d.grupo || '', 'grupo'));
+    if (d.copiableConTelefono) top.appendChild(el('span', 'copiable', 'copiable'));
+    const razon = el('span', null, 'razon');
+    razon.appendChild(document.createTextNode(Number(d.razon || 0).toFixed(1) + '×'));
+    razon.appendChild(el('small', ' su normal'));
+    top.appendChild(razon);
+    c.appendChild(top);
+
+    if (d.sospechaPago) {
+      const s = el('div', null, 'sospecha');
+      s.appendChild(el('b', 'Puede estar pagado. '));
+      s.appendChild(document.createTextNode(
+        'Las vistas se dispararon pero la interacción cayó muy por debajo de lo normal de esa ' +
+        'cuenta. No hay forma de saberlo desde fuera: es una sospecha, no un dato. Mira las dos ' +
+        'cifras y juzga.'));
+      c.appendChild(s);
+    }
+
+    const cif = el('dl', null, 'cifras');
+    const filas = [
+      ['Vistas', num(d.vistas)],
+      ['Mediana de su cuenta', num(d.medianaVistas)],
+      ['Me gusta', num(d.meGusta)],
+      ['Interacción', (Number(d.tasa || 0) * 100).toFixed(1) + ' %'],
+      ['Interacción normal de la cuenta', (Number(d.medianaTasa || 0) * 100).toFixed(1) + ' %'],
+    ];
+    for (const [k, v] of filas) {
+      const f = el('div');
+      f.appendChild(el('dt', k));
+      f.appendChild(el('dd', v));
+      cif.appendChild(f);
+    }
+    c.appendChild(cif);
+
+    if (d.texto) c.appendChild(el('p', d.texto, 'pie'));
+    if (d.enlace) {
+      const a = el('a', 'Ver el reel →', 'enlace');
+      a.href = d.enlace;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      c.appendChild(a);
+    }
+    return c;
+  }
+
+  function pintar() {
+    const inf = datos.informe;
+    pintarFechas();
+    pintarTotales(inf);
+
+    $('cabecera').textContent = inf
+      ? `Semana del ${inf.desde || '?'} al ${inf.hasta || '?'}. Generado el ${inf.fecha}.`
+      : 'Todavía no hay ningún informe. El primero sale cuando el radar corra por primera vez.';
+
+    const cont = $('destacados');
+    cont.replaceChildren();
+    const destacados = (inf && inf.destacados) || [];
+    if (!destacados.length) {
+      cont.appendChild(el('div',
+        inf ? 'Esta semana no destacó nada. Eso también es un resultado: un informe que siempre '
+            + 'encuentra algo deja de leerse.'
+            : 'Sin informes todavía.',
+        'vacio'));
+    } else {
+      for (const d of destacados) cont.appendChild(tarjetaReel(d));
+    }
+
+    $('s-texto').hidden = !(inf && inf.texto);
+    if (inf && inf.texto) $('texto').textContent = inf.texto;
+
+    const cu = $('cuentas');
+    cu.replaceChildren();
+    for (const c of (datos.cuentas || [])) {
+      const f = el('div');
+      f.appendChild(el('span', '@' + c.usuario, 'u'));
+      f.appendChild(el('span', GRUPOS[c.grupo] || c.grupo || '', 'grupo'));
+      f.appendChild(el('span', c.nota || '', 'nota'));
+      const e = el('span', ESTADOS[c.estado] || c.estado, 'est' + (ESTADO_MALO[c.estado] ? ' malo' : ''));
+      f.appendChild(e);
+      cu.appendChild(f);
+    }
+  }
+
+  // ── Arranque ──
+  $('l-btn').addEventListener('click', entrar);
+  $('l-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+  $('btn-salir').addEventListener('click', salir);
+  $('sel-fecha').addEventListener('change', (e) => cargar(e.target.value));
+  if (token) cargar();
+})();
+</script>
+</body>
+</html>

@@ -8,7 +8,8 @@
     { "source": "/api/sheets", "destination": "/api/sheets" },
     { "source": "/planeador", "destination": "/planeador.html" },
     { "source": "/privacidad", "destination": "/privacidad.html" },
-    { "source": "/retos", "destination": "/retos.html" }
+    { "source": "/retos", "destination": "/retos.html" },
+    { "source": "/radar", "destination": "/radar.html" }
   ],
   "headers": [
     {
