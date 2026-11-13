@@ -9,7 +9,7 @@ import { createHmac } from 'node:crypto';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { firmaValida } = require('../api/whatsapp.js');
+const { firmaValida, sacarMensaje } = require('../api/whatsapp.js');
 
 let fallos = 0;
 const ok = (c, m) => { console.log((c ? '  ok    ' : '  FALLA ') + m); if (!c) fallos++; };
@@ -51,6 +51,44 @@ console.log('\nEl mismo cuerpo con acentos y emoji (WhatsApp los trae)');
 const cuerpoUtf = JSON.stringify({ texto: 'Mándame 6 cajas 🙂 de sal de mar' });
 const buenaUtf = 'sha256=' + createHmac('sha256', SECRETO).update(cuerpoUtf, 'utf8').digest('hex');
 ok(firmaValida(cuerpoUtf, buenaUtf, SECRETO) === true, 'pasa con UTF-8');
+
+// ── sacarMensaje: lo que manda Meta es dato ajeno, no una promesa ───────────
+console.log('\nsacarMensaje con un mensaje de texto');
+const conTexto = {
+  entry: [{ changes: [{ value: {
+    contacts: [{ profile: { name: 'Abarrotes Lupita' } }],
+    messages: [{ id: 'wamid.ABC', from: '5215512345678', type: 'text',
+                 text: { body: 'Mandame 6 cajas de 12' } }],
+  } }] }],
+};
+const m = sacarMensaje(conTexto);
+ok(m?.id === 'wamid.ABC', 'saca el id del mensaje (hace de clave idempotente)');
+ok(m?.telefono === '5215512345678', 'saca el telefono');
+ok(m?.texto === 'Mandame 6 cajas de 12', 'saca el texto');
+ok(m?.nombrePerfil === 'Abarrotes Lupita', 'saca el nombre del perfil');
+
+console.log('\nsacarMensaje devuelve null, sin lanzar, cuando no hay nada que atender');
+for (const [cuerpo, como] of [
+  [{ entry: [{ changes: [{ value: { statuses: [{ status: 'delivered' }] } }] }] }, 'un acuse de entrega'],
+  [{ entry: [{ changes: [{ value: {} }] }] }, 'un value vacio'],
+  [{ entry: [{ changes: [] }] }, 'sin changes'],
+  [{ entry: [] }, 'sin entry'],
+  [{}, 'un objeto vacio'],
+  [null, 'null'],
+  [{ entry: [{ changes: [{ value: { messages: [] } }] }] }, 'messages vacio'],
+]) {
+  let lanzo = false, r;
+  try { r = sacarMensaje(cuerpo); } catch { lanzo = true; }
+  ok(!lanzo && r === null, `${como} devuelve null sin lanzar`);
+}
+
+console.log('\nUn mensaje que NO es texto (audio, imagen, ubicacion)');
+const audio = sacarMensaje({ entry: [{ changes: [{ value: {
+  messages: [{ id: 'wamid.X', from: '5215599999999', type: 'audio', audio: { id: 'a1' } }],
+} }] }] });
+ok(audio !== null, 'no se descarta: hay alguien escribiendo');
+ok(audio?.tipo === 'audio', 'el tipo viaja, para poder contestar que no se oyen audios');
+ok(audio?.texto === '', 'el texto queda vacio, no undefined');
 
 console.log(fallos ? `\n${fallos} FALLAS` : '\nTodo en verde');
 process.exit(fallos ? 1 : 0);
