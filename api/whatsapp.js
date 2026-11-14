@@ -184,6 +184,17 @@ async function registrarSaliente(telefono, texto, herramientas, tokens) {
   if (!r.ok) console.error('wa: no se pudo registrar la salida', r.status);
 }
 
+// Quien puede levantar un pedido se decide por el NIVEL, no por el flag
+// aprobado_b2b. Los dos campos pueden contradecirse y de hecho se contradicen:
+// el 14 nov 2026, el primer mensaje real llego de un cliente con
+// tipo_id = 1 (Consumidor) y aprobado_b2b = true, y el agente le ofrecio
+// levantarle un pedido. wa_identidad ya hacia lo correcto -devolvia
+// nivel: 'consumidor'-; el error era mio, por mirar el flag en vez del nivel.
+const NIVELES_QUE_PIDEN = ['tienda', 'restaurante', 'mayorista'];
+function puedePedir(id) {
+  return NIVELES_QUE_PIDEN.includes(String(id && id.nivel || '').toLowerCase());
+}
+
 // ── El prompt ───────────────────────────────────────────────────────────────
 // El nivel de precio entra como DATO YA RESUELTO por el servidor. El modelo no
 // lo elige y no tiene ninguna herramienta para cambiarlo (D6 del diseno).
@@ -196,7 +207,7 @@ function sistema(id) {
       ? `Escribe ${id.nombre}. Nivel de precio: ${id.nivel}.`
       : 'Escribe alguien que no esta en la base. Tratalo como consumidor.',
     '',
-    id.aprobadoB2B
+    puedePedir(id)
       ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. El pedido queda PENDIENTE de que Abraham lo confirme, y se lo dices al cerrarlo.'
       : 'NO puedes crear pedidos para esta persona. Para comprar, mandale https://crunchypaps.mx',
     '',

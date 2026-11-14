@@ -78,6 +78,20 @@ const sMay = sistema({
 ok(sMay.includes('mayorista') && !sMay.includes('Nivel de precio: tienda'),
   'un mayorista dice mayorista');
 
+console.log('\nsistema() con los dos campos en CONTRADICCION (el bug del 14 nov 2026)');
+// El primer mensaje real llego de un cliente con tipo_id = 1 (Consumidor) y
+// aprobado_b2b = TRUE a la vez. wa_identidad devolvio nivel: 'consumidor', que es
+// lo correcto, pero el prompt miraba el FLAG y le ofrecio levantarle un pedido a
+// un consumidor. La puerta la decide el NIVEL.
+const sContradictorio = sistema({
+  esCliente: true, nombre: 'Ana Maria Mora', nivel: 'consumidor',
+  aprobadoB2B: true, telefono: '5215540801794',
+});
+ok(/no puedes crear pedidos/i.test(sContradictorio),
+  'con nivel consumidor y aprobadoB2B true, NO puede crear pedidos');
+ok(sContradictorio.includes('crunchypaps.mx'),
+  'y se le manda al catalogo web, como a cualquier consumidor');
+
 console.log('\nsistema() nunca lleva un secreto dentro');
 for (const s of [sTienda, sCons, sMay]) {
   ok(!/sk-ant|EAA[A-Za-z0-9]|service_role|eyJ[A-Za-z0-9]/.test(s),
