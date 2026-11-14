@@ -9,7 +9,7 @@
 // Plan: cambios/2026-11-12-agente-whatsapp-plan.md, tarea 4.
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { podarHilo, sistema, MAX_TURNOS } = require('../api/whatsapp.js');
+const { podarHilo, sistema, MAX_TURNOS, normalizarDestino } = require('../api/whatsapp.js');
 
 let fallos = 0;
 const ok = (c, m) => { console.log((c ? '  ok    ' : '  FALLA ') + m); if (!c) fallos++; };
@@ -77,6 +77,30 @@ const sMay = sistema({
 });
 ok(sMay.includes('mayorista') && !sMay.includes('Nivel de precio: tienda'),
   'un mayorista dice mayorista');
+
+console.log('\nnormalizarDestino: el 1 de Mexico (el bug del 14 nov 2026)');
+// WhatsApp entrega el `from` mexicano como 52 + 1 + diez digitos. El numero de
+// la lista de destinatarios es 52 + diez. Contestar al de 13 da
+// "(#131030) Recipient phone number not in allowed list" y el agente parece mudo.
+ok(normalizarDestino('5215540801794') === '525540801794',
+  'quita el 1 de un movil mexicano de 13 digitos');
+ok(normalizarDestino('525540801794') === '525540801794',
+  'deja intacto el mexicano que ya viene de 12');
+ok(normalizarDestino('+52 1 55 4080 1794') === '525540801794',
+  'tambien con signos y espacios de por medio');
+
+ok(normalizarDestino('16315551181') === '16315551181',
+  'NO toca un numero de Estados Unidos');
+ok(normalizarDestino('5215540801') === '5215540801',
+  'NO toca algo que empieza por 521 pero no tiene 13 digitos');
+ok(normalizarDestino('5415540801794') === '5415540801794',
+  'NO toca Argentina, que tiene su propia mania y se vera cuando aparezca');
+
+for (const [entrada, como] of [[null, 'null'], [undefined, 'undefined'], ['', 'cadena vacia']]) {
+  let lanzo = false, r;
+  try { r = normalizarDestino(entrada); } catch { lanzo = true; }
+  ok(!lanzo && r === '', `${como} devuelve cadena vacia sin lanzar`);
+}
 
 console.log('\nsistema() con los dos campos en CONTRADICCION (el bug del 14 nov 2026)');
 // El primer mensaje real llego de un cliente con tipo_id = 1 (Consumidor) y

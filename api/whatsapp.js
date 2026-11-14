@@ -263,13 +263,32 @@ async function responder(id, texto, hilo) {
 }
 
 // ── La salida ───────────────────────────────────────────────────────────────
+// MEXICO: WhatsApp entrega el `from` de un numero mexicano como 52 + 1 + diez
+// digitos (13 en total), pero el numero canonico —el que esta en la agenda, en
+// la lista de destinatarios de prueba y en `clientes`— es 52 + diez (12). Si se
+// contesta al de 13, Meta responde:
+//
+//   (#131030) Recipient phone number not in allowed list
+//
+// y el agente parece mudo: redacta la respuesta y nadie la recibe. Se vio el
+// 14 nov 2026 con el primer mensaje real, llegado desde 5215540801794.
+//
+// Solo se toca el caso de Mexico. Otros paises con la misma mania —Argentina
+// mete un 9— se arreglan cuando aparezcan, no antes.
+function normalizarDestino(telefono) {
+  const d = String(telefono || '').replace(/\D/g, '');
+  if (d.length === 13 && d.startsWith('521')) return '52' + d.slice(3);
+  return d;
+}
+
 async function enviarWA(telefono, texto) {
+  const destino = normalizarDestino(telefono);
   const r = await fetch(`https://graph.facebook.com/${WA_GRAPH}/${WA_PHONE_ID}/messages`, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + WA_TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       messaging_product: 'whatsapp',
-      to: telefono,
+      to: destino,
       type: 'text',
       text: { body: String(texto).slice(0, 4000) },
     }),
@@ -368,8 +387,13 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true, error: 'modelo' });
   }
 
-  await enviarWA(msg.telefono, salida.texto);
-  await registrarSaliente(msg.telefono, salida.texto, null, salida.tokens);
+  // El resultado del envio se GUARDA. Antes la fila `sale` se escribia pasara
+  // lo que pasara, asi que leerla parecia prueba de que el cliente recibio algo
+  // y no lo era: el 14 nov hubo tres respuestas redactadas y cero entregadas,
+  // con la fila puesta igual. Regla 14: el "hecho" de una herramienta no es
+  // evidencia de que la accion ocurriera.
+  const entregado = await enviarWA(msg.telefono, salida.texto);
+  await registrarSaliente(msg.telefono, salida.texto, { entregado }, salida.tokens);
   await guardarHilo(msg.telefono, [
     ...hilo,
     { role: 'user', content: msg.texto },
@@ -386,3 +410,5 @@ module.exports.sacarMensaje = sacarMensaje;
 module.exports.podarHilo = podarHilo;
 module.exports.sistema = sistema;
 module.exports.MAX_TURNOS = MAX_TURNOS;
+module.exports.normalizarDestino = normalizarDestino;
+module.exports.puedePedir = puedePedir;
