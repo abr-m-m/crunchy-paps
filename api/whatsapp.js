@@ -402,24 +402,25 @@ async function cotizarLineas(lineas, nivel) {
 }
 
 // ── Crear el pedido ─────────────────────────────────────────────────────────
-// LA CREDENCIAL ESTA PENDIENTE DE DECISION, y es la unica pieza que falta aqui.
-// `crear_pedido` exige `token` -> resolver_sesion_vendedor -> sesiones_vendedor
-// con `expira_en > now()`, y esas sesiones duran DOCE HORAS (medido el 14 nov
-// 2026 en produccion: 4 sesiones en total, cero vivas, la ultima caducada en
-// octubre). O sea que WA_VENDEDOR_TOKEN como variable fija en Vercel funciona
-// media jornada y despues devuelve `sesion_requerida` para siempre. El plan daba
-// esa linea por hecha; es la misma trampa del token de Meta de ayer.
+// EL AGENTE NO LLEVA CREDENCIAL. Va por `wa_crear_pedido`
+// (20261114000000_wa_crear_pedido.sql), que abre una sesion de vendedor DENTRO de
+// su transaccion, crea el pedido y la borra. El token no existe fuera de la base:
+// no esta en Vercel, ni en el repo, ni en un log.
 //
-// Mientras se decide, esto manda la variable igual: cambiar de opcion es cambiar
-// esta linea y nada mas, y la prueba no depende de ella -comprueba el PAYLOAD que
-// sale, que es donde estan los dos fallos que de verdad importan-.
+// La alternativa era WA_VENDEDOR_TOKEN, y no vale: `crear_pedido` lo resuelve
+// contra sesiones_vendedor con `expira_en > now()`, y esas sesiones duran DOCE
+// HORAS (medido en produccion el 14 nov 2026: 4 en total, cero vivas, la ultima
+// caducada en octubre). Habria funcionado media jornada. La misma trampa del
+// token de Meta, que tambien parecia resuelto y caducaba en una hora.
+//
+// Y D6 ya no depende de este archivo: el nivel de precio lo resuelve el RPC desde
+// el telefono con wa_identidad, y PISA lo que se mande aqui. `tipoCliente`,
+// `idCliente`, `canal` y el telefono ni se envian: los pone el servidor. Lo que
+// se manda abajo es solo lo que el servidor no puede saber.
 //
 // El pedido nace 'Pendiente' porque lo decide `crear_pedido` para todo canal que
 // no sea mostrador: aqui no se elige, se hereda.
-function credencialDelAgente() {
-  return process.env.WA_VENDEDOR_TOKEN || '';
-}
-
+//
 // `cotizar_linea` devuelve `piezasPorCaja`; `crear_pedido` lee `caja`. NO son la
 // misma clave, y el plan pasaba el detalle tal cual. Con eso, toda linea por caja
 // se habria cobrado por pieza: 72 piezas a 28 son 2,016 en vez de los 1,800 de 6
@@ -451,14 +452,11 @@ async function crearPedidoConfirmado(entrada, id) {
   const c = await cotizarLineas((entrada && entrada.lineas) || [], id.nivel);
   if (!c.ok) return `NO crees el pedido ni digas que quedo hecho. No pude cotizar (${c.error}).`;
 
-  const r = await transporte('rpc/crear_pedido', 'POST', {
+  const r = await transporte('rpc/wa_crear_pedido', 'POST', {
+    // El telefono va APARTE del p_data, y es de donde el servidor saca la
+    // identidad y el nivel. Lo verifico Meta al firmar el webhook.
+    p_telefono: id.telefono,
     p_data: {
-      token: credencialDelAgente(),   // UNICO sitio donde aparece. Regla 38.
-      tipoCliente: id.nivel,          // de wa_identidad. NUNCA del modelo. D6.
-      idCliente: id.idCliente,
-      nombreCliente: id.nombre,
-      telefono: id.telefono,
-      canal: 'whatsapp',
       metodoEntrega: 'domicilio',
       fechaEntrega: fecha,
       tipoPagoId: 1,
@@ -474,11 +472,17 @@ async function crearPedidoConfirmado(entrada, id) {
 
   const j = r.data;
   if (!r.ok || !j) {
-    console.error('wa: crear_pedido no contesto', r.status, JSON.stringify(j).slice(0, 300));
+    console.error('wa: wa_crear_pedido no contesto', r.status, JSON.stringify(j).slice(0, 300));
     return 'NO le digas que el pedido quedo hecho. No pude registrarlo; dile que Abraham le confirma.';
   }
 
   if (j.ok === false) {
+    if (j.error === 'no_puede_pedir') {
+      // El servidor lo rechazo aunque puedePedir(id) dijo que si. Si pasa, es que
+      // este archivo y wa_identidad no ven lo mismo, y manda wa_identidad.
+      console.error('wa: el servidor dice no_puede_pedir y el codigo decia que si', id.nivel);
+      return 'NO puedes crear pedidos para esta persona. Mandale https://crunchypaps.mx';
+    }
     if (j.error === 'precio_cambiado') {
       // NO se reintenta solo con el total corregido: seria cobrarle algo que no
       // vio. Se le dice y se le vuelve a preguntar. Regla 11.

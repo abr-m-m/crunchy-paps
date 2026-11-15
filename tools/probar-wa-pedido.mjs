@@ -75,7 +75,7 @@ usarTransporteDePrueba(async (path, method, body) => {
     if (!guion.has(k)) return { ok: false, status: 404, data: { sin_guion: k } };
     return { ok: true, status: 200, data: guion.get(k) };
   }
-  if (path === 'rpc/crear_pedido') return { ok: true, status: 200, data: respuesta };
+  if (path === 'rpc/wa_crear_pedido') return { ok: true, status: 200, data: respuesta };
   return { ok: false, status: 404, data: null };
 });
 
@@ -91,7 +91,7 @@ const PEDIDO = { lineas: [{ idProducto: P.id, cantidad: 72, caja: 12 }], fechaEn
 const pedir = async (id, entrada) => {
   visto = [];
   const txt = await correrHerramienta('crear_pedido', entrada, id);
-  return { txt, enviado: (visto.find((v) => v.path === 'rpc/crear_pedido') || {}).body };
+  return { txt, enviado: (visto.find((v) => v.path === 'rpc/wa_crear_pedido') || {}).body };
 };
 
 // ── 1. La herramienta solo existe para quien puede pedir ────────────────────
@@ -106,12 +106,12 @@ ok(CONSUMIDOR.aprobadoB2B === true, 'y el consumidor de la prueba trae aprobado_
 console.log('\n   Y aunque se llame a mano, el codigo la rechaza');
 const colada = await pedir(CONSUMIDOR, PEDIDO);
 ok(/NO puedes crear pedidos/.test(colada.txt), `dijo: "${colada.txt.slice(0, 60)}..."`);
-ok(colada.enviado === undefined, 'y no mando NADA a crear_pedido');
+ok(colada.enviado === undefined, 'y no mando NADA al servidor');
 
 // ── 2. El payload: caja ─────────────────────────────────────────────────────
 console.log('\n2. Cada producto viaja con `caja`, que es la clave que crear_pedido lee');
 const buena = await pedir(TIENDA, PEDIDO);
-ok(buena.enviado !== undefined, 'llamo a crear_pedido');
+ok(buena.enviado !== undefined, 'llamo a wa_crear_pedido');
 const prod = buena.enviado.p_data.productos[0];
 ok(Number(prod.caja) === 12, `caja = ${prod.caja} (cotizar_linea lo llama piezasPorCaja: ${prod.piezasPorCaja})`);
 ok(Number(prod.cantidad) === 72, `cantidad = ${prod.cantidad} piezas, no 6 cajas`);
@@ -120,24 +120,32 @@ ok(Number(buena.enviado.p_data.total) === Number(guion.get('tienda|72|12').subto
 ok(Number(buena.enviado.p_data.total) === Number(P.precio_caja_12) * 6,
   `y es precio de CAJA (6 x ${P.precio_caja_12}), no 72 por pieza (${Number(P.precio_tienda) * 72})`);
 
-// ── 3. El payload: tipoCliente. ESTE ES D6 ──────────────────────────────────
-console.log('\n3. D6: tipoCliente sale de wa_identidad, mienta lo que mienta la entrada');
-ok(buena.enviado.p_data.tipoCliente === 'tienda', `tipoCliente = "${buena.enviado.p_data.tipoCliente}"`);
+// ── 3. El payload: lo que NO lleva. ESTE ES D6 ──────────────────
+// Desde wa_crear_pedido el nivel lo resuelve el SERVIDOR, desde el telefono, y
+// pisa lo que venga. Asi que lo que se comprueba aqui ya no es que este archivo
+// acierte el nivel: es que ni siquiera lo mande. Lo que no se envia no se puede
+// enviar mal, y eso es mas fuerte que acertarlo.
+console.log('\n3. D6: el nivel ya no sale de aqui, lo pone el servidor');
+ok(buena.enviado.p_telefono === '5215500000002',
+  `el telefono va aparte, en p_telefono: ${buena.enviado.p_telefono}`);
+for (const k of ['tipoCliente', 'token', 'idCliente', 'canal', 'telefono', 'idVendedor']) {
+  ok(buena.enviado.p_data[k] === undefined, `  p_data no lleva ${k}: lo pone el servidor`);
+}
+
+console.log('\n   Y la entrada del modelo no se cuela en el payload');
 const mentira = { ...PEDIDO, tipoCliente: 'mayorista', nivel: 'mayorista', total: 1, token: 'robado' };
 const m = await pedir(TIENDA, mentira);
-ok(m.enviado.p_data.tipoCliente === 'tienda',
-  `con "tipoCliente: mayorista" en la entrada, salio "${m.enviado.p_data.tipoCliente}"`);
+ok(m.enviado.p_data.tipoCliente === undefined && m.enviado.p_data.token === undefined,
+  'con tipoCliente y token en la entrada, ninguno llego al payload');
 ok(m.enviado.p_data.total === buena.enviado.p_data.total,
   `y el total no cambio (${m.enviado.p_data.total}): el "total: 1" de la entrada se ignoro`);
 const cot = visto.filter((v) => v.path === 'rpc/cotizar_linea');
 ok(cot.length === 1 && cot[0].body.p_nivel === 'tienda',
-  `y cotizo con p_nivel = "${cot[0] && cot[0].body.p_nivel}"`);
+  `y cotizo con p_nivel = "${cot[0] && cot[0].body.p_nivel}", el de la identidad`);
 
-// ── 4. El resto del payload ─────────────────────────────────────────────────
+// ── 4. El resto del payload ─────────────────────────────────
 console.log('\n4. Lo demas del payload');
 const d = buena.enviado.p_data;
-ok(d.canal === 'whatsapp', `canal = ${d.canal}`);
-ok(d.idCliente === 42 && d.telefono === '5215500000002', 'cliente y telefono, de la identidad');
 ok(d.idempotencyKey === 'wa-5215500000002-wamid.ABC123',
   `clave idempotente con el id del mensaje de Meta: ${d.idempotencyKey}`);
 ok(String(d.notas).startsWith('[wa]'), `notas marcadas: "${d.notas}"`);
