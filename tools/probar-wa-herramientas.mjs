@@ -252,5 +252,14 @@ for (const h of herramientasPara(PERFILES[1])) {
 
 usarAjustesDePrueba({});   // se deja como estaba
 
+console.log('\nEl prompt pone techo a los temas ajenos');
+// El 15 nov 2026 el agente dio recetas completas de pozole y frijoles, a $0.059
+// cada una -lo mismo que cotizarle a una tienda- y encima llamando a catalogo y
+// cotizar para darlas. Cordial sigue siendo gratis; una receta de seis pasos no.
+const sTema = sistema(PERFILES[0]);
+ok(/2 o 3 frases COMO MUCHO/.test(sTema), 'le da un techo concreto, no "se breve"');
+ok(/recetas completas/i.test(sTema), 'y nombra el caso que de verdad paso');
+ok(/NO llames a ninguna herramienta/i.test(sTema), 'y le prohibe gastar herramientas en eso');
+
 console.log(fallos ? `\n${fallos} FALLAS` : '\nTodo en verde');
 process.exit(fallos ? 1 : 0);

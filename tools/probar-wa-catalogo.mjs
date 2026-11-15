@@ -131,5 +131,30 @@ for (const f of conCaja) {
 }
 console.log(`  ${conCaja.length} cotizaciones de caja comprobadas`);
 
+// ── El formato que ve el modelo ───────────────────────────────
+// El catalogo se manda como TABLA y no como JSON: sobre los 28 productos reales
+// son 705 caracteres en vez de 2,925, y viaja en dos o tres vueltas por
+// conversacion. Lo que esta prueba vigila no es que sea corto -eso se ve-: es
+// que la tabla siga llevando los IDs, porque `cotizar` los necesita y un
+// catalogo sin ids obliga al modelo a adivinarlos.
+console.log('\nLa tabla que ve el modelo lleva los ids que cotizar necesita');
+const { correrHerramienta, usarTransporteDePrueba } = require('../api/whatsapp.js');
+const porId = new Map(filas.map((f) => [String(f.id), f]));
+usarTransporteDePrueba(async () => ({ ok: true, status: 200,
+  data: [...porId.values()].filter((f, i, a) => a.findIndex((x) => x.id === f.id) === i) }));
+const tabla = await correrHerramienta('catalogo', { busca: '' },
+  { nivel: 'tienda', esCliente: true, nombre: 'Lupita', telefono: '521' });
+ok(typeof tabla === 'string' && !tabla.trim().startsWith('{'), 'no es JSON');
+ok(/id\|sabor\|presentacion/.test(tabla), 'trae cabecera con nombres de columna');
+const lineas = tabla.split('\n').slice(2).filter(Boolean);
+ok(lineas.length > 0, `${lineas.length} filas en la tabla`);
+const idsTabla = lineas.map((l) => l.split('|')[0]);
+ok(idsTabla.every((x) => /^[0-9]+$/.test(x)), 'cada fila empieza por un id numerico');
+ok(new Set(idsTabla).size === idsTabla.length, 'sin ids repetidos');
+const bytesTabla = tabla.length;
+const bytesJson = JSON.stringify([...porId.values()]).length;
+ok(bytesTabla < bytesJson / 2,
+  `la tabla ocupa ${bytesTabla} y el JSON ${bytesJson}: menos de la mitad`);
+
 console.log(fallos ? `\n${fallos} FALLAS` : '\nTodo en verde');
 process.exit(fallos ? 1 : 0);

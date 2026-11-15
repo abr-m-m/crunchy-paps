@@ -337,6 +337,16 @@ function sistema(id) {
     // herramientas- y el hilo se lo recordaba, pero un cliente no quiere la
     // historia interna del sistema: quiere su respuesta.
     'No te disculpes por lo que dijiste antes ni expliques cambios del sistema. Contesta y ya.',
+    '',
+    // TEMAS AJENOS. Decision de Abraham: cordial, no cortante — pero con techo.
+    // El 15 nov 2026 el agente dio recetas completas de pozole y de frijoles, y
+    // cada una costo $0.059, lo mismo que cotizarle a una tienda. Peor: llamo a
+    // `catalogo` y a `cotizar` para darlas, que es gasto puro. Amable sigue
+    // siendo gratis; una receta de seis pasos, no.
+    'Si te preguntan algo que no es de Crunchy Paps (una receta, el clima, lo que sea):',
+    'contesta en 2 o 3 frases COMO MUCHO y vuelve al tema. Nada de listas de pasos,',
+    'ni ingredientes, ni recetas completas: lo esencial en una o dos frases y ya.',
+    'Y en esos casos NO llames a ninguna herramienta: no hace falta ninguna para eso.',
   ].join('\n');
 }
 
@@ -814,7 +824,7 @@ async function correrHerramienta(nombre, entrada, id) {
       + '&activo=eq.true&descontinuado=not.eq.true&order=orden.asc&limit=60';
     const busca = String((entrada && entrada.busca) || '').trim();
     if (busca) q += `&sabor=ilike.*${encodeURIComponent(busca)}*`;
-    const r = await supa(q, 'GET');
+    const r = await transporte(q, 'GET');
     if (!r.ok) return 'No pude leer el catalogo. Dile que lo intentas en un momento y no inventes precios.';
     const filas = [];
     for (const p of (Array.isArray(r.data) ? r.data : [])) {
@@ -826,11 +836,32 @@ async function correrHerramienta(nombre, entrada, id) {
       });
     }
     if (!filas.length) return 'No hay productos que coincidan con esa busqueda.';
-    return JSON.stringify({ nivelDePrecio: id.nivel, productos: filas });
+
+    // TABLA, NO JSON, y es dinero. Medido el 15 nov 2026 sobre los 28 productos
+    // reales: en JSON ocupa 2,925 caracteres y en tabla 705. Cuatro veces menos,
+    // y el catalogo viaja en DOS O TRES vueltas de cada conversacion, asi que de
+    // ahi salia que la entrada pasara de 5,000 a 12,500 tokens en un rato. Para
+    // dar la escala: el prompt entero son ~508 tokens y las definiciones de las
+    // herramientas ~470; el catalogo en JSON pesaba mas que los dos juntos.
+    //
+    // Cambia COMO se escribe, no QUE se ofrece: clasificarProducto decide lo
+    // mismo y probar-wa-catalogo.mjs sigue cotizando cada fila contra el servidor.
+    const conCaja = filas.some((f) => f.caja3 || f.caja6 || f.caja12);
+    const cab = conCaja
+      ? 'id|sabor|presentacion|pieza|caja3|caja6|caja12'
+      : 'id|sabor|presentacion|precio';
+    const cuerpo = filas.map((f) => {
+      const base = `${f.id}|${f.sabor}|${f.presentacion}|${f.precio}`;
+      // Guion y no hueco: una columna vacia se lee como "no se", y un guion como
+      // "no hay". Son cosas distintas cuando lo que falta es un precio.
+      return conCaja ? `${base}|${f.caja3 || '-'}|${f.caja6 || '-'}|${f.caja12 || '-'}` : base;
+    }).join('\n');
+
+    return `Precios para nivel ${id.nivel}, en pesos.\n${cab}\n${cuerpo}`;
   }
 
   if (nombre === 'fecha_entrega') {
-    const r = await supa('rpc/obtener_fecha_entrega', 'POST', { p_data: { telefono: id.telefono } });
+    const r = await transporte('rpc/obtener_fecha_entrega', 'POST', { p_data: { telefono: id.telefono } });
     if (!r.ok || !r.data) return 'No pude calcular la fecha de entrega.';
     // OJO: `fechaDisplay` viene en espanglish ("Tuesday 17 de November"), asi que
     // NO se le pasa al modelo: diria eso tal cual a un cliente. Se manda la fecha
@@ -864,7 +895,7 @@ async function correrHerramienta(nombre, entrada, id) {
 
   if (nombre === 'mis_pedidos') {
     if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
-    const r = await supa(
+    const r = await transporte(
       'ordenes?select=consecutivo,fecha_orden,fecha_entrega,estatus_pedido,estatus_pago,total'
       + `&id_cliente=eq.${encodeURIComponent(id.idCliente)}&order=id.desc&limit=5`, 'GET');
     if (!r.ok) return 'No pude leer los pedidos.';
