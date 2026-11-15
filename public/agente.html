@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --papel:#f7f6f2; --panel:#fffffe; --tinta:#14150f; --tinta2:#5d6055; --linea:#dedbd0;
+  --amarillo:#ffd200; --sombra:0 1px 2px rgba(20,21,15,.06);
+  --ok:#4f9d69; --oks:#e0f0e5; --aviso:#b3261e; --avisos:#fbe4e2; --ambar:#e8a91d; --ambars:#fdf1d2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:#0e0e0e; --panel:#202020; --tinta:#ededed; --tinta2:#a0a0a0; --linea:#3d3d3d;
+    --sombra:0 1px 2px rgba(0,0,0,.4);
+    --ok:#7fd48c; --oks:#16351a; --aviso:#ff6b6b; --avisos:#3a1715; --ambar:#ffca3a; --ambars:#3a2f00;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#0e0e0e; --panel:#202020; --tinta:#ededed; --tinta2:#a0a0a0; --linea:#3d3d3d;
+  --sombra:0 1px 2px rgba(0,0,0,.4);
+  --ok:#7fd48c; --oks:#16351a; --aviso:#ff6b6b; --avisos:#3a1715; --ambar:#ffca3a; --ambars:#3a2f00;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:920px;margin:0 auto;padding-block:24px;padding-left:18px;padding-right:18px}
+h1,h2{font-family:Archivo,Inter,sans-serif;margin:0;text-wrap:balance}
+h1{font-size:clamp(1.5rem,3.4vw,2.1rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta2)}
+p{margin:0}
+.sub{color:var(--tinta2);margin-top:6px;max-width:70ch;font-size:.92rem}
+header{border-bottom:2px solid var(--tinta);padding-bottom:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+header .crece{flex:1 1 220px;min-width:0}
+section{margin-top:26px}
+.panel{background:var(--panel);border:1px solid var(--linea);border-radius:12px;padding:14px;box-shadow:var(--sombra);margin-top:10px}
+
+/* interruptor */
+.poder{display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-left:4px solid var(--ok)}
+.poder.off{border-left-color:var(--aviso);background:var(--avisos)}
+.poder .estado{font-family:Archivo,sans-serif;font-size:1.3rem;font-weight:800;line-height:1.1}
+.poder .crece{flex:1 1 200px;min-width:0}
+.poder small{color:var(--tinta2);font-size:.82rem;display:block;margin-top:2px}
+
+/* pulso */
+.tot{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.tot .caja{background:var(--panel);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;box-shadow:var(--sombra)}
+.tot b{font-family:Archivo,sans-serif;font-size:1.45rem;display:block;font-variant-numeric:tabular-nums;line-height:1.1}
+.tot span{font-size:.72rem;color:var(--tinta2);text-transform:uppercase;letter-spacing:.06em}
+
+/* formulario */
+.campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+label{display:block;font-size:.82rem;font-weight:600;margin-bottom:4px}
+label i{font-style:normal;font-weight:400;color:var(--tinta2);display:block;font-size:.76rem;margin-top:1px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--linea);border-radius:8px;background:var(--papel);color:var(--tinta);font:inherit;font-size:.92rem}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--ambar);outline-offset:1px}
+textarea{min-height:68px;resize:vertical}
+.ancho{grid-column:1/-1}
+button{font:inherit;font-weight:600;padding:9px 16px;border-radius:8px;border:1px solid var(--tinta);background:var(--tinta);color:var(--papel);cursor:pointer}
+button.claro{background:transparent;color:var(--tinta)}
+button.peligro{background:var(--aviso);border-color:var(--aviso);color:#fff}
+button.ok{background:var(--ok);border-color:var(--ok);color:#06240f}
+button[disabled]{opacity:.5;cursor:default}
+.barra{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.err{color:var(--aviso);font-size:.86rem;margin-top:8px}
+.sucio{color:var(--ambar);font-size:.82rem;font-weight:600}
+
+/* ultimos */
+.tabla-caja{overflow-x:auto;border:1px solid var(--linea);border-radius:10px;background:var(--panel);margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--linea);vertical-align:top}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+td.txt{min-width:16rem}
+.pill{display:inline-block;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.pill.entra{background:var(--ambars);color:var(--ambar)}
+.pill.sale{background:var(--oks);color:var(--ok)}
+.pill.aviso{background:var(--avisos);color:var(--aviso)}
+
+/* login */
+#login{max-width:340px;margin:12vh auto 0}
+#login .panel{display:flex;flex-direction:column;gap:10px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--tinta);color:var(--papel);padding:10px 16px;border-radius:999px;font-size:.88rem;opacity:0;pointer-events:none;transition:.2s}
+.toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>Agente</h1>
+  <p class="sub">Ajustes del asistente de WhatsApp. Solo el dueño.</p>
+  <div class="panel">
+    <div><label for="l-tel">Teléfono</label><input id="l-tel" type="tel" inputmode="numeric" autocomplete="username"></div>
+    <div><label for="l-pin">PIN</label><input id="l-pin" type="password" inputmode="numeric" autocomplete="current-password"></div>
+    <button type="button" id="btn-entrar">Entrar</button>
+    <p class="err" id="l-err"></p>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="crece">
+      <h1>Agente de WhatsApp</h1>
+      <p class="sub">Lo que cambies aquí surte efecto en el siguiente mensaje. No hace falta desplegar nada.</p>
+    </div>
+    <button type="button" class="claro" id="btn-recargar">Recargar</button>
+    <button type="button" class="claro" id="btn-salir">Salir</button>
+  </header>
+
+  <section>
+    <h2>Encendido</h2>
+    <div class="panel poder" id="poder">
+      <div class="crece">
+        <span class="estado" id="poder-txt">—</span>
+        <small id="poder-sub"></small>
+      </div>
+      <button type="button" id="btn-poder">—</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Hoy</h2>
+    <div class="tot" id="pulso"></div>
+  </section>
+
+  <section>
+    <h2>Mandos</h2>
+    <div class="panel">
+      <div class="campos" id="campos"></div>
+      <div class="barra">
+        <button type="button" id="btn-guardar" disabled>Guardar</button>
+        <button type="button" class="claro" id="btn-deshacer" disabled>Deshacer</button>
+        <span class="sucio" id="sucio" hidden>Hay cambios sin guardar</span>
+      </div>
+      <p class="err" id="g-err"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Últimos mensajes</h2>
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th>Hora</th><th>Tel</th><th></th><th>Texto</th><th>Herramientas</th><th>Costo</th></tr></thead>
+        <tbody id="ultimos"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = window.__CP_CONFIG__ || {};
+  const URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  const LLAVE = CFG.SUPABASE_ANON_KEY || '';
+
+  // Los textos de cada mando. El ORDEN de esta lista es el de la pantalla, y
+  // esta pensado: primero lo que cuesta dinero, luego lo que frena, luego los
+  // avisos. Los limites NO estan aqui: vienen del servidor (wa_rangos), para
+  // que el formulario no acepte lo que el guardado rechaza.
+  const MANDOS = [
+    { k: 'modelo', t: 'Modelo', ayuda: 'Sonnet cuesta la mitad; Haiku, una vigésima parte.',
+      opciones: [['claude-opus-5-5', 'Opus 5.5 — el mejor'],
+                 ['claude-sonnet-5-5', 'Sonnet 5.5 — la mitad de precio'],
+                 ['claude-haiku-5-5', 'Haiku 5.5 — el más barato']] },
+    { k: 'effort', t: 'Cuánto piensa', ayuda: 'Bajarlo a "poco" es el experimento de costo más barato.',
+      opciones: [['low', 'Poco'], ['medium', 'Normal'], ['high', 'Mucho']] },
+    { k: 'max_turnos', t: 'Memoria', ayuda: 'Turnos que recuerda. Más memoria encarece cada mensaje.' },
+    { k: 'max_vueltas', t: 'Vueltas de herramientas', ayuda: 'Cada vuelta reenvía lo anterior: aquí está el grueso del gasto.' },
+    { k: 'tope_global', t: 'Tope de mensajes al día', ayuda: 'Entre todos. Es el que protege la factura.' },
+    { k: 'tope_por_numero', t: 'Tope por teléfono', ayuda: 'Contra alguien dando lata.' },
+    { k: 'max_lineas', t: 'Líneas por cotización', ayuda: 'Más, y pide partir el pedido en dos.' },
+    { k: 'max_piezas_linea', t: 'Piezas por línea', ayuda: '2.000 de 100 g son 200 kg: un lote entero.' },
+    { k: 'avisos_por_dia', t: 'Avisos al día', ayuda: 'Por conversación, para que una charla mala no te llene el teléfono.' },
+    { k: 'avisar_a', t: 'Avisar a estos teléfonos', ancho: true,
+      ayuda: 'Uno por línea. Si lo dejas vacío, el agente NO puede avisar y deja de ofrecerlo.' },
+    { k: 'mensaje_apagado', t: 'Qué contesta estando apagado', ancho: true, area: true,
+      ayuda: 'Se manda tal cual. Se contesta en vez de callar: quien escribe merece saber que no hay nadie.' },
+  ];
+
+  let token = sessionStorage.getItem('cp-agente-token') || '';
+  let datos = null;     // ultima respuesta de wa_agente_admin
+  let guardado = null;  // ajustes tal como estan en la base
+
+  const $ = (id) => document.getElementById(id);
+  const num = (n) => Number(n || 0).toLocaleString('es-MX');
+  const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+  function toast(t) { const e = $('toast'); e.textContent = t; e.classList.add('on'); setTimeout(() => e.classList.remove('on'), 2600); }
+
+  async function rpc(nombre, cuerpo) {
+    const r = await fetch(URL_API + nombre, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify(cuerpo || {}),
+    });
+    return r.json().catch(() => null);
+  }
+
+  // ── Acceso ──
+  async function entrar() {
+    $('l-err').textContent = '';
+    const r = await rpc('validar_vendedor_pin', {
+      p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value } });
+    if (!r || !r.token) { $('l-err').textContent = (r && r.error) || 'Teléfono o PIN incorrectos.'; return; }
+    token = r.token; sessionStorage.setItem('cp-agente-token', token);
+    await cargar();
+  }
+  function salir() {
+    token = ''; sessionStorage.removeItem('cp-agente-token');
+    $('app').hidden = true; $('login').hidden = false;
+  }
+
+  async function cargar() {
+    const r = await rpc('wa_agente_admin', { p_data: { token } });
+    if (!r || !r.ok) {
+      salir();
+      $('l-err').textContent = (r && r.error) === 'No autorizado'
+        ? 'Tu sesión venció o esta cuenta no es la del dueño. Entra de nuevo.'
+        : ((r && r.error) || 'No se pudo cargar.');
+      return;
+    }
+    datos = r;
+    guardado = JSON.parse(JSON.stringify(r.ajustes || {}));
+    $('login').hidden = true; $('app').hidden = false;
+    pintarPoder(); pintarPulso(); pintarCampos(); pintarUltimos(); marcarSucio();
+  }
+
+  // ── Encendido ──
+  function pintarPoder() {
+    const on = guardado.activo !== false;
+    $('poder').classList.toggle('off', !on);
+    $('poder-txt').textContent = on ? 'Encendido' : 'Apagado';
+    $('poder-sub').textContent = on
+      ? 'Está contestando mensajes de clientes.'
+      : 'No llama al modelo: contesta el mensaje de apagado y nada más.';
+    const b = $('btn-poder');
+    b.textContent = on ? 'Apagar ahora' : 'Encender';
+    b.className = on ? 'peligro' : 'ok';
+  }
+
+  // Apagar y encender van APARTE del formulario y se guardan solos: si el
+  // agente se desmadra, nadie quiere acordarse de pulsar "Guardar" despues.
+  //
+  // La confirmacion de apagar es DE LA PAGINA, con dos pulsaciones, y no un
+  // confirm() del navegador. Probado el 15 nov 2026: en un navegador embebido,
+  // confirm() devuelve false sin preguntar nada, asi que el boton no hacia nada
+  // y no decia por que — y este es justo el boton que tiene que funcionar el dia
+  // que algo va mal. Dos clics funcionan en todas partes.
+  let armado = null;   // temporizador de la segunda pulsacion
+  function desarmar() {
+    if (armado) { clearTimeout(armado); armado = null; }
+    pintarPoder();
+  }
+  async function cambiarPoder() {
+    const on = guardado.activo !== false;
+    const b = $('btn-poder');
+    if (on && !armado) {
+      b.textContent = 'Pulsa otra vez para apagar';
+      armado = setTimeout(desarmar, 5000);
+      return;
+    }
+    if (armado) { clearTimeout(armado); armado = null; }
+    b.disabled = true;
+    const r = await rpc('set_wa_ajustes', { p_data: { token, activo: !on } });
+    b.disabled = false;
+    if (!r || !r.ok) { toast((r && r.error) || 'No se pudo cambiar.'); pintarPoder(); return; }
+    guardado = r.ajustes; pintarPoder(); pintarCampos(); marcarSucio();
+    toast(on ? 'Agente apagado. Ya no contesta.' : 'Agente encendido.');
+  }
+
+  // ── Hoy ──
+  function pintarPulso() {
+    const h = datos.hoy || {};
+    const cajas = [
+      [num(h.entran), 'entran'],
+      [num(h.salen), 'salen'],
+      [num(h.personas), 'personas'],
+      [num(h.avisos), 'avisos'],
+      ['$' + Number(h.usd || 0).toFixed(3), 'costo usd'],
+    ];
+    const c = $('pulso'); c.replaceChildren();
+    for (const [v, t] of cajas) {
+      const caja = el('div', null, 'caja');
+      caja.appendChild(el('b', v));
+      caja.appendChild(el('span', t));
+      c.appendChild(caja);
+    }
+  }
+
+  // ── Mandos ──
+  function pintarCampos() {
+    const c = $('campos'); c.replaceChildren();
+    const rangos = datos.rangos || {};
+    for (const m of MANDOS) {
+      const caja = el('div', null, m.ancho ? 'ancho' : '');
+      const lab = el('label', m.t); lab.htmlFor = 'f-' + m.k;
+      if (m.ayuda) lab.appendChild(el('i', m.ayuda));
+      caja.appendChild(lab);
+
+      let campo;
+      if (m.opciones) {
+        campo = document.createElement('select');
+        for (const [v, t] of m.opciones) { const o = el('option', t); o.value = v; campo.appendChild(o); }
+        campo.value = guardado[m.k] != null ? guardado[m.k] : '';
+      } else if (m.area) {
+        campo = document.createElement('textarea');
+        campo.value = guardado[m.k] || '';
+      } else if (m.k === 'avisar_a') {
+        campo = document.createElement('textarea');
+        campo.value = (guardado.avisar_a || []).join('\n');
+        campo.placeholder = '5215512345678';
+      } else {
+        campo = document.createElement('input');
+        campo.type = 'number';
+        campo.value = guardado[m.k];
+        // Los limites vienen del SERVIDOR. Si estuvieran escritos aqui, el dia
+        // que cambie un rango el formulario aceptaria lo que el guardado
+        // rechaza, y el error no se entenderia.
+        const r = rangos[m.k];
+        if (r) { campo.min = r[0]; campo.max = r[1]; }
+      }
+      campo.id = 'f-' + m.k;
+      campo.addEventListener('input', marcarSucio);
+      caja.appendChild(campo);
+      c.appendChild(caja);
+    }
+  }
+
+  function leerFormulario() {
+    const out = {};
+    for (const m of MANDOS) {
+      const campo = $('f-' + m.k);
+      if (!campo) continue;
+      if (m.k === 'avisar_a') {
+        out.avisar_a = campo.value.split('\n').map((s) => s.replace(/\D/g, '')).filter(Boolean);
+      } else if (m.opciones || m.area) {
+        out[m.k] = campo.value;
+      } else {
+        out[m.k] = Number(campo.value);
+      }
+    }
+    return out;
+  }
+
+  // Compara lo del formulario con lo guardado, para no mandar once claves
+  // cuando solo cambio una, y para que el boton diga la verdad.
+  function cambios() {
+    const act = leerFormulario();
+    const d = {};
+    for (const k of Object.keys(act)) {
+      const a = JSON.stringify(act[k]);
+      const b = JSON.stringify(guardado[k]);
+      if (a !== b) d[k] = act[k];
+    }
+    return d;
+  }
+  function marcarSucio() {
+    const n = Object.keys(cambios()).length;
+    $('sucio').hidden = n === 0;
+    $('btn-guardar').disabled = n === 0;
+    $('btn-deshacer').disabled = n === 0;
+    $('btn-guardar').textContent = n === 0 ? 'Guardar' : ('Guardar ' + n + (n === 1 ? ' cambio' : ' cambios'));
+  }
+
+  async function guardar() {
+    $('g-err').textContent = '';
+    const d = cambios();
+    if (!Object.keys(d).length) return;
+    $('btn-guardar').disabled = true;
+    const r = await rpc('set_wa_ajustes', { p_data: Object.assign({ token }, d) });
+    if (!r || !r.ok) {
+      // El servidor dice QUE clave esta mal: se repite tal cual, porque un
+      // "datos invalidos" con once campos en pantalla no ayuda a nadie.
+      const nombre = r && r.clave ? (MANDOS.find((m) => m.k === r.clave) || {}).t || r.clave : '';
+      const txt = !r ? 'No se pudo guardar.'
+        : r.error === 'fuera_de_rango' ? `"${nombre}" tiene que estar entre ${r.min} y ${r.max}.`
+        : r.error === 'no_es_numero' ? `"${nombre}" tiene que ser un número.`
+        : r.error === 'modelo_desconocido' ? 'Ese modelo no está permitido.'
+        : r.error === 'No autorizado' ? 'Tu sesión venció. Entra de nuevo.'
+        : (r.error || 'No se pudo guardar.');
+      $('g-err').textContent = txt;
+      marcarSucio();
+      if (r && r.error === 'No autorizado') salir();
+      return;
+    }
+    guardado = r.ajustes;
+    pintarPoder(); pintarCampos(); marcarSucio();
+    toast('Guardado. Surte efecto en el siguiente mensaje.');
+  }
+
+  function deshacer() { pintarCampos(); marcarSucio(); $('g-err').textContent = ''; }
+
+  // ── Últimos mensajes ──
+  function pintarUltimos() {
+    const t = $('ultimos'); t.replaceChildren();
+    const filas = datos.ultimos || [];
+    if (!filas.length) {
+      const tr = document.createElement('tr');
+      const td = el('td', 'Todavía no hay mensajes.'); td.colSpan = 6; td.className = 'txt';
+      tr.appendChild(td); t.appendChild(tr); return;
+    }
+    for (const f of filas) {
+      const tr = document.createElement('tr');
+      tr.appendChild(el('td', f.hora, 'num'));
+      tr.appendChild(el('td', '···' + (f.tel || ''), 'num'));
+      const tdp = document.createElement('td');
+      const clase = f.tipo === 'aviso' ? 'aviso' : (f.dir === 'entra' ? 'entra' : 'sale');
+      const texto = f.tipo === 'aviso' ? 'aviso' : (f.dir === 'entra' ? 'entra' : 'sale');
+      tdp.appendChild(el('span', texto, 'pill ' + clase));
+      tr.appendChild(tdp);
+      tr.appendChild(el('td', f.texto || '', 'txt'));
+      tr.appendChild(el('td', Array.isArray(f.uso) && f.uso.length ? f.uso.join(', ') : '—'));
+      tr.appendChild(el('td', Number(f.usd || 0) ? '$' + Number(f.usd).toFixed(4) : '—', 'num'));
+      t.appendChild(tr);
+    }
+  }
+
+  // ── Arranque ──
+  $('btn-entrar').addEventListener('click', entrar);
+  $('l-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+  $('btn-salir').addEventListener('click', salir);
+  $('btn-recargar').addEventListener('click', cargar);
+  $('btn-poder').addEventListener('click', cambiarPoder);
+  $('btn-guardar').addEventListener('click', guardar);
+  $('btn-deshacer').addEventListener('click', deshacer);
+  if (token) cargar();
+})();
+</script>
+</body>
+</html>

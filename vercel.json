@@ -9,7 +9,8 @@
     { "source": "/planeador", "destination": "/planeador.html" },
     { "source": "/privacidad", "destination": "/privacidad.html" },
     { "source": "/retos", "destination": "/retos.html" },
-    { "source": "/radar", "destination": "/radar.html" }
+    { "source": "/radar", "destination": "/radar.html" },
+    { "source": "/agente", "destination": "/agente.html" }
   ],
   "headers": [
     {
