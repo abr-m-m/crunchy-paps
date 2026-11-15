@@ -22,7 +22,7 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const {
-  herramientasPara, COLUMNA_PRECIO, sistema, MAX_LINEAS, cotizarLineas,
+  herramientasPara, COLUMNA_PRECIO, sistema, POR_DEFECTO, cotizarLineas, usarAjustesDePrueba,
 } = require('../api/whatsapp.js');
 
 let fallos = 0;
@@ -148,7 +148,8 @@ for (const h of TODAS) {
 console.log('\nY el tope de lineas vive en el CODIGO, que es donde se cumple');
 // Un limite que solo existe en el esquema es una sugerencia al modelo. Este se
 // cumple sin tocar la red, antes de preguntarle a nadie.
-ok(typeof MAX_LINEAS === 'number' && MAX_LINEAS > 0, `MAX_LINEAS = ${MAX_LINEAS}`);
+const MAX_LINEAS = POR_DEFECTO.max_lineas;
+ok(typeof MAX_LINEAS === 'number' && MAX_LINEAS > 0, `max_lineas por defecto = ${MAX_LINEAS}`);
 const muchas = Array.from({ length: MAX_LINEAS + 1 },
   (_, i) => ({ idProducto: i + 1, cantidad: 1, caja: 0 }));
 const rTope = await cotizarLineas(muchas, 'tienda');
@@ -207,6 +208,49 @@ for (const prohibido of ['token', 'tipoCliente', 'total', 'idCliente', 'canal'])
 ok(/CONFIRMAR el total/i.test(sistema(PERFILES[1])),
   'el prompt exige que el cliente confirme el total antes de crearlo');
 ok(/PENDIENTE/.test(sistema(PERFILES[1])), 'y que se le diga que queda pendiente');
+
+console.log('\nPasar con una persona: no se ofrece si no hay a quien avisar');
+// ESTE ES EL INVARIANTE. El prompt llevaba desde el 14 nov 2026 ofreciendo
+// "te lo paso con el equipo" sin que existiera forma de pasarlo: el agente se
+// saltaba su propia regla de no prometer lo que no puede cumplir, y nadie se
+// entero porque los avisos no iban a ningun sitio. Con avisar_a vacio, ni la
+// herramienta existe ni el prompt la nombra.
+usarAjustesDePrueba({ avisar_a: [] });
+for (const p of PERFILES) {
+  const n = herramientasPara(p).map((h) => h.name);
+  ok(!n.includes('pasar_con_una_persona'), `${p.nivel}: sin destinos, no esta la herramienta`);
+}
+ok(!/pasar_con_una_persona/.test(sistema(PERFILES[1])), 'y el prompt no la menciona');
+
+console.log('\n   Con un destino puesto, aparece para todos');
+usarAjustesDePrueba({ avisar_a: ['5215500000099'] });
+for (const p of PERFILES) {
+  const n = herramientasPara(p).map((h) => h.name);
+  ok(n.includes('pasar_con_una_persona'), `${p.nivel}: con destino, si esta`);
+}
+const sAviso = sistema(PERFILES[1]);
+ok(/pasar_con_una_persona/.test(sAviso), 'y el prompt la menciona');
+
+console.log('\n   Los tres escenarios estan en su descripcion');
+const esc = herramientasPara(PERFILES[1]).find((h) => h.name === 'pasar_con_una_persona');
+ok(/hablar con una persona/i.test(esc.description), '1. el cliente lo pide');
+ok(/cancelar un pedido/i.test(esc.description), '2. algo que no puede hacer');
+ok(/reclamo/i.test(esc.description), '3. reclamo o cliente molesto');
+ok(/NO la uses para dudas de producto/i.test(esc.description), 'y lo que NO escala');
+
+console.log('\n   Y el agente tiene prohibido cancelar');
+ok(/NO puedes cancelar/i.test(sAviso), 'el prompt se lo prohibe explicitamente');
+ok(/no digas que esta hecho/i.test(sAviso), 'y le dice que no finja que lo hizo');
+
+console.log('\nEl nombre del dueno no sale en nada que lea un cliente');
+for (const p of PERFILES) {
+  ok(!/Abraham/i.test(sistema(p)), `${p.nivel}: el prompt no nombra al dueno`);
+}
+for (const h of herramientasPara(PERFILES[1])) {
+  ok(!/Abraham/i.test(h.description), `${h.name}: su descripcion tampoco`);
+}
+
+usarAjustesDePrueba({});   // se deja como estaba
 
 console.log(fallos ? `\n${fallos} FALLAS` : '\nTodo en verde');
 process.exit(fallos ? 1 : 0);

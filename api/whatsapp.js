@@ -24,11 +24,6 @@ const WA_SECRET = process.env.WA_APP_SECRET;
 const SUPA_URL  = process.env.SUPABASE_URL;
 const SUPA_SR   = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Los dos topes viven aqui, no en la base: afinarlos no deberia costar una
-// migracion. La funcion wa_entrante los recibe como parametros.
-const TOPE_POR_NUMERO = 40;    // mensajes entrantes por numero, en 24 h
-const TOPE_GLOBAL     = 400;   // mensajes entrantes de todos, en 24 h
-
 const WA_TOKEN    = process.env.WA_TOKEN;
 const WA_PHONE_ID = process.env.WA_PHONE_ID;
 // v25.0 es la que usa la documentacion de Meta en noviembre de 2026. Cada version
@@ -36,9 +31,66 @@ const WA_PHONE_ID = process.env.WA_PHONE_ID;
 // hay que comprobarla contra el endpoint /versions antes de desplegar.
 const WA_GRAPH = process.env.WA_GRAPH_VERSION || 'v25.0';
 
-const MODELO = 'claude-opus-5-5';
-const MAX_TURNOS = 24;         // turnos de texto que se guardan del hilo
-const MAX_SALIDA = 4096;       // una respuesta de WhatsApp es corta: esto es tope, no meta
+const MAX_SALIDA = 4096;       // tope duro de una respuesta; el largo lo fija el prompt
+
+// ── Los ajustes ─────────────────────────────────────────────────────────────
+// Los numeros y los interruptores viven en la BASE, clave `agente_whatsapp` de
+// config_produccion (migracion 20261115000000). Decision de Abraham el 14 nov
+// 2026, y lo que de verdad compra es `activo`: si el agente se desmadra un
+// sabado, callarlo es un UPDATE y no un despliegue.
+//
+// Lo de aqui abajo son los MISMOS valores, y son la red. Si la base no contesta
+// o devuelve basura, se usan estos: un ajuste que falla abierto no es un ajuste,
+// porque justo el dia que Supabase va lento seria el dia sin topes.
+//
+// El prompt NO esta en la base, a proposito: es logica, pasa por seis pruebas y
+// por el CI, y un parrafo mal escrito ahi llega a un cliente sin que nadie lo
+// mire.
+const POR_DEFECTO = {
+  activo: true,
+  modelo: 'claude-opus-5-5',
+  effort: 'medium',
+  tope_por_numero: 40,      // mensajes entrantes por numero, en 24 h
+  tope_global: 400,         // mensajes entrantes de todos, en 24 h
+  max_turnos: 24,           // turnos de texto que se guardan del hilo
+  max_vueltas: 6,           // herramientas encadenadas antes de rendirse
+  max_lineas: 20,
+  max_piezas_linea: 2000,
+  avisar_a: [],
+  avisos_por_dia: 2,
+  mensaje_apagado: 'Ahorita no te puedo atender por aqui. Escribenos en crunchypaps.mx y te respondemos.',
+};
+
+// Estado de modulo, refrescado al principio de CADA peticion. En serverless no
+// hay memoria entre invocaciones (regla 44), asi que esto no es una cache: es
+// una variable que se llena al empezar. Si Vercel reutiliza el contenedor para
+// dos peticiones a la vez, las dos leen los mismos ajustes globales -no hay nada
+// por usuario aqui-, asi que compartirla no cambia ninguna respuesta.
+let AJ = { ...POR_DEFECTO };
+
+async function cargarAjustes() {
+  AJ = { ...POR_DEFECTO };
+  try {
+    const r = await supa('rpc/wa_ajustes', 'POST', {});
+    if (r.ok && r.data && typeof r.data === 'object' && !Array.isArray(r.data)) {
+      // Clave a clave y por TIPO: una clave con el tipo cambiado -un tope que
+      // llega como texto- haria algo peor que fallar, haria algo raro.
+      for (const [k, def] of Object.entries(POR_DEFECTO)) {
+        const v = r.data[k];
+        if (v === undefined || v === null) continue;
+        if (typeof def === 'number' && Number.isFinite(Number(v))) AJ[k] = Number(v);
+        else if (typeof def === 'boolean' && typeof v === 'boolean') AJ[k] = v;
+        else if (typeof def === 'string' && typeof v === 'string' && v) AJ[k] = v;
+        else if (Array.isArray(def) && Array.isArray(v)) AJ[k] = v;
+      }
+    } else {
+      console.warn('wa: wa_ajustes no contesto, van los valores del codigo', r.status);
+    }
+  } catch (e) {
+    console.warn('wa: wa_ajustes fallo, van los valores del codigo', e && e.message);
+  }
+  return AJ;
+}
 
 // ── La puerta ───────────────────────────────────────────────────────────────
 // Compara en tiempo constante y NUNCA lanza: una firma con basura devuelve
@@ -126,8 +178,8 @@ async function registrarEntrante(telefono, texto) {
   const r = await supa('rpc/wa_entrante', 'POST', {
     p_telefono: telefono,
     p_texto: texto,
-    p_tope_numero: TOPE_POR_NUMERO,
-    p_tope_global: TOPE_GLOBAL,
+    p_tope_numero: AJ.tope_por_numero,
+    p_tope_global: AJ.tope_global,
   });
   // Si la base no contesta, se para. Un contador que falla abierto no es un tope:
   // justo el dia que Supabase va lento seria el dia sin limite de gasto.
@@ -180,7 +232,7 @@ async function leerHilo(telefono) {
     `wa_conversaciones?select=hilo,bloqueado&telefono=eq.${encodeURIComponent(telefono)}`, 'GET');
   const fila = r.ok && Array.isArray(r.data) ? r.data[0] : null;
   return {
-    hilo: podarHilo(fila && fila.hilo, MAX_TURNOS),
+    hilo: podarHilo(fila && fila.hilo, AJ.max_turnos),
     bloqueado: Boolean(fila && fila.bloqueado),
   };
 }
@@ -188,7 +240,7 @@ async function leerHilo(telefono) {
 async function guardarHilo(telefono, hilo) {
   const r = await supa('wa_conversaciones', 'POST', {
     telefono,
-    hilo: podarHilo(hilo, MAX_TURNOS),
+    hilo: podarHilo(hilo, AJ.max_turnos),
     actualizado_en: new Date().toISOString(),
   }, 'resolution=merge-duplicates,return=minimal');
   if (!r.ok) console.error('wa: no se pudo guardar el hilo', r.status);
@@ -231,7 +283,7 @@ function sistema(id) {
     puedePedir(id)
       ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. Antes de crearlo, el cliente '
         + 'tiene que CONFIRMAR el total con sus palabras; no lo des por confirmado porque te haya '
-        + 'dicho que sabores quiere. El pedido queda PENDIENTE de que Abraham lo confirme, y eso se '
+        + 'dicho que sabores quiere. El pedido queda PENDIENTE de que lo confirme el equipo, y eso se '
         + 'lo dices siempre al cerrarlo.'
       : 'NO puedes crear pedidos para esta persona. Para comprar, mandale https://crunchypaps.mx',
     '',
@@ -250,6 +302,13 @@ function sistema(id) {
     puedePedir(id)
       ? '- crear_pedido: lo registra. Solo despues de cotizar Y de que el cliente confirme ese total.'
       : '',
+    (Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length)
+      ? '- pasar_con_una_persona: avisa al equipo. Si piden hablar con alguien, si no puedes hacer algo, o si hay un reclamo.'
+      : '',
+    // Cancelar mueve lote, caja, puntos y, con Stripe, un reembolso real. No es
+    // una accion de chat.
+    'NO puedes cancelar ni modificar un pedido ya hecho, ni cambiar una direccion, ni devolver dinero.',
+    'Si te lo piden, no digas que esta hecho: recoge el folio y el motivo y pasalo con el equipo.',
     '',
     // El modelo suma bien casi siempre, y ese "casi" es el problema: 12 x 27 lo
     // hace de memoria sin llamar a nada, y el dia que falle nadie lo revisa.
@@ -259,7 +318,7 @@ function sistema(id) {
     '',
     'NUNCA inventes precios, sabores, existencias ni fechas. Si una herramienta falla, dilo:',
     'es mejor decir "no lo pude comprobar" que dar un dato que puede estar mal.',
-    'Si no tienes herramienta para lo que piden, dilo y ofrece pasarlo con Abraham.',
+    'Si no tienes herramienta para lo que piden, dilo con naturalidad.',
     'No prometas nada que no puedas comprobar.',
     '',
     // LARGO. Esto no es estilo: es dinero y es WhatsApp. La salida cuesta cinco
@@ -373,19 +432,17 @@ function clasificarProducto(p, nivel, col) {
 // esquema va a mano, asi que no hay quien los quite. El tope de verdad vive en
 // cotizarLineas, que es donde tiene que estar: un limite que solo existe en el
 // esquema es una sugerencia al modelo, no un limite.
-const MAX_LINEAS = 20;
-const MAX_PIEZAS_LINEA = 2000;   // 2000 piezas de 100 g son 200 kg: un lote entero
 
 async function cotizarLineas(lineas, nivel) {
   if (!Array.isArray(lineas) || !lineas.length) return { ok: false, error: 'sin_lineas' };
-  if (lineas.length > MAX_LINEAS) return { ok: false, error: 'demasiadas_lineas' };
+  if (lineas.length > AJ.max_lineas) return { ok: false, error: 'demasiadas_lineas' };
 
   for (const l of lineas) {
     const n = Number(l && l.cantidad);
     if (!Number.isFinite(n) || n <= 0 || n !== Math.trunc(n)) {
       return { ok: false, error: 'cantidad_invalida', linea: l };
     }
-    if (n > MAX_PIEZAS_LINEA) return { ok: false, error: 'cantidad_enorme', linea: l };
+    if (n > AJ.max_piezas_linea) return { ok: false, error: 'cantidad_enorme', linea: l };
   }
 
   // Un mismo producto en dos lineas se rechaza en vez de sumarse solo: juntarlas
@@ -501,7 +558,7 @@ async function crearPedidoConfirmado(entrada, id) {
   const j = r.data;
   if (!r.ok || !j) {
     console.error('wa: wa_crear_pedido no contesto', r.status, JSON.stringify(j).slice(0, 300));
-    return 'NO le digas que el pedido quedo hecho. No pude registrarlo; dile que Abraham le confirma.';
+    return 'NO le digas que el pedido quedo hecho. No pude registrarlo; dile que el equipo le confirma.';
   }
 
   if (j.ok === false) {
@@ -521,7 +578,7 @@ async function crearPedidoConfirmado(entrada, id) {
       // El caso de los doce meses... o de las doce horas. Se registra para que en
       // Vercel se vea la causa, y al cliente no se le cuenta el problema interno.
       console.error('wa: credencial del agente invalida o caducada');
-      return 'NO le digas que quedo hecho. Dile que se lo pasas a Abraham para confirmarlo.';
+      return 'NO le digas que quedo hecho. Dile que lo revisa el equipo y le confirman.';
     }
     return `NO le digas que quedo hecho. El pedido no se pudo crear (${j.error}).`;
   }
@@ -531,7 +588,77 @@ async function crearPedidoConfirmado(entrada, id) {
   }
 
   return `Pedido ${j.consecutivo} creado por $${c.total}, para entregar el ${fecha}. `
-    + 'Queda PENDIENTE de que Abraham lo confirme, y eso hay que decirselo al cliente.';
+    + 'Queda PENDIENTE de que lo confirme el equipo, y eso hay que decirselo al cliente.';
+}
+
+// ── Pasar con una persona ───────────────────────────────────────────────────
+// Esta herramienta existe porque el prompt llevaba desde el 14 nov 2026
+// ofreciendo "te lo paso con el equipo" SIN QUE HUBIERA forma de pasarlo. El
+// agente se saltaba su propia regla de no prometer lo que no puede cumplir, y
+// nadie se enteraba: los avisos no llegaban a ningun sitio.
+//
+// Los tres escenarios son decision de Abraham (15 nov 2026), y estan en la
+// descripcion porque es lo unico que el modelo lee para decidir cuando usarla:
+//   1. el cliente pide hablar con una persona,
+//   2. el agente no puede resolverlo (cancelar, cambiar direccion, devolver),
+//   3. huele a reclamo o el cliente esta molesto.
+// Lo que NO escala: dudas de producto, precios y fechas, que para eso estan las
+// otras herramientas, y pedidos normales.
+//
+// CANCELAR NO LO HACE EL AGENTE, y no es prudencia: cancelar mueve el lote, la
+// caja, los puntos y -si fue Stripe- un reembolso de verdad. El 14 nov
+// aparecieron tres pedidos cancelados cuyo reembolso real nadie sabe si ocurrio.
+// Asi que recoge el folio y el motivo, avisa, y se lo dice al cliente.
+const AVISO_MAX = 600;
+
+async function avisosDeHoy(telefono) {
+  const desde = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const r = await supa('wa_mensajes?select=id'
+    + `&telefono=eq.${encodeURIComponent(telefono)}&direccion=eq.sale`
+    + `&fecha=gte.${encodeURIComponent(desde)}&herramientas->>tipo=eq.aviso`, 'GET');
+  return r.ok && Array.isArray(r.data) ? r.data.length : 0;
+}
+
+async function pasarConUnaPersona(entrada, id) {
+  const destinos = Array.isArray(AJ.avisar_a) ? AJ.avisar_a.filter(Boolean) : [];
+  if (!destinos.length) {
+    // No deberia llegar aqui: sin destinos, la herramienta no se ofrece. Si
+    // llega, se dice la verdad en vez de fingir que se aviso.
+    return 'No tengo a quien avisar ahora mismo. Dile que escriba a crunchypaps.mx.';
+  }
+
+  // El tope vive aqui y no en el prompt: un limite que se le pide al modelo es
+  // una sugerencia. Sin el, una conversacion mala llena el telefono de alguien.
+  const ya = await avisosDeHoy(id.telefono);
+  if (ya >= AJ.avisos_por_dia) {
+    console.warn('wa: tope de avisos alcanzado', { telefono: id.telefono, ya });
+    return 'De esta conversacion ya avisamos hoy. Dile que siguen en ello y que le escriben.';
+  }
+
+  const motivo = String((entrada && entrada.motivo) || '').trim().slice(0, AVISO_MAX);
+  if (!motivo) return 'Dime en una frase que quiere y por que no lo resolviste, y lo paso.';
+
+  const quien = id.nombre ? `${id.nombre} (${id.telefono})` : id.telefono;
+  const texto = `Crunchy Paps - WhatsApp\n\nDe: ${quien}\nNivel: ${id.nivel}\n\n${motivo}`;
+
+  let entregados = 0;
+  for (const destino of destinos) {
+    if (await enviarWA(destino, texto)) entregados++;
+  }
+
+  // Se registra SIEMPRE, entregado o no: la fila es lo que cuenta el tope, y es
+  // el unico rastro de que esta conversacion pidio ayuda.
+  await supa('wa_mensajes', 'POST', {
+    telefono: id.telefono, direccion: 'sale', texto,
+    herramientas: { tipo: 'aviso', entregados, destinos: destinos.length, motivo },
+    tokens: null,
+  }, 'return=minimal');
+
+  if (!entregados) {
+    console.error('wa: ningun aviso se pudo entregar');
+    return 'No pude avisar ahora mismo. Dile que escriba a crunchypaps.mx y no prometas que ya avisaste.';
+  }
+  return 'Avisado. Dile que una persona del equipo le escribe en cuanto pueda, sin prometer hora.';
 }
 
 // ── La lista blanca, por identidad ──────────────────────────────────────────
@@ -604,11 +731,39 @@ function herramientasPara(id) {
   // existe: no le llega en la peticion, asi que no es que el modelo "decida no
   // usarla". Un permiso que vive en una frase del prompt no es un permiso
   // (regla 35), y esta es la primera herramienta que escribe en la base.
+  // Solo si hay a quien avisar. Si la lista esta vacia, la herramienta no
+  // existe para el modelo y el prompt tampoco la menciona: asi no puede
+  // prometer un aviso que no va a salir de aqui.
+  if (Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length) {
+    lista.push({
+      name: 'pasar_con_una_persona',
+      description: 'Avisa al equipo de esta conversacion. Usala en TRES casos: '
+        + '(1) el cliente pide hablar con una persona; '
+        + '(2) te piden algo que no puedes hacer -cancelar un pedido, cambiar una direccion, '
+        + 'devolver dinero, un cobro que no cuadra-; '
+        + '(3) es un reclamo o el cliente esta molesto. '
+        + 'NO la uses para dudas de producto, precios o fechas: para eso tienes las otras.',
+      strict: true,
+      input_schema: {
+        type: 'object',
+        properties: {
+          motivo: {
+            type: 'string',
+            description: 'Una o dos frases: que quiere exactamente y por que no lo resolviste. '
+              + 'Si hay un folio de pedido, ponlo.',
+          },
+        },
+        required: ['motivo'],
+        additionalProperties: false,
+      },
+    });
+  }
+
   if (puedePedir(id)) {
     lista.push({
       name: 'crear_pedido',
       description: 'Crea el pedido en el sistema. Usala SOLO cuando ya cotizaste y el cliente '
-        + 'confirmo ese total con sus palabras. El pedido queda PENDIENTE de que Abraham lo '
+        + 'confirmo ese total con sus palabras. El pedido queda PENDIENTE de que el equipo lo '
         + 'confirme, y eso se le dice al cliente. No la uses para "apartar" ni para probar.',
       strict: true,
       input_schema: {
@@ -690,20 +845,22 @@ async function correrHerramienta(nombre, entrada, id) {
       // le deja al modelo inventarse que hacer; "quita esa linea" no.
       const comoSalir = {
         sin_lineas: 'No mandaste ninguna linea. Pregunta que quiere y cuanto.',
-        demasiadas_lineas: `No puedo cotizar mas de ${MAX_LINEAS} lineas de golpe. Pidele que lo parta en dos pedidos.`,
+        demasiadas_lineas: `No puedo cotizar mas de ${AJ.max_lineas} lineas de golpe. Pidele que lo parta en dos pedidos.`,
         producto_repetido: 'Mandaste el mismo producto dos veces. Juntalo en una sola linea con la cantidad sumada y vuelve a cotizar.',
         cantidad_invalida: 'Una cantidad no es un numero entero de piezas. Corrigela y vuelve a cotizar.',
-        cantidad_enorme: `Son mas de ${MAX_PIEZAS_LINEA} piezas en una linea. Eso lo tiene que ver Abraham: dile que se lo pasas.`,
+        cantidad_enorme: `Son mas de ${AJ.max_piezas_linea} piezas en una linea. Eso lo tiene que ver una persona del equipo: dile que se lo pasas.`,
         granel_no_soportado: 'Por aqui no se vende granel, solo bolsas. Ofrecele presentaciones de 100, 250, 500 g o 1 kg.',
         producto_no_disponible: 'Ese producto no esta disponible. Vuelve a mirar el catalogo y ofrece otro.',
       };
-      const salida = comoSalir[c.error] || `No pude cotizar (${c.error}). Dile que no se lo pudiste calcular y que Abraham le confirma.`;
+      const salida = comoSalir[c.error] || `No pude cotizar (${c.error}). Dile que no se lo pudiste calcular y que el equipo le confirma.`;
       return 'NO le des ningun total al cliente. ' + salida;
     }
     return JSON.stringify({ nivelDePrecio: id.nivel, total: c.total, lineas: c.detalle });
   }
 
   if (nombre === 'crear_pedido') return crearPedidoConfirmado(entrada, id);
+
+  if (nombre === 'pasar_con_una_persona') return pasarConUnaPersona(entrada, id);
 
   if (nombre === 'mis_pedidos') {
     if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
@@ -723,23 +880,22 @@ async function correrHerramienta(nombre, entrada, id) {
 // de la ULTIMA vuelta, y aqui hace falta sumar entrada y salida de TODAS para
 // poder calcular el gasto de verdad. Tambien deja registrar que herramientas se
 // usaron, que es lo que se guarda en `wa_mensajes.herramientas`.
-const MAX_VUELTAS = 6;
 
 async function responder(id, texto, hilo) {
   const mensajes = [...hilo, { role: 'user', content: texto }];
   const usadas = [];
   let entrada = 0, salida = 0;
 
-  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+  for (let vuelta = 0; vuelta < AJ.max_vueltas; vuelta++) {
     const r = await anthropic().beta.messages.create({
-      model: MODELO,
+      model: AJ.modelo,
       max_tokens: MAX_SALIDA,
       system: [{ type: 'text', text: sistema(id), cache_control: { type: 'ephemeral' } }],
       messages: mensajes,
       tools: herramientasPara(id),
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      output_config: { effort: 'medium' },
+      output_config: { effort: AJ.effort },
     });
 
     entrada += (r.usage && r.usage.input_tokens) || 0;
@@ -748,7 +904,7 @@ async function responder(id, texto, hilo) {
     // stop_reason se mira ANTES de leer content: en una negativa el contenido no
     // es la respuesta que el cliente espera.
     if (r.stop_reason === 'refusal') {
-      return { texto: 'Eso no lo puedo resolver por aqui. Le aviso a Abraham para que te escriba.',
+      return { texto: 'Eso no lo puedo resolver por aqui. Lo paso con el equipo para que te escriban.',
                entrada, salida, usadas, negada: true };
     }
 
@@ -782,7 +938,7 @@ async function responder(id, texto, hilo) {
   // Se acabaron las vueltas sin respuesta. Mejor decirlo que colgar la llamada.
   console.warn('wa: se agotaron las vueltas de herramientas', { usadas });
   return {
-    texto: 'Se me complico consultar eso. Dejame avisarle a Abraham y te escribe.',
+    texto: 'Se me complico consultar eso. Lo paso con el equipo y te escriben.',
     entrada, salida, usadas, negada: false,
   };
 }
@@ -870,6 +1026,18 @@ module.exports = async (req, res) => {
   // acusa recibo, Meta reintenta, y el reintento cuesta lo mismo que un mensaje.
   if (!msg) return res.status(200).json({ ok: true });
 
+  // Los ajustes se cargan ANTES de los topes, porque los topes son uno de ellos.
+  await cargarAjustes();
+
+  // El interruptor. Se mira antes de gastar un peso en el modelo, y se contesta
+  // en vez de callar: un cliente que escribe y no recibe nada no sabe si el
+  // numero existe. Cuesta un mensaje de WhatsApp y vale la pena.
+  if (AJ.activo === false) {
+    console.warn('wa: agente apagado por ajustes');
+    await enviarWA(msg.telefono, AJ.mensaje_apagado);
+    return res.status(200).json({ ok: true, apagado: true });
+  }
+
   const tope = await registrarEntrante(msg.telefono, msg.texto);
   if (!tope.permitido) {
     // Se calla. No se le contesta "te pasaste del limite" porque esa respuesta
@@ -908,7 +1076,7 @@ module.exports = async (req, res) => {
     salida = await responder(id, msg.texto, hilo);
   } catch (e) {
     console.error('wa: el modelo fallo', e && e.message);
-    await enviarWA(msg.telefono, 'Se me complico el sistema. Le aviso a Abraham para que te escriba.');
+    await enviarWA(msg.telefono, 'Se me complico el sistema. Lo paso con el equipo y te escriben.');
     return res.status(200).json({ ok: true, error: 'modelo' });
   }
 
@@ -942,7 +1110,17 @@ module.exports.leerCrudo = leerCrudo;
 module.exports.sacarMensaje = sacarMensaje;
 module.exports.podarHilo = podarHilo;
 module.exports.sistema = sistema;
-module.exports.MAX_TURNOS = MAX_TURNOS;
+module.exports.POR_DEFECTO = POR_DEFECTO;
+module.exports.cargarAjustes = cargarAjustes;
+// Mismo trato que el transporte de prueba: un gancho para poder probar los dos
+// estados de `avisar_a` sin base, y cerrado con llave en produccion. Un gancho
+// que en produccion sigue abierto no es un gancho, es una puerta.
+module.exports.usarAjustesDePrueba = (obj) => {
+  if (process.env.VERCEL) throw new Error('los ajustes de prueba no se sustituyen en produccion');
+  AJ = { ...POR_DEFECTO, ...(obj || {}) };
+  return AJ;
+};
+module.exports.ajustes = () => AJ;
 module.exports.normalizarDestino = normalizarDestino;
 module.exports.puedePedir = puedePedir;
 module.exports.herramientasPara = herramientasPara;
@@ -954,5 +1132,3 @@ module.exports.detalleParaPedido = detalleParaPedido;
 module.exports.crearPedidoConfirmado = crearPedidoConfirmado;
 module.exports.correrHerramienta = correrHerramienta;
 module.exports.usarTransporteDePrueba = usarTransporteDePrueba;
-module.exports.MAX_LINEAS = MAX_LINEAS;
-module.exports.MAX_PIEZAS_LINEA = MAX_PIEZAS_LINEA;

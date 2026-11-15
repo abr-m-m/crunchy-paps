@@ -9,7 +9,7 @@
 // Plan: cambios/2026-11-12-agente-whatsapp-plan.md, tarea 4.
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { podarHilo, sistema, MAX_TURNOS, normalizarDestino } = require('../api/whatsapp.js');
+const { podarHilo, sistema, POR_DEFECTO, normalizarDestino } = require('../api/whatsapp.js');
 
 let fallos = 0;
 const ok = (c, m) => { console.log((c ? '  ok    ' : '  FALLA ') + m); if (!c) fallos++; };
@@ -46,9 +46,9 @@ ok(soloAsistente.length === 0, 'un hilo que es solo un turno del asistente queda
 console.log('\npodarHilo no pierde turnos cuando caben todos');
 ok(podarHilo(hiloDe(4), 10).length === 4, 'con sitio de sobra no tira nada');
 
-console.log('\nMAX_TURNOS es un numero razonable');
-ok(Number.isInteger(MAX_TURNOS) && MAX_TURNOS >= 4 && MAX_TURNOS <= 100,
-  `MAX_TURNOS = ${MAX_TURNOS}`);
+console.log('\nPOR_DEFECTO.max_turnos es un numero razonable');
+ok(Number.isInteger(POR_DEFECTO.max_turnos) && POR_DEFECTO.max_turnos >= 4 && POR_DEFECTO.max_turnos <= 100,
+  `POR_DEFECTO.max_turnos = ${POR_DEFECTO.max_turnos}`);
 
 console.log('\nsistema() para una TIENDA aprobada');
 const sTienda = sistema({

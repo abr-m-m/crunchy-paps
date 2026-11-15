@@ -27,8 +27,9 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const {
-  cotizarLineas, correrHerramienta, usarTransporteDePrueba, MAX_PIEZAS_LINEA,
+  cotizarLineas, correrHerramienta, usarTransporteDePrueba,
 } = require('../api/whatsapp.js');
+const MAX_PIEZAS_LINEA = require('../api/whatsapp.js').POR_DEFECTO.max_piezas_linea;
 
 const STG = 'dkwatbsaidlfjqjnfyrk';
 const dir = mkdtempSync(join(tmpdir(), 'wa-cotizar-'));
