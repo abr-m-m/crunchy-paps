@@ -229,7 +229,10 @@ function sistema(id) {
       : 'Escribe alguien que no esta en la base. Tratalo como consumidor.',
     '',
     puedePedir(id)
-      ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. El pedido queda PENDIENTE de que Abraham lo confirme, y se lo dices al cerrarlo.'
+      ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. Antes de crearlo, el cliente '
+        + 'tiene que CONFIRMAR el total con sus palabras; no lo des por confirmado porque te haya '
+        + 'dicho que sabores quiere. El pedido queda PENDIENTE de que Abraham lo confirme, y eso se '
+        + 'lo dices siempre al cerrarlo.'
       : 'NO puedes crear pedidos para esta persona. Para comprar, mandale https://crunchypaps.mx',
     '',
     // Esta linea existe porque cotizar_linea solo aplica el precio de caja si la
@@ -244,6 +247,9 @@ function sistema(id) {
     '- fecha_entrega: cuando le toca la entrega a quien escribe.',
     '- mis_pedidos: sus ultimos pedidos, con folio y estatus.',
     '- cotizar: el total de una lista de lineas.',
+    puedePedir(id)
+      ? '- crear_pedido: lo registra. Solo despues de cotizar Y de que el cliente confirme ese total.'
+      : '',
     '',
     // El modelo suma bien casi siempre, y ese "casi" es el problema: 12 x 27 lo
     // hace de memoria sin llamar a nada, y el dia que falle nadie lo revisa.
@@ -395,6 +401,107 @@ async function cotizarLineas(lineas, nivel) {
   return { ok: true, total: Math.round(total * 100) / 100, detalle };
 }
 
+// ── Crear el pedido ─────────────────────────────────────────────────────────
+// LA CREDENCIAL ESTA PENDIENTE DE DECISION, y es la unica pieza que falta aqui.
+// `crear_pedido` exige `token` -> resolver_sesion_vendedor -> sesiones_vendedor
+// con `expira_en > now()`, y esas sesiones duran DOCE HORAS (medido el 14 nov
+// 2026 en produccion: 4 sesiones en total, cero vivas, la ultima caducada en
+// octubre). O sea que WA_VENDEDOR_TOKEN como variable fija en Vercel funciona
+// media jornada y despues devuelve `sesion_requerida` para siempre. El plan daba
+// esa linea por hecha; es la misma trampa del token de Meta de ayer.
+//
+// Mientras se decide, esto manda la variable igual: cambiar de opcion es cambiar
+// esta linea y nada mas, y la prueba no depende de ella -comprueba el PAYLOAD que
+// sale, que es donde estan los dos fallos que de verdad importan-.
+//
+// El pedido nace 'Pendiente' porque lo decide `crear_pedido` para todo canal que
+// no sea mostrador: aqui no se elige, se hereda.
+function credencialDelAgente() {
+  return process.env.WA_VENDEDOR_TOKEN || '';
+}
+
+// `cotizar_linea` devuelve `piezasPorCaja`; `crear_pedido` lee `caja`. NO son la
+// misma clave, y el plan pasaba el detalle tal cual. Con eso, toda linea por caja
+// se habria cobrado por pieza: 72 piezas a 28 son 2,016 en vez de los 1,800 de 6
+// cajas. No se habria cobrado de mas -el cuadre de crear_pedido tolera $1 y habria
+// saltado `precio_cambiado`- pero NINGUN pedido por caja se habria podido crear
+// jamas, que es justo lo que pide un tendero. Se traduce aqui, en un sitio.
+function detalleParaPedido(detalle) {
+  return detalle.map((d) => ({ ...d, caja: Number(d.piezasPorCaja) || 0 }));
+}
+
+async function crearPedidoConfirmado(entrada, id) {
+  // El permiso lo decide el NIVEL, no el flag aprobado_b2b. El plan decia
+  // `if (!id.aprobadoB2B)`, que es exactamente el bug del 14 nov: hay clientes
+  // con tipo_id = 1 y aprobado_b2b = true, y a esos el agente les habria
+  // levantado un pedido a precio de consumidor.
+  if (!puedePedir(id)) {
+    return 'Esta persona no es una tienda aprobada: NO puedes crear pedidos. '
+      + 'Mandale https://crunchypaps.mx para que compre ahi.';
+  }
+
+  const fecha = String((entrada && entrada.fechaEntrega) || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return 'La fecha de entrega tiene que ser AAAA-MM-DD. Llama a fecha_entrega y usa esa.';
+  }
+
+  // SE VUELVE A COTIZAR AQUI, con el nivel del servidor. Lo que el modelo haya
+  // dicho antes en la conversacion no se usa: el hilo guarda texto, y un texto
+  // que dice "son $1,800" no es un precio, es un recuerdo.
+  const c = await cotizarLineas((entrada && entrada.lineas) || [], id.nivel);
+  if (!c.ok) return `NO crees el pedido ni digas que quedo hecho. No pude cotizar (${c.error}).`;
+
+  const r = await transporte('rpc/crear_pedido', 'POST', {
+    p_data: {
+      token: credencialDelAgente(),   // UNICO sitio donde aparece. Regla 38.
+      tipoCliente: id.nivel,          // de wa_identidad. NUNCA del modelo. D6.
+      idCliente: id.idCliente,
+      nombreCliente: id.nombre,
+      telefono: id.telefono,
+      canal: 'whatsapp',
+      metodoEntrega: 'domicilio',
+      fechaEntrega: fecha,
+      tipoPagoId: 1,
+      tipoPago: 'Efectivo',
+      notas: '[wa] ' + String((entrada && entrada.notas) || '').slice(0, 300),
+      total: c.total,
+      productos: detalleParaPedido(c.detalle),
+      // El id del mensaje de Meta: si Meta reintenta el webhook, la clave es la
+      // misma y crear_pedido devuelve el pedido que ya existe en vez de otro.
+      idempotencyKey: 'wa-' + id.telefono + '-' + id.idMensaje,
+    },
+  });
+
+  const j = r.data;
+  if (!r.ok || !j) {
+    console.error('wa: crear_pedido no contesto', r.status, JSON.stringify(j).slice(0, 300));
+    return 'NO le digas que el pedido quedo hecho. No pude registrarlo; dile que Abraham le confirma.';
+  }
+
+  if (j.ok === false) {
+    if (j.error === 'precio_cambiado') {
+      // NO se reintenta solo con el total corregido: seria cobrarle algo que no
+      // vio. Se le dice y se le vuelve a preguntar. Regla 11.
+      return `El precio cambio: ahora son $${j.totalCorrecto}, no $${c.total}. `
+        + 'Diselo al cliente con los dos numeros y pregunta si lo confirma asi. NO lo des por hecho.';
+    }
+    if (j.error === 'sesion_requerida') {
+      // El caso de los doce meses... o de las doce horas. Se registra para que en
+      // Vercel se vea la causa, y al cliente no se le cuenta el problema interno.
+      console.error('wa: credencial del agente invalida o caducada');
+      return 'NO le digas que quedo hecho. Dile que se lo pasas a Abraham para confirmarlo.';
+    }
+    return `NO le digas que quedo hecho. El pedido no se pudo crear (${j.error}).`;
+  }
+
+  if (j.duplicado === true) {
+    return `Ese pedido ya estaba creado: ${j.consecutivo}. No lo crees otra vez; confirmaselo.`;
+  }
+
+  return `Pedido ${j.consecutivo} creado por $${c.total}, para entregar el ${fecha}. `
+    + 'Queda PENDIENTE de que Abraham lo confirme, y eso hay que decirselo al cliente.';
+}
+
 // ── La lista blanca, por identidad ──────────────────────────────────────────
 // Deja de ser una constante: lo que el agente PUEDE hacer depende de quien
 // escribe, y se decide en el servidor antes de armar la peticion. Un permiso que
@@ -463,6 +570,48 @@ function herramientasPara(id) {
   },
   ];
 
+  // AQUI se cierra el permiso de escribir. Para un consumidor, `crear_pedido` no
+  // existe: no le llega en la peticion, asi que no es que el modelo "decida no
+  // usarla". Un permiso que vive en una frase del prompt no es un permiso
+  // (regla 35), y esta es la primera herramienta que escribe en la base.
+  if (puedePedir(id)) {
+    lista.push({
+      name: 'crear_pedido',
+      description: 'Crea el pedido en el sistema. Usala SOLO cuando ya cotizaste y el cliente '
+        + 'confirmo ese total con sus palabras. El pedido queda PENDIENTE de que Abraham lo '
+        + 'confirme, y eso se le dice al cliente. No la uses para "apartar" ni para probar.',
+      strict: true,
+      input_schema: {
+        type: 'object',
+        properties: {
+          lineas: {
+            type: 'array',
+            minItems: 1,
+            maxItems: MAX_LINEAS,
+            description: 'Las MISMAS lineas que cotizaste y el cliente confirmo.',
+            items: {
+              type: 'object',
+              properties: {
+                idProducto: { type: 'integer', description: 'El id tal como lo dio catalogo.' },
+                cantidad: { type: 'integer', description: 'PIEZAS, no cajas. Seis cajas de 12 son 72 piezas.' },
+                caja: { type: 'integer', description: 'Piezas por caja: 3, 6 o 12. Cero si va por pieza.' },
+              },
+              required: ['idProducto', 'cantidad', 'caja'],
+              additionalProperties: false,
+            },
+          },
+          fechaEntrega: {
+            type: 'string',
+            description: 'AAAA-MM-DD. La que dio fecha_entrega, o una POSTERIOR que el cliente pidio.',
+          },
+          notas: { type: 'string', description: 'Lo que el cliente pidio aparte. Cadena vacia si no hay.' },
+        },
+        required: ['lineas', 'fechaEntrega', 'notas'],
+        additionalProperties: false,
+      },
+    });
+  }
+
   return lista;
 }
 
@@ -525,6 +674,8 @@ async function correrHerramienta(nombre, entrada, id) {
     }
     return JSON.stringify({ nivelDePrecio: id.nivel, total: c.total, lineas: c.detalle });
   }
+
+  if (nombre === 'crear_pedido') return crearPedidoConfirmado(entrada, id);
 
   if (nombre === 'mis_pedidos') {
     if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
@@ -771,6 +922,8 @@ module.exports.COLUMNA_PRECIO = COLUMNA_PRECIO;
 module.exports.NIVELES_CON_CAJA = NIVELES_CON_CAJA;
 module.exports.clasificarProducto = clasificarProducto;
 module.exports.cotizarLineas = cotizarLineas;
+module.exports.detalleParaPedido = detalleParaPedido;
+module.exports.crearPedidoConfirmado = crearPedidoConfirmado;
 module.exports.correrHerramienta = correrHerramienta;
 module.exports.usarTransporteDePrueba = usarTransporteDePrueba;
 module.exports.MAX_LINEAS = MAX_LINEAS;

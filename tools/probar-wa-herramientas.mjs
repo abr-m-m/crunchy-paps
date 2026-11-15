@@ -48,22 +48,28 @@ function propiedadesHondas(esquema, salida = []) {
   return salida;
 }
 
-console.log('\nLa lista blanca esta cerrada, y es la misma para los cinco perfiles');
-const ESPERADAS = 'catalogo,cotizar,fecha_entrega,mis_pedidos';
+console.log('\nLa lista blanca esta cerrada, y depende de QUIEN escribe');
+// Las de lectura las tiene todo el mundo. `crear_pedido` ESCRIBE, y solo aparece
+// para quien puede pedir: a un consumidor no le llega en la peticion, asi que no
+// es que el modelo "decida no usarla" (regla 35).
+const LEEN = 'catalogo,cotizar,fecha_entrega,mis_pedidos';
+const PIDEN = 'catalogo,cotizar,crear_pedido,fecha_entrega,mis_pedidos';
 for (const p of PERFILES) {
   const nombres = herramientasPara(p).map((h) => h.name).sort().join(',');
-  ok(nombres === ESPERADAS, `${p.nivel}${p.esCliente ? '' : ' (desconocido)'}: ${nombres}`);
+  const esperado = ['tienda', 'restaurante', 'mayorista'].includes(p.nivel) ? PIDEN : LEEN;
+  ok(nombres === esperado, `${p.nivel}${p.esCliente ? '' : ' (desconocido)'}: ${nombres}`);
 }
 
-// A partir de aqui basta un perfil para las propiedades del esquema, porque la
-// comprobacion de arriba ya garantiza que las cinco listas son iguales.
-const TODAS = herramientasPara(PERFILES[1]);
+const TODAS = herramientasPara(PERFILES[1]);          // tienda: las cinco
+const SOLO_LEE = herramientasPara(PERFILES[0]);       // consumidor: las cuatro
 
-console.log('\nNinguna escribe: la tarea 7 trae la primera y esta prueba tendra que cambiar');
+console.log('\nLa UNICA que escribe es crear_pedido, y no esta en la lista del consumidor');
 const SOSPECHOSAS = /crear|guardar|borrar|eliminar|actualizar|editar|enviar|cancelar/i;
-for (const h of TODAS) {
-  ok(!SOSPECHOSAS.test(h.name), `${h.name} no tiene nombre de escritura`);
+for (const h of SOLO_LEE) {
+  ok(!SOSPECHOSAS.test(h.name), `consumidor: ${h.name} no tiene nombre de escritura`);
 }
+const escriben = TODAS.filter((h) => SOSPECHOSAS.test(h.name)).map((h) => h.name);
+ok(escriben.join(',') === 'crear_pedido', `tienda: la unica que escribe es ${escriben.join(',') || 'ninguna'}`);
 
 console.log('\nNINGUNA acepta nivel, precio ni total como parametro (la que importa)');
 const PROHIBIDOS = /nivel|precio|total|subtotal|descuento|tipoCliente|tipo_cliente|aprobado|canal/i;
@@ -121,6 +127,22 @@ ok(!/fechaDisplay/.test(s), 'fechaDisplay no aparece por ningun lado (viene en e
 console.log('\nEl consumidor no compra por caja y el prompt se lo dice');
 ok(/no compra por caja/i.test(sistema(PERFILES[0])), 'consumidor: cotiza por pieza');
 ok(/multiplos exactos/i.test(sistema(PERFILES[1])), 'tienda: la caja solo en multiplos exactos');
+
+console.log('\ncrear_pedido pide fecha y no acepta nada de dinero');
+const crear = TODAS.find((h) => h.name === 'crear_pedido');
+const suyas = Object.keys(crear.input_schema.properties).sort().join(',');
+ok(suyas === 'fechaEntrega,lineas,notas', `lleva {${suyas}}`);
+ok(/AAAA-MM-DD/.test(crear.input_schema.properties.fechaEntrega.description),
+  'y dice el formato de la fecha');
+// El modelo no manda token, ni tipoCliente, ni total: eso lo pone el servidor.
+// Ya lo cubre el barrido de arriba, pero aqui se nombra, que es donde se busca.
+for (const prohibido of ['token', 'tipoCliente', 'total', 'idCliente', 'canal']) {
+  ok(!propiedadesHondas(crear.input_schema).includes(prohibido), `  sin ${prohibido}`);
+}
+// Y el prompt tiene que exigir confirmacion ANTES de escribir en la base.
+ok(/CONFIRMAR el total/i.test(sistema(PERFILES[1])),
+  'el prompt exige que el cliente confirme el total antes de crearlo');
+ok(/PENDIENTE/.test(sistema(PERFILES[1])), 'y que se le diga que queda pendiente');
 
 console.log(fallos ? `\n${fallos} FALLAS` : '\nTodo en verde');
 process.exit(fallos ? 1 : 0);
