@@ -80,6 +80,20 @@ td.txt{min-width:16rem}
 .pill.sale{background:var(--oks);color:var(--ok)}
 .pill.aviso{background:var(--avisos);color:var(--aviso)}
 
+/* temas */
+.tema{display:grid;grid-template-columns:1fr 9.5rem 2.2rem;gap:8px;align-items:start;padding:10px 0;border-bottom:1px dashed var(--linea)}
+.tema:last-of-type{border-bottom:none}
+.tema .campos2{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tema input,.tema select{font-size:.88rem}
+.tema .nota{font-size:.82rem}
+.tema button{padding:6px 9px;background:transparent;color:var(--aviso);border-color:var(--linea);font-size:1rem;line-height:1}
+.alc-responde{border-left:3px solid var(--ok)}
+.alc-breve{border-left:3px solid var(--ambar)}
+.alc-deriva{border-left:3px solid var(--tinta2)}
+.alc-no{border-left:3px solid var(--aviso)}
+.tema .barrita{padding-left:8px}
+@media (max-width:560px){.tema{grid-template-columns:1fr 2.2rem}.tema select{grid-column:1}}
+
 /* login */
 #login{max-width:340px;margin:12vh auto 0}
 #login .panel{display:flex;flex-direction:column;gap:10px}
@@ -142,6 +156,22 @@ td.txt{min-width:16rem}
         <span class="sucio" id="sucio" hidden>Hay cambios sin guardar</span>
       </div>
       <p class="err" id="g-err"></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Temas y alcance</h2>
+    <p class="sub">De qué habla el agente y hasta dónde. Lo que no se toca desde aquí son las
+      reglas de dinero y permisos: esas viven en el código, revisadas por las pruebas.</p>
+    <div class="panel">
+      <div id="temas"></div>
+      <div class="barra">
+        <button type="button" class="claro" id="btn-tema-nuevo">Añadir tema</button>
+        <button type="button" id="btn-temas-guardar" disabled>Guardar temas</button>
+        <button type="button" class="claro" id="btn-temas-deshacer" disabled>Deshacer</button>
+        <span class="sucio" id="temas-sucio" hidden>Hay cambios sin guardar</span>
+      </div>
+      <p class="err" id="temas-err"></p>
     </div>
   </section>
 
@@ -234,7 +264,13 @@ td.txt{min-width:16rem}
     datos = r;
     guardado = JSON.parse(JSON.stringify(r.ajustes || {}));
     $('login').hidden = true; $('app').hidden = false;
-    pintarPoder(); pintarPulso(); pintarCampos(); pintarUltimos(); marcarSucio();
+    const rt = await rpc('wa_temas_admin', { p_token: token });
+    datos.temas = (rt && rt.ok && rt.temas) || [];
+    datos.alcances = (rt && rt.alcances) || null;
+    datos.maxTemas = (rt && rt.max) || 12;
+    temasGuardados = JSON.parse(JSON.stringify(datos.temas));
+    pintarPoder(); pintarPulso(); pintarCampos(); pintarUltimos();
+    pintarTemas(); marcarSucio(); marcarTemas();
   }
 
   // ── Encendido ──
@@ -423,6 +459,115 @@ td.txt{min-width:16rem}
 
   function deshacer() { pintarCampos(); marcarSucio(); $('g-err').textContent = ''; }
 
+  // ── Temas y alcance ──
+  // La lista se edita entera y se guarda entera, como set_rutas: mas simple de
+  // razonar que altas y bajas sueltas, y deja el estado final a la vista.
+  //
+  // Los alcances NO estan escritos aqui: vienen del servidor, igual que los
+  // rangos de los mandos. Si manana se anade uno, la pantalla lo ofrece sola.
+  const ALCANCE_TXT = {
+    responde: 'Responde normal',
+    breve: 'Responde breve',
+    deriva: 'Pasa con el equipo',
+    no: 'No entra al tema',
+  };
+  let temasGuardados = [];
+
+  function pintarTemas() {
+    const c = $('temas'); c.replaceChildren();
+    const alcances = (datos.alcances && datos.alcances.length)
+      ? datos.alcances : Object.keys(ALCANCE_TXT);
+    if (!temasActuales().length && !temasGuardados.length) {
+      c.appendChild(el('p', 'Sin temas: el agente usa los que trae el código.', 'sub'));
+    }
+    temasGuardados.forEach((t, i) => {
+      const fila = el('div', null, 'tema alc-' + (t.alcance || 'responde'));
+      const izq = el('div', null, 'campos2 barrita');
+
+      const nom = document.createElement('input');
+      nom.value = t.tema || ''; nom.placeholder = 'Nombre del tema';
+      nom.dataset.k = 'tema'; nom.dataset.i = i;
+      izq.appendChild(nom);
+
+      const nota = document.createElement('input');
+      nota.value = t.nota || ''; nota.placeholder = 'Matiz (opcional): qué debe tener en cuenta';
+      nota.className = 'nota'; nota.dataset.k = 'nota'; nota.dataset.i = i;
+      izq.appendChild(nota);
+
+      const ej = document.createElement('input');
+      ej.value = t.ejemplos || ''; ej.placeholder = 'Ejemplos de cómo lo piden, separados por |';
+      ej.className = 'nota'; ej.dataset.k = 'ejemplos'; ej.dataset.i = i;
+      izq.appendChild(ej);
+      fila.appendChild(izq);
+
+      const sel = document.createElement('select');
+      for (const a of alcances) {
+        const o = el('option', ALCANCE_TXT[a] || a); o.value = a; sel.appendChild(o);
+      }
+      sel.value = t.alcance || 'responde';
+      sel.dataset.k = 'alcance'; sel.dataset.i = i;
+      fila.appendChild(sel);
+
+      const quitar = el('button', '\u00d7');
+      quitar.title = 'Quitar este tema';
+      quitar.addEventListener('click', () => {
+        temasGuardados.splice(i, 1); pintarTemas(); marcarTemas();
+      });
+      fila.appendChild(quitar);
+      c.appendChild(fila);
+    });
+    for (const campo of c.querySelectorAll('input,select')) {
+      campo.addEventListener('input', (e) => {
+        const { k, i } = e.target.dataset;
+        temasGuardados[i][k] = e.target.value;
+        if (k === 'alcance') pintarTemas();   // repinta el color de la barra
+        marcarTemas();
+      });
+    }
+  }
+  function temasActuales() { return (datos && datos.temas) || []; }
+  function marcarTemas() {
+    const cambio = JSON.stringify(temasGuardados) !== JSON.stringify(temasActuales());
+    $('temas-sucio').hidden = !cambio;
+    $('btn-temas-guardar').disabled = !cambio;
+    $('btn-temas-deshacer').disabled = !cambio;
+  }
+  function temaNuevo() {
+    const max = (datos.maxTemas || 12);
+    if (temasGuardados.length >= max) {
+      $('temas-err').textContent = 'El tope son ' + max + ' temas. Cada uno ocupa sitio en cada '
+        + 'mensaje, y una lista larga se cumple peor que una corta.';
+      return;
+    }
+    $('temas-err').textContent = '';
+    temasGuardados.push({ tema: '', alcance: 'responde', nota: '', ejemplos: '', activo: true });
+    pintarTemas(); marcarTemas();
+  }
+  async function guardarTemas() {
+    $('temas-err').textContent = '';
+    const vacio = temasGuardados.findIndex((t) => !String(t.tema || '').trim());
+    if (vacio >= 0) { $('temas-err').textContent = 'El tema ' + (vacio + 1) + ' no tiene nombre.'; return; }
+    $('btn-temas-guardar').disabled = true;
+    const r = await rpc('set_wa_temas', { p_data: { token, temas: temasGuardados } });
+    if (!r || !r.ok) {
+      const txt = !r ? 'No se pudo guardar.'
+        : r.error === 'demasiados_temas' ? 'El tope son ' + r.max + ' temas.'
+        : r.error === 'tema_repetido' ? 'Hay dos temas llamados "' + r.tema + '".'
+        : r.error === 'tema_sin_nombre' ? 'El tema ' + r.fila + ' no tiene nombre.'
+        : r.error === 'alcance_invalido' ? 'El alcance de "' + r.tema + '" no es válido.'
+        : r.error === 'No autorizado' ? 'Tu sesión venció. Entra de nuevo.'
+        : (r.error || 'No se pudo guardar.');
+      $('temas-err').textContent = txt;
+      marcarTemas();
+      if (r && r.error === 'No autorizado') salir();
+      return;
+    }
+    datos.temas = r.temas || [];
+    temasGuardados = JSON.parse(JSON.stringify(datos.temas));
+    pintarTemas(); marcarTemas();
+    toast('Temas guardados. Surte efecto en el siguiente mensaje.');
+  }
+
   // ── Últimos mensajes ──
   function pintarUltimos() {
     const t = $('ultimos'); t.replaceChildren();
@@ -457,6 +602,12 @@ td.txt{min-width:16rem}
   $('btn-poder').addEventListener('click', cambiarPoder);
   $('btn-guardar').addEventListener('click', guardar);
   $('btn-deshacer').addEventListener('click', deshacer);
+  $('btn-tema-nuevo').addEventListener('click', temaNuevo);
+  $('btn-temas-guardar').addEventListener('click', guardarTemas);
+  $('btn-temas-deshacer').addEventListener('click', () => {
+    temasGuardados = JSON.parse(JSON.stringify(temasActuales()));
+    pintarTemas(); marcarTemas(); $('temas-err').textContent = '';
+  });
   if (token) cargar();
 })();
 </script>

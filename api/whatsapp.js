@@ -268,6 +268,62 @@ function puedePedir(id) {
   return NIVELES_QUE_PIDEN.includes(String(id && id.nivel || '').toLowerCase());
 }
 
+// ── Los temas ───────────────────────────────────────────────────────────────
+// De que habla el agente y hasta donde. Vive en la base (`wa_temas`, migracion
+// 20261115000003) y Abraham lo edita en /agente; esto es la red para cuando la
+// base no contesta, y dice EXACTAMENTE lo que decia el prompt antes de que la
+// tabla existiera, para que el agente se comporte igual que ayer en vez de
+// quedarse sin criterio.
+//
+// El alcance es lista cerrada de cuatro valores, no texto libre, y la traduccion
+// de cada uno vive AQUI, en el repo: asi un tema nuevo no puede meter un parrafo
+// sin revisar en lo que lee un cliente.
+const COMO_SE_TRATA = {
+  responde: 'contesta normal, usando las herramientas que haga falta',
+  breve: 'contesta en 2 o 3 frases COMO MUCHO y vuelve al negocio; nada de listas de pasos ni recetas completas',
+  deriva: 'no lo resuelvas tu: recoge los datos y pasalo con el equipo',
+  no: 'no entres en el tema; dilo con amabilidad y ofrece el catalogo',
+};
+
+const TEMAS_POR_DEFECTO = [
+  { tema: 'Precios, sabores, pedidos y entregas', alcance: 'responde' },
+  { tema: 'Recetas y cocina', alcance: 'breve' },
+  { tema: 'Quejas, cancelaciones y cambios', alcance: 'deriva' },
+  { tema: 'Cualquier cosa ajena al negocio', alcance: 'no' },
+];
+
+let TEMAS = TEMAS_POR_DEFECTO;
+
+async function cargarTemas() {
+  TEMAS = TEMAS_POR_DEFECTO;
+  try {
+    const r = await supa('rpc/wa_temas_vigentes', 'POST', {});
+    const lista = r.ok && Array.isArray(r.data) ? r.data : null;
+    // Una lista VACIA no se acepta: que no haya temas configurados no significa
+    // que el agente deba quedarse sin criterio, significa que nadie los puso.
+    if (lista && lista.length) {
+      TEMAS = lista.filter((t) => t && t.tema && COMO_SE_TRATA[t.alcance]);
+    } else {
+      console.warn('wa: sin temas en la base, van los del codigo', r.status);
+    }
+  } catch (e) {
+    console.warn('wa: wa_temas_vigentes fallo, van los del codigo', e && e.message);
+  }
+  return TEMAS;
+}
+
+function textoDeTemas() {
+  const lineas = ['DE QUE HABLAS Y HASTA DONDE:'];
+  for (const t of TEMAS) {
+    let l = `- ${t.tema}: ${COMO_SE_TRATA[t.alcance] || COMO_SE_TRATA.responde}`;
+    if (t.nota) l += `. ${t.nota}`;
+    if (t.ejemplos) l += ` (p. ej. "${String(t.ejemplos).split('|').join('", "')}")`;
+    lineas.push(l);
+  }
+  lineas.push('Si lo que preguntan no encaja en ninguno, tratalo como el tema mas parecido.');
+  return lineas.join('\n');
+}
+
 // ── El prompt ───────────────────────────────────────────────────────────────
 // El nivel de precio entra como DATO YA RESUELTO por el servidor. El modelo no
 // lo elige y no tiene ninguna herramienta para cambiarlo (D6 del diseno).
@@ -338,15 +394,22 @@ function sistema(id) {
     // historia interna del sistema: quiere su respuesta.
     'No te disculpes por lo que dijiste antes ni expliques cambios del sistema. Contesta y ya.',
     '',
-    // TEMAS AJENOS. Decision de Abraham: cordial, no cortante — pero con techo.
-    // El 15 nov 2026 el agente dio recetas completas de pozole y de frijoles, y
-    // cada una costo $0.059, lo mismo que cotizarle a una tienda. Peor: llamo a
-    // `catalogo` y a `cotizar` para darlas, que es gasto puro. Amable sigue
-    // siendo gratis; una receta de seis pasos, no.
-    'Si te preguntan algo que no es de Crunchy Paps (una receta, el clima, lo que sea):',
-    'contesta en 2 o 3 frases COMO MUCHO y vuelve al tema. Nada de listas de pasos,',
-    'ni ingredientes, ni recetas completas: lo esencial en una o dos frases y ya.',
-    'Y en esos casos NO llames a ninguna herramienta: no hace falta ninguna para eso.',
+    // LOS TEMAS vienen de la base (`wa_temas`) y Abraham los edita en /agente.
+    // Lo que NO viene de la base son las reglas de arriba -el total lo pone el
+    // servidor, el nivel sale del telefono, no inventes precios-: eso es
+    // seguridad, y lo que se puede editar desde una pantalla se puede romper
+    // desde una pantalla. Los temas van ENCIMA, nunca en lugar de ellas.
+    //
+    // Si la base no contesta, TEMAS_POR_DEFECTO dice exactamente lo que decia
+    // esta funcion antes de existir la tabla, asi que el agente se comporta
+    // igual que ayer en vez de quedarse sin criterio.
+    textoDeTemas(),
+    '',
+    // Esto se queda fuera de los temas a proposito: vale para TODOS, y es la
+    // leccion del 15 nov, cuando dio recetas de pozole llamando a `catalogo` y
+    // `cotizar` —que no sirven para una receta— a $0.059 cada una.
+    'Para cualquier tema que no sea del negocio NO llames a ninguna herramienta:',
+    'no hace falta ninguna para eso, y cuestan.',
   ].join('\n');
 }
 
@@ -1067,7 +1130,9 @@ module.exports = async (req, res) => {
   if (!msg) return res.status(200).json({ ok: true });
 
   // Los ajustes se cargan ANTES de los topes, porque los topes son uno de ellos.
-  await cargarAjustes();
+  // Los temas van en la misma vuelta: son dos lecturas pequeñas y en paralelo no
+  // cuestan mas que una.
+  await Promise.all([cargarAjustes(), cargarTemas()]);
 
   // El interruptor. Se mira antes de gastar un peso en el modelo, y se contesta
   // en vez de callar: un cliente que escribe y no recibe nada no sabe si el
@@ -1159,6 +1224,15 @@ module.exports.podarHilo = podarHilo;
 module.exports.sistema = sistema;
 module.exports.POR_DEFECTO = POR_DEFECTO;
 module.exports.cargarAjustes = cargarAjustes;
+module.exports.cargarTemas = cargarTemas;
+module.exports.textoDeTemas = textoDeTemas;
+module.exports.COMO_SE_TRATA = COMO_SE_TRATA;
+module.exports.TEMAS_POR_DEFECTO = TEMAS_POR_DEFECTO;
+module.exports.usarTemasDePrueba = (lista) => {
+  if (process.env.VERCEL) throw new Error('los temas de prueba no se sustituyen en produccion');
+  TEMAS = Array.isArray(lista) && lista.length ? lista : TEMAS_POR_DEFECTO;
+  return TEMAS;
+};
 // Mismo trato que el transporte de prueba: un gancho para poder probar los dos
 // estados de `avisar_a` sin base, y cerrado con llave en produccion. Un gancho
 // que en produccion sigue abierto no es un gancho, es una puerta.
