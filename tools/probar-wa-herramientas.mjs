@@ -21,7 +21,9 @@
 // Plan: cambios/2026-11-12-agente-whatsapp-plan.md, tareas 5 y 6.
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { herramientasPara, COLUMNA_PRECIO, sistema, MAX_LINEAS } = require('../api/whatsapp.js');
+const {
+  herramientasPara, COLUMNA_PRECIO, sistema, MAX_LINEAS, cotizarLineas,
+} = require('../api/whatsapp.js');
 
 let fallos = 0;
 const ok = (c, m) => { console.log((c ? '  ok    ' : '  FALLA ') + m); if (!c) fallos++; };
@@ -96,11 +98,66 @@ for (const h of TODAS) {
   ok(typeof h.description === 'string' && h.description.length > 20, `${h.name} tiene descripcion util`);
 }
 
-console.log('\ncotizar pide piezas y pone techo a la lista');
+console.log('\nNINGUN esquema lleva algo que `strict: true` rechace');
+// EL CASO QUE TUMBO PRODUCCION. El 14 nov 2026 `cotizar` salio con `maxItems: 20`
+// en `lineas` y la API devolvio 400 en CADA mensaje:
+//
+//   tools.3.custom: For 'array' type, property 'maxItems' is not supported
+//
+// El agente contestaba "se me trabo el sistema" a todo, y lo encontro Abraham
+// escribiendole, no yo. Ninguna de las seis pruebas lo cazo porque todas miraban
+// el esquema que YO escribi, no si el destinatario lo acepta: comprobar la forma
+// en vez de la propiedad que importa (regla 53).
+//
+// `strict` acepta tipos, enum, const, anyOf, allOf, $ref y
+// additionalProperties:false, y NINGUN limite. Los helpers tipados del SDK
+// (betaZodTool) quitan los limites solos y validan en cliente; estos esquemas van
+// a mano -decision mia, para poder sumar los tokens de todas las vueltas-, asi
+// que aqui no hay quien los quite. Esta lista es el precio de esa decision.
+//
+// NO sustituye a probar contra la API: una lista negra solo conoce lo que ya
+// mordio. Si aparece un 400 de esquema que esta prueba no vio venir, la palabra
+// nueva se anade AQUI, con su fecha.
+const PROHIBIDAS_POR_STRICT = [
+  'minItems', 'maxItems', 'uniqueItems', 'contains',
+  'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf',
+  'minLength', 'maxLength', 'pattern',
+  'minProperties', 'maxProperties', 'patternProperties',
+  'not', 'oneOf', 'if', 'then', 'else', 'dependentSchemas',
+];
+function palabrasDelEsquema(e, out = []) {
+  if (!e || typeof e !== 'object') return out;
+  for (const [k, v] of Object.entries(e)) {
+    out.push(k);
+    if (k === 'required') continue;                     // es una lista de nombres
+    if (k === 'properties' && v && typeof v === 'object') {
+      for (const sub of Object.values(v)) palabrasDelEsquema(sub, out);
+    } else if (v && typeof v === 'object') {
+      palabrasDelEsquema(v, out);
+    }
+  }
+  return out;
+}
+for (const h of TODAS) {
+  const usadas = palabrasDelEsquema(h.input_schema);
+  const malas = PROHIBIDAS_POR_STRICT.filter((p) => usadas.includes(p));
+  ok(malas.length === 0,
+    `${h.name}: ${malas.length ? 'LLEVA ' + malas.join(', ') + ' — la API devolvera 400' : 'limpio'}`);
+}
+
+console.log('\nY el tope de lineas vive en el CODIGO, que es donde se cumple');
+// Un limite que solo existe en el esquema es una sugerencia al modelo. Este se
+// cumple sin tocar la red, antes de preguntarle a nadie.
+ok(typeof MAX_LINEAS === 'number' && MAX_LINEAS > 0, `MAX_LINEAS = ${MAX_LINEAS}`);
+const muchas = Array.from({ length: MAX_LINEAS + 1 },
+  (_, i) => ({ idProducto: i + 1, cantidad: 1, caja: 0 }));
+const rTope = await cotizarLineas(muchas, 'tienda');
+ok(rTope.ok === false && rTope.error === 'demasiadas_lineas',
+  `${MAX_LINEAS + 1} lineas -> ${rTope.ok ? 'COTIZO' : rTope.error}`);
+
+console.log('\ncotizar pide piezas, no cajas');
 const cotizar = TODAS.find((h) => h.name === 'cotizar');
 const lineas = cotizar.input_schema.properties.lineas;
-ok(lineas.maxItems === MAX_LINEAS, `tope de ${MAX_LINEAS} lineas en el esquema`);
-ok(lineas.minItems === 1, 'y al menos una');
 const campos = Object.keys(lineas.items.properties).sort().join(',');
 ok(campos === 'caja,cantidad,idProducto', `la linea lleva exactamente {${campos}}`);
 // El plan pedia sabor y presentacion. Se quitaron: el servidor los devuelve, y

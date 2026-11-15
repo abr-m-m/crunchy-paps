@@ -345,6 +345,17 @@ function clasificarProducto(p, nivel, col) {
 // pedirlos solo anade sitios donde el modelo puede equivocarse sin que se note.
 // De hecho sale mejor asi: si el modelo pide el id equivocado, lee "Natural" en
 // la respuesta y se da cuenta antes de decirselo al cliente.
+// OJO AL ESQUEMA DE `lineas`: NO lleva minItems ni maxItems. Con `strict: true`
+// la API los rechaza -"For 'array' type, property 'maxItems' is not supported"- y
+// la peticion entera se cae con un 400, asi que el agente contesta "se me trabo"
+// a TODO. Paso en produccion el 14 nov 2026, entre las 22:23 y las 22:30.
+//
+// Lo mismo vale para minimum, maximum, minLength, maxLength y los demas limites:
+// strict acepta tipos, enum, const, anyOf, $ref y additionalProperties:false, y
+// nada mas. Los helpers tipados del SDK (betaZodTool) los quitan solos; aqui el
+// esquema va a mano, asi que no hay quien los quite. El tope de verdad vive en
+// cotizarLineas, que es donde tiene que estar: un limite que solo existe en el
+// esquema es una sugerencia al modelo, no un limite.
 const MAX_LINEAS = 20;
 const MAX_PIEZAS_LINEA = 2000;   // 2000 piezas de 100 g son 200 kg: un lote entero
 
@@ -554,8 +565,6 @@ function herramientasPara(id) {
       properties: {
         lineas: {
           type: 'array',
-          minItems: 1,
-          maxItems: MAX_LINEAS,
           items: {
             type: 'object',
             properties: {
@@ -590,8 +599,6 @@ function herramientasPara(id) {
         properties: {
           lineas: {
             type: 'array',
-            minItems: 1,
-            maxItems: MAX_LINEAS,
             description: 'Las MISMAS lineas que cotizaste y el cliente confirmo.',
             items: {
               type: 'object',
@@ -884,7 +891,7 @@ module.exports = async (req, res) => {
     salida = await responder(id, msg.texto, hilo);
   } catch (e) {
     console.error('wa: el modelo fallo', e && e.message);
-    await enviarWA(msg.telefono, 'Se me trabo el sistema. Lo intento de nuevo en un momento.');
+    await enviarWA(msg.telefono, 'Se me complico el sistema. Le aviso a Abraham para que te escriba.');
     return res.status(200).json({ ok: true, error: 'modelo' });
   }
 
