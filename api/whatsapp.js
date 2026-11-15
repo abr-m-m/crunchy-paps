@@ -211,6 +211,13 @@ function sistema(id) {
       ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. El pedido queda PENDIENTE de que Abraham lo confirme, y se lo dices al cerrarlo.'
       : 'NO puedes crear pedidos para esta persona. Para comprar, mandale https://crunchypaps.mx',
     '',
+    // Esta linea existe porque cotizar_linea solo aplica el precio de caja si la
+    // cantidad es MULTIPLO EXACTO de la caja. Sin decirselo, el agente ofrece
+    // "12 piezas por $x la caja de 6" y el servidor cobra otra cosa.
+    NIVELES_CON_CAJA.includes(id.nivel)
+      ? 'Si el catalogo trae caja3, caja6 o caja12, ese precio SOLO aplica a multiplos exactos de esa caja y de un solo sabor: 12 piezas con caja de 6 son 2 cajas, pero 7 piezas se cobran por pieza.'
+      : 'Esta persona no compra por caja: cotiza siempre por pieza.',
+    '',
     'Tienes tres herramientas y son tu unica fuente de datos:',
     '- catalogo: productos y precios. Usala ANTES de decir cualquier precio o de afirmar que un sabor existe.',
     '- fecha_entrega: cuando le toca la entrega a quien escribe.',
@@ -250,6 +257,45 @@ const COLUMNA_PRECIO = {
   mayorista: 'precio_mayorista',
 };
 
+// REGLA DE ORO: el precio, y el si-se-puede-vender, los decide `cotizar_linea` en
+// el servidor. Lo de abajo es una COPIA de sus reglas, y se copia por una sola
+// razon: el catalogo trae las 35 filas de golpe, y cotizarlas una por una en cada
+// mensaje serian 35 llamadas. Lo que impide que la copia se separe del original NO
+// es la buena voluntad: es `tools/probar-wa-catalogo.mjs`, que cotiza producto por
+// producto contra la base de verdad y falla si el catalogo ofrece algo que el
+// servidor no cobra, o si esconde algo que si cobraria. Regla 63: una copia que
+// nadie compara no mide, repite.
+//
+// Las tres reglas copiadas, textuales de cotizar_linea:
+//   presentacion = 'Granel' or tipo_venta = 2   -> granel_no_soportado
+//   mayorista: coalesce(nullif(precio_mayorista, 0), precio_tienda)
+//   precio de caja: solo si nivel in ('tienda','mayorista') Y mod(cantidad, caja) = 0
+//
+// Y UNA REGLA PROPIA, que el servidor no tiene: un producto a $0 no se ofrece.
+// `cotizar_linea` lo cotiza (0 no es null: devuelve ok:true con subtotal 0), pero
+// decirle a un cliente "Natural a granel, $0" por WhatsApp es peor que no
+// mencionarlo. Hoy son los 6 granel, que ya salen por la primera regla; esta es
+// el seguro para el dia que una pieza se quede sin precio de su canal.
+const NIVELES_CON_CAJA = ['tienda', 'mayorista'];
+
+function clasificarProducto(p, nivel, col) {
+  if (p.presentacion === 'Granel' || Number(p.tipo_venta) === 2) return { fuera: 'granel' };
+
+  let precio = p[col];
+  if (nivel === 'mayorista' && !Number(precio)) precio = p.precio_tienda;
+  if (precio === null || precio === undefined) return { fuera: 'sin_precio' };
+  if (!Number(precio)) return { fuera: 'precio_en_cero' };
+
+  // Las cajas se omiten enteras si el nivel no las puede usar. Mandarlas igual
+  // haria que el agente le ofreciera a un restaurante un precio de caja que
+  // cotizar_linea nunca le va a cobrar.
+  const cajas = NIVELES_CON_CAJA.includes(nivel)
+    ? { caja3: p.precio_caja_3 || null, caja6: p.precio_caja_6 || null, caja12: p.precio_caja_12 || null }
+    : null;
+
+  return { precio, cajas };
+}
+
 const HERRAMIENTAS = [
   {
     name: 'catalogo',
@@ -284,17 +330,28 @@ async function correrHerramienta(nombre, entrada, id) {
     const col = COLUMNA_PRECIO[id.nivel] || COLUMNA_PRECIO.consumidor;
     // `descontinuado` se filtra ademas de `activo`: cotizar_linea rechaza los
     // descontinuados, asi que ofrecerlos seria prometer algo que no se puede cobrar.
-    let q = `productos?select=id,sabor,presentacion,gramos,tipo_venta,${col},precio_caja_3,precio_caja_6,precio_caja_12`
+    // El resto del filtrado va en clasificarProducto, con su prueba cruzada.
+    //
+    // precio_tienda entra SIEMPRE en el select aunque no sea la columna del nivel,
+    // porque el mayorista cae a ella cuando su precio es 0. Sin repetirla: para
+    // nivel tienda, `col` ya es esa.
+    const cols = [...new Set(['id', 'sabor', 'presentacion', 'gramos', 'tipo_venta',
+      col, 'precio_tienda', 'precio_caja_3', 'precio_caja_6', 'precio_caja_12'])].join(',');
+    let q = `productos?select=${cols}`
       + '&activo=eq.true&descontinuado=not.eq.true&order=orden.asc&limit=60';
     const busca = String((entrada && entrada.busca) || '').trim();
     if (busca) q += `&sabor=ilike.*${encodeURIComponent(busca)}*`;
     const r = await supa(q, 'GET');
     if (!r.ok) return 'No pude leer el catalogo. Dile que lo intentas en un momento y no inventes precios.';
-    const filas = (Array.isArray(r.data) ? r.data : []).map((p) => ({
-      id: p.id, sabor: p.sabor, presentacion: p.presentacion, gramos: p.gramos,
-      tipoVenta: p.tipo_venta, precio: p[col],
-      caja3: p.precio_caja_3, caja6: p.precio_caja_6, caja12: p.precio_caja_12,
-    }));
+    const filas = [];
+    for (const p of (Array.isArray(r.data) ? r.data : [])) {
+      const c = clasificarProducto(p, id.nivel, col);
+      if (c.fuera) continue;
+      filas.push({
+        id: p.id, sabor: p.sabor, presentacion: p.presentacion, gramos: p.gramos,
+        precio: c.precio, ...(c.cajas || {}),
+      });
+    }
     if (!filas.length) return 'No hay productos que coincidan con esa busqueda.';
     return JSON.stringify({ nivelDePrecio: id.nivel, productos: filas });
   }
@@ -550,3 +607,5 @@ module.exports.normalizarDestino = normalizarDestino;
 module.exports.puedePedir = puedePedir;
 module.exports.HERRAMIENTAS = HERRAMIENTAS;
 module.exports.COLUMNA_PRECIO = COLUMNA_PRECIO;
+module.exports.NIVELES_CON_CAJA = NIVELES_CON_CAJA;
+module.exports.clasificarProducto = clasificarProducto;
