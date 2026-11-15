@@ -122,8 +122,14 @@ td.txt{min-width:16rem}
   </section>
 
   <section>
-    <h2>Hoy</h2>
-    <div class="tot" id="pulso"></div>
+    <h2>Gasto y actividad</h2>
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th></th><th>Entran</th><th>Salen</th><th>Personas</th><th>Avisos</th><th>Costo</th></tr></thead>
+        <tbody id="pulso"></tbody>
+      </table>
+    </div>
+    <p class="sub" id="nota-cache"></p>
   </section>
 
   <section>
@@ -143,7 +149,7 @@ td.txt{min-width:16rem}
     <h2>Últimos mensajes</h2>
     <div class="tabla-caja">
       <table>
-        <thead><tr><th>Hora</th><th>Tel</th><th></th><th>Texto</th><th>Herramientas</th><th>Costo</th></tr></thead>
+        <thead><tr><th>Hora</th><th>Tel</th><th></th><th>Texto</th><th>Herramientas</th><th>Modelo</th><th>Costo</th></tr></thead>
         <tbody id="ultimos"></tbody>
       </table>
     </div>
@@ -274,23 +280,44 @@ td.txt{min-width:16rem}
     toast(on ? 'Agente apagado. Ya no contesta.' : 'Agente encendido.');
   }
 
-  // ── Hoy ──
+  // ── Gasto y actividad ──
+  // Tres ventanas MOVILES (hoy, 7 dias, 30 dias) y no mes natural: lo que
+  // interesa es si el gasto sube, y un mes natural lo esconde cada vez que
+  // empieza uno.
+  const PESOS_POR_USD = 18;   // referencia, no cotizacion del dia
   function pintarPulso() {
-    const h = datos.hoy || {};
-    const cajas = [
-      [num(h.entran), 'entran'],
-      [num(h.salen), 'salen'],
-      [num(h.personas), 'personas'],
-      [num(h.avisos), 'avisos'],
-      ['$' + Number(h.usd || 0).toFixed(3), 'costo usd'],
+    const filas = [
+      ['Hoy', datos.hoy], ['7 días', datos.semana], ['30 días', datos.mes],
     ];
-    const c = $('pulso'); c.replaceChildren();
-    for (const [v, t] of cajas) {
-      const caja = el('div', null, 'caja');
-      caja.appendChild(el('b', v));
-      caja.appendChild(el('span', t));
-      c.appendChild(caja);
+    const t = $('pulso'); t.replaceChildren();
+    for (const [nombre, d] of filas) {
+      const x = d || {};
+      const tr = document.createElement('tr');
+      const th = el('td', nombre); th.style.fontWeight = '600'; th.className = 'num';
+      tr.appendChild(th);
+      tr.appendChild(el('td', num(x.entran), 'num'));
+      tr.appendChild(el('td', num(x.salen), 'num'));
+      tr.appendChild(el('td', num(x.personas), 'num'));
+      tr.appendChild(el('td', num(x.avisos), 'num'));
+      const usd = Number(x.usd || 0);
+      const td = el('td', null, 'num');
+      td.appendChild(el('b', '$' + usd.toFixed(usd < 1 ? 4 : 2)));
+      td.appendChild(el('i', '≈ $' + (usd * PESOS_POR_USD).toFixed(2) + ' MXN'));
+      td.querySelector('i').style.cssText = 'font-style:normal;display:block;font-size:.72rem;color:var(--tinta2)';
+      td.querySelector('b').style.cssText = 'font-weight:700;display:block';
+      tr.appendChild(td);
+      t.appendChild(tr);
     }
+    // El cache del prompt cuesta 20 veces menos que la entrada normal. Si sale
+    // 0 habiendo trafico, el cache_control no esta haciendo nada y hay que
+    // mirarlo: no es un detalle, es la mitad del gasto de una conversacion larga.
+    const c = Number((datos.mes || {}).cache || 0);
+    const salen30 = Number((datos.mes || {}).salen || 0);
+    $('nota-cache').textContent = salen30 === 0
+      ? 'Sin mensajes en 30 días.'
+      : (c > 0
+        ? num(Math.round(c)) + ' tokens leídos de caché en 30 días (cuestan 20 veces menos que los normales).'
+        : 'Caché del prompt: 0 tokens en 30 días. Debería estar reutilizándose — conviene revisarlo.');
   }
 
   // ── Mandos ──
@@ -402,7 +429,7 @@ td.txt{min-width:16rem}
     const filas = datos.ultimos || [];
     if (!filas.length) {
       const tr = document.createElement('tr');
-      const td = el('td', 'Todavía no hay mensajes.'); td.colSpan = 6; td.className = 'txt';
+      const td = el('td', 'Todavía no hay mensajes.'); td.colSpan = 7; td.className = 'txt';
       tr.appendChild(td); t.appendChild(tr); return;
     }
     for (const f of filas) {
@@ -416,7 +443,8 @@ td.txt{min-width:16rem}
       tr.appendChild(tdp);
       tr.appendChild(el('td', f.texto || '', 'txt'));
       tr.appendChild(el('td', Array.isArray(f.uso) && f.uso.length ? f.uso.join(', ') : '—'));
-      tr.appendChild(el('td', Number(f.usd || 0) ? '$' + Number(f.usd).toFixed(4) : '—', 'num'));
+      tr.appendChild(el('td', String(f.modelo||'opus').replace('claude-','').replace('-5-5',' 5.5')));
+      tr.appendChild(el('td', Number(f.usd || 0) ? '$' + Number(f.usd).toFixed(5) : '—', 'num'));
       t.appendChild(tr);
     }
   }

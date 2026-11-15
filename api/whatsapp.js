@@ -915,7 +915,7 @@ async function correrHerramienta(nombre, entrada, id) {
 async function responder(id, texto, hilo) {
   const mensajes = [...hilo, { role: 'user', content: texto }];
   const usadas = [];
-  let entrada = 0, salida = 0;
+  let entrada = 0, salida = 0, cacheLeido = 0, cacheEscrito = 0;
 
   for (let vuelta = 0; vuelta < AJ.max_vueltas; vuelta++) {
     const r = await anthropic().beta.messages.create({
@@ -931,19 +931,28 @@ async function responder(id, texto, hilo) {
 
     entrada += (r.usage && r.usage.input_tokens) || 0;
     salida  += (r.usage && r.usage.output_tokens) || 0;
+    // El CACHE se registra porque hoy no sabemos si funciona. El prefijo que se
+    // cachea es `tools` + `system`; en Opus 5.5 el minimo para que se cachee son
+    // 512 tokens, y una lectura cacheada cuesta $0.20 por millon en vez de $4
+    // —VEINTE veces menos—. Si estos dos salen siempre en cero, el
+    // `cache_control` de abajo no esta haciendo nada y hay que mirarlo; si
+    // `leido` sube en las vueltas 2 y 3, esta pagando. Sin medirlo era una
+    // creencia (regla 26: afirmar donde esta el coste antes de medirlo sale caro).
+    cacheLeido  += (r.usage && r.usage.cache_read_input_tokens) || 0;
+    cacheEscrito += (r.usage && r.usage.cache_creation_input_tokens) || 0;
 
     // stop_reason se mira ANTES de leer content: en una negativa el contenido no
     // es la respuesta que el cliente espera.
     if (r.stop_reason === 'refusal') {
       return { texto: 'Eso no lo puedo resolver por aqui. Lo paso con el equipo para que te escriban.',
-               entrada, salida, usadas, negada: true };
+               entrada, salida, cacheLeido, cacheEscrito, usadas, negada: true };
     }
 
     if (r.stop_reason !== 'tool_use') {
       const dicho = r.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
       return {
         texto: dicho || 'Perdon, no te entendi. Me lo puedes decir de otra forma?',
-        entrada, salida, usadas, negada: false,
+        entrada, salida, cacheLeido, cacheEscrito, usadas, negada: false,
       };
     }
 
@@ -970,7 +979,7 @@ async function responder(id, texto, hilo) {
   console.warn('wa: se agotaron las vueltas de herramientas', { usadas });
   return {
     texto: 'Se me complico consultar eso. Lo paso con el equipo y te escriben.',
-    entrada, salida, usadas, negada: false,
+    entrada, salida, cacheLeido, cacheEscrito, usadas, negada: false,
   };
 }
 
@@ -1123,8 +1132,15 @@ module.exports = async (req, res) => {
   await registrarSaliente(msg.telefono, salida.texto, {
     entregado,
     usadas: salida.usadas,
+    // El MODELO se guarda con cada mensaje. Sin esto, cualquier cuenta de gasto
+    // tiene que suponer uno, y desde que el modelo es un ajuste de /agente esa
+    // suposicion es falsa en cuanto alguien lo baja a Sonnet o Haiku: el panel
+    // enseñaria precio de Opus para mensajes que costaron una veintava parte.
+    modelo: AJ.modelo,
     entrada: salida.entrada,
     salida: salida.salida,
+    cacheLeido: salida.cacheLeido,
+    cacheEscrito: salida.cacheEscrito,
   }, (salida.entrada || 0) + (salida.salida || 0));
   await guardarHilo(msg.telefono, [
     ...hilo,
