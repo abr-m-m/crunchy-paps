@@ -211,8 +211,14 @@ function sistema(id) {
       ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. El pedido queda PENDIENTE de que Abraham lo confirme, y se lo dices al cerrarlo.'
       : 'NO puedes crear pedidos para esta persona. Para comprar, mandale https://crunchypaps.mx',
     '',
-    'Nunca inventes precios, existencias ni fechas: salen de las herramientas.',
-    'Si no tienes una herramienta para lo que piden, dilo y ofrece pasarlo con Abraham.',
+    'Tienes tres herramientas y son tu unica fuente de datos:',
+    '- catalogo: productos y precios. Usala ANTES de decir cualquier precio o de afirmar que un sabor existe.',
+    '- fecha_entrega: cuando le toca la entrega a quien escribe.',
+    '- mis_pedidos: sus ultimos pedidos, con folio y estatus.',
+    '',
+    'NUNCA inventes precios, sabores, existencias ni fechas. Si una herramienta falla, dilo:',
+    'es mejor decir "no lo pude comprobar" que dar un dato que puede estar mal.',
+    'Si no tienes herramienta para lo que piden, dilo y ofrece pasarlo con Abraham.',
     'No prometas nada que no puedas comprobar.',
   ].join('\n');
 }
@@ -230,35 +236,157 @@ function anthropic() {
   return _anthropic;
 }
 
-async function responder(id, texto, hilo) {
-  const mensajes = [...hilo, { role: 'user', content: texto }];
-  const r = await anthropic().beta.messages.create({
-    model: MODELO,
-    max_tokens: MAX_SALIDA,
-    system: [{ type: 'text', text: sistema(id), cache_control: { type: 'ephemeral' } }],
-    messages: mensajes,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    output_config: { effort: 'medium' },
-  });
+// ── Las herramientas de lectura ─────────────────────────────────────────────
+// Lista blanca cerrada: el modelo solo puede hacer lo que esta aqui. Nada de SQL
+// libre, y ninguna escribe (tarea 7 trae la primera que escribe).
+//
+// El NIVEL de precio no es un parametro de ninguna herramienta: lo cierra el
+// closure desde wa_identidad. Si fuera parametro, el modelo podria pedir precio
+// de mayorista para un consumidor.
+const COLUMNA_PRECIO = {
+  consumidor: 'precio_consumidor',
+  tienda: 'precio_tienda',
+  restaurante: 'precio_restaurante',
+  mayorista: 'precio_mayorista',
+};
 
-  // stop_reason se mira ANTES de leer content: en una negativa el contenido no
-  // es la respuesta que el cliente espera.
-  if (r.stop_reason === 'refusal') {
-    return { texto: 'Eso no lo puedo resolver por aqui. Le aviso a Abraham para que te escriba.',
-             tokens: r.usage ? r.usage.output_tokens : null, negada: true };
+const HERRAMIENTAS = [
+  {
+    name: 'catalogo',
+    description: 'Productos de Crunchy Paps con el precio que le toca a quien escribe. '
+      + 'Usala SIEMPRE antes de decir un precio o afirmar que algo existe. Nunca cites precios de memoria.',
+    strict: true,
+    input_schema: {
+      type: 'object',
+      properties: {
+        busca: { type: 'string', description: 'Filtra por sabor. Cadena vacia para traer todo.' },
+      },
+      required: ['busca'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'fecha_entrega',
+    description: 'La fecha de entrega que le corresponde a quien escribe, segun su ruta y la hora limite.',
+    strict: true,
+    input_schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  },
+  {
+    name: 'mis_pedidos',
+    description: 'Los ultimos pedidos de quien escribe, con folio, fecha, estatus y total.',
+    strict: true,
+    input_schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+  },
+];
+
+async function correrHerramienta(nombre, entrada, id) {
+  if (nombre === 'catalogo') {
+    const col = COLUMNA_PRECIO[id.nivel] || COLUMNA_PRECIO.consumidor;
+    // `descontinuado` se filtra ademas de `activo`: cotizar_linea rechaza los
+    // descontinuados, asi que ofrecerlos seria prometer algo que no se puede cobrar.
+    let q = `productos?select=id,sabor,presentacion,gramos,tipo_venta,${col},precio_caja_3,precio_caja_6,precio_caja_12`
+      + '&activo=eq.true&descontinuado=not.eq.true&order=orden.asc&limit=60';
+    const busca = String((entrada && entrada.busca) || '').trim();
+    if (busca) q += `&sabor=ilike.*${encodeURIComponent(busca)}*`;
+    const r = await supa(q, 'GET');
+    if (!r.ok) return 'No pude leer el catalogo. Dile que lo intentas en un momento y no inventes precios.';
+    const filas = (Array.isArray(r.data) ? r.data : []).map((p) => ({
+      id: p.id, sabor: p.sabor, presentacion: p.presentacion, gramos: p.gramos,
+      tipoVenta: p.tipo_venta, precio: p[col],
+      caja3: p.precio_caja_3, caja6: p.precio_caja_6, caja12: p.precio_caja_12,
+    }));
+    if (!filas.length) return 'No hay productos que coincidan con esa busqueda.';
+    return JSON.stringify({ nivelDePrecio: id.nivel, productos: filas });
   }
 
-  const salida = r.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n')
-    .trim();
+  if (nombre === 'fecha_entrega') {
+    const r = await supa('rpc/obtener_fecha_entrega', 'POST', { p_data: { telefono: id.telefono } });
+    if (!r.ok || !r.data) return 'No pude calcular la fecha de entrega.';
+    // OJO: `fechaDisplay` viene en espanglish ("Tuesday 17 de November"), asi que
+    // NO se le pasa al modelo: diria eso tal cual a un cliente. Se manda la fecha
+    // en ISO y el `msg`, que si esta bien escrito en espanol.
+    return JSON.stringify({ fecha: r.data.fecha, explicacion: r.data.msg });
+  }
 
+  if (nombre === 'mis_pedidos') {
+    if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
+    const r = await supa(
+      'ordenes?select=consecutivo,fecha_orden,fecha_entrega,estatus_pedido,estatus_pago,total'
+      + `&id_cliente=eq.${encodeURIComponent(id.idCliente)}&order=id.desc&limit=5`, 'GET');
+    if (!r.ok) return 'No pude leer los pedidos.';
+    if (!Array.isArray(r.data) || !r.data.length) return 'Todavia no tiene ningun pedido.';
+    return JSON.stringify(r.data);
+  }
+
+  return 'Esa herramienta no existe.';
+}
+
+// ── El bucle ────────────────────────────────────────────────────────────────
+// A mano y no con el toolRunner del SDK, a proposito: el runner devuelve el uso
+// de la ULTIMA vuelta, y aqui hace falta sumar entrada y salida de TODAS para
+// poder calcular el gasto de verdad. Tambien deja registrar que herramientas se
+// usaron, que es lo que se guarda en `wa_mensajes.herramientas`.
+const MAX_VUELTAS = 6;
+
+async function responder(id, texto, hilo) {
+  const mensajes = [...hilo, { role: 'user', content: texto }];
+  const usadas = [];
+  let entrada = 0, salida = 0;
+
+  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+    const r = await anthropic().beta.messages.create({
+      model: MODELO,
+      max_tokens: MAX_SALIDA,
+      system: [{ type: 'text', text: sistema(id), cache_control: { type: 'ephemeral' } }],
+      messages: mensajes,
+      tools: HERRAMIENTAS,
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      output_config: { effort: 'medium' },
+    });
+
+    entrada += (r.usage && r.usage.input_tokens) || 0;
+    salida  += (r.usage && r.usage.output_tokens) || 0;
+
+    // stop_reason se mira ANTES de leer content: en una negativa el contenido no
+    // es la respuesta que el cliente espera.
+    if (r.stop_reason === 'refusal') {
+      return { texto: 'Eso no lo puedo resolver por aqui. Le aviso a Abraham para que te escriba.',
+               entrada, salida, usadas, negada: true };
+    }
+
+    if (r.stop_reason !== 'tool_use') {
+      const dicho = r.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
+      return {
+        texto: dicho || 'Perdon, no te entendi. Me lo puedes decir de otra forma?',
+        entrada, salida, usadas, negada: false,
+      };
+    }
+
+    mensajes.push({ role: 'assistant', content: r.content });
+
+    // Todos los resultados van en UN solo mensaje de usuario. Partirlos en varios
+    // le ensena al modelo a dejar de pedir herramientas en paralelo.
+    const resultados = [];
+    for (const b of r.content.filter((x) => x.type === 'tool_use')) {
+      usadas.push(b.name);
+      let out;
+      try {
+        out = await correrHerramienta(b.name, b.input, id);
+      } catch (e) {
+        console.error('wa: herramienta fallo', b.name, e && e.message);
+        out = 'Esa consulta fallo. No inventes el dato: dile que no lo pudiste comprobar.';
+      }
+      resultados.push({ type: 'tool_result', tool_use_id: b.id, content: String(out) });
+    }
+    mensajes.push({ role: 'user', content: resultados });
+  }
+
+  // Se acabaron las vueltas sin respuesta. Mejor decirlo que colgar la llamada.
+  console.warn('wa: se agotaron las vueltas de herramientas', { usadas });
   return {
-    texto: salida || 'Perdon, no te entendi. Me lo puedes decir de otra forma?',
-    tokens: r.usage ? (r.usage.input_tokens + r.usage.output_tokens) : null,
-    negada: false,
+    texto: 'Se me complico consultar eso. Dejame avisarle a Abraham y te escribe.',
+    entrada, salida, usadas, negada: false,
   };
 }
 
@@ -393,7 +521,15 @@ module.exports = async (req, res) => {
   // con la fila puesta igual. Regla 14: el "hecho" de una herramienta no es
   // evidencia de que la accion ocurriera.
   const entregado = await enviarWA(msg.telefono, salida.texto);
-  await registrarSaliente(msg.telefono, salida.texto, { entregado }, salida.tokens);
+  // `tokens` guarda la SUMA, por compatibilidad con lo ya escrito; el reparto va
+  // aparte, porque entrada y salida cuestan distinto (4 y 20 dolares por millon)
+  // y con el total sumado el gasto solo se puede estimar, no calcular.
+  await registrarSaliente(msg.telefono, salida.texto, {
+    entregado,
+    usadas: salida.usadas,
+    entrada: salida.entrada,
+    salida: salida.salida,
+  }, (salida.entrada || 0) + (salida.salida || 0));
   await guardarHilo(msg.telefono, [
     ...hilo,
     { role: 'user', content: msg.texto },
@@ -412,3 +548,5 @@ module.exports.sistema = sistema;
 module.exports.MAX_TURNOS = MAX_TURNOS;
 module.exports.normalizarDestino = normalizarDestino;
 module.exports.puedePedir = puedePedir;
+module.exports.HERRAMIENTAS = HERRAMIENTAS;
+module.exports.COLUMNA_PRECIO = COLUMNA_PRECIO;
