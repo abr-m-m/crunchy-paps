@@ -58,8 +58,17 @@ select * from (values
      'a como la de 100g|que sabores tienen', 10),
   ('Pedidos y entregas',  'responde', 'Usa mis_pedidos y fecha_entrega.',
      'donde va mi pedido|cuando me entregan', 20),
-  ('Recetas y cocina',    'breve',    'Es comida: no cortes en seco, pero no des la receta entera.',
-     'como hago chilaquiles|con que acompano', 30),
+  -- SIN tema de recetas, y es una correccion de Abraham del 15 nov: las recetas
+  -- fueron un EJEMPLO DE PRUEBA, no un caso real. Nadie le va a preguntar al
+  -- agente de una marca de papas por cocina, viajes ni como arreglar un
+  -- refrigerador, y darles tratamiento propio era convertir mi caso de medicion
+  -- en politica del negocio. Todo eso cae en 'Fuera del negocio' -> no entra.
+  --
+  -- El alcance 'breve' se queda disponible, sin tema asignado: sirve para lo
+  -- VECINO al producto (si pican, si llevan gluten, con que acompanarlas), que
+  -- si es del negocio y no merece una llamada a herramientas.
+  ('Producto: dudas sueltas', 'breve', 'Si pican, alergenos, con que acompanan. Sin inventar: si no lo sabes, dilo.',
+     'pican mucho|tienen gluten', 30),
   ('Quejas y reclamos',   'deriva',   'Recoge el folio y que paso. No prometas solucion ni plazo.',
      'no me llego|me cobraron de mas', 40),
   ('Cancelar o cambiar',  'deriva',   'NUNCA lo hagas tu: mueve lote, caja, puntos y reembolsos.',

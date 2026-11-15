@@ -285,9 +285,14 @@ const COMO_SE_TRATA = {
   no: 'no entres en el tema; dilo con amabilidad y ofrece el catalogo',
 };
 
+// SIN tema de recetas, y es correccion de Abraham del 15 nov 2026: las recetas
+// fueron un EJEMPLO DE PRUEBA, no un caso real. Nadie le pregunta al agente de
+// una marca de papas por cocina, viajes ni como arreglar un refrigerador, y
+// darles tratamiento propio era convertir mi caso de medicion en politica del
+// negocio. Todo eso cae en el ultimo tema: no entra.
 const TEMAS_POR_DEFECTO = [
   { tema: 'Precios, sabores, pedidos y entregas', alcance: 'responde' },
-  { tema: 'Recetas y cocina', alcance: 'breve' },
+  { tema: 'Dudas sueltas del producto (si pican, alergenos)', alcance: 'breve' },
   { tema: 'Quejas, cancelaciones y cambios', alcance: 'deriva' },
   { tema: 'Cualquier cosa ajena al negocio', alcance: 'no' },
 ];

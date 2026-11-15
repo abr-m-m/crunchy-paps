@@ -308,8 +308,14 @@ ok(!/haz_lo_que_quieras/.test(sRaro), 'el alcance inventado no aparece crudo en 
 console.log('\n   Sin temas en la base, quedan los del codigo');
 usarTemasDePrueba([]);
 const sVacio = sistema(PERFILES[1]);
-ok(/Recetas y cocina/.test(sVacio),
-  'una lista vacia NO deja al agente sin criterio: vuelve a TEMAS_POR_DEFECTO');
+// Se comprueba la PROPIEDAD, no el nombre de un tema concreto: la primera
+// version buscaba "Recetas y cocina" y se puso roja en cuanto Abraham corrigio
+// cual era el tema, que era un cambio legitimo. Una asercion atada al texto se
+// rompe con cada edicion; atada a la propiedad, no (regla 53).
+const temasEnVacio = (sVacio.match(/^- /gm) || []).length;
+ok(temasEnVacio >= 3,
+  `una lista vacia NO deja al agente sin criterio: salen ${temasEnVacio} temas del codigo`);
+ok(/DE QUE HABLAS Y HASTA DONDE/.test(sVacio), 'con su cabecera');
 ok(TEMAS_POR_DEFECTO.length >= 3, `${TEMAS_POR_DEFECTO.length} temas de respaldo en el codigo`);
 
 console.log('\n   Y el gancho esta cerrado en produccion');
