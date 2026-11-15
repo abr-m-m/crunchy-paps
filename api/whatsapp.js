@@ -98,6 +98,27 @@ async function supa(path, method, body, prefer) {
   return { ok: r.ok, status: r.status, data };
 }
 
+// El UNICO punto por donde una prueba puede sustituir el transporte de la
+// cotizacion. Existe porque la llave de servicio no se puede obtener del CLI de
+// Supabase -solo entrega las legacy, apagadas el 18 sep 2026, y trunca las
+// nuevas-, asi que sin esto la parte del dinero no se puede probar en local sin
+// meter un secreto en el disco.
+//
+// Lo que compra: la prueba puede ESPIAR con que `p_nivel` se llama al servidor,
+// que es exactamente la propiedad de D6 y se ve mejor espiando la llamada que
+// mirando el total.
+//
+// Y se cierra con llave en produccion: en Vercel, llamarlo lanza. Un gancho de
+// pruebas que en produccion sigue abierto no es un gancho, es una puerta.
+// (se exporta al final del archivo: `module.exports = handler` reemplaza el objeto
+// entero, asi que cualquier cosa colgada de module.exports ANTES de esa linea se
+// pierde sin avisar. node --check no lo ve y comprobar-libres.mjs tampoco.)
+let transporte = (...a) => supa(...a);
+function usarTransporteDePrueba(f) {
+  if (process.env.VERCEL) throw new Error('el transporte de prueba no se sustituye en produccion');
+  transporte = typeof f === 'function' ? f : ((...a) => supa(...a));
+}
+
 // ── Los topes ───────────────────────────────────────────────────────────────
 // Registra el mensaje que entra y dice si cabe. El conteo y el registro van en
 // la misma llamada (wa_entrante), asi que no hay hueco entre contar y registrar.
@@ -218,10 +239,17 @@ function sistema(id) {
       ? 'Si el catalogo trae caja3, caja6 o caja12, ese precio SOLO aplica a multiplos exactos de esa caja y de un solo sabor: 12 piezas con caja de 6 son 2 cajas, pero 7 piezas se cobran por pieza.'
       : 'Esta persona no compra por caja: cotiza siempre por pieza.',
     '',
-    'Tienes tres herramientas y son tu unica fuente de datos:',
+    'Tus herramientas son tu unica fuente de datos:',
     '- catalogo: productos y precios. Usala ANTES de decir cualquier precio o de afirmar que un sabor existe.',
     '- fecha_entrega: cuando le toca la entrega a quien escribe.',
     '- mis_pedidos: sus ultimos pedidos, con folio y estatus.',
+    '- cotizar: el total de una lista de lineas.',
+    '',
+    // El modelo suma bien casi siempre, y ese "casi" es el problema: 12 x 27 lo
+    // hace de memoria sin llamar a nada, y el dia que falle nadie lo revisa.
+    'NUNCA calcules un total tu. Ni una multiplicacion, ni una suma, ni un redondeo, ni "mas o',
+    'menos". Aunque sea una sola bolsa y la cuenta sea obvia: el total sale de cotizar o no se dice.',
+    'Si no has llamado a cotizar, no tienes total.',
     '',
     'NUNCA inventes precios, sabores, existencias ni fechas. Si una herramienta falla, dilo:',
     'es mejor decir "no lo pude comprobar" que dar un dato que puede estar mal.',
@@ -296,7 +324,88 @@ function clasificarProducto(p, nivel, col) {
   return { precio, cajas };
 }
 
-const HERRAMIENTAS = [
+// ── Cotizar ─────────────────────────────────────────────────────────────────
+// LA REGLA QUE NO SE NEGOCIA (D6 del diseno): el total lo suma el SERVIDOR. El
+// modelo dice que lineas quiere, y nada mas. No multiplica, no suma, no redondea,
+// y el `nivel` que decide el precio no le pasa ni por delante: entra aqui como
+// argumento, resuelto por wa_identidad desde el telefono que Meta ya verifico.
+//
+// Una sola implementacion, usada por la herramienta `cotizar` y -en la tarea 7-
+// por `crear_pedido`. Si fueran dos, el total que ve el cliente y el que se
+// escribe en la base podrian separarse, y nadie lo notaria hasta la factura.
+//
+// El modelo aporta TRES datos por linea: idProducto, cantidad y caja. Ni sabor ni
+// presentacion, aunque el plan los pedia: el servidor los devuelve, asi que
+// pedirlos solo anade sitios donde el modelo puede equivocarse sin que se note.
+// De hecho sale mejor asi: si el modelo pide el id equivocado, lee "Natural" en
+// la respuesta y se da cuenta antes de decirselo al cliente.
+const MAX_LINEAS = 20;
+const MAX_PIEZAS_LINEA = 2000;   // 2000 piezas de 100 g son 200 kg: un lote entero
+
+async function cotizarLineas(lineas, nivel) {
+  if (!Array.isArray(lineas) || !lineas.length) return { ok: false, error: 'sin_lineas' };
+  if (lineas.length > MAX_LINEAS) return { ok: false, error: 'demasiadas_lineas' };
+
+  for (const l of lineas) {
+    const n = Number(l && l.cantidad);
+    if (!Number.isFinite(n) || n <= 0 || n !== Math.trunc(n)) {
+      return { ok: false, error: 'cantidad_invalida', linea: l };
+    }
+    if (n > MAX_PIEZAS_LINEA) return { ok: false, error: 'cantidad_enorme', linea: l };
+  }
+
+  // Un mismo producto en dos lineas se rechaza en vez de sumarse solo: juntarlas
+  // por mi cuenta cambiaria lo que el cliente pidio sin que nadie lo dijera.
+  const ids = lineas.map((l) => Number(l.idProducto));
+  if (new Set(ids).size !== ids.length) return { ok: false, error: 'producto_repetido' };
+
+  // En PARALELO, no en serie como decia el plan: veinte llamadas encadenadas son
+  // unos dos segundos de reloj dentro de un webhook que Meta reintenta si tarda,
+  // y un reintento cuesta otro mensaje. Son lecturas puras: el orden no importa,
+  // y Promise.all conserva el de la lista.
+  const rs = await Promise.all(lineas.map((l) => transporte('rpc/cotizar_linea', 'POST', {
+    p_id_producto: Number(l.idProducto),
+    p_nivel: nivel,
+    p_cantidad: Number(l.cantidad),
+    p_caja: Number(l.caja || 0),
+  })));
+
+  const detalle = [];
+  let total = 0;
+  for (let i = 0; i < rs.length; i++) {
+    const r = rs[i];
+    if (!r.ok || !r.data || r.data.ok !== true) {
+      // El status se REGISTRA. Sin esto, un 401 por una llave caducada y un
+      // producto que de verdad no se puede vender se ven exactamente igual desde
+      // fuera: "no_cotiza". Paso media hora con eso el 14 nov 2026.
+      if (!r.ok) console.error('wa: cotizar_linea no contesto', r.status,
+        JSON.stringify(r.data).slice(0, 200));
+      return {
+        ok: false,
+        error: (r.data && r.data.error) || (r.ok ? 'no_cotiza' : 'base_' + r.status),
+        linea: lineas[i],
+      };
+    }
+    // Solo lo que devolvio el servidor. Nada de `{ ...l, ...r.data }`: lo que
+    // dijo el modelo no entra en el detalle que la tarea 7 va a escribir.
+    detalle.push(r.data);
+    total += Number(r.data.subtotal || 0);
+  }
+
+  return { ok: true, total: Math.round(total * 100) / 100, detalle };
+}
+
+// ── La lista blanca, por identidad ──────────────────────────────────────────
+// Deja de ser una constante: lo que el agente PUEDE hacer depende de quien
+// escribe, y se decide en el servidor antes de armar la peticion. Un permiso que
+// se le pide al modelo en el prompt no es un permiso (regla 35): lo que no esta
+// en esta lista no existe para el, no es que exista y se niegue.
+//
+// Hoy las cuatro son de lectura y las tiene todo el mundo. La estructura se monta
+// ahora porque la tarea 7 (crear_pedido, que escribe) y las herramientas de
+// negocio para Abraham y el equipo se cuelgan exactamente de aqui.
+function herramientasPara(id) {
+  const lista = [
   {
     name: 'catalogo',
     description: 'Productos de Crunchy Paps con el precio que le toca a quien escribe. '
@@ -323,7 +432,39 @@ const HERRAMIENTAS = [
     strict: true,
     input_schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
   },
-];
+  {
+    name: 'cotizar',
+    description: 'Suma una lista de lineas con los precios del servidor y devuelve el total. '
+      + 'Usala SIEMPRE antes de decir un total, aunque sea una sola linea y la cuenta te parezca facil. '
+      + 'NUNCA multipliques ni sumes tu: el precio y el total los pone el servidor.',
+    strict: true,
+    input_schema: {
+      type: 'object',
+      properties: {
+        lineas: {
+          type: 'array',
+          minItems: 1,
+          maxItems: MAX_LINEAS,
+          items: {
+            type: 'object',
+            properties: {
+              idProducto: { type: 'integer', description: 'El id tal como lo dio la herramienta catalogo. No lo adivines.' },
+              cantidad: { type: 'integer', description: 'PIEZAS, no cajas. Seis cajas de 12 son 72 piezas.' },
+              caja: { type: 'integer', description: 'Piezas por caja: 3, 6 o 12. Cero si va por pieza.' },
+            },
+            required: ['idProducto', 'cantidad', 'caja'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['lineas'],
+      additionalProperties: false,
+    },
+  },
+  ];
+
+  return lista;
+}
 
 async function correrHerramienta(nombre, entrada, id) {
   if (nombre === 'catalogo') {
@@ -365,6 +506,26 @@ async function correrHerramienta(nombre, entrada, id) {
     return JSON.stringify({ fecha: r.data.fecha, explicacion: r.data.msg });
   }
 
+  if (nombre === 'cotizar') {
+    const c = await cotizarLineas((entrada && entrada.lineas) || [], id.nivel);
+    if (!c.ok) {
+      // El error se traduce a una INSTRUCCION, no a un codigo. "granel_no_soportado"
+      // le deja al modelo inventarse que hacer; "quita esa linea" no.
+      const comoSalir = {
+        sin_lineas: 'No mandaste ninguna linea. Pregunta que quiere y cuanto.',
+        demasiadas_lineas: `No puedo cotizar mas de ${MAX_LINEAS} lineas de golpe. Pidele que lo parta en dos pedidos.`,
+        producto_repetido: 'Mandaste el mismo producto dos veces. Juntalo en una sola linea con la cantidad sumada y vuelve a cotizar.',
+        cantidad_invalida: 'Una cantidad no es un numero entero de piezas. Corrigela y vuelve a cotizar.',
+        cantidad_enorme: `Son mas de ${MAX_PIEZAS_LINEA} piezas en una linea. Eso lo tiene que ver Abraham: dile que se lo pasas.`,
+        granel_no_soportado: 'Por aqui no se vende granel, solo bolsas. Ofrecele presentaciones de 100, 250, 500 g o 1 kg.',
+        producto_no_disponible: 'Ese producto no esta disponible. Vuelve a mirar el catalogo y ofrece otro.',
+      };
+      const salida = comoSalir[c.error] || `No pude cotizar (${c.error}). Dile que no se lo pudiste calcular y que Abraham le confirma.`;
+      return 'NO le des ningun total al cliente. ' + salida;
+    }
+    return JSON.stringify({ nivelDePrecio: id.nivel, total: c.total, lineas: c.detalle });
+  }
+
   if (nombre === 'mis_pedidos') {
     if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
     const r = await supa(
@@ -396,7 +557,7 @@ async function responder(id, texto, hilo) {
       max_tokens: MAX_SALIDA,
       system: [{ type: 'text', text: sistema(id), cache_control: { type: 'ephemeral' } }],
       messages: mensajes,
-      tools: HERRAMIENTAS,
+      tools: herramientasPara(id),
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       output_config: { effort: 'medium' },
@@ -605,7 +766,12 @@ module.exports.sistema = sistema;
 module.exports.MAX_TURNOS = MAX_TURNOS;
 module.exports.normalizarDestino = normalizarDestino;
 module.exports.puedePedir = puedePedir;
-module.exports.HERRAMIENTAS = HERRAMIENTAS;
+module.exports.herramientasPara = herramientasPara;
 module.exports.COLUMNA_PRECIO = COLUMNA_PRECIO;
 module.exports.NIVELES_CON_CAJA = NIVELES_CON_CAJA;
 module.exports.clasificarProducto = clasificarProducto;
+module.exports.cotizarLineas = cotizarLineas;
+module.exports.correrHerramienta = correrHerramienta;
+module.exports.usarTransporteDePrueba = usarTransporteDePrueba;
+module.exports.MAX_LINEAS = MAX_LINEAS;
+module.exports.MAX_PIEZAS_LINEA = MAX_PIEZAS_LINEA;
