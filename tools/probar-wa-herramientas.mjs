@@ -181,6 +181,13 @@ ok(/nunca inventes/i.test(s), 'le prohibe inventar precios, sabores y fechas');
 ok(/nunca calcules un total/i.test(s), 'y le prohibe calcular un total el mismo');
 ok(!/fechaDisplay/.test(s), 'fechaDisplay no aparece por ningun lado (viene en espanglish)');
 
+// El largo no es estilo: la salida cuesta 5x la entrada, y la primera respuesta
+// con herramientas del 14 nov 2026 gasto 895 tokens -7 sabores y 5 pedidos,
+// correcta y correctisima, pero una pared de texto en un telefono-.
+ok(/6 lineas o menos/.test(s), 'le pone techo de 6 lineas');
+ok(/no listes tambien sus pedidos/.test(s), 'y le dice que conteste solo lo que preguntaron');
+ok(/No te disculpes/.test(s), 'y que no cuente la historia interna del sistema al cliente');
+
 console.log('\nEl consumidor no compra por caja y el prompt se lo dice');
 ok(/no compra por caja/i.test(sistema(PERFILES[0])), 'consumidor: cotiza por pieza');
 ok(/multiplos exactos/i.test(sistema(PERFILES[1])), 'tienda: la caja solo en multiplos exactos');

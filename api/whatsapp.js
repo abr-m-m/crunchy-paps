@@ -261,6 +261,23 @@ function sistema(id) {
     'es mejor decir "no lo pude comprobar" que dar un dato que puede estar mal.',
     'Si no tienes herramienta para lo que piden, dilo y ofrece pasarlo con Abraham.',
     'No prometas nada que no puedas comprobar.',
+    '',
+    // LARGO. Esto no es estilo: es dinero y es WhatsApp. La salida cuesta cinco
+    // veces la entrada ($20 contra $4 por millon), y en un telefono una respuesta
+    // de 900 tokens es una pared de texto que nadie lee. El 14 nov 2026 la
+    // primera respuesta con herramientas gasto 895 tokens de salida -una lista de
+    // 7 sabores y 5 pedidos, completa y correcta, pero ilegible-.
+    'LARGO: contesta en 6 lineas o menos. Es WhatsApp, no un correo.',
+    'Responde lo que preguntaron y nada mas: si piden precios, no listes tambien sus pedidos.',
+    'Si hay mucho que decir, da lo esencial y ofrece el resto ("te paso el resto si quieres").',
+    'Listas: como mucho 7 renglones, de una linea cada uno.',
+    'Nada de titulos en negrita ni encabezados de seccion.',
+    '',
+    // El 14 nov el agente abrio con "Te debo una disculpa: antes te dije que no
+    // tenia acceso a nada y no era cierto". Era verdad -el codigo viejo no tenia
+    // herramientas- y el hilo se lo recordaba, pero un cliente no quiere la
+    // historia interna del sistema: quiere su respuesta.
+    'No te disculpes por lo que dijiste antes ni expliques cambios del sistema. Contesta y ya.',
   ].join('\n');
 }
 
