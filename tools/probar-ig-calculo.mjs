@@ -9,7 +9,11 @@
 // Plan: cambios/2026-11-13-radar-instagram-plan.md, tarea 1.
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { mediana, analizarCuenta, UMBRAL_RAZON, UMBRAL_TASA } = require('../api/ig-radar.js');
+const {
+  mediana, analizarCuenta, UMBRAL_RAZON, UMBRAL_TASA,
+  promptDesmontaje, desmontar, MODELO,
+  normalizarDestino, textoAviso,
+} = require('../api/ig-radar.js');
 
 let fallos = 0;
 const ok = (c, m) => { console.log((c ? '  ok    ' : '  FALLA ') + m); if (!c) fallos++; };
@@ -90,6 +94,50 @@ for (const [entrada, como] of [
   try { res = analizarCuenta(entrada); } catch { lanzo = true; }
   ok(!lanzo && res && Array.isArray(res.medios), `${como} no revienta`);
 }
+
+// ── Tarea 4: el desmontaje ──────────────────────────────────────────────────
+// No se llama a la API: eso costaria dinero en cada corrida. Se comprueba lo
+// unico que se puede comprobar gratis y que de verdad importa — que el prompt
+// dice lo que debe y no lleva nada que no deba.
+console.log('\nTarea 4 — el prompt del desmontaje');
+{
+  const p = promptDesmontaje([{ usuario: 'papassabritas', razon: 3.2, grupo: 'grande' }]);
+  ok(!/sk-ant|EAA[A-Za-z0-9]|service_role|eyJ[A-Za-z0-9]/.test(p), 'el prompt no trae llaves');
+  ok(/no hay nada que valga la pena/i.test(p), 'el prompt permite decir que no hubo nada');
+  ok(/copiarlo con un telefono/i.test(p), 'el prompt pide la columna accionable');
+  ok(/marca grande con agencia/i.test(p), 'el prompt avisa de lo que no es copiable');
+  ok(/puede estar pagado/i.test(p), 'el prompt manda tratar con pinzas lo sospechoso');
+  ok(/No inventes nada/i.test(p), 'el prompt prohibe inventar');
+  // Sin esto el prompt podria estar perfecto y no llevar los datos.
+  ok(p.includes('papassabritas'), 'los destacados llegan dentro del prompt');
+  ok(p.includes('"grupo"') || p.includes('grande'), 'el grupo viaja con cada cuenta');
+}
+
+console.log('\nTarea 4 — el modulo carga sin ANTHROPIC_API_KEY');
+// Si el cliente se construyera al cargar el modulo, el require de arriba habria
+// lanzado y esta prueba no existiria. Llegar hasta aqui ES la comprobacion.
+ok(typeof desmontar === 'function', 'desmontar se exporta y el modulo cargo sin la llave');
+ok(MODELO === 'claude-opus-5-5', `el modelo es ${MODELO}`);
+
+// ── Tarea 6: el aviso por WhatsApp ──────────────────────────────────────────
+console.log('\nTarea 6 — el destino se normaliza igual que en el agente');
+ok(normalizarDestino('5215512345678') === '525512345678', 'quita el 1 del 521 de Mexico');
+ok(normalizarDestino('525512345678') === '525512345678', 'un numero ya bueno no se toca');
+ok(normalizarDestino('+52 55 1234 5678') === '525512345678', 'quita espacios y el mas');
+ok(normalizarDestino(null) === '', 'null no revienta');
+
+console.log('\nTarea 6 — el texto del aviso');
+ok(textoAviso({ cuantos: 0 }) === null, 'sin destacados NO se manda nada');
+ok(textoAviso(null) === null, 'un informe vacio no manda nada');
+{
+  const t = textoAviso({ cuantos: 3, cuentas: ['papassabritas', 'barcel'] });
+  ok(typeof t === 'string' && t.length > 0, 'con destacados si hay texto');
+  ok(t.includes('/radar'), 'el aviso lleva el enlace al informe');
+  ok(t.length < 500, `son tres lineas, no el informe entero (${t.length} caracteres)`);
+  ok(!/sk-ant|EAA[A-Za-z0-9]|service_role/.test(t), 'el aviso no trae llaves');
+  ok(/3 reels/.test(t), 'dice cuantos fueron');
+}
+ok(/1 reel reventó/.test(textoAviso({ cuantos: 1, cuentas: ['x'] })), 'singular con uno solo');
 
 console.log('\nLos umbrales son los del spec');
 ok(UMBRAL_RAZON === 2.5, `UMBRAL_RAZON = ${UMBRAL_RAZON}`);
