@@ -58,6 +58,10 @@ const POR_DEFECTO = {
   max_piezas_linea: 2000,
   avisar_a: [],
   avisos_por_dia: 2,
+  // Cuanto se calla el agente tras pasar una conversacion con una persona.
+  // Ocho horas es tambien lo que trae por omision el bot de la ferreteria del
+  // reel que trajo Abraham el 18 nov; se cambia en /agente sin desplegar.
+  callar_horas: 8,
   mensaje_apagado: 'Ahorita no te puedo atender por aqui. Escribenos en crunchypaps.mx y te respondemos.',
 };
 
@@ -229,11 +233,15 @@ function podarHilo(hilo, maxTurnos) {
 
 async function leerHilo(telefono) {
   const r = await supa(
-    `wa_conversaciones?select=hilo,bloqueado&telefono=eq.${encodeURIComponent(telefono)}`, 'GET');
+    `wa_conversaciones?select=hilo,bloqueado,callado_hasta&telefono=eq.${encodeURIComponent(telefono)}`,
+    'GET');
   const fila = r.ok && Array.isArray(r.data) ? r.data[0] : null;
   return {
     hilo: podarHilo(fila && fila.hilo, AJ.max_turnos),
     bloqueado: Boolean(fila && fila.bloqueado),
+    // Crudo, sin interpretar: quien decide es `sigueCallado`, que es pura y se
+    // prueba sola. Aqui solo se trae lo que dijo la base.
+    calladoHasta: (fila && fila.callado_hasta) || null,
   };
 }
 
@@ -697,6 +705,27 @@ async function avisosDeHoy(telefono) {
   return r.ok && Array.isArray(r.data) ? r.data.length : 0;
 }
 
+// Hasta cuando dura el silencio. `horas` viene de la base y lo edita una
+// persona, asi que un valor roto NO puede producir "Invalid Date" y acabar
+// escrito en la columna: cae al valor del codigo.
+function hastaCuando(horas, ahora) {
+  const h = Number(horas);
+  const n = Number.isFinite(h) && h > 0 ? h : POR_DEFECTO.callar_horas;
+  const base = ahora instanceof Date ? ahora.getTime() : Date.now();
+  return new Date(base + n * 3600 * 1000).toISOString();
+}
+
+// FALLA ABIERTO, A PROPOSITO. Si `callado_hasta` trae basura, el agente
+// CONTESTA. El silencio es lo peligroso de esta pieza: un cliente callado no
+// recibe nada y no sabe si el numero existe. Entre un robot que contesta de mas
+// y un cliente que habla con una pared, se elige el primero.
+function sigueCallado(calladoHasta, ahora) {
+  if (!calladoHasta || typeof calladoHasta !== 'string') return false;
+  const t = Date.parse(calladoHasta);
+  if (!Number.isFinite(t)) return false;
+  return t > (ahora instanceof Date ? ahora.getTime() : Date.now());
+}
+
 async function pasarConUnaPersona(entrada, id) {
   const destinos = Array.isArray(AJ.avisar_a) ? AJ.avisar_a.filter(Boolean) : [];
   if (!destinos.length) {
@@ -736,6 +765,34 @@ async function pasarConUnaPersona(entrada, id) {
     console.error('wa: ningun aviso se pudo entregar');
     return 'No pude avisar ahora mismo. Dile que escriba a crunchypaps.mx y no prometas que ya avisaste.';
   }
+  // EL SILENCIO EMPIEZA AQUI, y solo si el aviso SALIO: avisar y callarse son
+  // una sola cosa. Callarse sin que nadie se entere deja al cliente sin agente
+  // Y sin persona, que es el peor de los dos mundos — por eso va despues del
+  // `if (!entregados)` de arriba y no antes.
+  //
+  // Esta respuesta todavia le llega al cliente: el handler lee `callado_hasta`
+  // AL ENTRAR, asi que el silencio aplica a los mensajes siguientes. Si
+  // aplicara ya, el cliente pediria hablar con alguien y no recibiria ni la
+  // confirmacion de que se le paso.
+  //
+  // El POST manda SOLO estas dos columnas: con merge-duplicates, PostgREST
+  // actualiza unicamente las que van en el cuerpo, asi que el `hilo` no se
+  // pisa. Y si la fila no existia, nace con el `hilo` POR OMISION de la tabla,
+  // que es `'[]'::jsonb` y no nulo: comprobado en staging el 18 nov 2026, una
+  // conversacion creada solo con telefono y callado_hasta sale con 0 turnos y
+  // `bloqueado` en false. (Aqui yo habia escrito "nace con hilo nulo" sin
+  // mirarlo; el `not null default '[]'` de la tabla dice otra cosa.)
+  const hasta = hastaCuando(AJ.callar_horas);
+  const rc = await supa('wa_conversaciones', 'POST', {
+    telefono: id.telefono, callado_hasta: hasta,
+  }, 'resolution=merge-duplicates,return=minimal');
+  if (!rc.ok) {
+    // Al modelo no se le miente: el aviso si salio, asi que lo que tiene que
+    // decirle al cliente no cambia. Lo que fallo es el silencio, y se grita en
+    // el log en vez de tragarselo (regla 27).
+    console.error('wa: aviso entregado pero NO se pudo callar la conversacion', rc.status);
+  }
+
   return 'Avisado. Dile que una persona del equipo le escribe en cuanto pueda, sin prometer hora.';
 }
 
@@ -1166,10 +1223,52 @@ module.exports = async (req, res) => {
   }
   const id = { ...ident, telefono: msg.telefono, idMensaje: msg.id };
 
-  const { hilo, bloqueado } = await leerHilo(msg.telefono);
+  // Quien escribe y NO es cliente queda registrado como prospecto. Antes moria
+  // aqui: `wa_identidad` devolvia `esCliente: false` y se acababa. Los mensajes
+  // si quedaban en `wa_mensajes`, pero eso es un log — nadie lo abre para
+  // decidir a quien visitar, y el plan del negocio es llegar a tienditas.
+  //
+  // `wa_prospecto` es idempotente y NO duplica: si el telefono ya es prospecto
+  // -el caso que mas vale, una de las 1,129 de la lista fria levantando la
+  // mano- solo le estampa las dos fechas y no toca nada mas suyo.
+  //
+  // NO PUEDE TUMBAR LA CONVERSACION, y por eso va en su propio try: perder un
+  // prospecto es malo, dejar a alguien sin respuesta por no poder anotarlo es
+  // peor. Al fallar grita en el log y sigue.
+  //
+  // El nombre sale del perfil de WhatsApp, que Meta manda en el webhook y
+  // `sacarMensaje` ya extrae. Va antes de la puerta del silencio a proposito:
+  // un escalado no deja de ser un lead.
+  if (ident.esCliente === false) {
+    try {
+      const rp = await supa('rpc/wa_prospecto', 'POST', {
+        p_telefono: msg.telefono, p_nombre: msg.nombrePerfil || '',
+      });
+      if (!rp.ok || !rp.data || rp.data.ok !== true) {
+        console.error('wa: no se pudo registrar el prospecto', rp.status,
+          JSON.stringify(rp.data).slice(0, 200));
+      } else if (rp.data.nuevo) {
+        console.log('wa: prospecto nuevo', rp.data.idProspecto);
+      }
+    } catch (e) {
+      console.error('wa: wa_prospecto lanzo', e && e.message);
+    }
+  }
+
+  const { hilo, bloqueado, calladoHasta } = await leerHilo(msg.telefono);
   if (bloqueado) {
     console.warn('wa: conversacion bloqueada', msg.telefono);
     return res.status(200).json({ ok: true, bloqueado: true });
+  }
+
+  // Ya se paso con una persona: el agente no se mete. Va DESPUES de
+  // `registrarEntrante`, a proposito: lo que el cliente escriba mientras el
+  // agente calla queda en `wa_mensajes`, que es lo que Abraham necesita leer
+  // antes de contestarle. Lo que NO entra es el hilo del modelo — cuando el
+  // silencio caduque, el agente no sabra lo que se dijo en medio.
+  if (sigueCallado(calladoHasta)) {
+    console.warn('wa: conversacion callada hasta', calladoHasta);
+    return res.status(200).json({ ok: true, callado: true });
   }
 
   // De momento solo texto. Un audio o una foto no se ignoran —hay alguien del
@@ -1247,6 +1346,8 @@ module.exports.usarAjustesDePrueba = (obj) => {
   return AJ;
 };
 module.exports.ajustes = () => AJ;
+module.exports.sigueCallado = sigueCallado;
+module.exports.hastaCuando = hastaCuando;
 module.exports.normalizarDestino = normalizarDestino;
 module.exports.puedePedir = puedePedir;
 module.exports.herramientasPara = herramientasPara;
