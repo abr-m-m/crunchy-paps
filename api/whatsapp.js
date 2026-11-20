@@ -345,10 +345,28 @@ function sistema(id) {
     'Eres el asistente de WhatsApp de Crunchy Paps: papas y snacks saborizados, en CDMX.',
     'Hablas espanol de Mexico. Breve y directo, sin emoji. Si te preguntan, di que eres un asistente.',
     '',
-    id.esCliente
+    // EL ORDEN DE ESTAS RAMAS IMPORTA, y no es cosmetico: `esCliente` va ANTES
+    // que `esVendedor` porque es la rama que lleva el NIVEL DE PRECIO. Alguien
+    // del equipo que ademas sea tendero tiene que seguir viendo su precio de
+    // tienda; si `esVendedor` fuera primero, lo perderia en silencio.
+    id.esDueno
+      ? `Escribe ${id.nombre || 'el dueno'}, el DUENO de Crunchy Paps. No le vendas ni le `
+        + 'ofrezcas el catalogo: es quien manda. Contesta lo que te pregunte del negocio con las '
+        + 'herramientas que tengas, y si no tienes herramienta para algo, dilo claro en vez de '
+        + 'rodearlo.'
+      : id.esCliente
       ? `Escribe ${id.nombre}. Nivel de precio: ${id.nivel}.`
+        + (id.esVendedor ? ` Ademas es del equipo (${id.rol}).` : '')
+      : id.esVendedor
+      ? `Escribe ${id.nombre || 'alguien'} del equipo de Crunchy Paps (${id.rol}), que no esta `
+        + 'dado de alta como cliente. No le ofrezcas comprar.'
       : 'Escribe alguien que no esta en la base. Tratalo como consumidor.',
     '',
+    // Al dueño no se le dan instrucciones de venta: acabamos de decirle al
+    // modelo que no le venda. Salio de MIRAR el prompt armado (regla 30): decia
+    // «no le ofrezcas el catalogo» y tres lineas despues «para comprar, mandale
+    // crunchypaps.mx».
+    id.esDueno ? '' :
     puedePedir(id)
       ? 'Es una tienda aprobada: puedes cotizar y levantar su pedido. Antes de crearlo, el cliente '
         + 'tiene que CONFIRMAR el total con sus palabras; no lo des por confirmado porque te haya '
@@ -359,6 +377,7 @@ function sistema(id) {
     // Esta linea existe porque cotizar_linea solo aplica el precio de caja si la
     // cantidad es MULTIPLO EXACTO de la caja. Sin decirselo, el agente ofrece
     // "12 piezas por $x la caja de 6" y el servidor cobra otra cosa.
+    id.esDueno ? '' :
     NIVELES_CON_CAJA.includes(id.nivel)
       ? 'Si el catalogo trae caja3, caja6 o caja12, ese precio SOLO aplica a multiplos exactos de esa caja y de un solo sabor: 12 piezas con caja de 6 son 2 cajas, pero 7 piezas se cobran por pieza.'
       : 'Esta persona no compra por caja: cotiza siempre por pieza.',
