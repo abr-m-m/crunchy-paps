@@ -21,7 +21,8 @@
     }
   ],
   "crons": [
-    { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" }
+    { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" },
+    { "path": "/api/contador", "schedule": "0 7 * * *" }
   ],
   "functions": {
     "api/recordatorios-pago.js": {
