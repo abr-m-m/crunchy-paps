@@ -496,7 +496,8 @@ function sistema(id) {
         + 'LEE LA FOTO Y DI LO QUE VES -monto, proveedor, fecha- ANTES de guardar nada, y '
         + 'espera a que te lo confirmen. Si no distingues el monto, dilo y pide que te lo '
         + 'escriban: nunca adivines una cifra. Pregunta el AREA si no la sabes (Produccion, '
-        + 'Reparto, Preventa, Administracion, Marketing); es distinta de la categoria y sin '
+        + 'Reparto, Preventa, Administracion, Marketing, o General para lo que sirve a todo '
+        + 'el negocio: limpieza, renta, luz); es distinta de la categoria y sin ' 
         + 'ella no se puede sacar el costo por area. Cuando te confirmen, llamala con '
         + 'aprobar en true. Si la respuesta fue que no, no guardes nada.'
       : '',
@@ -1141,13 +1142,16 @@ function herramientasPara(id) {
           monto: { type: 'number', description: 'El total del ticket, en pesos.' },
           categoria: {
             type: 'string',
-            enum: ['Materia Prima', 'Servicios', 'Nómina', 'Empaque', 'Logística', 'Equipo', 'Otros'],
+            enum: ['Materia Prima', 'Servicios', 'Nómina', 'Empaque', 'Logística',
+                   'Equipo', 'Limpieza', 'Otros'],
             description: 'QUE se compro.',
           },
           area: {
             type: 'string',
-            enum: ['Producción', 'Reparto', 'Preventa', 'Administración', 'Marketing'],
+            enum: ['Producción', 'Reparto', 'Preventa', 'Administración', 'Marketing', 'General'],
             description: 'DE QUIEN ES EL COSTO, que es distinto de la categoria. '
+              + 'Usa General para lo que sirve a TODO el negocio y no a una parte: '
+              + 'limpieza, renta, luz, internet, contabilidad. '
               + 'Si no lo sabes, preguntalo: sin area no se puede sacar el margen por ruta.',
           },
           descripcion: { type: 'string', description: 'Que fue, en pocas palabras.' },

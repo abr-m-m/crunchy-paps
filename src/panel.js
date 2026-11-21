@@ -5997,6 +5997,9 @@ const SUBCATEGORIAS_GASTOS = {
   'Empaque':       ['Bolsas', 'Etiquetas', 'Cajas', 'Otros'],
   'Logística':     ['Combustible', 'Mensajería', 'Mantenimiento vehículo', 'Otros'],
   'Equipo':        ['Herramientas', 'Reparaciones', 'Compra equipo', 'Otros'],
+  // Nacio del primer ticket que leyo el agente por WhatsApp: cloro,
+  // fabuloso y escobas caian en 'Otros', que no dice nada.
+  'Limpieza':      ['Quimicos', 'Utensilios', 'Papel y consumibles', 'Otros'],
   'Otros':         ['Otros']
 };
 

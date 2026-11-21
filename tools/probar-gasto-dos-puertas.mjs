@@ -163,6 +163,17 @@ try {
     }
     const basura = sql("select public.gasto_area_normal('contabilidad creativa') as a;");
     ok(basura.a === null, 'un area inventada se queda en null, no entra a la tabla');
+
+    // «General» nacio del primer ticket real: productos de limpieza, que no
+    // son de un area sino de todas. Y «limpieza» cae ahi en vez de
+    // rechazarse: perder el gasto por una palabra seria peor.
+    for (const [manda, espera] of [['General', 'General'], ['limpieza', 'General'],
+                                   ['indirectos', 'General']]) {
+      const r = sql(`select public.gasto_area_normal('${manda}') as a;`);
+      ok(r.a === espera, `'${manda}' -> '${r.a}'`);
+    }
+    const dentro = sql("select ('General' = any(array['Producción','Reparto','Preventa','Administración','Marketing','General'])) ok;");
+    ok(dentro.ok === true, 'y la tabla lo acepta');
   }
   {
     const r = sql(`select public.wa_registrar_gasto('{"telefono":"${ANA}",
