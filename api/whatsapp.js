@@ -994,7 +994,10 @@ function herramientasPara(id) {
       name: 'ventas',
       description: 'Las ventas del NEGOCIO (todos los pedidos, no solo los de quien escribe): '
         + 'cuanto se vendio en un periodo y CUANDO FUE EL ULTIMO DIA CON VENTAS. '
-        + 'El ultimo dia no depende del periodo que pidas. Sin fechas, toma los ultimos 90 dias.',
+        + 'El ultimo dia no depende del periodo que pidas. Sin fechas, toma los ultimos 90 dias. '
+        + 'OJO A LOS CAMPOS: `neto` es subtotal menos descuento y NO lleva envio; `cobrado` SI lo '
+        + 'lleva, asi que `cobrado = neto + envioCobrado`. Si el dueño pregunta por que no cuadran, '
+        + 'esa es la razon y la puedes explicar.',
       input_schema: {
         type: 'object',
         properties: {

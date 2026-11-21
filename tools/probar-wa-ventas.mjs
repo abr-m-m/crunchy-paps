@@ -84,6 +84,21 @@ try {
       `y los pedidos: agente ${c.ped_agente} = pantalla ${c.ped_pantalla}`);
   }
 
+  console.log('');
+  console.log('El agente puede EXPLICAR por que cobrado > neto');
+  {
+    // Lo encontro el propio agente el 20 nov a las 19:26: «Cobrado sale mayor que
+    // neto. No sé a qué se deba la diferencia, y con estos datos no puedo
+    // explicarla.» Tenia razon, y el defecto era de la herramienta: le daba
+    // `neto` -sin envio- y `cobrado` -con envio- sin con que explicar la
+    // diferencia. Dijo «no se» en vez de inventar, que es lo que se le pidio.
+    ok(r.envioCobrado !== undefined, 'el payload trae `envioCobrado`');
+    const cuadra = Math.abs(Number(r.neto) + Number(r.envioCobrado) - Number(r.cobrado)) < 0.01;
+    ok(cuadra,
+      `cobrado = neto + envio: ${r.cobrado} = ${r.neto} + ${r.envioCobrado}`);
+    ok(r.cupones !== undefined, 'y los cupones, que es el otro hueco entre bruto y neto');
+  }
+
   console.log('\n«El último día que vendimos» no depende de la ventana');
   {
     // Es la unica cifra que NO es del periodo: preguntar «cuando vendimos por
