@@ -211,11 +211,63 @@ function sacarMensaje(cuerpo) {
       telefono: m.from,
       tipo: m.type,
       texto: m.type === 'text' ? m.text.body : '',
+      // Una foto llega como un ID de medio, no como bytes: hay que ir a por
+      // ella con el token. El pie de foto es opcional y la gente lo usa para
+      // decir lo que la foto no dice ("esto fue de la gasolina del martes").
+      imagenId: m.type === 'image' ? (m.image && m.image.id) || '' : '',
+      pieDeFoto: m.type === 'image' ? (m.image && m.image.caption) || '' : '',
       nombrePerfil: (v.contacts && v.contacts[0] && v.contacts[0].profile
         && v.contacts[0].profile.name) || '',
     };
   } catch {
     return null;
+  }
+}
+
+// ── La foto del ticket ──────────────────────────────────────────────────────
+// Meta no manda la imagen: manda un id. Hay dos saltos -pedir la URL firmada y
+// luego bajarla-, y LOS DOS necesitan el token. La URL caduca en minutos, asi
+// que no se guarda: se usa y se tira.
+const TICKET_MAX = 4 * 1024 * 1024;   // el tope de la API para una imagen
+
+async function bajarImagenWA(mediaId) {
+  const cab = { Authorization: `Bearer ${WA_TOKEN}` };
+  const meta = await fetch(`https://graph.facebook.com/${WA_GRAPH}/${mediaId}`, { headers: cab });
+  if (!meta.ok) { console.error('wa: no se pudo pedir la foto', meta.status); return null; }
+  const info = await meta.json();
+  if (!info || !info.url) return null;
+
+  const bin = await fetch(info.url, { headers: cab });
+  if (!bin.ok) { console.error('wa: no se pudo bajar la foto', bin.status); return null; }
+  const bytes = Buffer.from(await bin.arrayBuffer());
+
+  // Una foto que no cabe se rechaza AQUI y no en la API: asi el usuario recibe
+  // una frase util en vez de un fallo, y no se paga la vuelta al modelo.
+  if (bytes.length > TICKET_MAX) {
+    console.warn('wa: foto demasiado grande', bytes.length);
+    return { grande: true };
+  }
+  return { bytes, mime: info.mime_type || 'image/jpeg', tam: bytes.length };
+}
+
+// Se guarda ANTES de ensenarsela al modelo, a proposito: si el modelo falla o
+// el usuario se arrepiente, el ticket ya esta a salvo y se puede clasificar
+// despues. Perder la foto es perder el comprobante.
+async function subirTicket(bytes, mime) {
+  const ext = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+  const ahora = new Date();
+  const ruta = `tickets/${ahora.getUTCFullYear()}/${ahora.getTime()}-${Math.round(bytes.length)}.${ext}`;
+  try {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/contenido/${ruta}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${SUPA_SR}`, 'Content-Type': mime, 'x-upsert': 'true' },
+      body: bytes,
+    });
+    if (!r.ok) { console.error('wa: no se pudo guardar el ticket', r.status); return ''; }
+    return ruta;
+  } catch (e) {
+    console.error('wa: subirTicket lanzo', e && e.message);
+    return '';
   }
 }
 
@@ -415,6 +467,24 @@ function sistema(id) {
       ? '- registrar_hueco: cuando te pregunte algo del negocio y NO tengas herramienta para '
         + 'contestarlo, dilo claro y apuntalo con esta. No le digas que se lo pasas a alguien: '
         + 'el ES el equipo.'
+      : '',
+    // GASTOS. Las dos reglas que importan son: leer en voz alta antes de
+    // escribir -de una foto se confunde un 6 con un 8 y el numero se queda en
+    // los libros- y no aprobar nada por cuenta propia. La segunda tambien esta
+    // en el servidor, que es donde de verdad manda; aqui esta para que el
+    // agente no PROMETA una aprobacion que no va a ocurrir.
+    id.puedeGastos
+      ? '- registrar_gasto: cuando te manden la foto de un ticket o te digan un gasto. '
+        + 'LEE LA FOTO Y DI LO QUE VES -monto, proveedor, fecha- ANTES de guardar nada, y '
+        + 'espera a que te lo confirmen. Si no distingues el monto, dilo y pide que te lo '
+        + 'escriban: nunca adivines una cifra. Pregunta el AREA si no la sabes (Produccion, '
+        + 'Reparto, Preventa, Administracion, Marketing); es distinta de la categoria y sin '
+        + 'ella no se puede sacar el costo por area. Cuando te confirmen, llamala con '
+        + 'aprobar en true. Si la respuesta fue que no, no guardes nada.'
+      : '',
+    id.puedeGastos
+      ? 'Tu NO apruebas gastos. Si quien escribe no puede aprobar, el gasto queda pendiente '
+        + 'y lo dices asi, sin prometer que ya quedo listo.'
       : '',
     // Cancelar mueve lote, caja, puntos y, con Stripe, un reembolso real. No es
     // una accion de chat.
@@ -1035,6 +1105,50 @@ function herramientasPara(id) {
     });
   }
 
+  // Gastos: a quien trae la seccion `gastos`, que hoy son el dueno y mostrador.
+  // Esto NO es el permiso -lo da `wa_registrar_gasto` mirando la misma seccion
+  // en el servidor-: es para no ofrecer algo que luego falla.
+  if (id.puedeGastos) {
+    lista.push({
+      name: 'registrar_gasto',
+      description: 'Registra un gasto del negocio. Usala cuando te manden la foto de un '
+        + 'ticket o te digan un gasto por escrito. ANTES de llamarla, DI EN VOZ ALTA lo que '
+        + 'leiste -monto, proveedor, fecha- y espera a que te lo confirmen: de una foto se '
+        + 'lee mal un 6 por un 8 y el numero se queda en los libros. '
+        + 'Si te confirman el monto, pasa `aprobar: true`; si no te han contestado todavia, '
+        + 'NO la llames. Si no distingues el monto, dilo y pide que te lo escriban.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          monto: { type: 'number', description: 'El total del ticket, en pesos.' },
+          categoria: {
+            type: 'string',
+            enum: ['Materia Prima', 'Servicios', 'Nómina', 'Empaque', 'Logística', 'Equipo', 'Otros'],
+            description: 'QUE se compro.',
+          },
+          area: {
+            type: 'string',
+            enum: ['Producción', 'Reparto', 'Preventa', 'Administración', 'Marketing'],
+            description: 'DE QUIEN ES EL COSTO, que es distinto de la categoria. '
+              + 'Si no lo sabes, preguntalo: sin area no se puede sacar el margen por ruta.',
+          },
+          descripcion: { type: 'string', description: 'Que fue, en pocas palabras.' },
+          proveedor: { type: 'string', description: 'Quien lo vendio, si aparece en el ticket.' },
+          fecha: { type: 'string', description: 'AAAA-MM-DD. La del ticket, no la de hoy, si se ve.' },
+          metodoPago: { type: 'string', enum: ['Efectivo', 'Tarjeta', 'Transferencia'] },
+          fuenteDinero: { type: 'string', enum: ['Crunchy', 'Inversión'] },
+          aprobar: {
+            type: 'boolean',
+            description: 'true SOLO si la persona ya dijo que si a ESTE monto. Nunca por tu cuenta.',
+          },
+        },
+        required: ['monto', 'categoria', 'area'],
+        additionalProperties: false,
+      },
+      strict: true,
+    });
+  }
+
   return lista;
 }
 
@@ -1162,6 +1276,44 @@ async function correrHerramienta(nombre, entrada, id) {
     return JSON.stringify(r.data);
   }
 
+  if (nombre === 'registrar_gasto') {
+    const campos = {
+      monto: entrada.monto,
+      categoria: entrada.categoria,
+      area: entrada.area,
+      descripcion: entrada.descripcion || '',
+      proveedor: entrada.proveedor || '',
+      metodo_pago: entrada.metodoPago || '',
+      fuente_dinero: entrada.fuenteDinero || 'Crunchy',
+    };
+    // La fecha del TICKET, no la de hoy, pero solo si viene bien escrita: una
+    // fecha inventada en los libros es peor que la de hoy, que al menos se
+    // sabe de donde salio.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(entrada.fecha || ''))) {
+      campos.fecha = entrada.fecha;
+    }
+    // La ruta del ticket la pone el handler al guardar la foto, NO el modelo:
+    // el modelo no sabe donde quedo el archivo y no tiene por que saberlo.
+    if (id.rutaTicket) campos.ticket_url = id.rutaTicket;
+
+    const r = await transporte('rpc/wa_registrar_gasto', 'POST', {
+      p_data: {
+        telefono: id.telefono,
+        // `aprobar` viaja como lo que es: «la persona dijo que si». Quien
+        // decide si esa persona PUEDE aprobar es el servidor, mirando su rol.
+        aprobar: entrada.aprobar === true,
+        campos,
+      },
+    });
+    if (!r.ok || !r.data || r.data.ok !== true) {
+      const por = (r.data && r.data.error) || 'sin detalle';
+      console.error('wa: no se pudo registrar el gasto', por);
+      return `No se pudo registrar: ${por}. Dilo tal cual, no inventes que quedo guardado.`;
+    }
+    return JSON.stringify({ ok: true, id: r.data.id,
+      aprobado: entrada.aprobar === true && id.esDueno === true });
+  }
+
   return 'Esa herramienta no existe.';
 }
 
@@ -1171,8 +1323,16 @@ async function correrHerramienta(nombre, entrada, id) {
 // poder calcular el gasto de verdad. Tambien deja registrar que herramientas se
 // usaron, que es lo que se guarda en `wa_mensajes.herramientas`.
 
-async function responder(id, texto, hilo) {
-  const mensajes = [...hilo, { role: 'user', content: texto }];
+// `imagen` va solo en la PRIMERA vuelta y NO se guarda en el hilo: una foto en
+// base64 son cientos de miles de caracteres, y el hilo se manda entero en cada
+// mensaje. Lo que se recuerda de un ticket es lo que el agente dijo de el.
+async function responder(id, texto, hilo, imagen) {
+  const contenido = imagen
+    ? [{ type: 'image',
+         source: { type: 'base64', media_type: imagen.mime, data: imagen.bytes.toString('base64') } },
+       { type: 'text', text: texto }]
+    : texto;
+  const mensajes = [...hilo, { role: 'user', content: contenido }];
   const usadas = [];
   let entrada = 0, salida = 0, cacheLeido = 0, cacheEscrito = 0;
 
@@ -1325,6 +1485,13 @@ module.exports = async (req, res) => {
   // acusa recibo, Meta reintenta, y el reintento cuesta lo mismo que un mensaje.
   if (!msg) return res.status(200).json({ ok: true });
 
+  // Una foto llega SIN texto, y el bucle de turnos se corta cuando no hay nada
+  // que contestar. Se encola el pie de foto -o una marca- para que siga su
+  // curso, y de paso queda en `wa_mensajes` que entro una foto y no un vacio.
+  if (msg.imagenId && !msg.texto) {
+    msg.texto = msg.pieDeFoto || '[te mando una foto]';
+  }
+
   // Los ajustes se cargan ANTES de los topes, porque los topes son uno de ellos.
   // Los temas van en la misma vuelta: son dos lecturas pequeñas y en paralelo no
   // cuestan mas que una.
@@ -1356,6 +1523,26 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
   const id = { ...ident, telefono: msg.telefono, idMensaje: msg.id };
+
+  // LA FOTO SOLO SE BAJA SI QUIEN LA MANDA PUEDE REGISTRAR GASTOS. Bajar y
+  // guardar la foto de cualquiera cuesta transferencia y almacenamiento, y no
+  // sirve para nada: la herramienta tampoco se le ofrece.
+  let imagen = null;
+  if (msg.imagenId && ident.puedeGastos) {
+    const bajada = await bajarImagenWA(msg.imagenId);
+    if (bajada && bajada.grande) {
+      await enviarWA(msg.telefono,
+        'Esa foto pesa demasiado para que la lea. Mandamela mas chica, o escribeme el monto.');
+      return res.status(200).json({ ok: true, fotoGrande: true });
+    }
+    if (bajada) {
+      imagen = bajada;
+      // Se guarda ANTES de ensenarsela al modelo, a proposito: si el modelo
+      // falla o la persona se arrepiente, el comprobante ya esta a salvo y se
+      // clasifica despues. Perder la foto es perder el comprobante.
+      id.rutaTicket = await subirTicket(bajada.bytes, bajada.mime);
+    }
+  }
 
   // Quien escribe y NO es cliente queda registrado como prospecto. Antes moria
   // aqui: `wa_identidad` devolvia `esCliente: false` y se acababa. Los mensajes
@@ -1454,7 +1641,9 @@ module.exports = async (req, res) => {
 
       let salida;
       try {
-        salida = await responder(id, texto, hiloVivo);
+        // La foto va solo en la primera vuelta: en la segunda el modelo ya
+        // dijo lo que leyo, y remandarla es pagar dos veces por lo mismo.
+        salida = await responder(id, texto, hiloVivo, vueltas === 0 ? imagen : null);
       } catch (e) {
         console.error('wa: el modelo fallo', e && e.message);
         await enviarWA(msg.telefono, 'Se me complico el sistema. Lo paso con el equipo y te escriben.');

@@ -1758,6 +1758,17 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <option value="Inversión">Inversión</option>
       </select>
     </div>
+    <div>
+      <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Área del negocio</label>
+      <select class="inp" id="ng-area">
+        <option value="">Sin clasificar</option>
+        <option value="Producción">Producción</option>
+        <option value="Reparto">Reparto</option>
+        <option value="Preventa">Preventa</option>
+        <option value="Administración">Administración</option>
+        <option value="Marketing">Marketing</option>
+      </select>
+    </div>
     <input class="inp" id="ng-proveedor" type="text" placeholder="Proveedor (opcional)" maxlength="100">
     <input class="inp" id="ng-factura" type="text" placeholder="Factura / folio (opcional)" maxlength="50">
     <textarea class="inp" id="ng-notas" placeholder="Notas (opcional)" rows="2" style="resize:vertical;"></textarea>

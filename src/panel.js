@@ -6078,6 +6078,7 @@ async function renderGastos() {
       metodoPago:      g.metodo_pago,
       tipoPago:        g.metodo_pago,      // alias legacy (UI usa tipoPago)
       fuenteDinero:    g.fuente_dinero || 'Crunchy',  // default
+      area:            g.area || '',
       proveedor:       g.proveedor,
       rfcProveedor:    g.rfc_proveedor,
       tieneFactura:    g.tiene_factura,
@@ -6247,6 +6248,7 @@ window.abrirNuevoGasto = function() {
   document.getElementById('ng-monto').value = '';
   document.getElementById('ng-tipo-pago').value = 'Efectivo';
   document.getElementById('ng-fuente').value = 'Crunchy';
+  document.getElementById('ng-area').value = '';
   document.getElementById('ng-proveedor').value = '';
   document.getElementById('ng-factura').value = '';
   document.getElementById('ng-notas').value = '';
@@ -6323,6 +6325,7 @@ window.guardarGasto = async function() {
   const monto     = Number(document.getElementById('ng-monto').value);
   const tipoPago  = document.getElementById('ng-tipo-pago').value;
   const fuente    = document.getElementById('ng-fuente').value;
+  const area      = document.getElementById('ng-area').value;
   const proveedor = document.getElementById('ng-proveedor').value.trim();
   const factura   = document.getElementById('ng-factura').value.trim();
   const notas     = document.getElementById('ng-notas').value.trim();
@@ -6345,6 +6348,7 @@ window.guardarGasto = async function() {
       moneda: 'MXN',
       metodo_pago: tipoPago,
       fuente_dinero: fuente,
+      area,
       proveedor: proveedor || null,
       // legacy: factura va a notas (campo factura no existe en BD nueva, lo mantenemos así)
       notas: notas || (factura ? `Factura: ${factura}` : null),
@@ -6574,6 +6578,7 @@ window.editarGastoUI = function(id) {
   document.getElementById('ng-monto').value = g.monto;
   document.getElementById('ng-tipo-pago').value = g.tipoPago;
   document.getElementById('ng-fuente').value = g.fuenteDinero;
+  document.getElementById('ng-area').value = g.area || '';
   document.getElementById('ng-proveedor').value = g.proveedor;
   document.getElementById('ng-factura').value = g.factura;
   document.getElementById('ng-notas').value = g.notas;
