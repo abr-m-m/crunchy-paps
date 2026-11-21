@@ -409,6 +409,9 @@ function sistema(id) {
     // que no puedas contestar se APUNTA. Es la diferencia entre pasar el
     // problema y reconocerlo.
     id.esDueno
+      ? '- ventas: lo que vendio el NEGOCIO en un periodo, y cuando fue el ultimo dia con ventas. No la confundas con mis_pedidos, que solo ve los de quien escribe.'
+      : '',
+    id.esDueno
       ? '- registrar_hueco: cuando te pregunte algo del negocio y NO tengas herramienta para '
         + 'contestarlo, dilo claro y apuntalo con esta. No le digas que se lo pasas a alguien: '
         + 'el ES el equipo.'
@@ -983,6 +986,28 @@ function herramientasPara(id) {
     });
   }
 
+  // Las ventas del negocio son del dueño, no de quien escribe. `mis_pedidos` ya
+  // existe y solo ve los de uno: esa es exactamente la distincion que el propio
+  // agente apunto al no poder contestar, el 20 nov a las 19:07.
+  if (id.esDueno) {
+    lista.push({
+      name: 'ventas',
+      description: 'Las ventas del NEGOCIO (todos los pedidos, no solo los de quien escribe): '
+        + 'cuanto se vendio en un periodo y CUANDO FUE EL ULTIMO DIA CON VENTAS. '
+        + 'El ultimo dia no depende del periodo que pidas. Sin fechas, toma los ultimos 90 dias.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          desde: { type: 'string', description: 'AAAA-MM-DD. Cadena vacia para los ultimos 90 dias.' },
+          hasta: { type: 'string', description: 'AAAA-MM-DD. Cadena vacia para hoy.' },
+        },
+        required: ['desde', 'hasta'],
+        additionalProperties: false,
+      },
+      strict: true,
+    });
+  }
+
   // Solo el dueño. Para un cliente, lo que no se puede contestar se ESCALA; para
   // el dueño, se APUNTA. Son dos cosas distintas y por eso son dos herramientas.
   if (id.esDueno) {
@@ -1094,6 +1119,18 @@ async function correrHerramienta(nombre, entrada, id) {
   if (nombre === 'crear_pedido') return crearPedidoConfirmado(entrada, id);
 
   if (nombre === 'pasar_con_una_persona') return pasarConUnaPersona(entrada, id);
+
+  if (nombre === 'ventas') {
+    const lim = (v) => (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(String(v || '')) ? String(v) : null);
+    const r = await supa('rpc/wa_ventas', 'POST', {
+      p_desde: lim(entrada && entrada.desde), p_hasta: lim(entrada && entrada.hasta),
+    });
+    if (!r.ok || !r.data || r.data.ok !== true) {
+      console.error('wa: wa_ventas fallo', r.status);
+      return 'No pude consultar las ventas. Dilo asi en vez de dar un numero.';
+    }
+    return JSON.stringify(r.data);
+  }
 
   if (nombre === 'registrar_hueco') {
     const r = await supa('rpc/wa_registrar_hueco', 'POST', {
