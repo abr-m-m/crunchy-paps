@@ -62,6 +62,10 @@ const POR_DEFECTO = {
   // Ocho horas es tambien lo que trae por omision el bot de la ferreteria del
   // reel que trajo Abraham el 18 nov; se cambia en /agente sin desplegar.
   callar_horas: 8,
+  // Cuanto espera antes de contestar, para juntar los mensajes que la gente
+  // manda partidos en dos o tres. 0 lo apaga y contesta al instante, que es el
+  // comportamiento de siempre.
+  juntar_segundos: 6,
   mensaje_apagado: 'Ahorita no te puedo atender por aqui. Escribenos en crunchypaps.mx y te respondemos.',
 };
 
@@ -335,6 +339,14 @@ function textoDeTemas() {
   }
   lineas.push('Si lo que preguntan no encaja en ninguno, tratalo como el tema mas parecido.');
   return lineas.join('\n');
+}
+
+// ── Juntar lo que llego partido ─────────────────────────────────────────────
+// WhatsApp manda de vez en cuando textos vacios, y un mensaje con solo espacios
+// no aporta nada al modelo: se tiran aqui en vez de mandarselos.
+function juntarPendientes(lista) {
+  if (!Array.isArray(lista)) return '';
+  return lista.map((t) => String(t == null ? '' : t).trim()).filter(Boolean).join('\n');
 }
 
 // ── El prompt ───────────────────────────────────────────────────────────────
@@ -1299,14 +1311,52 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
 
-  let salida;
-  try {
-    salida = await responder(id, msg.texto, hilo);
-  } catch (e) {
-    console.error('wa: el modelo fallo', e && e.message);
-    await enviarWA(msg.telefono, 'Se me complico el sistema. Lo paso con el equipo y te escriben.');
-    return res.status(200).json({ ok: true, error: 'modelo' });
+  // ── EL TURNO ──────────────────────────────────────────────────────────────
+  // Cada mensaje de WhatsApp dispara su propia invocacion. El 20 nov 2026
+  // Abraham mando «La última producción» y «?» en el mismo segundo y el agente
+  // contesto DOS veces, 17:40:41 y 17:40:42: dos modelos pensando a la vez
+  // sobre medias preguntas. En una cotizacion eso es un precio equivocado.
+  //
+  // `wa_tomar_turno` encola el texto SIEMPRE y solo le da el turno a una. Las
+  // demas se van sin contestar, tranquilas: su texto ya esta en la cola.
+  const espera = Math.max(0, Number(AJ.juntar_segundos) || 0);
+  const turno = await supa('rpc/wa_tomar_turno', 'POST', {
+    p_telefono: msg.telefono, p_texto: msg.texto, p_segundos: 60,
+  });
+  if (!turno.ok || !turno.data || turno.data.tomado !== true) {
+    console.log('wa: encolado, otro tiene el turno', msg.telefono);
+    return res.status(200).json({ ok: true, encolado: true });
   }
+
+  let hiloVivo = hilo;
+  let vueltas = 0;
+  try {
+    for (;;) {
+      // La espera va SOLO en la primera vuelta: es la que atrapa la rafaga. En
+      // las siguientes se mira la cola al instante, porque lo que interesa es
+      // lo que entro MIENTRAS el modelo pensaba.
+      if (espera > 0 && vueltas === 0) {
+        await new Promise((r) => setTimeout(r, espera * 1000));
+      }
+
+      const pend = await supa('rpc/wa_tomar_pendientes', 'POST', {
+        p_telefono: msg.telefono, p_segundos: 60,
+      });
+      const lista = (pend.ok && pend.data && Array.isArray(pend.data.pendientes))
+        ? pend.data.pendientes : [];
+      const texto = juntarPendientes(lista);
+      // Sin nada que contestar se sale: en la primera vuelta no deberia pasar
+      // -el mensaje propio ya esta encolado- y en la segunda es lo normal.
+      if (!texto) break;
+
+      let salida;
+      try {
+        salida = await responder(id, texto, hiloVivo);
+      } catch (e) {
+        console.error('wa: el modelo fallo', e && e.message);
+        await enviarWA(msg.telefono, 'Se me complico el sistema. Lo paso con el equipo y te escriben.');
+        return res.status(200).json({ ok: true, error: 'modelo' });
+      }
 
   // El resultado del envio se GUARDA. Antes la fila `sale` se escribia pasara
   // lo que pasara, asi que leerla parecia prueba de que el cliente recibio algo
@@ -1330,20 +1380,33 @@ module.exports = async (req, res) => {
     cacheLeido: salida.cacheLeido,
     cacheEscrito: salida.cacheEscrito,
   }, (salida.entrada || 0) + (salida.salida || 0));
-  await guardarHilo(msg.telefono, [
-    ...hilo,
-    { role: 'user', content: msg.texto },
-    { role: 'assistant', content: salida.texto },
-  ]);
+      hiloVivo = [
+        ...hiloVivo,
+        { role: 'user', content: texto },
+        { role: 'assistant', content: salida.texto },
+      ];
+      await guardarHilo(msg.telefono, hiloVivo);
+
+      // DOS vueltas como mucho. Si siguen entrando mensajes, el webhook del
+      // siguiente tomara el turno cuando lo soltemos: no hace falta -ni cabe-
+      // quedarse aqui. Un bucle sin tope se come los 60 s de la funcion.
+      if (++vueltas >= 2) break;
+    }
+  } finally {
+    // SIEMPRE, incluso si el modelo fallo y salimos por el `return` de arriba.
+    // Un turno que no se suelta deja la conversacion muda hasta que caduque.
+    await supa('rpc/wa_soltar_turno', 'POST', { p_telefono: msg.telefono });
+  }
 
   // Meta reintenta si no recibe un 200 rapido, y un reintento es otro mensaje.
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, vueltas });
 };
 
 module.exports.firmaValida = firmaValida;
 module.exports.leerCrudo = leerCrudo;
 module.exports.sacarMensaje = sacarMensaje;
 module.exports.podarHilo = podarHilo;
+module.exports.juntarPendientes = juntarPendientes;
 module.exports.sistema = sistema;
 module.exports.POR_DEFECTO = POR_DEFECTO;
 module.exports.cargarAjustes = cargarAjustes;
