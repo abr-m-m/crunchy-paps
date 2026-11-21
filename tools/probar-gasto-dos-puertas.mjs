@@ -191,6 +191,50 @@ try {
     ok(reventó, 'la tabla rechaza un area fuera de las cinco, aunque se escriba directo');
   }
 
+  console.log('');
+  console.log('EL MISMO MENSAJE NO ESCRIBE DOS GASTOS (fallo real del 21 nov 13:41)');
+  {
+    // Paso de verdad: el modelo pidio `registrar_gasto` DOS VECES en la misma
+    // respuesta y quedaron las filas 7 y 8, con 110 ms de diferencia. No se
+    // arregla pidiendole al modelo que no lo haga -llamar en paralelo es un
+    // caso normal de la API-: se arregla donde se escribe.
+    const msg = 'wamid.PRUEBA.' + Date.now();
+    const a = sql(`select public.wa_registrar_gasto('{"telefono":"${ANA}","idMensaje":"${msg}",
+        "campos":{"monto":"777","categoria":"Limpieza","area":"General"}}'::jsonb) as j;`).j;
+    const b = sql(`select public.wa_registrar_gasto('{"telefono":"${ANA}","idMensaje":"${msg}",
+        "campos":{"monto":"777","categoria":"Limpieza","area":"General"}}'::jsonb) as j;`).j;
+    ok(a.ok === true && a.creado === true, 'la primera llamada crea');
+    ok(b.ok === true && b.creado === false, 'la segunda NO crea');
+    ok(Number(a.id) === Number(b.id), `y devuelve el mismo id (${a.id} = ${b.id})`);
+    ok(b.yaEstaba === true, 'diciendo que ya estaba, no fingiendo que creo otro');
+    const n = sql(`select count(*) c from gastos where wa_mensaje_id = '${msg}';`);
+    ok(Number(n.c) === 1, `queda UNA fila, no dos (hay ${n.c})`);
+    sql(`delete from gastos where wa_mensaje_id = '${msg}';`);
+  }
+
+  console.log('');
+  console.log('LA FOTO SOBREVIVE ENTRE MENSAJES (el otro fallo del 21 nov)');
+  {
+    // La foto llega en un mensaje y la confirmacion dos despues. La ruta solo
+    // existia en la invocacion de la imagen, asi que el gasto quedo SIN
+    // ticket: la foto en Storage y `ticket_url` en null.
+    sql(`insert into wa_conversaciones (telefono, hilo) values ('${ANA}', '[]'::jsonb)
+           on conflict (telefono) do nothing;`);
+    const ruta = 'tickets/2026/prueba-pendiente.jpg';
+    const g = sql(`select public.wa_guardar_ticket_pendiente('{"telefono":"${ANA}","ruta":"${ruta}"}'::jsonb) as j;`).j;
+    ok(g.ok === true, 'la ruta se aparca en la conversacion');
+
+    const msg2 = 'wamid.FOTO.' + Date.now();
+    const r = sql(`select public.wa_registrar_gasto('{"telefono":"${ANA}","idMensaje":"${msg2}",
+        "campos":{"monto":"55","categoria":"Limpieza","area":"General"}}'::jsonb) as j;`).j;
+    const f = sql(`select coalesce(ticket_url,'(null)') t from gastos where id = ${Number(r.id)};`);
+    ok(f.t === ruta, `el gasto se queda con el comprobante: ${f.t}`);
+
+    const c = sql(`select coalesce(ticket_pendiente,'(null)') p from wa_conversaciones where telefono='${ANA}';`);
+    ok(c.p === '(null)', 'y la foto se suelta, para no pegarse al siguiente gasto');
+    sql(`delete from gastos where wa_mensaje_id = '${msg2}';`);
+  }
+
   console.log('\nLa foto del ticket viaja y se guarda');
   {
     const r = sql(`select public.wa_registrar_gasto('{"telefono":"${ANA}",

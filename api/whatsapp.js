@@ -1155,8 +1155,12 @@ function herramientasPara(id) {
               + 'Si no lo sabes, preguntalo: sin area no se puede sacar el margen por ruta.',
           },
           descripcion: { type: 'string', description: 'Que fue, en pocas palabras.' },
-          proveedor: { type: 'string', description: 'Quien lo vendio, si aparece en el ticket.' },
-          fecha: { type: 'string', description: 'AAAA-MM-DD. La del ticket, no la de hoy, si se ve.' },
+          proveedor: { type: 'string',
+            description: 'Quien lo vendio. Si lo leiste del ticket, MANDALO: el 21 nov se '
+              + 'perdio un proveedor que el agente habia leido bien y no paso aqui.' },
+          fecha: { type: 'string',
+            description: 'AAAA-MM-DD. LA DEL TICKET, no la de hoy. Si la leiste, mandala: '
+              + 'un gasto de julio fechado en noviembre descuadra el mes.' },
           metodoPago: { type: 'string', enum: ['Efectivo', 'Tarjeta', 'Transferencia'] },
           fuenteDinero: { type: 'string', enum: ['Crunchy', 'Inversión'] },
           aprobar: {
@@ -1164,7 +1168,10 @@ function herramientasPara(id) {
             description: 'true SOLO si la persona ya dijo que si a ESTE monto. Nunca por tu cuenta.',
           },
         },
-        required: ['monto', 'categoria', 'area'],
+        // `metodoPago` y `fuenteDinero` son OBLIGATORIOS, y no por capricho:
+        // de los dos depende si el gasto toca la caja. Si no los sabes,
+        // preguntalos; lo que no se puede es que falten en silencio.
+        required: ['monto', 'categoria', 'area', 'metodoPago', 'fuenteDinero'],
         additionalProperties: false,
       },
       strict: true,
@@ -1305,22 +1312,26 @@ async function correrHerramienta(nombre, entrada, id) {
       area: entrada.area,
       descripcion: entrada.descripcion || '',
       proveedor: entrada.proveedor || '',
-      metodo_pago: entrada.metodoPago || '',
-      fuente_dinero: entrada.fuenteDinero || 'Crunchy',
     };
+    // Solo lo que de verdad vino. Un campo ausente se queda ausente: antes
+    // `fuente_dinero` caia en 'Crunchy' por omision y escribio «Crunchy» donde
+    // la persona habia dicho «Inversion».
+    if (entrada.metodoPago) campos.metodo_pago = entrada.metodoPago;
+    if (entrada.fuenteDinero) campos.fuente_dinero = entrada.fuenteDinero;
     // La fecha del TICKET, no la de hoy, pero solo si viene bien escrita: una
     // fecha inventada en los libros es peor que la de hoy, que al menos se
     // sabe de donde salio.
     if (/^\d{4}-\d{2}-\d{2}$/.test(String(entrada.fecha || ''))) {
       campos.fecha = entrada.fecha;
     }
-    // La ruta del ticket la pone el handler al guardar la foto, NO el modelo:
-    // el modelo no sabe donde quedo el archivo y no tiene por que saberlo.
-    if (id.rutaTicket) campos.ticket_url = id.rutaTicket;
 
     const r = await transporte('rpc/wa_registrar_gasto', 'POST', {
       p_data: {
         telefono: id.telefono,
+        // La cerradura del duplicado. El 21 nov el modelo pidio la herramienta
+        // dos veces en la MISMA respuesta y quedaron dos filas; las dos
+        // llamadas comparten este id, y el servidor deja pasar una.
+        idMensaje: id.idMensaje || '',
         // `aprobar` viaja como lo que es: «la persona dijo que si». Quien
         // decide si esa persona PUEDE aprobar es el servidor, mirando su rol.
         aprobar: entrada.aprobar === true,
@@ -1562,7 +1573,19 @@ module.exports = async (req, res) => {
       // Se guarda ANTES de ensenarsela al modelo, a proposito: si el modelo
       // falla o la persona se arrepiente, el comprobante ya esta a salvo y se
       // clasifica despues. Perder la foto es perder el comprobante.
-      id.rutaTicket = await subirTicket(bajada.bytes, bajada.mime);
+      const ruta = await subirTicket(bajada.bytes, bajada.mime);
+      // SE APARCA EN LA CONVERSACION, no en esta invocacion. La foto llega en
+      // un mensaje y la confirmacion dos despues; el 21 nov la ruta moria con
+      // la invocacion y el gasto quedo sin comprobante, con la foto en Storage
+      // y `ticket_url` en null. Ahora espera ahi hasta que se registre.
+      if (ruta) {
+        try {
+          await supa('rpc/wa_guardar_ticket_pendiente', 'POST',
+            { p_data: { telefono: msg.telefono, ruta } });
+        } catch (e) {
+          console.error('wa: no se pudo aparcar el ticket', e && e.message);
+        }
+      }
     }
   }
 
