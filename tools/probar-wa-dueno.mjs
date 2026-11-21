@@ -138,6 +138,31 @@ try {
     ok(r.nuevo === true || r.idProspecto !== null,
       `el desconocido si entra (nuevo=${r.nuevo}, id=${r.idProspecto})`);
   }
+  console.log(''); console.log('Los huecos quedan apuntados, no escalados');
+  {
+    // La frecuencia es la señal, asi que NO se deduplica: dos veces la misma
+    // pregunta son dos filas, y eso es a proposito.
+    const r1 = una(`select public.wa_registrar_hueco(jsonb_build_object(
+      'agente','whatsapp','telefono','${ADMIN}','quien','Abraham',
+      'pregunta','cuando fue el ultimo dia que vendimos',
+      'queFalta','una herramienta de ventas')) as j;`).j;
+    ok(r1.ok === true && Number.isFinite(Number(r1.id)), `queda apuntado (id ${r1.id})`);
+
+    const r2 = una(`select public.wa_registrar_hueco(jsonb_build_object(
+      'agente','whatsapp','telefono','${ADMIN}','quien','Abraham',
+      'pregunta','cuando fue el ultimo dia que vendimos',
+      'queFalta','una herramienta de ventas')) as j;`).j;
+    ok(String(r2.id) !== String(r1.id), 'la misma pregunta otra vez es OTRA fila: la frecuencia es la señal');
+
+    const malo = una(`select public.wa_registrar_hueco(jsonb_build_object('pregunta','a medias')) as j;`).j;
+    ok(malo.ok === false && malo.error === 'faltan_datos', 'sin `queFalta` no se guarda nada');
+
+    const n = una(`select count(*)::int n from agente_huecos
+                    where telefono = '${ADMIN}';`).n;
+    ok(n === 2, `quedaron las dos y solo las dos (hay ${n})`);
+    sql(`delete from agente_huecos where telefono = '${ADMIN}';`);
+  }
+
 } finally {
   limpiar();
   const q = una(`select count(*)::int n from prospectos

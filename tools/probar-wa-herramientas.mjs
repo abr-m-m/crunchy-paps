@@ -38,6 +38,12 @@ const PERFILES = [
   { nombre: '', nivel: 'consumidor', esCliente: false, telefono: '5215500000005' },
 ];
 
+// El dueño va aparte: no es un nivel de precio mas, es otra clase de persona.
+const DUENO = {
+  nombre: 'Abraham Miranda', nivel: 'consumidor', esCliente: false,
+  esVendedor: true, esDueno: true, rol: 'Administrador', telefono: '5215500000006',
+};
+
 // Todos los nombres de propiedad del esquema, a cualquier profundidad.
 function propiedadesHondas(esquema, salida = []) {
   if (!esquema || typeof esquema !== 'object') return salida;
@@ -63,7 +69,46 @@ for (const p of PERFILES) {
   ok(nombres === esperado, `${p.nivel}${p.esCliente ? '' : ' (desconocido)'}: ${nombres}`);
 }
 
+console.log('\nAl DUEÑO no se le ofrece ESCALAR: el ES el equipo');
+{
+  // Con `avisar_a` puesto, `pasar_con_una_persona` SI se ofrece. Sin ponerlo,
+  // esta prueba pasaria por omision -no se ofrece a nadie- y no por el arreglo.
+  //
+  // De donde salio: el 20 nov 2026 a las 18:17 Abraham pregunto algo que el
+  // agente no sabia, el agente ESCALO, el aviso salio a su propio numero y la
+  // conversacion quedo callada 8 horas. Pregunto, se lo reenviaron a el mismo,
+  // y luego dejo de contestarle.
+  usarAjustesDePrueba({ avisar_a: ['5215500000099'] });
+  const tendero = herramientasPara(PERFILES[1]).map((h) => h.name);
+  const dueno   = herramientasPara(DUENO).map((h) => h.name);
+  ok(tendero.includes('pasar_con_una_persona'), 'al tendero SI se le ofrece escalar');
+  ok(!dueno.includes('pasar_con_una_persona'), 'al dueño NO se le ofrece');
+  ok(dueno.includes('registrar_hueco'), 'y a cambio tiene registrar_hueco');
+  ok(!tendero.includes('registrar_hueco'), 'que el tendero no tiene');
+  ok(!dueno.includes('crear_pedido'), 'el dueño tampoco levanta pedidos a su nombre');
+  usarAjustesDePrueba({});
+}
+
+// TODAS = la union de lo que ve un tendero y lo que ve el dueño, para que las
+// comprobaciones de abajo -que ninguna acepte un precio, que los esquemas sean
+// estrictos- cubran TAMBIEN las herramientas nuevas. Si `TODAS` se quedara en
+// las del tendero, `registrar_hueco` entraria sin que nadie la revisara.
 const TODAS = herramientasPara(PERFILES[1]);          // tienda: las cinco
+const SOLO_TIENDA = TODAS;
+
+// La union de lo que ve un tendero y lo que ve el dueño. Se usa SOLO en las
+// comprobaciones de SEGURIDAD -que ninguna acepte un precio, que los esquemas
+// sean estrictos-, para que cubran tambien las del dueño. NO se usa para «el
+// prompt menciona X»: cada prompt nombra solo las suyas, y mezclarlas hace
+// fallar esa comprobacion por una razon que no es la que vigila. Eso paso al
+// escribir esto, y por eso estan separadas.
+const TODAS_MAS_DUENO = (() => {
+  usarAjustesDePrueba({ avisar_a: ['5215500000099'] });
+  const u = new Map();
+  for (const h of [...herramientasPara(PERFILES[1]), ...herramientasPara(DUENO)]) u.set(h.name, h);
+  usarAjustesDePrueba({});
+  return [...u.values()];
+})();
 const SOLO_LEE = herramientasPara(PERFILES[0]);       // consumidor: las cuatro
 
 console.log('\nLa UNICA que escribe es crear_pedido, y no esta en la lista del consumidor');
@@ -71,12 +116,12 @@ const SOSPECHOSAS = /crear|guardar|borrar|eliminar|actualizar|editar|enviar|canc
 for (const h of SOLO_LEE) {
   ok(!SOSPECHOSAS.test(h.name), `consumidor: ${h.name} no tiene nombre de escritura`);
 }
-const escriben = TODAS.filter((h) => SOSPECHOSAS.test(h.name)).map((h) => h.name);
+const escriben = SOLO_TIENDA.filter((h) => SOSPECHOSAS.test(h.name)).map((h) => h.name);
 ok(escriben.join(',') === 'crear_pedido', `tienda: la unica que escribe es ${escriben.join(',') || 'ninguna'}`);
 
 console.log('\nNINGUNA acepta nivel, precio ni total como parametro (la que importa)');
 const PROHIBIDOS = /nivel|precio|total|subtotal|descuento|tipoCliente|tipo_cliente|aprobado|canal/i;
-for (const h of TODAS) {
+for (const h of TODAS_MAS_DUENO) {
   const props = propiedadesHondas(h.input_schema);
   const malos = props.filter((p) => PROHIBIDOS.test(p));
   ok(malos.length === 0,
@@ -93,7 +138,7 @@ function cerradoHasta(esquema) {
   if (esquema.items && !cerradoHasta(esquema.items)) return false;
   return true;
 }
-for (const h of TODAS) {
+for (const h of TODAS_MAS_DUENO) {
   ok(h.strict === true, `${h.name} va con strict`);
   ok(cerradoHasta(h.input_schema), `${h.name} no admite propiedades extra en ningun nivel`);
   ok(typeof h.description === 'string' && h.description.length > 20, `${h.name} tiene descripcion util`);
@@ -139,7 +184,7 @@ function palabrasDelEsquema(e, out = []) {
   }
   return out;
 }
-for (const h of TODAS) {
+for (const h of TODAS_MAS_DUENO) {
   const usadas = palabrasDelEsquema(h.input_schema);
   const malas = PROHIBIDAS_POR_STRICT.filter((p) => usadas.includes(p));
   ok(malas.length === 0,

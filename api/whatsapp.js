@@ -402,13 +402,23 @@ function sistema(id) {
     puedePedir(id)
       ? '- crear_pedido: lo registra. Solo despues de cotizar Y de que el cliente confirme ese total.'
       : '',
-    (Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length)
+    (!id.esDueno && Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length)
       ? '- pasar_con_una_persona: avisa al equipo. Si piden hablar con alguien, si no puedes hacer algo, o si hay un reclamo.'
+      : '',
+    // Al dueño no se le dice que puede escalar -no tiene a quien- sino que lo
+    // que no puedas contestar se APUNTA. Es la diferencia entre pasar el
+    // problema y reconocerlo.
+    id.esDueno
+      ? '- registrar_hueco: cuando te pregunte algo del negocio y NO tengas herramienta para '
+        + 'contestarlo, dilo claro y apuntalo con esta. No le digas que se lo pasas a alguien: '
+        + 'el ES el equipo.'
       : '',
     // Cancelar mueve lote, caja, puntos y, con Stripe, un reembolso real. No es
     // una accion de chat.
     'NO puedes cancelar ni modificar un pedido ya hecho, ni cambiar una direccion, ni devolver dinero.',
-    'Si te lo piden, no digas que esta hecho: recoge el folio y el motivo y pasalo con el equipo.',
+    id.esDueno
+      ? 'Si te lo pide, recoge el folio y dile que lo haga el mismo en crunchypaps.mx: cancelar mueve el lote, la caja, los puntos y, con Stripe, un reembolso de verdad.'
+      : 'Si te lo piden, no digas que esta hecho: recoge el folio y el motivo y pasalo con el equipo.',
     '',
     // El modelo suma bien casi siempre, y ese "casi" es el problema: 12 x 27 lo
     // hace de memoria sin llamar a nada, y el dia que falle nadie lo revisa.
@@ -447,7 +457,11 @@ function sistema(id) {
     // Si la base no contesta, TEMAS_POR_DEFECTO dice exactamente lo que decia
     // esta funcion antes de existir la tabla, asi que el agente se comporta
     // igual que ayer en vez de quedarse sin criterio.
-    textoDeTemas(),
+    // El bloque de temas es sobre COMO TRATAR CLIENTES: «no lo resuelvas tu,
+    // pasalo con el equipo», «ofrece el catalogo». Al dueño le contradice las dos
+    // cosas que acabamos de decirle -no le vendas, y tu ERES el equipo-, asi que
+    // no se le pone. Salio de MIRAR el prompt armado, no de leer el codigo.
+    id.esDueno ? '' : textoDeTemas(),
     '',
     // Esto se queda fuera de los temas a proposito: vale para TODOS, y es la
     // leccion del 15 nov, cuando dio recetas de pozole llamando a `catalogo` y
@@ -900,7 +914,15 @@ function herramientasPara(id) {
   // Solo si hay a quien avisar. Si la lista esta vacia, la herramienta no
   // existe para el modelo y el prompt tampoco la menciona: asi no puede
   // prometer un aviso que no va a salir de aqui.
-  if (Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length) {
+  // AL DUEÑO NO SE LE OFRECE ESCALAR, y la razon es un error real del 20 nov
+  // 2026 a las 18:17: Abraham pregunto algo que el agente no sabia, el agente
+  // escalo, el aviso salio a SU PROPIO numero -porque `avisar_a` es el suyo- y
+  // escalar ademas CALLA la conversacion 8 horas. Pregunto, se lo reenviaron a
+  // el mismo, y luego el agente dejo de hablarle.
+  //
+  // El dueño ES el equipo: no hay a quien pasarle nada. Lo suyo es decir que no
+  // puede y apuntar el hueco, que es la herramienta de abajo.
+  if (!id.esDueno && Array.isArray(AJ.avisar_a) && AJ.avisar_a.filter(Boolean).length) {
     lista.push({
       name: 'pasar_con_una_persona',
       description: 'Avisa al equipo de esta conversacion. Usala en TRES casos: '
@@ -958,6 +980,30 @@ function herramientasPara(id) {
         required: ['lineas', 'fechaEntrega', 'notas'],
         additionalProperties: false,
       },
+    });
+  }
+
+  // Solo el dueño. Para un cliente, lo que no se puede contestar se ESCALA; para
+  // el dueño, se APUNTA. Son dos cosas distintas y por eso son dos herramientas.
+  if (id.esDueno) {
+    lista.push({
+      name: 'registrar_hueco',
+      description: 'Apunta una pregunta del dueño que NO pudiste contestar por falta de '
+        + 'herramienta, para que quede como pendiente de construir. Usala SOLO cuando te '
+        + 'falte la herramienta, no cuando la tengas y el dato no exista: si `catalogo` '
+        + 'contesta que no hay un sabor, eso NO es un hueco, es la respuesta. '
+        + 'Despues de llamarla, dile que quedo apuntado.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          pregunta: { type: 'string', description: 'Lo que pregunto, con sus palabras.' },
+          queFalta: { type: 'string',
+            description: 'Que herramienta o dato haria falta para contestarlo. Concreto.' },
+        },
+        required: ['pregunta', 'queFalta'],
+        additionalProperties: false,
+      },
+      strict: true,
     });
   }
 
@@ -1048,6 +1094,23 @@ async function correrHerramienta(nombre, entrada, id) {
   if (nombre === 'crear_pedido') return crearPedidoConfirmado(entrada, id);
 
   if (nombre === 'pasar_con_una_persona') return pasarConUnaPersona(entrada, id);
+
+  if (nombre === 'registrar_hueco') {
+    const r = await supa('rpc/wa_registrar_hueco', 'POST', {
+      p_data: {
+        agente: 'whatsapp', telefono: id.telefono, quien: id.nombre,
+        pregunta: String((entrada && entrada.pregunta) || '').slice(0, 500),
+        queFalta: String((entrada && entrada.queFalta) || '').slice(0, 500),
+      },
+    });
+    if (!r.ok || !r.data || r.data.ok !== true) {
+      console.error('wa: no se pudo apuntar el hueco', r.status);
+      // No se le miente: si no quedo apuntado, no se le dice que si.
+      return 'No pude apuntarlo. Dile que lo tienes presente pero que no quedo registrado.';
+    }
+    return 'Apuntado. Dile que no tienes esa herramienta todavia y que queda anotado '
+      + 'para construirla. No le prometas cuando.';
+  }
 
   if (nombre === 'mis_pedidos') {
     if (!id.idCliente) return 'Esta persona no tiene pedidos: no esta registrada como cliente.';
