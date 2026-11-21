@@ -105,6 +105,66 @@ sql(`insert into receta_lineas (id_receta, id_insumo, cantidad, unidad) values (
 ok(uno(`select public.costo_sku(${idProd}, '2026-09-23') c`).c === null,
    'C7 con la base en NULL, el SKU también es NULL (no solo el empaque)');
 
+// ── Casos 8-10: el DISPARADOR, que hasta hoy no probaba nadie ───────────────
+// La cabecera de este archivo decía «y —cuando llegue la tarea 5— que el costo
+// congelado en la venta no se mueva al subir el precio de la papa (D11)». La
+// tarea 5 llegó: el disparador existe desde octubre y la siembra del 21 nov le
+// dio de comer. Estos tres casos son esa deuda, pagada.
+//
+// Los siete de arriba prueban las FUNCIONES llamándolas a mano. Ninguno metía
+// una línea de pedido, que es por donde entra el costo de verdad.
+barrer();   // de aquí en adelante se usan los insumos SEMBRADOS, no el fixture
+
+console.log('\nCaso 8: al escribir una línea, el disparador la costea solo');
+const costoHoy = Number(uno(`select public.costo_base_kg(current_date) c`).c);
+ok(costoHoy > 0, `C8 la base vale ${costoHoy} hoy (la siembra del 21 nov)`);
+const idP100 = Number(uno(`select p.id from productos p
+   where p.activo and p.gramos = 100 and p.sabor not like 'EDIT-%' limit 1`).id);
+const idOrden = Number(uno(`insert into ordenes (consecutivo, estatus_pedido, tipo_interno)
+   values ('ZZ-COSTEO-' || substr(md5(random()::text),1,6), 'Pendiente', 'prueba') returning id`).id);
+const l1 = uno(`insert into ordenes_detalle (id_orden, id_producto, cantidad, subtotal, tipo_venta)
+   values (${idOrden}, '${idP100}', 2, 64, 'Por Pieza')
+   returning costo_unitario::numeric cu, coalesce(costo_origen,'') co`);
+ok(Math.abs(Number(l1.cu) - costoHoy * 0.1) < 0.01,
+   `C8 la línea quedó costeada sola en ${l1.cu} (un décimo del kilo)`);
+ok(l1.co === 'capturado', 'C8 y marcada como capturado, no como reconstruido');
+
+console.log('\nCaso 9: el granel se costea por lo que PESÓ, no por una receta fija');
+// Sus líneas llevan cantidad = 1 y el peso aparte: comprobado en producción,
+// cinco líneas con gramos de 136 a 1000. Sin esta rama todas costarían igual.
+const idGranel = Number(uno(`select p.id from productos p
+   where p.activo and coalesce(p.gramos,0) = 0 limit 1`).id || 0);
+if (idGranel) {
+  const g1 = uno(`insert into ordenes_detalle (id_orden, id_producto, cantidad, gramos_vendidos, subtotal, tipo_venta)
+     values (${idOrden}, '${idGranel}', 1, 136, 30, 'A granel') returning costo_unitario::numeric cu`);
+  const g2 = uno(`insert into ordenes_detalle (id_orden, id_producto, cantidad, gramos_vendidos, subtotal, tipo_venta)
+     values (${idOrden}, '${idGranel}', 1, 1000, 220, 'A granel') returning costo_unitario::numeric cu`);
+  ok(Math.abs(Number(g1.cu) - costoHoy * 0.136) < 0.01, `C9 136 g cuestan ${g1.cu}`);
+  ok(Math.abs(Number(g2.cu) - costoHoy) < 0.01, `C9 y 1 kg cuesta ${g2.cu}, no lo mismo`);
+  ok(Number(g2.cu) > Number(g1.cu) * 7, 'C9 manda el peso, no una receta fija');
+} else {
+  ok(false, 'C9 no hay producto a granel en staging para probarlo');
+}
+
+console.log('\nCaso 10: EL COSTO SE CONGELA — subir la papa no reescribe el pasado');
+// Es la razón de ser del diseño (D11): si el margen se recalculara al vuelo,
+// una compra cara de papa cambiaría hacia atrás el margen de todo lo vendido.
+const antesDeSubir = Number(l1.cu);
+const idPapaSembrada = Number(uno(`select id from insumos where nombre = 'Papa' limit 1`).id);
+sql(`insert into insumos_costos (id_insumo, costo_unidad, vigente_desde, fuente, nota)
+     values (${idPapaSembrada}, 999, current_date + 1, 'capturado', 'ZZ-prueba-costeo subida')`);
+ok(Number(uno(`select public.costo_base_kg(current_date + 1) c`).c) > costoHoy * 2,
+   'C10 lo que se venda MAÑANA sí cuesta más');
+const vieja = uno(`select costo_unitario::numeric cu from ordenes_detalle
+   where id_orden = ${idOrden} and tipo_venta = 'Por Pieza' limit 1`);
+ok(Math.abs(Number(vieja.cu) - antesDeSubir) < 0.001,
+   `C10 y la línea ya vendida sigue en ${vieja.cu}: el pasado no se movió`);
+sql(`delete from insumos_costos where nota = 'ZZ-prueba-costeo subida'`);
+
+sql(`delete from ordenes_detalle where id_orden = ${idOrden}; delete from ordenes where id = ${idOrden}`);
+ok(Number(uno(`select count(*) n from ordenes where consecutivo like 'ZZ-COSTEO-%'`).n) === 0,
+   'Limpieza: no quedó ningún pedido de prueba');
+
 // ── Limpieza: el fixture no se queda en staging ──────────────────────────────
 barrer();
 const resto = Number(uno(`select count(*) n from insumos where nombre like 'ZZ-prueba-costeo%'`).n);
