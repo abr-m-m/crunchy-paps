@@ -3,18 +3,23 @@
 --
 --  Diseno: cambios/2026-11-21-capturar-el-gasto.md
 --
---  UN SOLO CAMBIO: se anade la clave `puedeGastos` a los DOS caminos de
---  salida. Nada mas se toco, y para asegurarlo el cuerpo no se transcribio:
---  se saco de la base con `pg_get_functiondef` y se le insertaron las dos
---  lineas. Dentro vive el `case` que decide el NIVEL DE PRECIO (D6) y lleva
---  una nota de que no se ha tocado; copiarlo a mano para anadir un campo es
---  como se rompe algo que nadie estaba mirando.
+--  UN SOLO CAMBIO: la clave `puedeGastos` en los DOS caminos de salida. El
+--  cuerpo NO se transcribio: se saco con `pg_get_functiondef` -que trae la
+--  cabecera entera, no solo el cuerpo- y se le insertaron las dos lineas.
+--  Dentro vive el `case` que decide el NIVEL DE PRECIO (D6).
+--
+--  GENERADA DESDE PRODUCCION, no desde staging, despues de descubrir que las
+--  dos copias no eran identicas: staging guardaba `dueÃ±o` donde produccion
+--  guarda `dueño`. Una migracion que reemplaza una funcion se genera de la
+--  copia que va a reemplazar, o se lleva por delante lo que esa copia tuviera.
+--  Y la lectura se decodifica como UTF-8 a mano: la codificacion del sistema,
+--  en Windows, convierte una eñe en dos caracteres sin avisar.
 --
 --  Para que sirve: el agente solo ofrece la herramienta de gastos a quien
 --  puede usarla. NO es el permiso -ese lo da `wa_registrar_gasto` mirando la
 --  misma seccion en el servidor-; es para no prometer algo que luego falla.
 --
---  Aplicar: staging primero, probar, produccion con aprobacion aparte.
+--  Aplicar: staging y produccion, en ese orden.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.wa_identidad(p_telefono text)
@@ -34,7 +39,7 @@ begin
     return jsonb_build_object('ok', false, 'error', 'telefono_invalido');
   end if;
 
-  -- El dueÃ±o primero, porque hoy puede no estar en `clientes` en absoluto.
+  -- El dueño primero, porque hoy puede no estar en `clientes` en absoluto.
   -- Solo vendedores ACTIVOS: dar de baja a alguien tiene que quitarle esto.
   select * into v_ven from public.vendedores
    where activo
@@ -94,5 +99,4 @@ begin
       'puedeGastos', 'gastos' = any(coalesce(v_ven.secciones, array[]::text[]))
   );
 end;
-$function$
-;
+$function$;
