@@ -242,6 +242,31 @@ try {
     ok(texto.imagenId === '' && texto.texto === 'hola',
       'un mensaje de texto sigue igual que siempre');
   }
+
+  console.log('');
+  console.log('LA PUERTA DEJA PASAR LA FOTO (lo que fallo el 21 nov con un ticket real)');
+  {
+    // Esta es la asercion que faltaba. Todo el camino de la foto estaba hecho
+    // y probado por piezas -bajarla, guardarla, la herramienta, el prompt-,
+    // pero una guarda enterrada en el handler cortaba los mensajes que no
+    // fueran texto DOS PASOS DESPUES de guardar la foto. Abraham mando un
+    // ticket de verdad y recibio «por aqui solo leo mensajes de texto».
+    //
+    // La leccion: probar las piezas no prueba el camino. Lo que no estaba
+    // probado era justo lo unico que fallaba, y yo lo habia dicho.
+    const casos = [
+      [{ tipo: 'text', texto: 'hola' }, false, true, 'un texto entra, venga de quien venga'],
+      [{ tipo: 'text', texto: '' }, true, false, 'un texto vacio no'],
+      [{ tipo: 'image', texto: 'Un gasto' }, true, true,
+        'LA FOTO DE QUIEN CAPTURA GASTOS ENTRA'],
+      [{ tipo: 'image', texto: 'hola' }, false, false, 'la foto de quien no captura, no'],
+      [{ tipo: 'audio' }, true, false, 'un audio sigue fuera'],
+      [{ tipo: 'document' }, true, false, 'un documento tambien'],
+    ];
+    for (const [m, puede, esperado, que] of casos) {
+      ok(wa.entraAlAgente(m, puede) === esperado, que);
+    }
+  }
 } finally {
   // La prueba no deja el mundo distinto a como lo encontro.
   try { sql("update vendedores set secciones = array_remove(secciones,'gastos') where id=1;"); } catch {}

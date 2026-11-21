@@ -224,6 +224,24 @@ function sacarMensaje(cuerpo) {
   }
 }
 
+// ── Quien entra al agente ───────────────────────────────────────────────────
+// Un audio o un documento no se ignoran -hay alguien del otro lado- pero
+// tampoco se inventan: se dice lo que hay. La EXCEPCION es la foto de un
+// ticket de quien puede registrar gastos, que es justo para lo que se baja.
+//
+// EL 21 NOV 2026 ESTA CONDICION ESTABA ENTERRADA EN EL HANDLER, y se llevo por
+// delante el unico camino que no estaba probado: Abraham mando un ticket de
+// verdad y el agente contesto «por aqui solo leo mensajes de texto» sin llegar
+// al modelo. La foto se habia bajado y guardado bien; la guarda la cortaba dos
+// pasos despues. Una decision con nombre se puede probar; una condicion dentro
+// de una funcion de trescientas lineas, no.
+function entraAlAgente(msg, puedeGastos) {
+  if (!msg) return false;
+  if (msg.tipo === 'text') return Boolean(msg.texto);
+  if (msg.tipo === 'image') return Boolean(puedeGastos);
+  return false;
+}
+
 // ── La foto del ticket ──────────────────────────────────────────────────────
 // Meta no manda la imagen: manda un id. Hay dos saltos -pedir la URL firmada y
 // luego bajarla-, y LOS DOS necesitan el token. La URL caduca en minutos, asi
@@ -1594,8 +1612,10 @@ module.exports = async (req, res) => {
 
   // De momento solo texto. Un audio o una foto no se ignoran —hay alguien del
   // otro lado— pero tampoco se inventan: se dice lo que hay.
-  if (msg.tipo !== 'text' || !msg.texto) {
-    const aviso = 'Por aqui solo leo mensajes de texto. Me lo escribes?';
+  if (!entraAlAgente(msg, ident.puedeGastos)) {
+    const aviso = msg.tipo === 'image'
+      ? 'Por aqui no puedo con fotos. Me lo escribes?'
+      : 'Por aqui solo leo mensajes de texto. Me lo escribes?';
     await enviarWA(msg.telefono, aviso);
     await registrarSaliente(msg.telefono, aviso, null, 0);
     return res.status(200).json({ ok: true });
@@ -1733,3 +1753,4 @@ module.exports.detalleParaPedido = detalleParaPedido;
 module.exports.crearPedidoConfirmado = crearPedidoConfirmado;
 module.exports.correrHerramienta = correrHerramienta;
 module.exports.usarTransporteDePrueba = usarTransporteDePrueba;
+module.exports.entraAlAgente = entraAlAgente;
