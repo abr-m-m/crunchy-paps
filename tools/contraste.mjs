@@ -140,13 +140,58 @@ for (const archivo of ARCHIVOS) {
   }
 }
 
+// ── SEGUNDA COMPROBACION: texto claro o amarillo escrito a pelo ───────────
+// El punto ciego de la primera es que solo juzga pares que estan JUNTOS. Un
+// `color:#fff` cuyo fondo lo pone un ancestro no se puede RESOLVER... pero si
+// se puede SOSPECHAR: un texto blanco a pelo solo funciona si el fondo es
+// oscuro, y en una app con dos pieles el fondo cambia debajo.
+//
+// Esto se escapo TRES veces -el logo, el saludo y la ficha de producto- y las
+// tres las vio Abraham en una captura. La tercera convencio de arreglar la
+// herramienta en vez de arreglar otra pantalla.
+//
+// Un texto claro declarado JUNTO a un fondo oscuro no se marca: ese par se ve
+// entero y ya lo juzga la primera comprobacion.
+const CLARO = /^(#fff|#ffffff|white|rgba?\(\s*255\s*,\s*255\s*,\s*255)/i;
+const sospechosos = [];
+for (const archivo of ARCHIVOS) {
+  const texto = readFileSync(archivo, 'utf8');
+  const mirar = (decl, donde) => {
+    const t = decl.match(RE_TEXTO);
+    if (!t) return;
+    const v = t[1].trim();   // en ESTE archivo el valor es el grupo 1
+    const esClaro = CLARO.test(v);
+    const esMarca = /var\(--amarillo\b/.test(v);
+    if (!esClaro && !esMarca) return;
+    if (decl.match(RE_FONDO)) return;     // hay fondo al lado: lo juzga la otra
+    sospechosos.push({ archivo, donde, valor: v, tipo: esClaro ? 'texto claro' : 'amarillo de marca' });
+  };
+  for (const m of texto.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const sel = m[1].trim().split('\n').pop().trim();
+    if (sel.startsWith('@') || sel.startsWith(':root') || sel.includes('piel-clara')) continue;
+    mirar(m[2], sel.slice(0, 70));
+  }
+  for (const m of texto.matchAll(/style\s*=\s*["'`]([^"'`]*)["'`]/g)) {
+    mirar(m[1], `linea ${texto.slice(0, m.index).split('\n').length}`);
+  }
+}
+
 console.log(`\n  CONTRASTE — ${revisados} pares comprobados en las dos pieles`);
 console.log(`  (${sinResolver} pares con un color que no se puede resolver sin navegador: no se juzgan)\n`);
 
-if (!fallos.length) {
+if (sospechosos.length) {
+  console.log(`  TEXTO QUE DEPENDE DE UN FONDO QUE PUEDE CAMBIAR — ${sospechosos.length}:`);
+  for (const s of sospechosos) {
+    console.log(`    ${s.tipo.padEnd(18)} ${s.valor.padEnd(26)} ${s.archivo} · ${s.donde}`);
+  }
+  console.log('\n  Ninguno dice sobre QUE fondo va. Si la piel lo vuelve claro, desaparecen.\n');
+}
+
+if (!fallos.length && !sospechosos.length) {
   console.log('  Ningun par de fondo+texto baja del minimo legible.\n');
   process.exit(0);
 }
+if (!fallos.length) process.exit(1);
 
 const porPiel = { oscura: [], clara: [] };
 for (const f of fallos) porPiel[f.piel].push(f);

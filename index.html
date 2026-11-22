@@ -135,7 +135,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="margin-bottom:24px;">
       <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--amarillo);letter-spacing:4px;line-height:1;">CRUNCHY</div>
       <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--rojo);letter-spacing:4px;line-height:1;margin-top:-8px;">PAPS</div>
-      <div style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Adictivamente crujientes</div>
+      <div style="font-size:0.85rem;font-weight:600;color:var(--blanco);letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Adictivamente crujientes</div>
     </div>
 
     <!-- Patrón decorativo -->
@@ -150,20 +150,20 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <button onclick="usarComoConsumidor()" style="background:var(--amarillo);border:none;border-radius:12px;padding:16px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:1.05rem;color:var(--negro);cursor:pointer;">
         Ver el catálogo
       </button>
-      <div style="font-size:0.74rem;font-weight:600;color:rgba(255,255,255,0.42);margin-top:8px;">
+      <div style="font-size:0.74rem;font-weight:600;color:var(--blanco);margin-top:8px;">
         Mira sabores y precios sin registrarte. Te pediremos tu número solo al pagar.
       </div>
     </div>
 
     <div style="width:100%;max-width:360px;display:flex;align-items:center;gap:10px;margin-bottom:18px;">
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></div>
-      <div style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:1px;">O YA SOY CLIENTE</div>
+      <div style="font-size:0.68rem;font-weight:700;color:var(--blanco);letter-spacing:1px;">O YA SOY CLIENTE</div>
       <div style="flex:1;height:1px;background:rgba(255,255,255,0.12);"></div>
     </div>
 
     <!-- Entrada con teléfono: clientes que vuelven, y el personal -->
     <div style="width:100%;max-width:360px;">
-      <div style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Entra con tu número</div>
+      <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Entra con tu número</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
         <div style="background:var(--gris);border:2px solid var(--gris3);border-radius:12px;padding:14px 12px;color:var(--blanco);font-weight:700;font-size:0.95rem;width:76px;text-align:center;flex-shrink:0;">🇲🇽 +52</div>
         <input id="welcome-tel" class="inp" type="tel" maxlength="10" placeholder="55 1234 5678"
@@ -294,7 +294,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);letter-spacing:3px;line-height:1;">
         BIENVENIDO
       </div>
-      <div style="font-size:0.85rem;font-weight:600;color:rgba(255,255,255,0.4);margin-top:6px;">
+      <div style="font-size:0.85rem;font-weight:600;color:var(--blanco);margin-top:6px;">
         ¿Cómo nos compras?
       </div>
     </div>
@@ -359,7 +359,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;line-height:1;">VALIDANDO<br>TU NEGOCIO</div>
       <div style="background:var(--gris);border:2px solid var(--gris3);border-radius:16px;padding:20px;text-align:left;width:100%;">
         <div style="font-size:0.86rem;font-weight:700;color:var(--suave);line-height:1.6;">
-          Estamos validando tu <strong style="color:var(--blanco)" id="pend-tipo">tienda</strong> para darte <strong style="color:var(--amarillo)">precios de mayoreo</strong><br><br>
+          Estamos validando tu <strong style="color:var(--blanco)" id="pend-tipo">tienda</strong> para darte <strong style="color:var(--acento-txt)">precios de mayoreo</strong><br><br>
           En cuanto confirmemos (normalmente el <strong style="color:var(--blanco)">mismo día</strong>) verás tu catálogo con precios especiales para tiendas. Te contactamos al:<br>
           <span style="color:var(--blanco);font-size:1rem;" id="pend-tel">—</span>
         </div>
@@ -385,7 +385,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9"/><path d="M10 21v-6h4v6"/></svg></div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">COMPLETA LOS DATOS<br>DE TU NEGOCIO</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">
-          Necesitamos estos datos para validar tu negocio y darte <strong style="color:var(--amarillo)">precios de mayoreo</strong>.
+          Necesitamos estos datos para validar tu negocio y darte <strong style="color:var(--acento-txt)">precios de mayoreo</strong>.
         </div>
       </div>
 
@@ -407,7 +407,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ubicación de entrega *</label>
       <div style="font-size:0.74rem;color:var(--suave);margin-bottom:8px;line-height:1.4;">
-        ¿Estás en tu tienda? Pon tu dirección y <strong style="color:var(--blanco);">arrastra el pin</strong> a la entrada. <strong style="color:var(--amarillo);">Aquí te entregaremos.</strong>
+        ¿Estás en tu tienda? Pon tu dirección y <strong style="color:var(--blanco);">arrastra el pin</strong> a la entrada. <strong style="color:var(--acento-txt);">Aquí te entregaremos.</strong>
       </div>
       <button onclick="ubicarTiendaEnMapa()" id="dt-geo-btn" style="width:100%;background:var(--gris2);border:1px dashed var(--gris3);border-radius:10px;padding:12px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;margin-bottom:6px;">
         Ubicar mi tienda en el mapa
@@ -435,7 +435,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9"/><path d="M10 21v-6h4v6"/></svg></div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">DAR DE ALTA NEGOCIO</div>
-        <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Registra una tienda, restaurante o mayorista en sitio. Queda <strong style="color:var(--amarillo);">pendiente de aprobación</strong>.</div>
+        <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Registra una tienda, restaurante o mayorista en sitio. Queda <strong style="color:var(--acento-txt);">pendiente de aprobación</strong>.</div>
       </div>
 
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Tipo de negocio *</label>
@@ -486,7 +486,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">AJUSTAR UBICACIÓN</div>
-        <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Estás en el negocio: busca al cliente y captura su <strong style="color:var(--amarillo);">GPS exacto</strong>. Solo cambia la ubicación.</div>
+        <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Estás en el negocio: busca al cliente y captura su <strong style="color:var(--acento-txt);">GPS exacto</strong>. Solo cambia la ubicación.</div>
       </div>
 
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Nombre o teléfono del cliente *</label>
@@ -584,7 +584,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div id="banner-interno" style="display:none;margin:0 16px 8px;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:10px;padding:10px 12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div>
-        <div style="font-size:0.74rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Modo: pedido interno</div>
+        <div style="font-size:0.74rem;font-weight:900;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;">Modo: pedido interno</div>
         <div style="font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sin cargo · Descuenta inventario · Elegirás el motivo al confirmar</div>
       </div>
       <button onclick="setModo('pieza')" style="background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--suave);cursor:pointer;white-space:nowrap;">Salir</button>
@@ -1407,7 +1407,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <button onclick="cerrarImportador()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="font-size:0.78rem;color:var(--suave);margin-bottom:10px;line-height:1.5;">
-    Sube un archivo CSV con columnas: <strong style="color:var(--amarillo);">nombre, tipo, direccion, lat, lng, score, telefono</strong> (opcional). La primera fila debe ser el encabezado.
+    Sube un archivo CSV con columnas: <strong style="color:var(--acento-txt);">nombre, tipo, direccion, lat, lng, score, telefono</strong> (opcional). La primera fila debe ser el encabezado.
   </div>
   <input type="file" id="pros-csv-file" accept=".csv,text/csv" onchange="procesarCSV(event)"
     style="display:block;width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:10px;color:var(--blanco);margin-bottom:10px;">
@@ -1737,7 +1737,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <span id="ng-cantidad-label">Cantidad</span>
       </label>
       <input class="inp" id="ng-cantidad" type="number" step="0.01" min="0" placeholder="0" oninput="recalcularPrecioUnitario()">
-      <div id="ng-precio-unitario" style="margin-top:6px;font-size:0.74rem;color:var(--amarillo);font-weight:700;display:none;"></div>
+      <div id="ng-precio-unitario" style="margin-top:6px;font-size:0.74rem;color:var(--acento-txt);font-weight:700;display:none;"></div>
     </div>
     <input class="inp" id="ng-concepto" type="text" placeholder="Concepto / descripción breve" maxlength="200">
     <div>
@@ -2523,14 +2523,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div class="entrega-btn" onclick="setEntrega('paqueteria')" data-id="paqueteria" style="background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:10px;cursor:pointer;text-align:center;transition:all 0.15s;">
           <div class="ico-tarjeta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
           <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);line-height:1.2;">Paquetería</div>
-          <div style="font-size:0.66rem;color:var(--amarillo);margin-top:2px;" id="entrega-paq-costo">+$80</div>
+          <div style="font-size:0.66rem;color:var(--acento-txt);margin-top:2px;" id="entrega-paq-costo">+$80</div>
         </div>
       </div>
       <div id="entrega-info" style="display:none;background:var(--gris2);border-radius:8px;padding:8px 12px;font-size:0.74rem;color:var(--suave2);margin-bottom:14px;line-height:1.4;"></div>
 
       <!-- v2.11: Selector de vendedor (solo cuando elige "Coordinar") -->
       <div id="vendedor-selector-wrap" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:10px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:0.78rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+        <div style="font-size:0.78rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
           ¿Quién es tu contacto Crunchy? *
         </div>
 
@@ -2654,7 +2654,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">FECHA DE ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
-      <div style="font-weight:800;color:var(--amarillo);font-size:0.9rem;" id="fecha-entrega-lbl">Calculando...</div>
+      <div style="font-weight:800;color:var(--acento-txt);font-size:0.9rem;" id="fecha-entrega-lbl">Calculando...</div>
       <div style="font-size:0.72rem;color:var(--suave);font-weight:600;margin-top:2px;" id="fecha-entrega-msg"></div>
       <!-- Editor de fecha (solo vendedores) -->
       <div id="fecha-entrega-editor" style="display:none;margin-top:8px;">
@@ -2700,7 +2700,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div class="consec-val" id="g-consec">—</div>
       <div class="vend-info" id="g-vendedor"></div>
       <div class="puntos-ganados" id="g-puntos"></div>
-      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--amarillo);" id="g-b2b-txt">Te contactamos</strong> para coordinar la entrega.</div>
+      <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--acento-txt);" id="g-b2b-txt">Te contactamos</strong> para coordinar la entrega.</div>
     </div>
     <div class="gracias-wpp-wrap">
       <div class="wpp-hint">¿Quieres enviarnos el resumen por WhatsApp?</div>
@@ -2760,7 +2760,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <!-- v2.7.3: PERFORMANCE MONITOR (admin only) -->
 <div id="perf-monitor" style="display:none;position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.92);border:1px solid var(--amarillo);border-radius:10px;padding:8px 10px;min-width:240px;max-width:300px;font-family:monospace;font-size:0.7rem;color:#ddd;box-shadow:0 4px 16px rgba(0,0,0,0.6);">
   <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gris3);padding-bottom:4px;margin-bottom:6px;">
-    <span style="color:var(--amarillo);font-weight:800;">Performance</span>
+    <span style="color:var(--acento-txt);font-weight:800;">Performance</span>
     <div>
       <button onclick="perfClear()" style="background:transparent;border:1px solid var(--gris3);border-radius:4px;color:#aaa;padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
       <button onclick="perfHide()" style="background:transparent;border:none;color:#888;font-size:1rem;cursor:pointer;line-height:0.8;">×</button>

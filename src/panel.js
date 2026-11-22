@@ -690,10 +690,10 @@ async function renderProduccion() {
             ? Math.round(cerrados.reduce((s,l)=>{const t=Number(l.kilos_totales)||0,v=Number(l.kilos_vendidos)||0;return s+(t>0?(v/t)*100:0);},0)/cerrados.length)
             : null;
           statsEl.innerHTML = `
-            <div>Lotes registrados: <strong style="color:var(--amarillo)">${nL}</strong> (${activos} activo${activos!==1?'s':''})</div>
-            <div style="margin-top:4px;">Producido total: <strong style="color:var(--amarillo)">${sumProd.toFixed(1)}kg</strong> · vendido: <strong style="color:var(--amarillo)">${sumVend.toFixed(1)}kg</strong> (${pctGlob}%)</div>
-            <div style="margin-top:4px;">Promedio por lote: <strong style="color:var(--amarillo)">${promLote.toFixed(1)}kg</strong></div>
-            ${pctCerr!==null ? `<div style="margin-top:4px;">Agotamiento prom. (lotes cerrados): <strong style="color:var(--amarillo)">${pctCerr}%</strong></div>` : ''}
+            <div>Lotes registrados: <strong style="color:var(--acento-txt)">${nL}</strong> (${activos} activo${activos!==1?'s':''})</div>
+            <div style="margin-top:4px;">Producido total: <strong style="color:var(--acento-txt)">${sumProd.toFixed(1)}kg</strong> · vendido: <strong style="color:var(--acento-txt)">${sumVend.toFixed(1)}kg</strong> (${pctGlob}%)</div>
+            <div style="margin-top:4px;">Promedio por lote: <strong style="color:var(--acento-txt)">${promLote.toFixed(1)}kg</strong></div>
+            ${pctCerr!==null ? `<div style="margin-top:4px;">Agotamiento prom. (lotes cerrados): <strong style="color:var(--acento-txt)">${pctCerr}%</strong></div>` : ''}
           `;
         }
       }
@@ -999,7 +999,7 @@ async function renderMayoreoAdminCfg() {
     </div>`;
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
-      <div style="font-size:0.72rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mínimos de mayoreo (admin)</div>
+      <div style="font-size:0.72rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mínimos de mayoreo (admin)</div>
       ${presentaciones.map(fila).join('')}
       <button onclick="guardarMayoreoCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar mínimos</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">0 = sin mínimo. Aplica solo a pedidos de canal Mayorista.</div>
@@ -1673,7 +1673,7 @@ window.cargarMetricaRegalo = async function(yyyymm) {
               <div style="font-size:0.68rem;color:var(--suave);">${pctTxt}</div>
             </div>
             <div style="text-align:right;flex:0 0 auto;margin-left:8px;">
-              <div style="font-size:0.8rem;color:var(--amarillo);font-weight:800;">${fmtKg(c.regalo_kg)}</div>
+              <div style="font-size:0.8rem;color:var(--acento-txt);font-weight:800;">${fmtKg(c.regalo_kg)}</div>
               <div style="font-size:0.68rem;color:var(--suave);">${fmtMx(c.regalo_mxn)}</div>
             </div>
           </div>`;
@@ -1732,10 +1732,10 @@ window.renderKardexLote = async function(idLote) {
         const p = porPedido[k];
         const f = p.fecha ? new Date(p.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '—';
         const lotes = Object.keys(p.lotes).map(l => l.replace('LOTE-', '')).join(', ');
-        const tag = p.interno ? ` <span style="color:var(--amarillo);">${p.interno}</span>` : '';
+        const tag = p.interno ? ` <span style="color:var(--acento-txt);">${p.interno}</span>` : '';
         return `<div style="display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--gris3);padding:7px 0;font-size:0.76rem;">
           <div><strong style="color:var(--blanco);">${k}</strong>${tag}<div style="color:var(--suave);">${f}</div></div>
-          <div style="text-align:right;"><strong style="color:var(--amarillo);">${lotes}</strong><div style="color:var(--suave);">${p.kg.toFixed(2)} kg</div></div>
+          <div style="text-align:right;"><strong style="color:var(--acento-txt);">${lotes}</strong><div style="color:var(--suave);">${p.kg.toFixed(2)} kg</div></div>
         </div>`;
       }).join('');
       cont.innerHTML = filas
@@ -1812,7 +1812,7 @@ window.renderKardexLote = async function(idLote) {
       const estColor = cancel ? '#ff8a8a' : (String(r.estatus).toLowerCase() === 'entregado' ? '#7ee787' : 'var(--suave)');
       return `<tr style="border-bottom:1px solid var(--gris3);">
         <td style="padding:7px 8px;white-space:nowrap;color:var(--suave);font-size:0.74rem;">${fmtFecha(r.fecha)}</td>
-        <td style="padding:7px 8px;white-space:nowrap;font-weight:700;font-size:0.76rem;color:var(--amarillo);">${r.folio}</td>
+        <td style="padding:7px 8px;white-space:nowrap;font-weight:700;font-size:0.76rem;color:var(--acento-txt);">${r.folio}</td>
         <td style="padding:7px 8px;font-size:0.76rem;">${r.cliente}</td>
         <td style="padding:7px 8px;font-size:0.72rem;color:var(--suave);">${r.items.join(', ')}</td>
         <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.76rem;color:#ff8a8a;">−${fmtKg(r.kg)}</td>
@@ -1900,7 +1900,7 @@ async function renderResumenInventario(elId, incluirLote) {
       let badge = '';
       if (dias!==null) {
         if (dias<=1) badge = `<span style="color:#4caf50;"><span class="dot-est conv"></span>${dias===0?'hoy':'ayer'}</span>`;
-        else if (dias<=5) badge = `<span style="color:var(--amarillo);">hace ${dias} días</span>`;
+        else if (dias<=5) badge = `<span style="color:var(--acento-txt);">hace ${dias} días</span>`;
         else badge = `<span style="color:var(--rojo);">hace ${dias} días</span>`;
       }
       const porSabor = {};
@@ -1925,11 +1925,11 @@ async function renderResumenInventario(elId, incluirLote) {
         </div>
         <div style="display:flex;align-items:center;padding:2px 0;"><span style="flex:1.4;"></span>${PRES.map(p=>`<span style="flex:1;text-align:center;font-size:0.6rem;font-weight:800;color:#555;">${p}</span>`).join('')}</div>
         ${filas}
-        <div style="margin-top:8px;font-size:0.72rem;color:#555;text-align:right;">Total embolsado: <strong style="color:var(--amarillo)">${totG>=1000?(totG/1000).toFixed(2)+'kg':totG+'g'}</strong></div>
+        <div style="margin-top:8px;font-size:0.72rem;color:#555;text-align:right;">Total embolsado: <strong style="color:var(--acento-txt)">${totG>=1000?(totG/1000).toFixed(2)+'kg':totG+'g'}</strong></div>
         <div style="margin-top:6px;font-size:0.62rem;color:#444;font-style:italic;">Para actualizar: pestaña Inv. Físico.</div>`;
     } else {
       fisicoHTML = `
-        <div style="font-family:'Archivo',sans-serif; font-weight:700;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:6px;">STOCK TERMINADO</div>
+        <div style="font-family:'Archivo',sans-serif; font-weight:700;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:6px;">STOCK TERMINADO</div>
         <div style="color:var(--rojo);font-size:0.8rem;">Sin conteo físico de este lote. Regístralo en Inv. Físico.</div>`;
     }
 
@@ -2150,7 +2150,7 @@ function pintarResumen() {
 
   const filasHTML = filas.map(r => `
     <tr onclick="verDetallePedido(${r.id})" style="cursor:pointer;">
-      <td style="font-weight:800;color:var(--amarillo);">${r.consec}</td>
+      <td style="font-weight:800;color:var(--acento-txt);">${r.consec}</td>
       <td>${r.cliente}</td>
       <td style="color:var(--suave);">${r.vendedor}</td>
       <td class="num">${r.esInterno ? '—' : '$' + r.monto.toLocaleString('es-MX')}</td>
@@ -2833,7 +2833,7 @@ function pintarVistaPedidosVendedor() {
       <div style="flex:1;display:flex;align-items:center;gap:6px;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background-image:repeating-linear-gradient(45deg,rgba(255,210,0,0.9) 0,rgba(255,210,0,0.9) 2px,rgba(255,210,0,0.3) 2px,rgba(255,210,0,0.3) 4px);flex-shrink:0;"></span>
         <span style="color:var(--suave);">Por cobrar</span>
-        <span style="color:var(--amarillo);margin-left:auto;">$${pendiente.toLocaleString('es-MX')}</span>
+        <span style="color:var(--acento-txt);margin-left:auto;">$${pendiente.toLocaleString('es-MX')}</span>
       </div>
     </div>
   ` : '';
@@ -2865,7 +2865,7 @@ function pintarVistaPedidosVendedor() {
             <div style="font-size:0.7rem;font-weight:700;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ingreso neto del mes</div>
           </div>
           ${esAdminUser ? `
-          <button onclick="abrirSetCuota()" style="background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--amarillo);cursor:pointer;white-space:nowrap;">
+          <button onclick="abrirSetCuota()" style="background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--acento-txt);cursor:pointer;white-space:nowrap;">
             Fijar cuota
           </button>` : ''}
         </div>
@@ -3089,7 +3089,7 @@ function pedidoCardVendedorHTML(p) {
 
   // Cuando es interno, mostrar "Sin cargo" en vez de $0
   const totalDisplay = p.esInterno
-    ? `<span style="font-size:0.78rem;font-weight:800;color:var(--amarillo);">Sin cargo</span>`
+    ? `<span style="font-size:0.78rem;font-weight:800;color:var(--acento-txt);">Sin cargo</span>`
     : `$${(p.total||0).toLocaleString('es-MX')}`;
 
   return `<div class="pedido-card clickable ${p.esInterno?'pedido-interno':''}" onclick="verDetallePedido(${p.id})"
@@ -3338,7 +3338,7 @@ function pintarDetallePedido({ orden, lineas }) {
   const editarHTML = !puedeEditar || orden.editable === undefined ? '' : orden.editable ? `
     <div style="margin-top:12px;">
       <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
-      ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
+      ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--acento-txt);margin-top:4px;">${motivoTxt}</div>` : ''}
       ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : orden.puedeForzar ? `
     <div style="margin-top:12px;">
@@ -3379,7 +3379,7 @@ function pintarDetallePedido({ orden, lineas }) {
       <!-- Banner: pedido interno -->
       <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div>
-          <div style="font-size:0.7rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
+          <div style="font-size:0.7rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
         </div>
         <div style="text-align:right;">
@@ -3545,7 +3545,7 @@ function preguntarMetodoPago(metodoActual) {
             return `<button data-met="${o.id}" style="background:${activo?'#2a1f00':'var(--gris2)'};border:2px solid ${activo?'var(--amarillo)':'var(--gris3)'};border-radius:10px;padding:14px;color:var(--blanco);font-size:0.95rem;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:${activo?'800':'500'};">
               <span style="font-size:1.2rem;">${o.ico}</span>
               <span style="flex:1;">${o.label}</span>
-              ${activo ? '<span style="color:var(--amarillo);font-size:0.7rem;font-weight:800;">SUGERIDO</span>' : ''}
+              ${activo ? '<span style="color:var(--acento-txt);font-size:0.7rem;font-weight:800;">SUGERIDO</span>' : ''}
             </button>`;
           }).join('')}
           <button data-met="" style="background:transparent;border:none;color:var(--suave);font-size:0.84rem;margin-top:6px;cursor:pointer;padding:8px;">Cancelar</button>
@@ -4009,7 +4009,7 @@ function renderB2BLista() {
               </select>
             </div>
           ` : (c.vendedor
-            ? `<div style="font-size:0.72rem;color:var(--suave);">Vendedor: <span style="color:var(--amarillo);font-weight:700;">${c.vendedor}</span></div>`
+            ? `<div style="font-size:0.72rem;color:var(--suave);">Vendedor: <span style="color:var(--acento-txt);font-weight:700;">${c.vendedor}</span></div>`
             : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin vendedor asignado</div>`)}
           ${esAdmin() ? `
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
@@ -4021,7 +4021,7 @@ function renderB2BLista() {
               </select>
             </div>
           ` : (c.idRuta
-            ? `<div style="font-size:0.72rem;color:var(--suave);">Ruta: <span style="color:var(--amarillo);font-weight:700;">${nombreRuta(c.idRuta)}</span></div>`
+            ? `<div style="font-size:0.72rem;color:var(--suave);">Ruta: <span style="color:var(--acento-txt);font-weight:700;">${nombreRuta(c.idRuta)}</span></div>`
             : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin ruta</div>`)}
           ${c.rfc ? `<div style="font-size:0.72rem;color:var(--suave);">RFC: ${c.rfc}</div>` : ''}
         </div>
@@ -4715,7 +4715,7 @@ function mostrarResultadoRuta() {
     const tMin = Math.round(leg.duration.value / 60);
     html += `<div style="background:var(--gris2);border-left:3px solid var(--amarillo);border-radius:8px;padding:9px 12px;margin-bottom:6px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-        <div style="font-size:0.66rem;color:var(--amarillo);font-weight:800;">PARADA ${i+1}</div>
+        <div style="font-size:0.66rem;color:var(--acento-txt);font-weight:800;">PARADA ${i+1}</div>
         <div style="font-size:0.7rem;color:var(--suave);">${dKm}km · ${tMin}min</div>
       </div>
       <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;margin-top:2px;">${p.nombre}</div>
@@ -4980,7 +4980,7 @@ function pintarListaProspectos() {
             <span style="font-size:0.7rem;color:#666;">${p.numContactos>0 ? `${p.numContactos} contacto(s) · últ ${ult}` : 'Sin contactos'}${p.nombreVendedor ? ` · ${p.nombreVendedor}` : ''}</span>
           </div>
         </div>
-        <div style="font-size:0.78rem;color:var(--amarillo);font-weight:700;white-space:nowrap;">${estrellas}</div>
+        <div style="font-size:0.78rem;color:var(--acento-txt);font-weight:700;white-space:nowrap;">${estrellas}</div>
       </div>
     </div>`;
   }).join('');
@@ -5013,9 +5013,9 @@ window.verDetalleProspecto = function(id) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span class="pedido-estatus" style="background:${p.estatus==='pendiente'?'#2d0d0d':p.estatus==='contactado'?'#2a1f00':p.estatus==='convertido'?'#0d2d0d':'#222'};color:${p.estatus==='pendiente'?'var(--rojo)':p.estatus==='contactado'?'var(--amarillo)':p.estatus==='convertido'?'#4caf50':'#888'};">${ico[p.estatus]||p.estatus}</span>
-        <span style="font-size:0.86rem;color:var(--amarillo);font-weight:700;">${estrellas}</span>
+        <span style="font-size:0.86rem;color:var(--acento-txt);font-weight:700;">${estrellas}</span>
       </div>
-      <div style="font-weight:800;color:var(--blanco);font-size:0.94rem;">${p.tipo}${p.tierOriginal?` · <span style="color:var(--amarillo);font-size:0.78rem;">${p.tierOriginal}</span>`:''}</div>
+      <div style="font-weight:800;color:var(--blanco);font-size:0.94rem;">${p.tipo}${p.tierOriginal?` · <span style="color:var(--acento-txt);font-size:0.78rem;">${p.tierOriginal}</span>`:''}</div>
       ${p.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">${p.direccion}</div>` : ''}
       ${(p.colonia || p.codigoPostal) ? `<div style="font-size:0.74rem;color:var(--suave);">${p.colonia||''} ${p.codigoPostal?'· CP '+p.codigoPostal:''}</div>` : ''}
       ${p.telefono ? `<div style="font-size:0.78rem;color:var(--suave);">${p.telefono}</div>` : ''}
@@ -5027,10 +5027,10 @@ window.verDetalleProspecto = function(id) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Seguimiento</div>
       <div style="font-size:0.8rem;color:var(--blanco);">
-        <strong style="color:var(--amarillo);">${p.numContactos}</strong> contacto(s) · Último: <strong>${ult}</strong>
+        <strong style="color:var(--acento-txt);">${p.numContactos}</strong> contacto(s) · Último: <strong>${ult}</strong>
       </div>
       ${p.nombreVendedor
-        ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">Asignado: <strong style="color:var(--amarillo);">${p.nombreVendedor}</strong></div>`
+        ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">Asignado: <strong style="color:var(--acento-txt);">${p.nombreVendedor}</strong></div>`
         : `<div style="font-size:0.74rem;color:#888;font-style:italic;margin-top:3px;">Sin vendedor asignado</div>`}
     </div>
 
@@ -5188,7 +5188,7 @@ function pintarRutaDia() {
     const nuevo = !p.ultimaVisita && !p.visitadaHoy;
     const detalle = p.visitadaHoy
       ? rutaEsc(p.etiquetaHoy || '')
-      : (nuevo ? '<b style="color:var(--amarillo);">NUEVO</b> · primera visita'
+      : (nuevo ? '<b style="color:var(--acento-txt);">NUEVO</b> · primera visita'
                : 'ya visitado ' + new Date(p.ultimaVisita).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
                  + (p.ultimoResultado ? ' · ' + rutaEsc((RESULTADOS_VISITA.concat(RESULTADOS_VISITA_CLIENTE).find(r => r.codigo === p.ultimoResultado) || {}).etiqueta || p.ultimoResultado) : ''));
     return `
@@ -5335,7 +5335,7 @@ window._reparto = null;
 function repartoFila(p, acciones) {
   const pagado = (p.estatusPago || '') === 'Pagado';
   const est = p.estatusPedido === 'Entregado' ? '<span style="color:#4caf50;font-weight:800;">Entregado</span>'
-    : p.estatusPedido === 'En camino' ? '<span style="color:var(--amarillo);font-weight:800;">En camino</span>' : '';
+    : p.estatusPedido === 'En camino' ? '<span style="color:var(--acento-txt);font-weight:800;">En camino</span>' : '';
   // La marca de Armado solo importa antes de salir: en camino o entregado ya no se enseña.
   const armado = p.estatusPedido !== 'En proceso' ? '' : (p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>');
   const dist = p.entregaDistanciaM != null ? (p.entregaFueraDelPunto
@@ -5343,7 +5343,7 @@ function repartoFila(p, acciones) {
   return `<div style="display:flex;gap:10px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid var(--gris3);">
     <div style="flex:1;min-width:0;cursor:pointer;" onclick="verDetallePedido(${p.id})">
       <div style="font-weight:800;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.consecutivo || '')} · ${rutaEsc(p.cliente || '')}</div>
-      <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--amarillo);">cobrar</b>'}${armado ? ' · ' + armado : ''}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
+      <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--acento-txt);">cobrar</b>'}${armado ? ' · ' + armado : ''}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
     </div>
     ${acciones || ''}
   </div>`;
@@ -5763,7 +5763,7 @@ window.procesarCSV = function(event) {
       if (faltantes.length > 0) {
         document.getElementById('pros-csv-preview').innerHTML =
           `<div style="color:var(--rojo);font-weight:700;">Faltan columnas obligatorias: ${faltantes.join(', ')}</div>
-           <div style="margin-top:6px;font-size:0.74rem;">Encabezados detectados: <code style="color:var(--amarillo);">${headersRaw.join(', ')}</code></div>
+           <div style="margin-top:6px;font-size:0.74rem;">Encabezados detectados: <code style="color:var(--acento-txt);">${headersRaw.join(', ')}</code></div>
            <div style="margin-top:6px;font-size:0.72rem;color:var(--suave);">Asegúrate de tener al menos: <strong>NombreCliente</strong>, <strong>lat</strong> y <strong>lng</strong>.</div>`;
         document.getElementById('pros-csv-preview').style.display = 'block';
         return;
@@ -5823,9 +5823,9 @@ window.procesarCSV = function(event) {
       }).join('<br>');
 
       document.getElementById('pros-csv-preview').innerHTML = `
-        <div style="font-weight:800;color:var(--amarillo);">${prospectos.length} prospectos listos para importar</div>
+        <div style="font-weight:800;color:var(--acento-txt);">${prospectos.length} prospectos listos para importar</div>
         ${invalidos > 0 ? `<div style="color:var(--rojo);font-size:0.74rem;margin-top:4px;">${invalidos} filas inválidas (sin nombre o coordenadas)</div>` : ''}
-        ${coordsSwapped > 0 ? `<div style="color:var(--amarillo);font-size:0.74rem;margin-top:4px;">↔️ ${coordsSwapped} coordenadas detectadas invertidas y corregidas automáticamente</div>` : ''}
+        ${coordsSwapped > 0 ? `<div style="color:var(--acento-txt);font-size:0.74rem;margin-top:4px;">↔️ ${coordsSwapped} coordenadas detectadas invertidas y corregidas automáticamente</div>` : ''}
         <div style="margin-top:6px;font-size:0.74rem;color:var(--suave);">Primeros registros:<br>${previewLineas}${prospectos.length > 3 ? '<br>...' : ''}</div>
       `;
       document.getElementById('pros-csv-preview').style.display = 'block';
@@ -5887,7 +5887,7 @@ window.confirmarImportacion = async function() {
       <div style="color:var(--suave);">
         <span class="loader loader-w"></span> Procesando lote ${i+1}/${lotes.length} (${(i*LOTE)+1}–${Math.min((i+1)*LOTE, total)} de ${total})...
       </div>
-      <div style="font-size:0.74rem;margin-top:6px;color:var(--amarillo);">
+      <div style="font-size:0.74rem;margin-top:6px;color:var(--acento-txt);">
         Hasta ahora: ${importadosTotal} ok · ${duplicadosTotal} dup · ${invalidosTotal} inv
       </div>`;
     try {
@@ -5922,7 +5922,7 @@ window.confirmarImportacion = async function() {
         <div style="font-size:0.78rem;margin-top:6px;color:var(--suave);">
           Procesados antes del fallo: ${importadosTotal} ok · ${duplicadosTotal} dup · ${invalidosTotal} inv
         </div>
-        <div style="font-size:0.74rem;margin-top:6px;color:var(--amarillo);">
+        <div style="font-size:0.74rem;margin-top:6px;color:var(--acento-txt);">
           Tip: abre la consola (F12) para ver detalle del error. También puedes intentar el botón "Probar 1 fila" para diagnosticar.
         </div>`;
       btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Reintentar';
@@ -6136,7 +6136,7 @@ function pintarResumenGastos(r) {
     html += `<span>Inversión: <strong style="color:var(--blanco);">$${fuentes['Inversión'].toLocaleString('es-MX')}</strong></span>`;
   }
   if (r.totalPendientes > 0) {
-    html += `<span>Pendientes: <strong style="color:var(--amarillo);">$${r.totalPendientes.toLocaleString('es-MX')}</strong></span>`;
+    html += `<span>Pendientes: <strong style="color:var(--acento-txt);">$${r.totalPendientes.toLocaleString('es-MX')}</strong></span>`;
   }
   det.innerHTML = html || '<span>Sin gastos este mes</span>';
 
@@ -6156,7 +6156,7 @@ function pintarResumenGastos(r) {
     document.getElementById('g-resumen').appendChild(blockEl);
   }
 
-  let insumosHTML = '<div style="font-size:0.66rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Insumos del mes (precio promedio)</div>';
+  let insumosHTML = '<div style="font-size:0.66rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Insumos del mes (precio promedio)</div>';
   insumosKeys.forEach(s => {
     const i = insumos[s];
     let detalleLts = '';
@@ -6166,7 +6166,7 @@ function pintarResumenGastos(r) {
     insumosHTML += `
       <div style="display:flex;justify-content:space-between;font-size:0.74rem;color:var(--blanco);padding:3px 0;">
         <span><strong>${s}</strong>: ${i.totalCantidad} ${i.unidad}${detalleLts}</span>
-        <span style="color:var(--amarillo);font-weight:700;">$${i.precioPromedio.toFixed(2)}/${i.unidad}</span>
+        <span style="color:var(--acento-txt);font-weight:700;">$${i.precioPromedio.toFixed(2)}/${i.unidad}</span>
       </div>`;
   });
   blockEl.innerHTML = insumosHTML;
@@ -6218,7 +6218,7 @@ function pintarListaGastos() {
         <div style="flex:1;min-width:0;">
           <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</div>
           ${g.concepto ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:2px;">${g.concepto}</div>` : ''}
-          ${g.cantidad > 0 ? `<div style="font-size:0.74rem;color:var(--amarillo);margin-top:2px;font-weight:700;">${g.cantidad} ${g.unidad} · $${g.precioUnitario.toFixed(2)}/${g.unidad.replace(/^bidón\s*/,'').replace(/L$/,'L').trim()||g.unidad}</div>` : ''}
+          ${g.cantidad > 0 ? `<div style="font-size:0.74rem;color:var(--acento-txt);margin-top:2px;font-weight:700;">${g.cantidad} ${g.unidad} · $${g.precioUnitario.toFixed(2)}/${g.unidad.replace(/^bidón\s*/,'').replace(/L$/,'L').trim()||g.unidad}</div>` : ''}
           <div style="font-size:0.7rem;color:#888;margin-top:4px;">
             ${fecha} · ${fuenteIco[g.fuenteDinero]||''} ${g.fuenteDinero}
             ${g.tieneTicket ? ' ·' : ''}
@@ -6469,9 +6469,9 @@ window.verDetalleGasto = function(id) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;font-size:0.82rem;">
       <div><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Categoría:</strong> <span style="color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</span></div>
       ${g.cantidad > 0 ? `<div style="background:var(--aviso-bg);border-radius:8px;padding:8px;margin:4px 0;">
-        <strong style="color:var(--amarillo);font-size:0.7rem;text-transform:uppercase;">Métrica:</strong>
+        <strong style="color:var(--acento-txt);font-size:0.7rem;text-transform:uppercase;">Métrica:</strong>
         <div style="color:var(--blanco);margin-top:2px;">
-          ${g.cantidad} ${g.unidad} · <strong style="color:var(--amarillo);">$${g.precioUnitario.toFixed(2)}/${g.unidad}</strong>
+          ${g.cantidad} ${g.unidad} · <strong style="color:var(--acento-txt);">$${g.precioUnitario.toFixed(2)}/${g.unidad}</strong>
           ${g.unidad === 'bidón 20L' ? `<br><span style="font-size:0.74rem;color:var(--suave);">≈ ${g.cantidad * 20}L totales · $${(g.monto / (g.cantidad * 20)).toFixed(2)}/L</span>` : ''}
         </div>
       </div>` : ''}
@@ -6486,9 +6486,9 @@ window.verDetalleGasto = function(id) {
 
     <!-- Trazabilidad -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--suave2);">
-      <div>Registrado por: <strong style="color:var(--amarillo);">${g.nombreVendedor || 'Sin nombre'}</strong></div>
+      <div>Registrado por: <strong style="color:var(--acento-txt);">${g.nombreVendedor || 'Sin nombre'}</strong></div>
       <div>${fechaReg}</div>
-      ${g.aprobadoPor ? `<div style="margin-top:4px;">${g.estatusAprobacion === 'aprobado' ? '' : ''} ${g.estatusAprobacion === 'aprobado' ? 'Aprobado' : 'Rechazado'} por: <strong style="color:var(--amarillo);">${g.aprobadoPor}</strong></div>` : ''}
+      ${g.aprobadoPor ? `<div style="margin-top:4px;">${g.estatusAprobacion === 'aprobado' ? '' : ''} ${g.estatusAprobacion === 'aprobado' ? 'Aprobado' : 'Rechazado'} por: <strong style="color:var(--acento-txt);">${g.aprobadoPor}</strong></div>` : ''}
       ${g.motivoRechazo ? `<div style="margin-top:4px;color:var(--rojo);">Motivo: ${g.motivoRechazo}</div>` : ''}
     </div>
 
@@ -6937,7 +6937,7 @@ function armadoPintarPedidos() {
       ${porConfirmar.map(p => `
         <button onclick="verDetallePedido(${p.id})" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:12px;padding:10px 14px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;">
           <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);"> · ${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''}</span> ${armadoRutaBadge(p)}</span>
-          <span style="color:var(--amarillo);font-weight:800;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
+          <span style="color:var(--acento-txt);font-weight:800;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
         </button>`).join('')}` : '';
     return;
   }
@@ -7122,7 +7122,7 @@ async function cargarPendientesCaja() {
     if ((tot.numEfectivoPendiente || 0) > 0 || (tot.numTransferPendiente || 0) > 0) {
       html += `
         <div style="background:var(--gris);border-radius:10px;padding:10px;margin-bottom:12px;">
-          <div style="font-size:0.7rem;color:var(--amarillo);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Pendientes de procesar</div>
+          <div style="font-size:0.7rem;color:var(--acento-txt);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Pendientes de procesar</div>
           ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>Efectivo en vendedores</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
           ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>Transferencias por verificar</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
         </div>
@@ -7184,7 +7184,7 @@ function renderEfectivoVendedor(v) {
         </div>
       </div>
       <details style="margin-top:8px;">
-        <summary style="font-size:0.72rem;color:var(--amarillo);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Ver pedidos (${v.numPedidos})</summary>
+        <summary style="font-size:0.72rem;color:var(--acento-txt);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Ver pedidos (${v.numPedidos})</summary>
         <div style="margin-top:6px;">${pedidosHTML}</div>
       </details>
     </div>
@@ -7335,7 +7335,7 @@ function renderPuntoCaja(p, esHoy) {
       ${estatusDia !== 'no_abierta' ? `
       <!-- Movimientos -->
       <details style="margin-top:6px;">
-        <summary style="font-size:0.78rem;color:var(--amarillo);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Movimientos del día (${movimientos.length})</summary>
+        <summary style="font-size:0.78rem;color:var(--acento-txt);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Movimientos del día (${movimientos.length})</summary>
         <div style="margin-top:8px;">${movHTML}</div>
       </details>
       ` : ''}
@@ -7353,7 +7353,7 @@ window.abrirAperturaCaja = async function(idPunto) {
 
   // Defaults antes de la query
   document.getElementById('ap-info').innerHTML =
-    `Vas a abrir caja de <strong style="color:var(--amarillo);">${p.nombre}</strong> para hoy. Ingresa el saldo inicial (fondo en mano).`;
+    `Vas a abrir caja de <strong style="color:var(--acento-txt);">${p.nombre}</strong> para hoy. Ingresa el saldo inicial (fondo en mano).`;
   document.getElementById('ap-saldo').value = p.fondoMinimo || '';
   document.getElementById('ap-notas').value = '';
   document.getElementById('overlay-apertura-caja').classList.add('visible');
@@ -7371,9 +7371,9 @@ window.abrirAperturaCaja = async function(idPunto) {
 
       document.getElementById('ap-saldo').value = saldoUlt.toFixed(2);
       document.getElementById('ap-info').innerHTML = `
-        <div style="margin-bottom:6px;">Vas a abrir caja de <strong style="color:var(--amarillo);">${p.nombre}</strong> para hoy.</div>
+        <div style="margin-bottom:6px;">Vas a abrir caja de <strong style="color:var(--acento-txt);">${p.nombre}</strong> para hoy.</div>
         <div style="background:var(--ok-bg);border-left:3px solid #4caf50;padding:8px 10px;border-radius:6px;font-size:0.78rem;color:var(--blanco);">
-          Saldo de cierre de <strong>${fechaFmt}</strong>: <strong style="color:var(--amarillo);">$${saldoUlt.toLocaleString('es-MX', {minimumFractionDigits:2})}</strong><br>
+          Saldo de cierre de <strong>${fechaFmt}</strong>: <strong style="color:var(--acento-txt);">$${saldoUlt.toLocaleString('es-MX', {minimumFractionDigits:2})}</strong><br>
           <span style="color:var(--suave);font-size:0.72rem;">Se precargó automáticamente. Ajusta si el efectivo físico difiere.</span>
         </div>
       `;
@@ -7433,11 +7433,11 @@ window.abrirCierreCaja = function(idPunto) {
   const calculado = saldoApertura + ingresos + egresos;
 
   document.getElementById('ci-info').innerHTML = `
-    <div style="margin-bottom:6px;color:var(--blanco);"><strong style="color:var(--amarillo);">${p.nombre}</strong></div>
+    <div style="margin-bottom:6px;color:var(--blanco);"><strong style="color:var(--acento-txt);">${p.nombre}</strong></div>
     <div style="display:flex;justify-content:space-between;color:var(--suave);font-size:0.78rem;margin-bottom:3px;"><span>Apertura</span><span>$${saldoApertura.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:#4caf50;font-size:0.78rem;margin-bottom:3px;"><span>Ingresos</span><span>+$${ingresos.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--rojo);font-size:0.78rem;margin-bottom:6px;"><span>Egresos</span><span>$${egresos.toLocaleString('es-MX')}</span></div>
-    <div style="display:flex;justify-content:space-between;color:var(--amarillo);font-weight:800;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--acento-txt);font-weight:800;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
   `;
   document.getElementById('ci-saldo').value = calculado.toFixed(2);
   document.getElementById('ci-notas').value = '';
@@ -7509,7 +7509,7 @@ window.abrirMovCaja = function(idPunto) {
   if (!p) return;
   _cajaPuntoSeleccionado = p;
   document.getElementById('mc-punto-info').innerHTML =
-    `Movimiento en <strong style="color:var(--amarillo);">${p.nombre}</strong>`;
+    `Movimiento en <strong style="color:var(--acento-txt);">${p.nombre}</strong>`;
   document.getElementById('mc-tipo').value = '';
   document.getElementById('mc-monto').value = '';
   document.getElementById('mc-desc').value = '';
@@ -7616,7 +7616,7 @@ window.abrirAccionesPendiente = function(idOrden, consec, monto, modo) {
   const icoModo = modo === 'efectivo' ? 'Efectivo' : 'Transferencia/Tarjeta';
   document.getElementById('ap-pend-info').innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <strong style="color:var(--amarillo);">${consec}</strong>
+      <strong style="color:var(--acento-txt);">${consec}</strong>
       <span style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;">$${_accionPendActual.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
     </div>
     <div style="color:var(--suave);font-size:0.78rem;">Método declarado: ${icoModo}</div>
@@ -7761,7 +7761,7 @@ async function pintarPermisosPorRol() {
 
     cont.innerHTML = ['vendedor','consumidor'].map(rol => `
       <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;font-size:0.78rem;margin-bottom:8px;">${rol === 'vendedor' ? 'Vendedores' : 'Consumidores'}</div>
+        <div style="font-weight:900;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;font-size:0.78rem;margin-bottom:8px;">${rol === 'vendedor' ? 'Vendedores' : 'Consumidores'}</div>
         ${disp.map(sec => {
           const checked = (_configRoles[rol] || []).indexOf(sec) >= 0;
           return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:0.84rem;color:var(--blanco);cursor:pointer;">
@@ -7811,7 +7811,7 @@ async function pintarPermisosPorVendedor() {
         const tieneOverride = override.length > 0;
         return `
           <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-            <div style="font-weight:900;color:var(--amarillo);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:#888;font-weight:600;">(usa config rol)</span>'}</div>
+            <div style="font-weight:900;color:var(--acento-txt);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:#888;font-weight:600;">(usa config rol)</span>'}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;">
               ${disp.map(sec => {
                 const checked = override.indexOf(sec) >= 0;
@@ -8197,7 +8197,7 @@ async function pintarReporteAdmin() {
     const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     cont.innerHTML = `
       <div style="background:var(--gris);border-radius:12px;padding:12px;">
-        <div style="font-size:0.7rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Reporte ${meses[ahora.getMonth()]} ${ahora.getFullYear()}</div>
+        <div style="font-size:0.7rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Reporte ${meses[ahora.getMonth()]} ${ahora.getFullYear()}</div>
         ${reporte.map(v => `
           <div style="background:var(--gris2);border-radius:8px;padding:9px;margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -8366,7 +8366,7 @@ window.abrirCerrarJornada = async function() {
   const min = Math.round((ahora - ent) / 60000);
   const h = Math.floor(min/60), m = min%60;
   document.getElementById('cj-resumen').innerHTML = `
-    <div style="font-weight:700;color:var(--amarillo);">${h}h ${m}m de jornada</div>
+    <div style="font-weight:700;color:var(--acento-txt);">${h}h ${m}m de jornada</div>
     <div style="font-size:0.74rem;color:var(--suave);margin-top:3px;">Entrada: ${ent.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
   `;
 
@@ -8578,7 +8578,7 @@ function pintarListaProductos() {
 
   // Sección de papas con switches on/off (solo control de disponibilidad)
   if (_papasLista.length > 0) {
-    html += `<div style="font-size:0.74rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
+    html += `<div style="font-size:0.74rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
     html += `<div style="font-size:0.7rem;color:#777;margin-bottom:10px;">Apaga el switch cuando un sabor esté agotado.</div>`;
     _papasLista.forEach(p => {
       const activo = p.activo !== false;
@@ -8601,7 +8601,7 @@ function pintarListaProductos() {
   }
 
   // Sección de bebidas (gestión completa con tarjetas que abren modal)
-  html += `<div style="font-size:0.74rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;">Bebidas</div>`;
+  html += `<div style="font-size:0.74rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;">Bebidas</div>`;
   if (_productosLista.length === 0) {
     html += '<div style="text-align:center;color:var(--suave);padding:18px 8px;font-size:0.82rem;">Sin bebidas. Toca "+ Nuevo producto" o "Escanear código" para empezar.</div>';
   } else {
@@ -8652,7 +8652,7 @@ function cardProducto(p) {
   const tipoIco = { Refresco:'', Agua:'', Cerveza:'', Jugo:'', Energizante:'', Otro:'' };
   const ico = tipoIco[p.tipo_bebida] || '';
   const detalle = (p.sabor || p.presentacion)
-    ? `<div style="font-size:0.72rem;color:var(--amarillo);font-weight:600;margin-top:1px;">${[p.sabor, p.presentacion].filter(Boolean).join(' · ')}</div>`
+    ? `<div style="font-size:0.72rem;color:var(--acento-txt);font-weight:600;margin-top:1px;">${[p.sabor, p.presentacion].filter(Boolean).join(' · ')}</div>`
     : '';
   const badge = inactivo
     ? `<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.6rem;font-weight:800;letter-spacing:0.5px;">AGOTADO</span>`

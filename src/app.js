@@ -1271,6 +1271,9 @@ window.verProducto = function(key) {
   renderDetalleQty();
   const ov = document.getElementById('prod-detalle');
   ov.style.display = 'flex';
+  // Sin esto el dedo arrastra la PAGINA DE ATRAS por debajo de la ficha, y
+  // al cerrarla el catalogo ha viajado solo. Lo vio Abraham el 23 nov 2026.
+  document.body.classList.add('ficha-abierta');
   requestAnimationFrame(() => ov.classList.add('open'));
   track('view_item', { sabor: p.sabor, presentacion: p.presentacion });
 };
@@ -1318,7 +1321,9 @@ window.detalleAgregar = function(delta) { agregarUnidad(String(detalleKey), delt
 window.detalleQty = function(delta) { cambiarQty(String(detalleKey), delta); renderDetalleQty(); };
 window.cerrarProducto = function() {
   const ov = document.getElementById('prod-detalle');
+  if (!ov) return;
   ov.classList.remove('open');
+  document.body.classList.remove('ficha-abierta');
   setTimeout(() => { ov.style.display = 'none'; }, 250);
 };
 // ══════════════════════════════════
@@ -2002,7 +2007,7 @@ function renderDrawer() {
     ];
     const selectorHTML = `
       <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin:6px 0 10px;">
-        <div style="font-size:0.7rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
+        <div style="font-size:0.7rem;font-weight:900;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           ${TIPOS.map(t => {
             const sel = t.id === tipoActual;
@@ -2080,7 +2085,7 @@ function renderDrawer() {
       }
       if (envRow) {
         envRow.style.display = costoEnv > 0 ? 'flex' : 'none';
-        if (costoEnv > 0) envRow.innerHTML = `<span>Envío paquetería</span><span style="color:var(--amarillo);">+$${costoEnv}</span>`;
+        if (costoEnv > 0) envRow.innerHTML = `<span>Envío paquetería</span><span style="color:var(--acento-txt);">+$${costoEnv}</span>`;
       }
       // v2.10: línea de descuento por cupón envío gratis
       let envDescRow = document.getElementById('cart-envio-desc-row');
@@ -2434,9 +2439,9 @@ window.setEntrega = function(id) {
     // ¿Hay cupón envío gratis aplicado?
     const tieneCuponEnvio = _cuponEnCarrito && _cuponEnCarrito.tipo === 'envio_gratis';
     if (tieneCuponEnvio) {
-      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. <strong style="color:#4caf50;">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
+      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--acento-txt);">enviatodo.com</strong>. <strong style="color:#4caf50;">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
     } else {
-      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--amarillo);">enviatodo.com</strong>. Costo: <strong>$${COSTO_PAQUETERIA}</strong> que se sumará al total. Se asignará una guía de rastreo una vez confirmado.` + avisoEnvioCDMX();
+      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--acento-txt);">enviatodo.com</strong>. Costo: <strong>$${COSTO_PAQUETERIA}</strong> que se sumará al total. Se asignará una guía de rastreo una vez confirmado.` + avisoEnvioCDMX();
     }
   } else if (id === 'coordinar') {
     info.style.display = 'block';
@@ -2584,7 +2589,7 @@ function pintarResultadosVendedor(vendedores, query) {
           <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">${v.nombre}</div>
           ${subtituloHtml}
         </div>
-        <span style="color:var(--amarillo);">→</span>
+        <span style="color:var(--acento-txt);">→</span>
       </div>
     `;
   }).join('');
@@ -4500,6 +4505,10 @@ let _seccionPedida = null;
 // Devuelve `false` cuando NO pintó nada porque está esperando al panel. El envoltorio de historial
 // de abajo mira ese `false` para no empujar una entrada de una pantalla que nunca se mostró.
 window.navegar = function(seccion) {
+  // La ficha de producto vive por encima de todo: si no se cierra, se
+  // navega por detras y la seccion nueva queda tapada. Abraham: «de ahi no
+  // puedes ir directamente a otra seccion» (23 nov 2026).
+  if (document.body.classList.contains('ficha-abierta')) cerrarProducto();
   _seccionPedida = seccion;
   // Panel bajo demanda (cambios/2026-09-19-partir-monolito): si la sección vive en panel.js y aún no
   // cargó, se carga y se vuelve a navegar. Un consumidor nunca llega aquí con esas secciones.
@@ -4984,7 +4993,7 @@ async function renderClubAdminCfg() {
     </div>`;
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
-      <div style="font-size:0.72rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Reglas del Club (admin)</div>
+      <div style="font-size:0.72rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Reglas del Club (admin)</div>
       ${fila('Puntos por peso', '0.1 = 1 punto por cada $10 de producto, sin envío', inp('cfg-ppp', g.puntos_por_peso, '0.01'))}
       ${fila('Valor del punto al canjear ($)', 'cuánto descuenta 1 punto', inp('cfg-vpm', r.valor_punto_mxn, '0.01'))}
       ${fila('% máx. del pedido con puntos', 'nunca llega a 100%', inp('cfg-pct', r.pct_max_pedido, '1'))}
@@ -5046,7 +5055,7 @@ function renderPedidos() {
   lista.innerHTML = `
     <!-- Último pedido destacado -->
     <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:0.68rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
+      <div style="font-size:0.68rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
@@ -5054,7 +5063,7 @@ function renderPedidos() {
       <div style="font-size:0.75rem;color:var(--suave);font-weight:600;">${ultimo.fecha?new Date(ultimo.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
       <span class="pedido-estatus ${ultimo.estatus==='Entregado'?'entregado':''}" style="margin-top:8px;">${ultimo.estatus||'Pendiente'}</span>
       ${ultimo.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${ultimo.id})" style="margin-top:10px;width:100%;background:var(--amarillo);color:#222;border:none;border-radius:10px;padding:9px;font-weight:800;font-size:0.78rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(ultimo.id)>=0?'✓ Ya evaluado · editar':'Evaluar este pedido'}</button>` : ''}
-      <div style="font-size:0.7rem;color:var(--amarillo);margin-top:8px;font-weight:700;">Ver seguimiento</div>
+      <div style="font-size:0.7rem;color:var(--acento-txt);margin-top:8px;font-weight:700;">Ver seguimiento</div>
     </div>
     <!-- Resto de pedidos -->
     ${pedidos.slice(1).map(p => {
@@ -5420,7 +5429,7 @@ function editorPedidoPintar() {
       : `<button type="button" aria-label="Menos" onclick="editorPedidoMas(${i}, -1)">−</button><b>${l.caja ? l.cajas + ' caja' + (l.cajas === 1 ? '' : 's') : l.cantidad}</b><button type="button" aria-label="Más" onclick="editorPedidoMas(${i}, 1)">+</button>`;
     const sub = l.caja ? `${epEsc(l.presentacion)} · caja de ${l.caja}` : epEsc(l.presentacion || '');
     return `<div class="ep-linea${l.canje ? ' canje' : ''}${l.quitada ? ' quitada' : ''}">
-      <div class="n">${epEsc(l.sabor)}${l.nueva ? ' <span style="color:var(--amarillo)">nuevo</span>' : ''}<small>${sub}</small></div>
+      <div class="n">${epEsc(l.sabor)}${l.nueva ? ' <span style="color:var(--acento-txt)">nuevo</span>' : ''}<small>${sub}</small></div>
       ${l.quitada ? '' : `<div class="ep-qty">${qty}</div>`}
       ${l.canje ? '' : `<button type="button" class="ep-quitar${l.quitada ? ' deshacer' : ''}" onclick="editorPedidoQuitar(${i})">${l.quitada ? 'Deshacer' : 'Quitar'}</button>`}
     </div>`;
@@ -5647,7 +5656,7 @@ function pintarTracking() {
   const motivoCli = (MOTIVO_EDICION.cliente || {})[p.motivo] || '';
   const editarHTML = p.editable === undefined ? '' : (p.editable && tokenCliente() && !esVendedor)
     ? `<button type="button" class="tk-btn" onclick="editarMiPedido()">Editar pedido</button>`
-    : (motivoCli ? `<div class="tk-nota" style="margin-top:10px;">${motivoCli}${/WhatsApp/.test(motivoCli) ? ` · <a href="#" onclick="editarMiPedidoWpp();return false;" style="color:var(--amarillo);">Abrir WhatsApp</a>` : ''}</div>` : '');
+    : (motivoCli ? `<div class="tk-nota" style="margin-top:10px;">${motivoCli}${/WhatsApp/.test(motivoCli) ? ` · <a href="#" onclick="editarMiPedidoWpp();return false;" style="color:var(--acento-txt);">Abrir WhatsApp</a>` : ''}</div>` : '');
 
   cont.innerHTML = `
     <div class="tk-card">
@@ -6018,14 +6027,14 @@ window.mostrarInstruccionesInstalar = function() {
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Desliza y elige <strong style="color:var(--amarillo);">"Añadir a inicio"</strong></div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Desliza y elige <strong style="color:var(--acento-txt);">"Añadir a inicio"</strong></div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">Aparece en el menú entre las opciones</div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Añadir"</strong> arriba a la derecha</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Añadir"</strong> arriba a la derecha</div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">El ícono aparecerá en tu pantalla principal</div>
       </div>
@@ -6044,13 +6053,13 @@ window.mostrarInstruccionesInstalar = function() {
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Instalar app"</strong> o <strong style="color:var(--amarillo);">"Agregar a pantalla de inicio"</strong></div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Instalar app"</strong> o <strong style="color:var(--acento-txt);">"Agregar a pantalla de inicio"</strong></div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Confirma <strong style="color:var(--amarillo);">"Instalar"</strong></div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Confirma <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
         </div>
       </div>
     `;
@@ -6060,13 +6069,13 @@ window.mostrarInstruccionesInstalar = function() {
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Busca el ícono <strong style="color:var(--amarillo);">⊕</strong> en la barra de direcciones</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Busca el ícono <strong style="color:var(--acento-txt);">⊕</strong> en la barra de direcciones</div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Instalar"</strong></div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
         </div>
       </div>
     `;
@@ -6213,8 +6222,8 @@ function mostrarPagoConfirmado(ok) {
     : 'Tu pago se canceló o no se completó. Tu pedido quedó guardado como pendiente; puedes intentar pagar de nuevo.';
   ov.innerHTML = '<div style="background:var(--negro);border:1px solid var(--gris2);border-radius:16px;max-width:360px;width:100%;padding:28px 22px;text-align:center;">'
     + '<div style="font-size:3rem;line-height:1;margin-bottom:10px;">' + icon + '</div>'
-    + '<div style="font-weight:900;font-size:1.3rem;color:#fff;margin-bottom:8px;">' + titulo + '</div>'
-    + '<div style="font-size:0.92rem;color:rgba(255,255,255,0.78);line-height:1.5;margin-bottom:20px;">' + msg + '</div>'
+    + '<div style="font-weight:900;font-size:1.3rem;color:var(--blanco);margin-bottom:8px;">' + titulo + '</div>'
+    + '<div style="font-size:0.92rem;color:var(--blanco);line-height:1.5;margin-bottom:20px;">' + msg + '</div>'
     + '<button id="pago-ok-btn" style="background:#E5B312;color:#111;border:none;border-radius:10px;padding:13px 20px;font-weight:900;font-size:0.95rem;cursor:pointer;width:100%;">Entendido</button>'
     + '</div>';
   document.body.appendChild(ov);

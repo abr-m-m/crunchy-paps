@@ -136,8 +136,8 @@ select.inp { appearance: none; cursor: pointer; }
   color:var(--blanco); letter-spacing:3px; line-height:1;
   text-shadow:0 2px 12px rgba(0,0,0,0.6);
 }
-.banner-h .hl { color:var(--amarillo); }
-.banner-slogan { font-size:0.88rem; font-weight:700; color:rgba(255,255,255,0.55); margin-top:6px; }
+.banner-h .hl { color:var(--acento-txt); }
+.banner-slogan { font-size:0.88rem; font-weight:700; color:var(--blanco); margin-top:6px; }
 
 .welcome-pregunta {
   font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem;
@@ -164,7 +164,7 @@ select.inp { appearance: none; cursor: pointer; }
   background: radial-gradient(ellipse at 50% 0%, var(--aviso-bg), var(--negro) 60%);
 }
 .otp-box { width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; gap:18px; }
-.otp-title { font-family:'Archivo',sans-serif; font-weight:700; font-size:2rem; color:var(--amarillo); letter-spacing:2px; }
+.otp-title { font-family:'Archivo',sans-serif; font-weight:700; font-size:2rem; color:var(--acento-txt); letter-spacing:2px; }
 .otp-desc { color:var(--suave); font-size:0.88rem; font-weight:600; line-height:1.5; }
 .tel-wrap { display:flex; width:100%; gap:8px; }
 .lada {
@@ -200,7 +200,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:10px 14px; display:flex; align-items:center;
   justify-content:space-between; position:sticky; top:0; z-index:100;
 }
-.logo { font-family:'Archivo',sans-serif; font-weight:700; text-transform:uppercase; font-size:1.5rem; color:var(--amarillo); letter-spacing:0; line-height:1; }
+.logo { font-family:'Archivo',sans-serif; font-weight:700; text-transform:uppercase; font-size:1.5rem; color:var(--acento-txt); letter-spacing:0; line-height:1; }
 .logo span { color:var(--rojo); }
 .header-right { display:flex; gap:8px; align-items:center; }
 .user-chip {
@@ -243,7 +243,7 @@ select.inp { appearance: none; cursor: pointer; }
 .banner-cat .banner-overlay { background:linear-gradient(90deg,rgba(0,0,0,0.9) 0%,rgba(0,0,0,0.78) 42%,rgba(0,0,0,0.32) 70%,rgba(0,0,0,0) 100%); }
 .banner-cat .banner-content { max-width:72%; }
 .banner-cat .banner-h { text-shadow:0 2px 10px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9); }
-.banner-cat .banner-slogan { color:rgba(255,255,255,0.92); text-shadow:0 1px 6px rgba(0,0,0,0.9); }
+.banner-cat .banner-slogan { color:var(--blanco); text-shadow:0 1px 6px rgba(0,0,0,0.9); }
 /* Carrusel de banners (imágenes completas, clickeables) */
 .bn-carousel { position:relative; width:100%; overflow:hidden; }
 .bn-track { display:flex; transition:transform 0.4s ease; }
@@ -260,7 +260,7 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-overlay.open .pd-panel { transform:translateY(0); }
 .pd-topbar { display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--gris2,#222); flex:0 0 auto; }
 .pd-back { background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; line-height:1; padding:2px 8px; }
-.pd-topttl { font-weight:900; color:#fff; font-size:1rem; }
+.pd-topttl { font-weight:900; color:var(--blanco); font-size:1rem; }
 .pd-scroll { flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 .pd-imgwrap { width:100%; aspect-ratio:1/1; background:#f1f1f1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
 .pd-img { width:100%; height:100%; object-fit:contain; }
@@ -269,16 +269,16 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-ph .emoji svg { width:56px; height:56px; }
 .pd-ph .prox { font-size:0.7rem; font-weight:800; color:#999; text-transform:uppercase; }
 .pd-body { padding:18px 18px 26px; }
-.pd-nombre { font-weight:900; font-size:1.5rem; color:#fff; line-height:1.15; }
+.pd-nombre { font-weight:900; font-size:1.5rem; color:var(--blanco); line-height:1.15; }
 .pd-pres { font-size:0.78rem; color:var(--suave,#999); font-weight:700; text-transform:uppercase; margin-top:3px; }
-.pd-precio { font-size:1.8rem; font-weight:900; color:var(--amarillo,#E5B312); margin-top:12px; }
+.pd-precio { font-size:1.8rem; font-weight:900; color:var(--acento-txt); margin-top:12px; }
 .pd-precio-orig { font-size:1rem; color:#888; text-decoration:line-through; font-weight:700; }
-.pd-desc { font-size:0.92rem; color:rgba(255,255,255,0.78); line-height:1.55; margin-top:14px; white-space:pre-wrap; }
+.pd-desc { font-size:0.92rem; color:var(--blanco); line-height:1.55; margin-top:14px; white-space:pre-wrap; }
 .pd-bottom { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:12px 16px; border-top:1px solid var(--gris2,#222); background:var(--negro,#0e0e0e); flex:0 0 auto; }
 .pd-bottom-row { display:flex; gap:10px; align-items:center; }
-.pd-cart-line { font-size:0.84rem; font-weight:800; color:var(--amarillo,#E5B312); text-align:center; }
+.pd-cart-line { font-size:0.84rem; font-weight:800; color:var(--acento-txt); text-align:center; }
 .pd-cart-line.pd-cart-empty { color:#888; font-weight:700; }
-.pd-bottom .pd-qty-num { color:#fff; font-size:1.15rem; min-width:30px; }
+.pd-bottom .pd-qty-num { color:var(--blanco); font-size:1.15rem; min-width:30px; }
 .pd-bottom .qty-ctrl { margin:0; padding-top:0; }
 .pd-add { flex:1; background:var(--rojo,#e3000f); color:#fff; border:none; border-radius:10px; padding:13px; font-weight:900; font-size:0.95rem; cursor:pointer; }
 .pd-agotado { flex:1; text-align:center; color:#888; font-weight:700; padding:12px; }
@@ -301,7 +301,7 @@ select.inp { appearance: none; cursor: pointer; }
   transition:all 0.2s; flex-shrink:0;
 }
 .tab.active { background:var(--sel-bg); border-color:var(--sel-br); color:var(--sel-fg); }
-.tab:hover:not(.active) { border-color:var(--amarillo); color:var(--amarillo); }
+.tab:hover:not(.active) { border-color:var(--amarillo); color:var(--acento-txt); }
 
 /* MODO VENTA (solo vendedor) */
 .modo-venta-wrap {
@@ -398,7 +398,7 @@ select.inp { appearance: none; cursor: pointer; }
   background:var(--gris); border:2px solid var(--gris3); border-radius:14px; padding:16px;
 }
 .granel-title {
-  font-family:'Archivo',sans-serif; font-weight:700; font-size:1.2rem; color:var(--amarillo);
+  font-family:'Archivo',sans-serif; font-weight:700; font-size:1.2rem; color:var(--acento-txt);
   letter-spacing:1px; margin-bottom:12px;
 }
 .granel-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
@@ -424,7 +424,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .drawer.open { transform:translateY(0); }
 .drawer-handle { width:40px; height:4px; background:var(--gris3); border-radius:2px; margin:0 auto 16px; }
-.drawer-title { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; margin-bottom:12px; }
+.drawer-title { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--acento-txt); letter-spacing:2px; margin-bottom:12px; }
 .cart-empty { text-align:center; color:var(--suave); padding:28px 0; font-size:0.95rem; font-weight:600; }
 .cart-empty span { display:flex; justify-content:center; margin-bottom:10px; color:var(--suave); }
 .cart-item {
@@ -434,7 +434,7 @@ select.inp { appearance: none; cursor: pointer; }
 .cart-item-info { flex:1; }
 .cart-item-nom { font-weight:800; font-size:0.86rem; }
 .cart-item-sub { font-size:0.76rem; color:var(--suave); font-weight:600; }
-.cart-item-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.15rem; color:var(--amarillo); }
+.cart-item-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.15rem; color:var(--acento-txt); }
 .del-btn { background:none; border:none; color:var(--suave); width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex-shrink:0; transition:color 0.15s; }
 .del-btn:hover { color:var(--rojo); }
 .cart-total {
@@ -442,7 +442,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:12px 0 6px; margin-top:4px;
 }
 .cart-total .lbl { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.1rem; color:var(--suave); letter-spacing:1px; }
-.cart-total .mnt { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.9rem; color:var(--amarillo); }
+.cart-total .mnt { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.9rem; color:var(--acento-txt); }
 .min-msg {
   background:var(--gris2); border-left:3px solid var(--amarillo);
   border-radius:0 8px 8px 0; padding:9px 12px;
@@ -486,7 +486,7 @@ select.inp { appearance: none; cursor: pointer; }
   padding:10px 14px; font-size:0.82rem; font-weight:700; color:var(--suave);
   display:flex; align-items:center; justify-content:space-between;
 }
-.puntos-chip .pts { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.2rem; color:var(--amarillo); }
+.puntos-chip .pts { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.2rem; color:var(--acento-txt); }
 
 .btn-confirmar {
   background:var(--amarillo); border:none; border-radius:14px;
@@ -524,14 +524,14 @@ select.inp { appearance: none; cursor: pointer; }
 }
 #gracias-overlay.visible { display:flex; animation:fadeIn 0.3s ease; }
 .gracias-box { max-width:340px; width:100%; }
-.gracias-emoji { color:var(--amarillo); margin-bottom:14px; animation:bounceIn 0.5s ease; display:flex; justify-content:center; }
-.gracias-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:3rem; color:var(--amarillo); letter-spacing:3px; line-height:1; }
+.gracias-emoji { color:var(--acento-txt); margin-bottom:14px; animation:bounceIn 0.5s ease; display:flex; justify-content:center; }
+.gracias-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:3rem; color:var(--acento-txt); letter-spacing:3px; line-height:1; }
 .gracias-sub { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.3rem; color:var(--blanco); letter-spacing:2px; margin-bottom:20px; }
 .gracias-card {
   background:var(--gris); border-radius:16px; padding:16px; margin-bottom:16px; text-align:left;
 }
 .gracias-card .consec-lbl { font-size:0.72rem; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
-.gracias-card .consec-val { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--amarillo); letter-spacing:2px; }
+.gracias-card .consec-val { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--acento-txt); letter-spacing:2px; }
 .gracias-card .vend-info { font-size:0.82rem; font-weight:700; color:var(--suave); margin-top:8px; }
 .gracias-card .puntos-ganados { font-size:0.82rem; font-weight:800; color:#4caf50; margin-top:6px; }
 .gracias-wpp-wrap {
@@ -567,11 +567,11 @@ select.inp { appearance: none; cursor: pointer; }
 }
 #historial-panel.visible { display:block; }
 .hist-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.hist-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:1rem; color:var(--amarillo); letter-spacing:1px; }
+.hist-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:1rem; color:var(--acento-txt); letter-spacing:1px; }
 .hist-close { background:none; border:none; color:#555; font-size:1.1rem; cursor:pointer; }
 .hist-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
 .hist-stat { background:var(--gris2); border-radius:10px; padding:10px; text-align:center; }
-.hist-stat .val { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.4rem; color:var(--amarillo); }
+.hist-stat .val { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.4rem; color:var(--acento-txt); }
 .hist-stat .lbl { font-size:0.65rem; font-weight:700; color:#555; text-transform:uppercase; }
 .hist-footer { margin-top:8px; font-size:0.72rem; font-weight:700; color:#444; text-align:center; }
 
@@ -610,7 +610,7 @@ select.inp { appearance: none; cursor: pointer; }
 .aviso.open { transform:translateY(0); }
 .aviso-titulo {
   font-family:'Archivo',sans-serif; font-weight:700; font-size:1.35rem;
-  color:var(--amarillo); margin-bottom:10px; line-height:1.15;
+  color:var(--acento-txt); margin-bottom:10px; line-height:1.15;
 }
 /* pre-line: los mensajes llevan saltos de linea con listas y cifras, y eran
    legibles dentro del alert. Se conservan sin tener que meter marcado. */
@@ -676,8 +676,8 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .nav-icon { width:22px; height:22px; color:var(--suave); display:block; }
 .nav-lbl { font-size:0.58rem; font-weight:800; color:var(--suave); text-transform:uppercase; white-space:nowrap; }
-.nav-item.active .nav-lbl { color:var(--amarillo); }
-.nav-item.active .nav-icon { color:var(--amarillo); stroke-width:2.2; }
+.nav-item.active .nav-lbl { color:var(--acento-txt); }
+.nav-item.active .nav-icon { color:var(--acento-txt); stroke-width:2.2; }
 
 /* MINI CARRITO */
 .mini-cart {
@@ -698,20 +698,20 @@ select.inp { appearance: none; cursor: pointer; }
 .premia-hero { background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg)); padding:28px 20px 24px; text-align:center; position:relative; overflow:hidden; }
 .premia-hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,210,0,0.07) 1px,transparent 1px); background-size:20px 20px; }
 .premia-nivel-badge { display:inline-flex; align-items:center; gap:6px; background:var(--amarillo); color:var(--sobre-marca); border-radius:50px; padding:5px 14px; font-weight:900; font-size:0.8rem; margin-bottom:14px; position:relative; }
-.premia-num { font-family:'Archivo',sans-serif; font-weight:700; font-size:5rem; color:var(--amarillo); line-height:1; position:relative; }
-.premia-lbl { font-size:0.85rem; font-weight:700; color:rgba(255,255,255,0.4); margin-top:4px; position:relative; }
+.premia-num { font-family:'Archivo',sans-serif; font-weight:700; font-size:5rem; color:var(--acento-txt); line-height:1; position:relative; }
+.premia-lbl { font-size:0.85rem; font-weight:700; color:var(--blanco); margin-top:4px; position:relative; }
 .premia-prog-wrap { margin:18px 0 6px; background:rgba(255,255,255,0.1); border-radius:50px; height:8px; overflow:hidden; position:relative; }
 .premia-prog { height:100%; background:var(--amarillo); border-radius:50px; transition:width 1s ease; }
 .premia-prog-labels { display:flex; justify-content:space-between; font-size:0.7rem; font-weight:700; color:#555; position:relative; }
 .premia-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px 0; }
 .premia-stat { background:var(--gris); border-radius:14px; padding:14px; }
-.premia-stat .pv { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.8rem; color:var(--amarillo); }
+.premia-stat .pv { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.8rem; color:var(--acento-txt); }
 .premia-stat .pl { font-size:0.72rem; font-weight:700; color:var(--suave); text-transform:uppercase; }
 .premia-beneficios { padding:14px 16px; }
-.premia-beneficios h3 { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.1rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:10px; }
+.premia-beneficios h3 { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.1rem; color:var(--acento-txt); letter-spacing:1px; margin-bottom:10px; }
 .bene-card { background:var(--gris); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; opacity:0.4; }
 .bene-card.activo { opacity:1; border:1px solid rgba(255,210,0,0.3); }
-.bene-icon { display:flex; flex-shrink:0; color:var(--amarillo); }
+.bene-icon { display:flex; flex-shrink:0; color:var(--acento-txt); }
 .bene-icon svg { width:24px; height:24px; }
 .bene-titulo { font-weight:900; font-size:0.85rem; }
 .bene-desc { font-size:0.73rem; color:var(--suave); font-weight:600; }
@@ -723,11 +723,11 @@ select.inp { appearance: none; cursor: pointer; }
 .club-card-wrap { padding:0 16px; margin-top:-44px; position:relative; }
 .club-card { background:var(--gris); border:1px solid var(--gris3); border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,0.35); }
 .club-card-lbl { display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:800; color:var(--suave); }
-.club-card-lbl svg { width:16px; height:16px; color:var(--amarillo); }
+.club-card-lbl svg { width:16px; height:16px; color:var(--acento-txt); }
 .club-card-fila { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:4px; }
 .club-card-num { font-family:'Archivo',sans-serif; font-weight:800; font-size:2.4rem; color:var(--blanco); line-height:1.1; }
 .club-card-eq { font-size:0.72rem; font-weight:700; color:var(--suave); }
-.club-card-vence { font-size:0.72rem; font-weight:800; color:var(--amarillo); margin-top:2px; }
+.club-card-vence { font-size:0.72rem; font-weight:800; color:var(--acento-txt); margin-top:2px; }
 .club-canjear { background:var(--amarillo); color:var(--sobre-marca); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
 .club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
 .club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave2); line-height:1.55; }
@@ -742,7 +742,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-reto-desc { font-size:0.78rem; font-weight:600; color:var(--suave); margin-bottom:8px; }
 .club-reto-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
 .club-reto-pill { font-size:0.7rem; font-weight:800; padding:4px 9px; border-radius:999px; border:1px solid var(--gris3); color:var(--blanco); }
-.club-reto-pill.bono { border-color:var(--amarillo); color:var(--amarillo); }
+.club-reto-pill.bono { border-color:var(--amarillo); color:var(--acento-txt); }
 .club-reto-pill.ok { border-color:#4caf50; color:#4caf50; }
 .club-reto-prog { font-size:0.72rem; font-weight:600; color:var(--suave); margin-bottom:5px; }
 .club-reto-prog b { color:var(--blanco); }
@@ -765,7 +765,7 @@ select.inp { appearance: none; cursor: pointer; }
 .rd-prog { padding:10px 16px 0; font-size:0.74rem; font-weight:600; color:var(--suave); }
 .rd-prog b { color:var(--blanco); }
 .rd-sec { margin:14px 16px 0; background:var(--gris); border:1px solid var(--gris3); border-radius:12px; padding:12px 14px; }
-.rd-sec summary { font-weight:800; font-size:0.9rem; color:var(--amarillo); cursor:pointer; list-style:none; display:flex; justify-content:space-between; }
+.rd-sec summary { font-weight:800; font-size:0.9rem; color:var(--acento-txt); cursor:pointer; list-style:none; display:flex; justify-content:space-between; }
 .rd-sec summary::after { content:'›'; transform:rotate(90deg); color:var(--suave); }
 .rd-sec[open] summary::after { transform:rotate(-90deg); }
 .rd-sec p { font-size:0.8rem; font-weight:600; color:var(--suave); line-height:1.5; margin:8px 0 0; }
@@ -782,7 +782,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-retos-puntos { display:flex; justify-content:center; gap:6px; margin-top:8px; }
 .club-retos-puntos span { width:6px; height:6px; border-radius:50%; background:var(--gris3); }
 .club-retos-puntos span.on { background:var(--amarillo); }
-.club-como strong { color:var(--amarillo); }
+.club-como strong { color:var(--acento-txt); }
 .club-como-tit { font-size:0.95rem; font-weight:800; color:var(--blanco); margin-bottom:6px; }
 #s-club-movs { background:var(--negro); }
 #s-club-movs .header { justify-content:flex-start; gap:10px; }
@@ -817,7 +817,7 @@ select.inp { appearance: none; cursor: pointer; }
 .tc-img { aspect-ratio:1; border-radius:10px; background:var(--gris2); overflow:hidden; display:flex; align-items:center; justify-content:center; }
 .tc-img img { width:100%; height:100%; object-fit:cover; }
 .tc-nom { font-size:0.86rem; font-weight:800; color:var(--blanco); line-height:1.2; }
-.tc-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.2rem; color:var(--amarillo); }
+.tc-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.2rem; color:var(--acento-txt); }
 .tc-pts small { font-size:0.7rem; font-family:'Inter',sans-serif; }
 .tc-paso { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:auto; }
 .tc-paso button { width:32px; height:32px; border-radius:50%; border:none; font-size:1.1rem; font-weight:900; cursor:pointer; background:var(--amarillo); color:var(--sobre-marca); }
@@ -836,7 +836,7 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
 
 /* PEDIDOS */
 #s-pedidos { background:var(--negro); padding:16px 16px 80px; }
-.pedidos-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:var(--amarillo); letter-spacing:1px; margin-bottom:14px; }
+.pedidos-titulo { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:var(--acento-txt); letter-spacing:1px; margin-bottom:14px; }
 .pedido-card { background:var(--gris); border-radius:14px; padding:14px; margin-bottom:8px; }
 .rt { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:600px; }
 .rt th { text-align:left; padding:8px 10px; color:var(--suave); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--gris3); position:sticky; top:0; background:var(--negro); white-space:nowrap; }
@@ -845,12 +845,12 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
 .rt .num { text-align:right; font-variant-numeric:tabular-nums; }
 .rt .est { font-size:0.66rem; font-weight:800; padding:2px 7px; border-radius:20px; }
 .rs-chip { background:var(--gris2); border:1px solid var(--gris3); border-radius:10px; padding:8px 12px; }
-.rs-chip .v { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.3rem; color:var(--amarillo); line-height:1; }
+.rs-chip .v { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.3rem; color:var(--acento-txt); line-height:1; }
 .rs-chip .l { font-size:0.64rem; color:var(--suave); text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
 .btn-confirm-wpp { width:100%; margin-top:10px; background:#25D366; color:var(--sobre-marca); border:none; border-radius:10px; padding:9px; font-family:'Inter',sans-serif; font-weight:800; font-size:0.8rem; cursor:pointer; }
 .btn-confirm-wpp:hover { background:#1ebe5d; }
 .pedido-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-.pedido-consec { font-family:'Archivo',sans-serif; font-weight:700; font-size:0.95rem; color:var(--amarillo); }
+.pedido-consec { font-family:'Archivo',sans-serif; font-weight:700; font-size:0.95rem; color:var(--acento-txt); }
 .pedido-total { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.1rem; color:var(--blanco); }
 .pedido-fecha { font-size:0.73rem; color:var(--suave); font-weight:600; }
 .pedido-estatus { display:inline-block; font-size:0.68rem; font-weight:800; padding:2px 8px; border-radius:50px; background:var(--gris3); color:var(--suave2); margin-top:4px; }
@@ -863,7 +863,7 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
   font-weight:700;font-size:0.78rem;cursor:pointer;white-space:nowrap;
   transition:color 0.2s,border-color 0.2s;
 }
-.prod-tab.active { color:var(--amarillo); border-bottom-color:var(--amarillo); }
+.prod-tab.active { color:var(--acento-txt); border-bottom-color:var(--amarillo); }
 
 /* ══════════════════════════
    TICKET IMPRIMIBLE & MODAL DETALLE
@@ -1056,7 +1056,7 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
 }
 .vend-resumen-h .titulo {
   font-family: 'Archivo', sans-serif; font-weight:700;
-  font-size: 1.1rem; color: var(--amarillo); letter-spacing: 1px;
+  font-size: 1.1rem; color: var(--acento-txt); letter-spacing: 1px;
 }
 .vend-resumen-h .mes {
   font-size: 0.7rem; font-weight: 800; color: var(--suave); text-transform: uppercase;
@@ -1096,7 +1096,7 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
   gap: 8px; margin-top: 14px;
 }
 .vend-stat { background: var(--gris2); border-radius: 10px; padding: 10px; text-align: center; }
-.vend-stat .v { font-family: 'Archivo', sans-serif; font-weight:700; font-size: 1.4rem; color: var(--amarillo); line-height: 1; }
+.vend-stat .v { font-family: 'Archivo', sans-serif; font-weight:700; font-size: 1.4rem; color: var(--acento-txt); line-height: 1; }
 .vend-stat .l { font-size: 0.6rem; font-weight: 800; color: #555; text-transform: uppercase; margin-top: 4px; }
 
 /* Pedido card con acciones para vendedor */
@@ -1133,7 +1133,7 @@ body.modo-interno .prod-card::after {
   display: block;
   font-size: 0.66rem;
   font-weight: 800;
-  color: var(--amarillo);
+  color: var(--acento-txt);
   letter-spacing: 1px;
   text-transform: uppercase;
   margin-top: 4px;
@@ -1162,7 +1162,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .bn-wrap .bn-carousel { border-radius:12px; }
 .tk-card { background:var(--gris); border-radius:12px; padding:16px; margin-bottom:10px; }
 .tk-cab { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
-.tk-folio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.4rem; color:var(--amarillo); line-height:1; }
+.tk-folio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.4rem; color:var(--acento-txt); line-height:1; }
 .tk-fecha { font-size:0.74rem; color:var(--suave); margin-top:4px; }
 .tk-cab-der { display:flex; flex-direction:column; align-items:flex-end; gap:6px; text-align:right; }
 .tk-monto { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.6rem; color:var(--blanco); line-height:1; font-variant-numeric:tabular-nums; }
@@ -1176,12 +1176,12 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .tk-paso.hecho::before { background:var(--amarillo); }
 .tk-circulo { flex:0 0 28px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; border:2px solid var(--gris3); color:var(--suave2); background:var(--gris); position:relative; z-index:1; }
 .tk-paso.hecho .tk-circulo { background:var(--amarillo); border-color:var(--amarillo); color:var(--sobre-marca); }
-.tk-paso.actual .tk-circulo { border-color:var(--amarillo); color:var(--amarillo); animation:pulse-glow 1.5s ease-in-out infinite; }
+.tk-paso.actual .tk-circulo { border-color:var(--amarillo); color:var(--acento-txt); animation:pulse-glow 1.5s ease-in-out infinite; }
 .tk-texto { display:flex; flex-direction:column; gap:2px; padding-top:4px; min-width:0; }
 .tk-titulo { font-weight:800; font-size:0.9rem; color:var(--suave); line-height:1.2; }
 .tk-paso.hecho .tk-titulo, .tk-paso.actual .tk-titulo { color:var(--blanco); }
 .tk-detalle { font-size:0.78rem; color:var(--suave); line-height:1.35; }
-.tk-paso.actual .tk-detalle { color:var(--amarillo); font-weight:600; }
+.tk-paso.actual .tk-detalle { color:var(--acento-txt); font-weight:600; }
 .tk-cancelado { margin-top:12px; border-left:3px solid var(--rojo); padding:8px 12px; color:var(--rojo); font-weight:700; font-size:0.85rem; }
 .tk-bloque { background:var(--gris2); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
 .tk-etq { font-size:0.66rem; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
@@ -1191,7 +1191,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .tk-linea.tk-suave { color:var(--suave); }
 .tk-linea.tk-sep { border-top:1px solid var(--gris3); margin-top:6px; padding-top:8px; }
 .tk-linea.tk-total { font-weight:900; }
-.tk-linea.tk-total .tk-num { color:var(--amarillo); }
+.tk-linea.tk-total .tk-num { color:var(--acento-txt); }
 .tk-num { font-variant-numeric:tabular-nums; white-space:nowrap; }
 .tk-btn { width:100%; min-height:44px; background:transparent; border:1px solid var(--amarillo); border-radius:10px; padding:10px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.86rem; color:var(--amarillo); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
 .tk-nota { font-size:0.68rem; color:var(--suave); text-align:center; margin-top:8px; }
@@ -1215,18 +1215,18 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .dot-est.pend { background:var(--rojo); } .dot-est.cont { background:var(--amarillo); } .dot-est.conv { background:#4caf50; } .dot-est.desc { background:#666; }
 .leyenda-ico { display:inline-flex; align-items:center; gap:4px; } .leyenda-ico svg { width:14px; height:14px; }
 button > svg[aria-hidden]:only-child { width:22px; height:22px; }
-.ico-solo { display:flex; justify-content:center; color:var(--amarillo); line-height:1; }
+.ico-solo { display:flex; justify-content:center; color:var(--acento-txt); line-height:1; }
 .ico-solo svg { width:1em; height:1em; }
-.tipo-card .tc-emoji.ico-solo { color:var(--amarillo); font-size:1.8rem; }
+.tipo-card .tc-emoji.ico-solo { color:var(--acento-txt); font-size:1.8rem; }
 /* Venta por caja (tienda y mayorista): tres botones apilados bajo el control de piezas */
 .caja-row { display:grid; gap:6px; margin-top:8px; }
 .caja-lbl { font-size:0.62rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--suave); }
 .caja-btn { min-height:44px; border:1px solid var(--gris3); background:var(--gris2); color:var(--blanco); border-radius:10px;
   font-family:'Inter',sans-serif; font-weight:700; font-size:0.78rem; display:flex; justify-content:space-between; align-items:center;
   padding:0 10px; cursor:pointer; touch-action:manipulation; }
-.caja-btn b { color:var(--amarillo); font-weight:800; }
+.caja-btn b { color:var(--acento-txt); font-weight:800; }
 .caja-btn.en-carrito { border-color:var(--amarillo); }
-.caja-btn .caja-x { font-size:0.7rem; color:var(--amarillo); font-weight:800; margin-left:6px; }
+.caja-btn .caja-x { font-size:0.7rem; color:var(--acento-txt); font-weight:800; margin-left:6px; }
 /* Selector de unidad (Pieza · Caja 3 · 6 · 12): se elige y luego se agrega */
 .u-sel { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px; }
 .u-sel.pd-usel { grid-template-columns:repeat(4,1fr); }
@@ -1259,7 +1259,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .ep-linea { display:flex; align-items:center; gap:10px; padding:10px 0; border-top:1px solid var(--gris3); }
 .ep-linea .n { flex:1; font-size:.84rem; font-weight:700; color:var(--blanco); }
 .ep-linea .n small { display:block; font-weight:600; color:var(--suave); }
-.ep-linea.canje .n small::after { content:' · Canje'; color:var(--amarillo); }
+.ep-linea.canje .n small::after { content:' · Canje'; color:var(--acento-txt); }
 .ep-linea.quitada { opacity:.45; }
 .ep-linea.quitada .n { text-decoration:line-through; }
 .ep-qty { display:flex; align-items:center; gap:6px; }
@@ -1267,7 +1267,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .ep-qty b { min-width:42px; text-align:center; color:var(--blanco); font-size:.9rem; }
 .ep-qty input { width:74px; min-height:34px; background:var(--gris); border:1px solid var(--gris3); border-radius:8px; color:var(--blanco); text-align:center; font:inherit; }
 .ep-quitar { background:none; border:0; color:var(--suave); font-size:.74rem; font-weight:700; cursor:pointer; padding:6px; }
-.ep-quitar.deshacer { color:var(--amarillo); }
+.ep-quitar.deshacer { color:var(--acento-txt); }
 .ep-agregar { padding:10px 16px; border-top:1px solid var(--gris3); }
 .ep-etq { font-size:.66rem; font-weight:800; color:#777; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
 .ep-agregar-fila { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -1488,3 +1488,25 @@ body.piel-clara {
   content:''; display:block; width:18px; height:2px;
   border-radius:2px; background:var(--blanco); margin-top:3px;
 }
+
+/* LA FICHA DE PRODUCTO NO ARRASTRA LA PAGINA DE ATRAS (23 nov 2026).
+   `.pd-scroll` ya scrolleaba; lo que faltaba es que no ENCADENE al llegar al
+   final, y que el documento se quede quieto mientras la ficha esta abierta. */
+body.ficha-abierta { overflow: hidden; }
+.pd-scroll { overscroll-behavior: contain; }
+
+/* LA FICHA, EN PIEL CLARA. Sus colores estaban escritos a pelo -#fff para el
+   titulo y el nombre- asi que al aclarar el fondo quedo blanco sobre blanco.
+   Esta es la tercera vez que pasa lo mismo, y por eso `tools/contraste.mjs`
+   aprendio a sospechar del texto claro sin fondo declarado al lado. */
+.piel-clara .pd-panel { background: var(--negro); }
+.piel-clara .pd-topbar { border-bottom: 1px solid var(--gris3); }
+.piel-clara .pd-back,
+.piel-clara .pd-topttl,
+.piel-clara .pd-nombre { color: var(--blanco); }
+.piel-clara .pd-precio { color: var(--blanco); }
+.piel-clara .pd-desc { color: var(--suave); }
+.piel-clara .pd-bottom { background: var(--negro); border-top: 1px solid var(--gris3); }
+.piel-clara .pd-bottom .pd-qty-num { color: var(--blanco); }
+.piel-clara .pd-cart-line { color: var(--suave); }
+.piel-clara .pd-imgwrap { background: var(--gris); border-bottom: 1px solid var(--gris3); }
