@@ -505,6 +505,21 @@ function sistema(id) {
       ? 'Tu NO apruebas gastos. Si quien escribe no puede aprobar, el gasto queda pendiente '
         + 'y lo dices asi, sin prometer que ya quedo listo.'
       : '',
+    // De esto depende que el costo por kilo siga siendo cierto dentro de dos
+    // meses. Si nadie actualiza el precio de la papa, el margen que enseña el
+    // sistema se vuelve mentira sin que nadie se entere.
+    id.puedeGastos
+      ? 'Si el ticket es de MATERIA PRIMA (papa, aceite) y dice cuanto se compro, manda tambien '
+        + 'el bloque `insumo` con la cantidad y lo que costo esa cantidad. Asi el costo por kilo '
+        + 'se actualiza solo. NO dividas tu: manda cuanto y cuanto costo, el servidor saca el '
+        + 'precio. Si el ticket no dice la cantidad, no lo mandes y dilo. '
+        + 'Si el insumo no existe en el catalogo, el gasto SI queda guardado: dile cuales hay '
+        + 'y que lo de alta en la app, no te lo inventes.'
+      : '',
+    id.puedeGastos
+      ? 'Cuando el precio de un insumo cambie mucho, DILO con el porcentaje y con el costo por '
+        + 'kilo nuevo. Que la papa suba 20% es una noticia del negocio, no un detalle.'
+      : '',
     // Cancelar mueve lote, caja, puntos y, con Stripe, un reembolso real. No es
     // una accion de chat.
     'NO puedes cancelar ni modificar un pedido ya hecho, ni cambiar una direccion, ni devolver dinero.',
@@ -1167,6 +1182,27 @@ function herramientasPara(id) {
             type: 'boolean',
             description: 'true SOLO si la persona ya dijo que si a ESTE monto. Nunca por tu cuenta.',
           },
+          // De un ticket de materia prima salen DOS hechos: «salieron $1,380» y
+          // «la papa esta a $23 el kilo». El segundo es el que mantiene vivo el
+          // costeo: sin el, el precio que se sembro hoy envejece y el margen
+          // que enseñe el sistema sera falso sin avisar a nadie.
+          insumo: {
+            type: 'object',
+            description: 'SOLO si el ticket es de materia prima y dice cuanto se compro. '
+              + 'Sirve para que el costo por kilo se actualice solo. Si el ticket no dice '
+              + 'la cantidad, NO lo mandes: sin cantidad no hay precio por kilo.',
+            properties: {
+              nombre: { type: 'string',
+                description: 'El insumo tal como se llama en el catalogo: Papa, Aceite. '
+                  + 'Si no sabes si existe, mandalo igual: el servidor te dira cuales hay.' },
+              cantidad: { type: 'number', description: 'Cuanto se compro, en su unidad (kg, bidon).' },
+              importe: { type: 'number',
+                description: 'Lo que costo ESA cantidad. Si el ticket trae varias cosas, '
+                  + 'manda solo la parte de este insumo, NO el total del ticket.' },
+            },
+            required: ['nombre', 'cantidad', 'importe'],
+            additionalProperties: false,
+          },
         },
         // `metodoPago` y `fuenteDinero` son OBLIGATORIOS, y no por capricho:
         // de los dos depende si el gasto toca la caja. Si no los sabes,
@@ -1335,6 +1371,11 @@ async function correrHerramienta(nombre, entrada, id) {
         // `aprobar` viaja como lo que es: «la persona dijo que si». Quien
         // decide si esa persona PUEDE aprobar es el servidor, mirando su rol.
         aprobar: entrada.aprobar === true,
+        // Se manda tal cual: el precio unitario lo saca el SERVIDOR. Es la
+        // misma regla que prohibe al modelo calcular totales, y aqui pesa mas:
+        // una division mal hecha se queda en los libros como el costo de la
+        // papa y contamina el margen de todo lo que se venda despues.
+        insumo: entrada.insumo || null,
         campos,
       },
     });
@@ -1343,8 +1384,15 @@ async function correrHerramienta(nombre, entrada, id) {
       console.error('wa: no se pudo registrar el gasto', por);
       return `No se pudo registrar: ${por}. Dilo tal cual, no inventes que quedo guardado.`;
     }
-    return JSON.stringify({ ok: true, id: r.data.id,
-      aprobado: entrada.aprobar === true && id.esDueno === true });
+    const ci = r.data.costoInsumo;
+    return JSON.stringify({
+      ok: true,
+      id: r.data.id,
+      aprobado: entrada.aprobar === true && id.esDueno === true,
+      // Si el insumo no existia, el GASTO YA QUEDO GUARDADO: se le dice para
+      // que lo cuente, no para que lo reintente.
+      costoInsumo: ci || undefined,
+    });
   }
 
   return 'Esa herramienta no existe.';

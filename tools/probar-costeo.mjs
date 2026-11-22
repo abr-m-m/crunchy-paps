@@ -165,6 +165,63 @@ sql(`delete from ordenes_detalle where id_orden = ${idOrden}; delete from ordene
 ok(Number(uno(`select count(*) n from ordenes where consecutivo like 'ZZ-COSTEO-%'`).n) === 0,
    'Limpieza: no quedó ningún pedido de prueba');
 
+console.log('\nCaso 11: un ticket de compra pone el precio, para que no envejezca');
+// El costo sembrado el 21 nov ($23 la papa) envejece: en dos meses nadie se
+// acuerda de venir a cambiarlo y el margen que enseñe el sistema será falso
+// sin avisar. Un dato que hay que mantener a mano no se mantiene — lo probó
+// `gastos`, con tres filas en un año. Así que lo pone la compra misma.
+const c11 = uno(`select public.registrar_costo_insumo(
+   ('{"insumo":"PAPA","cantidad":60,"importe":1500,"fecha":"' || (current_date + 3)::text || '","quien":"prueba"}')::jsonb) j`).j;
+ok(c11.ok === true, 'C11 acepta la compra');
+ok(Number(c11.unitario) === 25, `C11 EL SERVIDOR hace la división: 1500/60 = ${c11.unitario}`);
+ok(c11.insumo === 'Papa', "C11 'PAPA' en mayúsculas encuentra a 'Papa'");
+ok(Number(c11.cambio_pct) > 0, `C11 y avisa de cuánto subió: ${c11.cambio_pct}%`);
+ok(Number(c11.costoBaseKg) > costoHoy,
+   `C11 el kilo de base sube solo, de ${costoHoy} a ${c11.costoBaseKg}`);
+
+console.log('\nCaso 12: el modelo NO puede inventar insumos');
+// Que la papa sea un insumo es una DECISIÓN y se toma en la app. Que hoy valga
+// 23 es un HECHO. El agente captura hechos; si además crea catálogo, en un mes
+// hay cuatro «papas» distintas y ningún costo sirve.
+const c12 = uno(`select public.registrar_costo_insumo(
+   '{"insumo":"papa morada que no existe","cantidad":5,"importe":100}'::jsonb) j`).j;
+ok(c12.ok === false, 'C12 un insumo fuera del catálogo se rechaza');
+ok(Array.isArray(c12.insumos) && c12.insumos.length > 0,
+   `C12 y le dice cuáles sí hay, para que pueda decirlo: ${JSON.stringify(c12.insumos)}`);
+ok(Number(uno(`select count(*) n from insumos where nombre ilike '%morada%'`).n) === 0,
+   'C12 no se creó nada');
+
+console.log('\nCaso 13: sin cantidad o sin importe no se inventa un precio');
+ok(uno(`select public.registrar_costo_insumo('{"insumo":"Papa","importe":100}'::jsonb) j`).j.ok === false,
+   'C13 sin cantidad, no');
+ok(uno(`select public.registrar_costo_insumo('{"insumo":"Papa","cantidad":10}'::jsonb) j`).j.ok === false,
+   'C13 sin importe, tampoco');
+ok(uno(`select public.registrar_costo_insumo('{"insumo":"Papa","cantidad":0,"importe":100}'::jsonb) j`).j.ok === false,
+   'C13 y cantidad cero se rechaza antes de dividir entre cero');
+console.log('\nCaso 14: DE PUNTA A PUNTA — un ticket por WhatsApp, dos hechos');
+// La primera vez que se probó así falló: la herramienta del agente manda
+// `nombre` dentro del bloque y la función leía `insumo`. El gasto se guardó
+// igual —que es lo correcto— y el costo se perdió en silencio. Probar las
+// piezas por separado no lo habría encontrado nunca: las dos estaban bien.
+sql(`update vendedores set secciones = array_append(coalesce(secciones,array[]::text[]),'gastos')
+      where id=1 and not ('gastos' = any(coalesce(secciones,array[]::text[])))`);
+const e2e = uno(`select public.wa_registrar_gasto(('{
+   "telefono":"5500000001",
+   "idMensaje":"ZZ-prueba-costeo-e2e-' || substr(md5(random()::text),1,8) || '",
+   "campos":{"monto":1500,"categoria":"Materia Prima","area":"Producción",
+             "fecha":"' || (current_date + 4)::text || '"},
+   "insumo":{"nombre":"papa","cantidad":60,"importe":1500}
+ }')::jsonb) j`).j;
+ok(e2e.ok === true && e2e.creado === true, 'C14 el gasto queda guardado');
+const ci14 = e2e.costoInsumo || {};
+ok(ci14.ok === true, `C14 y el costo del insumo también: ${JSON.stringify(ci14.error || '')}`);
+ok(Number(ci14.unitario) === 25, `C14 'papa' en minúsculas dio con 'Papa' y salió a ${ci14.unitario}`);
+ok(Number(ci14.costoBaseKg) > 0, `C14 el kilo de base ya refleja la compra: ${ci14.costoBaseKg}`);
+sql(`delete from gastos where wa_mensaje_id like 'ZZ-prueba-costeo-e2e%'`);
+sql(`update vendedores set secciones = array_remove(secciones,'gastos') where id = 1`);
+
+sql(`delete from insumos_costos where vigente_desde > current_date`);
+
 // ── Limpieza: el fixture no se queda en staging ──────────────────────────────
 barrer();
 const resto = Number(uno(`select count(*) n from insumos where nombre like 'ZZ-prueba-costeo%'`).n);
