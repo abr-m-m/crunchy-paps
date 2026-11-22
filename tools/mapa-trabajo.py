@@ -179,6 +179,54 @@ def medir():
     return hay, [(f['q'], f['v']) for f in cifras]
 
 
+def medir_pendientes(datos):
+    """La OTRA direccion, y es la que fallo primero.
+
+    `comprobar()` solo atrapa un sentido: el mapa dice «hecho» y no existe. El
+    22 nov 2026 fallo el sentido contrario -el que este proyecto repite-: el
+    mapa decia que recostear el pasado estaba PENDIENTE, con el margen
+    historico en 32 %, y produccion ya tenia el costo completo y leia 9.2 %.
+    Nadie cerro la nota. Casi corri un UPDATE masivo sobre una tabla de dinero
+    para no cambiar nada.
+
+    Asi que un item pendiente puede declarar EL HECHO que dejaria de ser cierto
+    en cuanto el trabajo se haga, y el mapa falla si ese hecho ya cambio:
+
+        "sigue_pendiente": "<SQL que devuelve una fila, columna `pendiente`>"
+        "sigue_pendiente_sin_archivo": "<ruta que aun NO debe existir>"
+
+    Es un HECHO suelto -una cuenta, una existencia-, nunca una copia de la
+    logica que mide: una herramienta que copia lo que mide, repite (regla 63).
+    Y una comprobacion que no contesta se declara ROTA, no «sigue pendiente»
+    (regla 31): callar es como se cuelan las notas viejas."""
+    veredictos = {}
+    for f in datos['frentes']:
+        for it in f['items']:
+            if it['estado'] not in ('pendiente', 'en curso', 'bloqueado'):
+                continue
+            ruta = it.get('sigue_pendiente_sin_archivo')
+            if ruta:
+                existe = os.path.exists(os.path.join(RAIZ, ruta))
+                veredictos[(f['clave'], it['nombre'])] = (
+                    ('YA ESTÁ HECHO' if existe else 'sigue pendiente'),
+                    '%s %s' % (ruta, 'EXISTE' if existe else 'no existe todavía'))
+                continue
+            consulta = it.get('sigue_pendiente')
+            if not consulta:
+                continue
+            filas = sql(consulta)
+            if not filas or 'pendiente' not in filas[0]:
+                veredictos[(f['clave'], it['nombre'])] = (
+                    'COMPROBACIÓN ROTA',
+                    'la consulta no devolvió una columna `pendiente`')
+                continue
+            sigue = filas[0]['pendiente'] in (True, 't', 'true', 'True')
+            veredictos[(f['clave'], it['nombre'])] = (
+                ('sigue pendiente' if sigue else 'YA ESTÁ HECHO'),
+                'el hecho declarado dice %s' % ('que falta' if sigue else 'QUE YA SE HIZO'))
+    return veredictos
+
+
 def comprobar(item, hay):
     """Devuelve (veredicto, detalle). El veredicto es lo que decide el color."""
     vive = (item.get('vive_en') or '').strip()
@@ -240,6 +288,7 @@ def escribir(ws, fila, valores, relleno=None, fuente=None, wrap=()):
 def main():
     datos = json.load(io.open(FUENTE, encoding='utf-8'))
     hay, cifras = medir()
+    pendientes = medir_pendientes(datos)
     wb = Workbook()
     problemas = []
 
@@ -397,7 +446,8 @@ def main():
     # ── 8. COMPROBADO ───────────────────────────────────────────────────────
     ws = wb.create_sheet('Comprobado')
     cab(ws, 'LO QUE SE COMPROBÓ CONTRA LA BASE',
-        'Esta hoja existe para que el mapa no pueda mentir. Rojo = el mapa afirma algo que la base desmiente.',
+        'Esta hoja existe para que el mapa no pueda mentir, en LOS DOS SENTIDOS: '
+        'que no diga hecho lo que no existe, y que no diga pendiente lo que ya se hizo.',
         [7, 46, 11, 34, 18, 44])
     r = encabezados(ws, 4, ['Frente', 'Pieza', 'Dice', 'Declara vivir en', 'Veredicto', 'Detalle'])
     for f in datos['frentes']:
@@ -405,7 +455,19 @@ def main():
             veredicto, detalle = comprobar(i, hay)
             mal = (veredicto == 'NO EXISTE' and i['estado'] in ('hecho', 'en curso'))
             if mal:
-                problemas.append('%s · %s · %s' % (f['clave'], i['nombre'], detalle))
+                problemas.append('%s · %s · dice «%s» y %s'
+                                 % (f['clave'], i['nombre'], i['estado'], detalle))
+            # El sentido contrario manda sobre el de existencia: una pieza
+            # pendiente suele vivir en una tabla que SI existe (el refresco
+            # vive en `productos_bebidas`), asi que la existencia no dice nada
+            # de si el trabajo esta hecho. El hecho declarado si.
+            atras = pendientes.get((f['clave'], i['nombre']))
+            if atras:
+                veredicto, detalle = atras
+                if veredicto != 'sigue pendiente':
+                    mal = True
+                    problemas.append('%s · %s · dice «%s» y %s'
+                                     % (f['clave'], i['nombre'], i['estado'], detalle))
             r = escribir(ws, r, [f['clave'], i['nombre'], i['estado'],
                                  i.get('vive_en', ''), veredicto, detalle],
                          R_MAL if mal else (R_OK if veredicto == 'existe' else R_PEND),
@@ -427,7 +489,7 @@ def main():
         print('\n  %d AFIRMACIONES QUE LA BASE DESMIENTE:' % len(problemas))
         for p in problemas:
             print('    · %s' % p)
-        print('\n  El mapa dice que algo está hecho y no está. Corrige frentes.json.')
+        print('\n  El mapa y la base no cuentan lo mismo. Corrige frentes.json.')
         return 1
     print('  Ninguna afirmación del mapa contradice a la base.\n')
     return 0

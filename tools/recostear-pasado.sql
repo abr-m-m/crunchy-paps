@@ -20,9 +20,21 @@
 --  aparecen precios de una epoca que no se tenian. No se corre «por si acaso»:
 --  cambia numeros que Abraham ya vio.
 --
---  COMO SE CORRE (PowerShell, desde C:\Proyectos\crunchy-paps):
---    supabase db query --linked --project-ref xbyzarzyxiugrucyjwfn -f tools/recostear-pasado.sql
+--  COMO SE CORRE (PowerShell). RUTA COMPLETA, no relativa: la terminal de
+--  Abraham suele estar en una subcarpeta y el 22 nov 2026 este comando fallo
+--  dos veces con «failed to read SQL file» por darselo relativo.
+--    supabase db query --linked --project-ref xbyzarzyxiugrucyjwfn -f C:\Proyectos\crunchy-paps\tools\recostear-pasado.sql
 --  Staging es dkwatbsaidlfjqjnfyrk. Devuelve cuantas lineas cambio y el total.
+--
+--  ESTADO AL 22 nov 2026: correrlo HOY es un no-op comprobado. Las 182 lineas
+--  `reconstruido` ya llevan el costo completo -el ensayo en seco cambia 0- y el
+--  margen historico lee 9.2 % (jun 11.4, jul 4.5, sep 27.8). El detalle y como
+--  salio, en cambios/2026-11-21-frente-a-costos.md.
+--
+--  ANTES DE CORRERLO, EL ENSAYO EN SECO. El mismo `case` con
+--  `count(*) filter (where nuevo is not null and (viejo is null or viejo<>nuevo))`
+--  en vez del UPDATE dice cuantas lineas cambiarian. Si da 0, no hay nada que
+--  escribir: la nota que decia lo contrario esta vieja.
 -- ============================================================================
 
 with calc as (
