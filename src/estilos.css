@@ -1,6 +1,15 @@
 :root {
   --amarillo: #FFD200;
   --amarillo-dark: #e6bc00;
+  /* QUE SIGNIFICA «SELECCIONADO». Separado de --amarillo a proposito: en la
+     piel oscura seleccionar se pinta de amarillo, y en la clara NO puede, por
+     fisica -#FFD200 sobre hueso da 1.29:1 y el ojo persigue un borde que no
+     puede ver, que es lo que cansa-. Quien pinte un estado activo usa estos
+     tres, nunca --amarillo directo.
+     Decision del 23 nov 2026: cambios/2026-11-23-lo-que-abraham-vio.md */
+  --sel-bg: #FFD200;
+  --sel-fg: #0e0e0e;
+  --sel-br: #FFD200;
   --rojo: #E8242A;
   --negro: #0e0e0e;
   --gris: #1a1a1a;
@@ -264,12 +273,16 @@ select.inp { appearance: none; cursor: pointer; }
   font-weight:700; font-size:0.8rem; cursor:pointer; white-space:nowrap;
   transition:all 0.2s; flex-shrink:0;
 }
-.tab.active { background:var(--amarillo); border-color:var(--amarillo); color:var(--negro); }
+.tab.active { background:var(--sel-bg); border-color:var(--sel-br); color:var(--sel-fg); }
 .tab:hover:not(.active) { border-color:var(--amarillo); color:var(--amarillo); }
 
 /* MODO VENTA (solo vendedor) */
 .modo-venta-wrap {
-  display:none; padding:10px 16px 0; gap:8px;
+  /* El 12 de abajo NO es decorativo: sin el, «Venta para:» -que vive en
+     #canal-wrap, con padding-top 0- quedaba pegada al borde de estos botones
+     y se leia tapada. Lo reporto Abraham el 23 nov 2026 con dos capturas,
+     inicio y granel; era UN defecto y no dos: es el mismo bloque. */
+  display:none; padding:10px 16px 12px; gap:8px;
 }
 .modo-venta-wrap.visible { display:flex; }
 .modo-btn {
@@ -277,7 +290,7 @@ select.inp { appearance: none; cursor: pointer; }
   background:var(--gris); color:var(--suave); font-family:'Inter',sans-serif;
   font-weight:800; font-size:0.82rem; cursor:pointer; transition:all 0.2s; text-align:center;
 }
-.modo-btn.active { background:var(--amarillo); border-color:var(--amarillo); color:var(--negro); }
+.modo-btn.active { background:var(--sel-bg); border-color:var(--sel-br); color:var(--sel-fg); }
 
 /* CATÁLOGO GRID */
 .catalogo {
@@ -1241,3 +1254,110 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .ep-btn-sec { background:var(--gris2); border:1px solid var(--gris3); color:var(--blanco); }
 .ep-btn-pri { background:var(--amarillo); border:0; color:#111; }
 .ep-btn-pri[disabled] { opacity:.5; cursor:default; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PIEL CLARA «A1b» — SOLO la pantalla de Inicio (23 nov 2026)
+
+   Decidida mirando maquetas, en tres vueltas, sin tocar codigo:
+   cambios/2026-11-23-lo-que-abraham-vio.md. Los dos intentos anteriores
+   (7 y 12 sep 2026) murieron en «no me convence» DESPUES de recolorear la
+   app entera. Por eso esto empieza en una sola pantalla.
+
+   COMO FUNCIONA, y es casi todo el truco: los componentes de Inicio ya estan
+   escritos con tokens (var(--negro), var(--gris)...), y las custom properties
+   SE HEREDAN. Redefinirlas aqui dentro cambia la pantalla completa, incluidos
+   los estilos EN LINEA del HTML que usan var(). Lo que no se arregla solo es
+   lo que esta escrito a pelo en hexadecimal, y eso va abajo, uno por uno.
+
+   EL ALCANCE es `#s-catalogo.active` y su hermano `#navbar`. Ninguna otra
+   pantalla se entera: si esta no convence, se borra este bloque y ya.
+
+   LA REGLA: el amarillo nunca es tinta, nunca es superficie grande y nunca
+   significa «seleccionado». Seleccionado es negro (15.84:1). El amarillo vive
+   en la regla de 4px y en el logo, y nada mas.
+   ══════════════════════════════════════════════════════════════════════════ */
+#s-catalogo.active,
+#s-catalogo.active ~ #navbar {
+  --negro:  #F4F1EC;   /* el fondo deja de ser el fondo */
+  --gris:   #FFFFFF;   /* superficie: tarjeta, campo, pildora apagada */
+  --gris2:  #FFFFFF;
+  --gris3:  #E2DDD4;   /* bordes */
+  --blanco: #1A1714;   /* la tinta se invierte: 15.84:1 */
+  --suave:  #56524C;   /* texto secundario: 6.89:1, pasa AA */
+  --amarillo-dark: #F2CB2E;
+  --sel-bg: #1A1714;   /* seleccionado = negro, no amarillo */
+  --sel-fg: #F4F1EC;
+  --sel-br: #1A1714;
+}
+#s-catalogo.active { background: #F4F1EC; color: #1A1714; }
+
+/* El logo era texto amarillo sobre negro. Sobre hueso serian 1.29:1, asi que
+   el amarillo pasa de tinta a RELLENO: pastilla amarilla, texto en tinta
+   (12.3:1) y «Paps» en rojo (3.07:1, suficiente para 24px en negrita). */
+#s-catalogo.active .logo {
+  background: var(--amarillo); color: #1A1714;
+  padding: 3px 10px 4px; border-radius: 10px;
+}
+#s-catalogo.active .header { background: #F4F1EC; }
+
+/* El carrito deja de ser amarillo: en la cabecera ya manda el logo, y dos
+   bloques amarillos juntos son justo la superficie grande que cansa. */
+#s-catalogo.active .carrito-btn {
+  background: #FFFFFF; color: #1A1714; border: 1px solid var(--gris3);
+}
+#s-catalogo.active .carrito-btn:hover { background: #EDE8E0; }
+
+/* El hover de las pildoras pintaba texto amarillo: 1.29:1. A tinta. */
+#s-catalogo.active .tab:hover:not(.active) { border-color: #1A1714; color: #1A1714; }
+
+/* Tarjeta de producto: el #f0f0f0 de siempre ya era claro, pero sobre hueso
+   no se distingue del fondo. Blanca y con borde, como el resto. */
+#s-catalogo.active .prod-card {
+  background: #FFFFFF; border: 1px solid var(--gris3); box-shadow: none;
+}
+/* El ±: estaba a pelo en #222 y su texto es var(--blanco), que aqui ES tinta
+   oscura. Sin esto quedaba tinta oscura sobre fondo oscuro. */
+#s-catalogo.active .qty-btn { background: #EDE8E0; color: #1A1714; }
+#s-catalogo.active .qty-btn:hover { background: #1A1714; color: #F4F1EC; }
+/* «Agregar» se queda ROJO: es el rojo de la marca, da 4.45:1 en blanco sobre
+   rojo, y es la accion principal de la tarjeta. */
+
+/* El banner vive sobre una foto con su propia capa oscura, asi que no se
+   toca su contenido. Solo el degradado de respaldo, que era negro. */
+#s-catalogo.active .banner-cat {
+  background: linear-gradient(135deg, #FFF6D6, #F4F1EC 80%);
+  border-bottom: 1px solid var(--gris3);
+}
+
+/* El menu. El activo iba en amarillo; aqui va en tinta, y lleva una barrita
+   que SI se ve a 2px (15.84:1). En amarillo serian 1.29:1 y habria que
+   buscarla. Es ::after, asi que no toca el HTML. */
+#s-catalogo.active ~ #navbar { background: #F4F1EC; border-top: 1px solid var(--gris3); }
+#s-catalogo.active ~ #navbar .nav-item.active .nav-lbl,
+#s-catalogo.active ~ #navbar .nav-item.active .nav-icon { color: #1A1714; }
+#s-catalogo.active ~ #navbar .nav-item.active::after {
+  content: ''; display: block; width: 18px; height: 2px;
+  border-radius: 2px; background: #1A1714; margin-top: 3px;
+}
+
+/* EL SALUDO. Tres fugas de «amarillo como tinta», vistas MIRANDO la pantalla
+   y no leyendo el CSS (regla 30): la antetitulo «VENDEDOR» y el nombre en
+   «Hola, Ana» salian en amarillo -1.29:1, casi invisibles- y el bloque entero
+   tenia fondo amarillo palido, que competia con el logo.
+   `.banner-cat` es SOLO el saludo: la foto vive aparte, en #bn-wrap (12 sep
+   2026), asi que aclararlo no toca ninguna imagen. */
+#s-catalogo.active .banner-cat {
+  background: #F4F1EC;
+  border-bottom: 1px solid var(--gris3);
+}
+#s-catalogo.active .banner-cat .banner-overlay,
+#s-catalogo.active .banner-cat .banner-pattern,
+#s-catalogo.active .banner-cat .banner-accent { display: none; }
+#s-catalogo.active .banner-cat .banner-tag { color: #56524C; }
+#s-catalogo.active .banner-cat .banner-h {
+  color: #1A1714; text-shadow: none;
+}
+/* El nombre resaltado pasa de amarillo a ROJO: 3.95:1, suficiente para un
+   titular de 24px o mas, y sigue siendo un color de la marca. */
+#s-catalogo.active .banner-cat .banner-h .hl { color: var(--rojo); }
+#s-catalogo.active .banner-cat .banner-slogan { color: #56524C; }

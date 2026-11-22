@@ -171,3 +171,9 @@ Instagram/
 # recorre. `tools/mapa-trabajo.py` SI va al repo: es el generador, no el contenido.
 mapa-trabajo/
 docs/mapa-trabajo/
+
+# ux-ui/ — 23 nov 2026. Referencias visuales que trae Abraham: capturas de la
+# app de Crunchy, de «plan de vuelo» y de la app de un amigo (promotores), mas
+# tres videos de referencia para la web. Capturas de apps ajenas y 12 MB de
+# material: el repo es publico. Va al respaldo privado, no aqui.
+ux-ui/

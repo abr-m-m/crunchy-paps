@@ -92,6 +92,7 @@ const CARPETAS = [
   // PUBLICO. Se anade el mismo dia que nace, como pide el comentario de arriba y como
   // se hizo con Instagram/ el 26 oct. El .py importa mas que el .xlsx: lo regenera.
   { ruta: 'mapa-trabajo',         ext: ['.json', '.xlsx', '.md'] },
+  { ruta: 'ux-ui',                ext: ['.jpeg', '.jpg', '.png', '.webp', '.md'] },
   { ruta: 'docs/mapa-trabajo',    ext: ['.html'] },
 ];
 

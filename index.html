@@ -592,9 +592,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   </div>
   <!-- Selector de canal para vendedor -->
   <div id="canal-wrap" style="display:none;padding:0 16px 8px;">
-    <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Venta para:</div>
+    <div style="font-size:0.68rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Venta para:</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button id="canal-consumidor" onclick="setCanalVenta('consumidor')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--amarillo);background:var(--amarillo);color:var(--negro);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Consumidor</button>
+      <button id="canal-consumidor" onclick="setCanalVenta('consumidor')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--sel-br);background:var(--sel-bg);color:var(--sel-fg);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Consumidor</button>
       <button id="canal-tienda" onclick="setCanalVenta('tienda')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Tienda</button>
       <button id="canal-restaurante" onclick="setCanalVenta('restaurante')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Restaurante</button>
       <button id="canal-mayorista" onclick="setCanalVenta('mayorista')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Mayorista</button>

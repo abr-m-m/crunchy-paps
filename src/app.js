@@ -1337,9 +1337,12 @@ window.setCanalVenta = function(canal) {
     const btn = document.getElementById('canal-' + c);
     if (!btn) return;
     const activo = c === canal;
-    btn.style.background    = activo ? 'var(--amarillo)' : 'var(--gris)';
-    btn.style.color         = activo ? 'var(--negro)' : 'var(--suave)';
-    btn.style.borderColor   = activo ? 'var(--amarillo)' : 'var(--gris3)';
+    // --sel-* y no --amarillo: lo que significa «seleccionado» cambia con la
+    // piel, y estos estilos van EN LINEA, asi que ningun CSS los puede
+    // corregir despues. El token es el unico sitio donde se decide.
+    btn.style.background    = activo ? 'var(--sel-bg)' : 'var(--gris)';
+    btn.style.color         = activo ? 'var(--sel-fg)' : 'var(--suave)';
+    btn.style.borderColor   = activo ? 'var(--sel-br)' : 'var(--gris3)';
   });
 
   // Re-renderizar catálogo con nuevos precios
