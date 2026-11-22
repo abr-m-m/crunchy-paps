@@ -85,6 +85,14 @@ const CARPETAS = [
   // parte: que perfil colgaba de que centro de cuentas, y por que cada codigo de 2FA
   // salio rechazado.
   { ruta: 'Instagram',            ext: ['.md'] },
+  // 21 nov 2026: el MAPA DE TRABAJO. `mapa-trabajo/frentes.json` es la fuente de
+  // verdad de los 10 frentes -que piezas existen, cuanto llevan, que va primero- y
+  // `docs/mapa-trabajo/` su vista. Los dos fuera del repo: llevan margenes por canal,
+  // el estado de cada hueco de seguridad y el orden de lo que falta, y el repo es
+  // PUBLICO. Se anade el mismo dia que nace, como pide el comentario de arriba y como
+  // se hizo con Instagram/ el 26 oct. El .py importa mas que el .xlsx: lo regenera.
+  { ruta: 'mapa-trabajo',         ext: ['.json', '.xlsx', '.md'] },
+  { ruta: 'docs/mapa-trabajo',    ext: ['.html'] },
 ];
 
 // Un PNG no tiene líneas. Contarlas daba números sin sentido en el informe

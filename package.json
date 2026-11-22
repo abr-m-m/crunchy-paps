@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "validar": "node tools/validar.mjs index.html && node tools/partir/comprobar-libres.mjs && vite build",
-    "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-comprobar.mjs"
+    "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-comprobar.mjs",
+    "mapa-trabajo": "python tools/mapa-trabajo.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

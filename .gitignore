@@ -163,3 +163,11 @@ Fotos crunchy-insumos-producción/
 # procedimiento de separacion. El repo es PUBLICO: esto no entra. Hermana de
 # ACCESOS.md, que ya esta ignorado por lo mismo.
 Instagram/
+
+# mapa-trabajo/ y docs/mapa-trabajo/ — el mapa de trabajo de Crunchy. Fuera del repo
+# porque lleva los margenes por canal, el estado de cada hueco de seguridad y el orden
+# de lo que falta: un mapa comodo para cualquiera que quisiera hacer dano, y un repo
+# PUBLICO. Se respalda al repo privado con `node tools/respaldar-docs.mjs`, que ya los
+# recorre. `tools/mapa-trabajo.py` SI va al repo: es el generador, no el contenido.
+mapa-trabajo/
+docs/mapa-trabajo/
