@@ -130,8 +130,17 @@ const idOrden = Number(uno(`insert into ordenes (consecutivo, estatus_pedido, ti
 const l1 = uno(`insert into ordenes_detalle (id_orden, id_producto, cantidad, subtotal, tipo_venta)
    values (${idOrden}, '${idP100}', 2, 64, 'Por Pieza')
    returning costo_unitario::numeric cu, coalesce(costo_origen,'') co`);
-ok(Math.abs(Number(l1.cu) - costoHoy * 0.1) < 0.01,
-   `C8 la línea quedó costeada sola en ${l1.cu} (un décimo del kilo)`);
+// Esta aserción decía `costoHoy * 0.1` y se rompió el 21 nov, al entrar la
+// bolsa y la etiqueta en las recetas: era ella la que estaba mal, no el
+// código. Compaрaba la FORMA del número -un décimo del kilo- en vez de la
+// propiedad que importa: que la línea valga lo que dice SU RECETA (regla 53).
+// Ahora pregunta por el costo del SKU y comprueba, además, que lleve algo
+// encima de la base pelada -que es el empaque-.
+const cskuHoy = Number(uno(`select public.costo_sku(${idP100}, current_date) c`).c);
+ok(Math.abs(Number(l1.cu) - cskuHoy) < 0.001,
+   `C8 la línea quedó costeada sola en ${l1.cu}, lo que dice su receta`);
+ok(Number(l1.cu) > costoHoy * 0.1,
+   `C8 y por encima de la base pelada (${(costoHoy * 0.1).toFixed(4)}): lleva empaque`);
 ok(l1.co === 'capturado', 'C8 y marcada como capturado, no como reconstruido');
 
 console.log('\nCaso 9: el granel se costea por lo que PESÓ, no por una receta fija');

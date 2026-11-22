@@ -7743,6 +7743,7 @@ const SECCIONES_LABELS = {
   ruta:        'Mi ruta',
   reparto:     'Reparto',
   entregas:    'Mis entregas',
+  costos:      'Costos',
   cuenta:      'Mi cuenta',
 };
 
@@ -9150,5 +9151,288 @@ window.editarPedidoDesdeDrawer = async function (forzar) {
   });
 };
 
+// ════════════════════════════════════════════════════════════════════════════
+//  COSTOS — las tres preguntas del frente A
+//
+//  Diseño: cambios/2026-11-21-frente-a-costos.md
+//
+//  Hasta hoy el costeo vivía entero en la base: funciones, recetas y 183 líneas
+//  costeadas que NADIE en Crunchy podía ver. Esta pantalla es la diferencia
+//  entre tener el dato y que la empresa lo tenga.
+//
+//  NO CALCULA NADA. Los tres bloques pintan lo que devuelven `costos_resumen`,
+//  `margen_resumen` y `punto_equilibrio`. Si el navegador recalculara el costo
+//  —aunque fuera «solo para mostrarlo»— habría dos verdades y un día no
+//  coincidirían (reglas 10 y 63: el navegador no decide dinero, y una copia que
+//  nadie compara repite).
+//
+//  Visual: material/Design_reference/DIRECCION-DE-DISENO.md. Jerarquía por
+//  tamaño y no por grosor, UN amarillo por vista (el botón de calcular),
+//  superficies planas y listas de especificación.
+// ════════════════════════════════════════════════════════════════════════════
+
+let _costosData = null;
+
+// La lista de especificación de la referencia: etiqueta izquierda, valor
+// derecha, divisor de 1px. Un solo sitio, usada por los tres bloques.
+function _filaSpec(etq, valor, opt = {}) {
+  return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+      padding:12px 0;border-bottom:1px solid var(--gris3);">
+    <span style="font-size:0.875rem;color:var(--suave);${opt.etqFuerte ? 'color:var(--blanco);' : ''}">${etq}</span>
+    <span style="font-size:${opt.grande ? '1.1rem' : '0.9375rem'};color:${opt.color || 'var(--blanco)'};
+      font-weight:${opt.grande ? '600' : '400'};text-align:right;white-space:nowrap;">${valor}</span>
+  </div>`;
+}
+
+// Un margen negativo es un error del negocio, no una decoración: va en --rojo,
+// que la dirección de diseño reserva para error y destructivo.
+function pctColor(p) {
+  if (p === null || p === undefined || isNaN(Number(p))) return 'var(--suave)';
+  const n = Number(p);
+  if (n < 0) return 'var(--rojo)';
+  if (n < 15) return '#ff8a8a';
+  return 'var(--blanco)';
+}
+
+const _pesos = (n) => (n === null || n === undefined || isNaN(Number(n))
+  ? '—' : '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+const _pct = (n) => (n === null || n === undefined || isNaN(Number(n)) ? '—' : Number(n).toFixed(1) + ' %');
+
+function _pintarCostoBolsa(d) {
+  const el = document.getElementById('costos-bolsa');
+  if (!el) return;
+  const lineas = (d.base.lineas || []).map((l) => _filaSpec(
+    `${l.concepto}<span style="color:var(--suave);font-size:0.75rem;"> · ${_pct(l.pct)} del kilo</span>`,
+    _pesos(l.por_kg))).join('');
+
+  const pres = (d.presentaciones || []).map((p) => `
+    <div style="padding:14px 0;border-bottom:1px solid var(--gris3);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px;">
+        <span style="font-size:1.1rem;color:var(--blanco);">${p.presentacion}</span>
+        <span style="font-size:1.1rem;font-weight:600;color:var(--blanco);">${_pesos(p.costo)}</span>
+      </div>
+      <div style="font-size:0.75rem;color:var(--suave);margin-bottom:8px;">
+        ${_pesos(p.base)} de producto + ${_pesos(p.empaque)} de bolsa y etiqueta
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${[['Tienda', p.precios.tienda, p.margenes.tienda],
+           ['Mayorista', p.precios.mayorista, p.margenes.mayorista],
+           ['Restaurante', p.precios.restaurante, p.margenes.restaurante],
+           ['Consumidor', p.precios.consumidor, p.margenes.consumidor]]
+          .filter((x) => x[1])
+          .map((x) => `<span style="border:1px solid var(--gris3);border-radius:999px;padding:5px 10px;
+              font-size:0.75rem;color:var(--suave);white-space:nowrap;">
+              ${x[0]} ${_pesos(x[1]).replace('.00', '')}
+              <b style="color:${pctColor(x[2])};font-weight:600;"> ${_pct(x[2])}</b></span>`).join('')}
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--suave);margin-bottom:10px;">1 · Qué cuesta una bolsa</div>
+    <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:16px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;font-weight:400;color:var(--blanco);line-height:1;">
+        ${_pesos(d.base.por_kg)}</div>
+      <div style="font-size:0.875rem;color:var(--suave);margin-bottom:14px;">
+        por kilo de papa frita · una tanda rinde ${d.base.rinde} kg</div>
+      ${lineas}
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--suave);margin:20px 0 4px;">Y así sale cada presentación</div>
+      ${pres || '<div style="font-size:0.875rem;color:var(--suave);padding:12px 0;">Ninguna presentación se puede costear en esta fecha.</div>'}
+    </div>`;
+}
+
+function _pintarCanal(m) {
+  const el = document.getElementById('costos-canal');
+  if (!el) return;
+  if (!m || m.ok !== true) {
+    el.innerHTML = `<div style="font-size:0.875rem;color:var(--rojo);">No se pudo leer el margen: ${(m && m.error) || 'sin respuesta'}</div>`;
+    return;
+  }
+  const t = m.total || {};
+  const grupo = (titulo, filas) => `
+    <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--suave);margin:20px 0 4px;">${titulo}</div>
+    ${(filas || []).map((x) => _filaSpec(
+      `${x.clave}<span style="color:var(--suave);font-size:0.75rem;"> · ${Number(x.piezas).toLocaleString('es-MX')} pz</span>`,
+      `${_pesos(x.margen)} <b style="color:${pctColor(x.margen_pct)};font-weight:600;">${_pct(x.margen_pct)}</b>`)).join('')
+      || '<div style="font-size:0.875rem;color:var(--suave);padding:12px 0;">Sin ventas en el periodo.</div>'}`;
+
+  el.innerHTML = `
+    <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--suave);margin-bottom:10px;">2 · Qué dejó cada canal, ya vendido</div>
+    <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:16px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;font-weight:400;color:${pctColor(t.margen_pct)};line-height:1;">
+        ${_pct(t.margen_pct)}</div>
+      <div style="font-size:0.875rem;color:var(--suave);margin-bottom:6px;">
+        ${_pesos(t.neto)} vendido − ${_pesos(t.costo)} de costo = ${_pesos(t.margen)}</div>
+      <div style="font-size:0.75rem;color:var(--suave);margin-bottom:10px;">
+        ${Number(t.lineas || 0)} líneas de venta real, con el costo CONGELADO el día de cada pedido${
+          m.sin_costear ? ` · ${m.sin_costear} línea(s) sin costear` : ''}</div>
+      ${grupo('Por canal', m.por_canal)}
+      ${grupo('Por mes', m.por_mes)}
+      ${grupo('Por presentación', m.por_presentacion)}
+    </div>`;
+}
+
+function _pintarEquilibrio(e) {
+  const el = document.getElementById('eq-salida');
+  if (!el) return;
+  if (!e || e.ok !== true) {
+    el.innerHTML = `<div style="font-size:0.875rem;color:var(--rojo);padding-top:12px;">No se pudo calcular: ${(e && e.error) || 'sin respuesta'}</div>`;
+    return;
+  }
+  if (e.pierde) {
+    el.innerHTML = `
+      <div style="border-top:1px solid var(--gris3);margin-top:14px;padding-top:14px;">
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--rojo);margin-bottom:6px;">Cada pieza pierde dinero</div>
+        <div style="font-size:0.875rem;color:var(--suave);">${e.mensaje || ''}</div>
+        ${_filaSpec('Cuesta', _pesos(e.costo))}
+        ${_filaSpec('Se vende a', _pesos(e.precio))}
+        ${_filaSpec('Pierde por pieza', _pesos(e.margen_contribucion), { color: 'var(--rojo)', grande: true })}
+      </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="border-top:1px solid var(--gris3);margin-top:14px;padding-top:14px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;font-weight:400;color:var(--blanco);line-height:1;">
+        ${Number(e.piezas_objetivo).toLocaleString('es-MX')} piezas</div>
+      <div style="font-size:0.875rem;color:var(--suave);margin-bottom:12px;">
+        al mes${Number(e.objetivo) > 0 ? ` para ganar ${_pesos(e.objetivo)}` : ' para no perder'}
+        · ${Number(e.tiendas).toLocaleString('es-MX')} tiendas · ${e.kg_mes} kg · ${e.tandas_mes} tandas</div>
+      ${_filaSpec('Cuesta la pieza', _pesos(e.costo), { etqFuerte: true })}
+      ${_filaSpec('· de eso, papa, aceite, gas y otros', _pesos(e.costo - e.empaque - (e.mano_obra_por_kg * e.gramos / 1000)))}
+      ${_filaSpec('· de eso, mano de obra', _pesos(e.mano_obra_por_kg * e.gramos / 1000))}
+      ${_filaSpec('· de eso, bolsa y etiqueta', _pesos(e.empaque))}
+      ${_filaSpec('Se vende a', _pesos(e.precio))}
+      ${_filaSpec('Deja por pieza', `${_pesos(e.margen_contribucion)} <b style="color:${pctColor(e.margen_pct)};font-weight:600;">${_pct(e.margen_pct)}</b>`, { grande: true })}
+      ${_filaSpec('Fijos al mes', _pesos(e.fijos_mes))}
+      ${_filaSpec('Para no perder', `${Number(e.piezas_equilibrio).toLocaleString('es-MX')} piezas`)}
+      ${_filaSpec('Vendedores que hacen falta', e.vendedores_necesarios ?? '—')}
+      ${_filaSpec('¿Cabe en la ruta de un vendedor?', e.cabe ? 'Sí' : 'No', { color: e.cabe ? 'var(--blanco)' : 'var(--rojo)' })}
+    </div>`;
+}
+
+window.calcularEquilibrio = async function calcularEquilibrio() {
+  const el = document.getElementById('eq-salida');
+  if (el) el.innerHTML = '<div style="padding-top:14px;color:var(--suave);font-size:0.875rem;"><span class="loader loader-w"></span> Calculando…</div>';
+  const v = (id) => {
+    const n = document.getElementById(id);
+    return n && String(n.value).trim() !== '' ? n.value : null;
+  };
+  const p = { token: tokenVendedor(), fecha: v('costos-fecha') };
+  // Solo se mandan los levers que el usuario tocó: lo que no viene, lo decide
+  // el servidor leyendo la receta. Mandar un 0 por omisión sería decidir aquí.
+  for (const [k, id] of [['gramos', 'eq-gramos'], ['canal', 'eq-canal'], ['precio_papa', 'eq-papa'],
+                         ['dias_por_tanda', 'eq-dias'], ['pago_dia', 'eq-pago'],
+                         ['fijos_mes', 'eq-fijos'], ['objetivo', 'eq-objetivo']]) {
+    const x = v(id);
+    if (x !== null) p[k] = x;
+  }
+  try {
+    const r = await supabaseCall('POST', 'rpc/punto_equilibrio', { p_data: p });
+    _pintarEquilibrio(r);
+  } catch (err) {
+    _pintarEquilibrio({ ok: false, error: err.message });
+  }
+};
+
+window.cargarCostos = async function cargarCostos() {
+  const fecha = (document.getElementById('costos-fecha') || {}).value || null;
+  const bolsa = document.getElementById('costos-bolsa');
+  if (bolsa) bolsa.innerHTML = '<div style="color:var(--suave);font-size:0.875rem;padding:20px 0;"><span class="loader loader-w"></span> Leyendo las recetas…</div>';
+  try {
+    const [cr, mr] = await Promise.all([
+      supabaseCall('POST', 'rpc/costos_resumen', { p_data: { token: tokenVendedor(), fecha } }),
+      supabaseCall('POST', 'rpc/margen_resumen', { p_data: { token: tokenVendedor() } }),
+    ]);
+    // `supabaseCall` devuelve el JSON del RPC TAL CUAL. `dashboard_resumen`
+    // anida su carga en `data` porque esa es SU forma, no la de la llamada:
+    // copiar ese `res.data` aquí dejó la pantalla en «no se pudo leer el
+    // costo» con el RPC respondiendo bien. Lo probado fueron las piezas, no
+    // el camino -cuarta vez el mismo día-.
+    const d = cr;
+    if (!d || d.ok !== true) {
+      if (bolsa) bolsa.innerHTML = `<div style="font-size:0.875rem;color:var(--rojo);">${(d && d.error) || 'No se pudo leer el costo.'}</div>`;
+      return;
+    }
+    _costosData = d;
+    _pintarCostoBolsa(d);
+    _pintarCanal(mr);
+
+    // El bloque 3 se arma aquí porque sus opciones salen de los datos: las
+    // presentaciones que de verdad se pueden costear, no una lista escrita.
+    const eq = document.getElementById('costos-equilibrio');
+    if (eq) {
+      const campo = (id, etq, val, ph) => `
+        <label style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 120px;">
+          <span style="font-size:0.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--suave);">${etq}</span>
+          <input id="${id}" type="number" step="any" value="${val ?? ''}" placeholder="${ph}"
+            style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:10px;padding:9px 10px;font-size:0.9375rem;min-width:0;width:100%;box-sizing:border-box;">
+        </label>`;
+      eq.innerHTML = `
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--suave);margin-bottom:10px;">3 · Qué tiene que pasar para ganar</div>
+        <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:16px;">
+          <div style="font-size:0.875rem;color:var(--suave);margin-bottom:14px;">
+            Lo que no cambies lo decide la receta. ${d.lever ? d.lever.nota : ''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <label style="display:flex;flex-direction:column;gap:4px;flex:1 1 120px;">
+              <span style="font-size:0.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--suave);">Presentación</span>
+              <select id="eq-gramos" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:10px;padding:9px 10px;font-size:0.9375rem;width:100%;box-sizing:border-box;">
+                ${(d.presentaciones || []).map((p) => `<option value="${p.gramos}">${p.presentacion}</option>`).join('')}
+              </select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;flex:1 1 120px;">
+              <span style="font-size:0.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--suave);">Canal</span>
+              <select id="eq-canal" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:10px;padding:9px 10px;font-size:0.9375rem;width:100%;box-sizing:border-box;">
+                <option value="tienda">Tienda</option><option value="mayorista">Mayorista</option>
+                <option value="restaurante">Restaurante</option><option value="consumidor">Consumidor</option>
+              </select>
+            </label>
+            ${campo('eq-papa', 'Papa $/kg', '', 'la de hoy')}
+            ${campo('eq-dias', 'Días por tanda', '', d.lever ? d.lever.valor : '2')}
+            ${campo('eq-pago', 'Pago por día', '', '350')}
+            ${campo('eq-fijos', 'Fijos al mes', '', '350')}
+            ${campo('eq-objetivo', 'Ganancia que quieres', '', '0')}
+          </div>
+          <button onclick="calcularEquilibrio()" style="background:var(--amarillo);border:none;color:var(--negro);
+            border-radius:999px;padding:14px;font-weight:600;font-size:0.9375rem;cursor:pointer;width:100%;">Calcular</button>
+          <div id="eq-salida"></div>
+        </div>`;
+      window.calcularEquilibrio();
+    }
+
+    const av = document.getElementById('costos-avisos');
+    if (av) {
+      av.innerHTML = `
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+          color:var(--suave);margin-bottom:10px;">De dónde sale cada número</div>
+        <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:16px;">
+          <div style="font-size:0.875rem;color:var(--suave);margin-bottom:10px;">
+            Estos costos se reconstruyeron: ninguno viene de una factura capturada en el sistema.
+            Mientras digan esto, el margen de arriba es una estimación.</div>
+          ${(d.avisos || []).map((a) => `
+            <div style="padding:10px 0;border-bottom:1px solid var(--gris3);">
+              <div style="font-size:0.875rem;color:var(--blanco);">${a.concepto}</div>
+              <div style="font-size:0.75rem;color:var(--suave);line-height:1.5;">${a.nota || ''}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+  } catch (err) {
+    if (bolsa) bolsa.innerHTML = `<div style="font-size:0.875rem;color:var(--rojo);">Error: ${err.message}</div>`;
+  }
+};
+
+async function renderCostos() {
+  const f = document.getElementById('costos-fecha');
+  // La fecha de CDMX, no la de UTC. `toISOString()` daba el dia siguiente a
+  // partir de las 18:00 hora local, asi que la pantalla pedia el costo de
+  // MANANA -y con un precio de papa fechado manana habria ensenado otro
+  // numero-. Mismo patron que el resto de la app: 'en-CA' da AAAA-MM-DD.
+  if (f && !f.value) f.value = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });
+  await window.cargarCostos();
+}
+
 // Lo que app.js llama del panel
-export { armadoPararRefresco, cargarCupones, cargarListaProductos, pintarDetallePedido, renderArmado, renderB2B, renderCaja, renderEntregas, renderGastos, renderJornadas, renderMayoreoAdminCfg, renderPedidosVendedor, renderProduccion, renderProspeccion, renderReparto, renderResumen, renderRuta };
+export { armadoPararRefresco, cargarCupones, cargarListaProductos, pintarDetallePedido, renderArmado, renderB2B, renderCaja, renderCostos, renderEntregas, renderGastos, renderJornadas, renderMayoreoAdminCfg, renderPedidosVendedor, renderProduccion, renderProspeccion, renderReparto, renderResumen, renderRuta };

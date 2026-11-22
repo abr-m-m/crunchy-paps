@@ -4488,7 +4488,7 @@ window.togglePromosPerfil = async function(el) {
 
 // Las trece secciones que viven en panel.js. `premia` y `pedidos` NO están aquí: las usan también
 // los consumidores, y meterlas cargaría el panel a cada cliente. Esas dos se resuelven en su rama.
-const SECCIONES_PANEL = new Set(['produccion', 'b2b', 'prospeccion', 'ruta', 'reparto', 'entregas', 'armado', 'caja', 'gastos', 'jornadas', 'productos', 'cupones', 'resumen']);
+const SECCIONES_PANEL = new Set(['produccion', 'b2b', 'prospeccion', 'ruta', 'reparto', 'entregas', 'armado', 'caja', 'gastos', 'jornadas', 'productos', 'cupones', 'resumen', 'costos']);
 
 // La última sección que el usuario pidió. Mientras `panel.js` viaja, el usuario puede tocar otra
 // cosa; cuando llega, solo se navega si sigue queriendo ir donde pidió. Sin esto, tocar Armado y
@@ -4589,6 +4589,10 @@ window.navegar = function(seccion) {
   else if (seccion === 'resumen') {
     document.getElementById('s-resumen').classList.add('active');
     P.renderResumen();
+  }
+  else if (seccion === 'costos') {
+    document.getElementById('s-costos').classList.add('active');
+    P.renderCostos();
   }
 
   // Actualizar estado activo del nav
@@ -5231,6 +5235,7 @@ const NAV_ITEM_POR_SECCION = {
   ruta:        'nav-ruta',
   reparto:     'nav-reparto',
   entregas:    'nav-entregas',
+  costos:      'nav-costos',
   cuenta:      'nav-perfil',
 };
 

@@ -2283,6 +2283,30 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   </div>
 </div>
 
+<!-- ── COSTOS — solo el dueño ─────────────────────────────────────────────────
+     Tres preguntas, en el orden en que se hacen de verdad: qué cuesta una
+     bolsa, qué dejó cada canal, y qué tiene que pasar para ganar. El contenido
+     lo pinta `renderCostos()` en panel.js; aquí solo está el armazón.
+     Sigue material/Design_reference/DIRECCION-DE-DISENO.md: jerarquía por
+     tamaño y no por grosor, UN amarillo por vista, superficies planas y listas
+     de especificación (etiqueta izquierda, valor derecha, divisor de 1px). -->
+<div class="screen" id="s-costos">
+  <div class="header"><div class="logo">Crunchy<span> Paps</span></div></div>
+  <div style="padding:20px 20px 120px;">
+    <div style="font-family:'Archivo',sans-serif;font-size:2rem;font-weight:400;color:var(--blanco);line-height:1.15;margin-bottom:4px;">Costos</div>
+    <div style="font-size:0.875rem;color:var(--suave);margin-bottom:12px;">Qué cuesta una bolsa, qué dejó cada canal y qué tiene que pasar para ganar.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:24px;">
+      <span style="font-size:0.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);">Al día</span>
+      <input type="date" id="costos-fecha" onchange="cargarCostos()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:10px;padding:7px 10px;font-size:0.8rem;">
+    </div>
+
+    <div id="costos-bolsa" style="margin-bottom:24px;"></div>
+    <div id="costos-canal" style="margin-bottom:24px;"></div>
+    <div id="costos-equilibrio" style="margin-bottom:24px;"></div>
+    <div id="costos-avisos"></div>
+  </div>
+</div>
+
 <nav class="navbar" id="navbar" style="display:none;">
   <div class="nav-item active" id="nav-inicio" onclick="navegar('inicio')">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
@@ -2350,6 +2374,10 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="nav-item" id="nav-resumen" onclick="navegar('resumen')" style="display:none;">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-3"/></svg>
     <span class="nav-lbl">Resumen</span>
+  </div>
+  <div class="nav-item" id="nav-costos" onclick="navegar('costos')" style="display:none;">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 6.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 2.6 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg>
+    <span class="nav-lbl">Costos</span>
   </div>
   <div class="nav-item" id="nav-perfil" onclick="navegar('cuenta')">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
