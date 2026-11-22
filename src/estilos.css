@@ -1510,3 +1510,20 @@ body.ficha-abierta { overflow: hidden; }
 .piel-clara .pd-bottom .pd-qty-num { color: var(--blanco); }
 .piel-clara .pd-cart-line { color: var(--suave); }
 .piel-clara .pd-imgwrap { background: var(--gris); border-bottom: 1px solid var(--gris3); }
+
+/* PRECIOS DE REFERENCIA DE OTROS CANALES (solo vendedor). Cada uno dice de
+   quien es: antes eran numeros sueltos y solo el de mayoreo llevaba nombre.
+   El encabezado estaba en un title=, invisible en un telefono. */
+.ref-wrap { margin-top: 5px; }
+.ref-ttl {
+  font-size: 0.56rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--suave2); margin-bottom: 3px;
+}
+.ref-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.ref-chip {
+  font-size: 0.63rem; font-weight: 800; background: var(--gris);
+  color: var(--blanco); border: 1px solid var(--gris3);
+  border-radius: 5px; padding: 2px 5px;
+  pointer-events: none; user-select: none; white-space: nowrap;
+}
+.ref-etq { font-weight: 600; color: var(--suave2); margin-right: 3px; }

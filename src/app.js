@@ -1457,11 +1457,20 @@ window.renderCatalogo = function() {
     const { precio, precioOriginal, descuento } = getPrecioConDescuento(p);
 
     // Precios B2B visibles para vendedores (solo en papas, no bebidas)
+    // Precios de referencia de los otros canales, solo para el vendedor.
+    // Antes salian como numeros sueltos y SOLO el de mayoreo decia que era
+    // («$22 · $28 · Mayoreo $21»), asi que de los otros dos no se sabia de
+    // quien eran. Y el «solo referencia» vivia en un title=, que en un
+    // telefono no existe. Lo reporto Abraham el 23 nov 2026.
+    const chipRef = (etq, val) => `<div class="ref-chip"><span class="ref-etq">${etq}</span>$${val}</div>`;
     const preciosB2BHTML = (esVendedor && !esBebida) ? `
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;" title="Solo referencia de precios">
-        <div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_tienda||0}</div>
-        <div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_restaurante||0}</div>
-        ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">Mayoreo $${p.precio_mayorista}</div>` : ''}
+      <div class="ref-wrap">
+        <div class="ref-ttl">Otros canales</div>
+        <div class="ref-row">
+          ${chipRef('Tienda', p.precio_tienda || 0)}
+          ${chipRef('Restaurante', p.precio_restaurante || 0)}
+          ${Number(p.precio_mayorista) > 0 ? chipRef('Mayoreo', p.precio_mayorista) : ''}
+        </div>
       </div>` : '';
 
     // Sin foto: el mismo placeholder de trazo para papas y bebidas
