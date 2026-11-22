@@ -68,8 +68,13 @@ ok(Number(uno(`select public.costo_base_kg('2026-09-23') c`).c) === 114.25,
    'C3 el 23 sep, con la papa a 25: 4.25*25 + 0.2*40 = 114.25');
 ok(Number(uno(`select public.costo_base_kg('2026-06-15') c`).c) === 71.75,
    'C3 el 15 jun, con la papa a 15: 4.25*15 + 0.2*40 = 71.75');
-ok(uno(`select public.costo_base_kg('2026-05-31') c`).c === null,
-   'C3 antes de que la receta exista: NULL, no 0');
+// La fecha se movió el 21 nov 2026, y el motivo vale: hasta entonces no había
+// ninguna receta real y el 31 may servía. Ahora SÍ la hay, vigente desde el
+// 9 ene 2026 —el primer día del cuaderno—, así que esa fecha ya devuelve un
+// número y la prueba empezó a fallar. Falló bien: el mundo cambió. Para probar
+// «antes de que exista ninguna receta» hay que irse antes de enero.
+ok(uno(`select public.costo_base_kg('2025-12-31') c`).c === null,
+   'C3 antes de que exista NINGUNA receta: NULL, no 0');
 
 console.log('\nCaso 4: un insumo SIN costo hace NULL toda la receta, no la ignora');
 // LA TRAMPA: sum() de Postgres salta los NULL en silencio y daría 114.25 igual, ocultando que
@@ -117,7 +122,7 @@ barrer();   // de aquí en adelante se usan los insumos SEMBRADOS, no el fixture
 
 console.log('\nCaso 8: al escribir una línea, el disparador la costea solo');
 const costoHoy = Number(uno(`select public.costo_base_kg(current_date) c`).c);
-ok(costoHoy > 0, `C8 la base vale ${costoHoy} hoy (la siembra del 21 nov)`);
+ok(costoHoy > 0, `C8 la base vale ${costoHoy} hoy, con papa, aceite, gas y otros`);
 const idP100 = Number(uno(`select p.id from productos p
    where p.activo and p.gramos = 100 and p.sabor not like 'EDIT-%' limit 1`).id);
 const idOrden = Number(uno(`insert into ordenes (consecutivo, estatus_pedido, tipo_interno)
