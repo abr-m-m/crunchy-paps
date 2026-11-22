@@ -7,6 +7,11 @@
      puede ver, que es lo que cansa-. Quien pinte un estado activo usa estos
      tres, nunca --amarillo directo.
      Decision del 23 nov 2026: cambios/2026-11-23-lo-que-abraham-vio.md */
+  /* Tinta que SIEMPRE va encima del amarillo. Separada de --negro porque
+     --negro se invierte con la piel: la insignia «VENDEDOR» salio en claro
+     sobre amarillo (1.45:1) justo por eso. Visto el 23 nov 2026 en una
+     captura de Abraham, no leyendo el CSS. */
+  --sobre-marca: #0e0e0e;
   --sel-bg: #FFD200;
   --sel-fg: #0e0e0e;
   --sel-br: #FFD200;
@@ -98,7 +103,7 @@ select.inp { appearance: none; cursor: pointer; }
 .banner-content { position:relative; z-index:2; padding:36px 28px 36px 36px; text-align:left; }
 .banner-tag {
   display:inline-flex; align-items:center; gap:6px;
-  background:var(--amarillo); color:var(--negro);
+  background:var(--amarillo); color:var(--sobre-marca);
   font-family:'Inter',sans-serif; font-weight:900; font-size:0.7rem;
   text-transform:uppercase; letter-spacing:1.5px;
   padding:4px 10px; border-radius:50px; margin-bottom:10px;
@@ -186,7 +191,7 @@ select.inp { appearance: none; cursor: pointer; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;
 }
 .user-chip .badge {
-  background:var(--amarillo); color:var(--negro);
+  background:var(--amarillo); color:var(--sobre-marca);
   border-radius:50px; padding:1px 7px; font-size:0.62rem;
   font-weight:900; white-space:nowrap;
 }
@@ -351,7 +356,7 @@ select.inp { appearance: none; cursor: pointer; }
 /* Zona de toque de 44px sin agrandar el dibujo: el boton mide 28px (24 en
    pantallas chicas) y el pulgar necesita mas. */
 .qty-btn::after { content:''; position:absolute; inset:-4px; border-radius:12px; }
-.qty-btn:hover { background:var(--amarillo); color:var(--negro); }
+.qty-btn:hover { background:var(--amarillo); color:var(--sobre-marca); }
 .qty-num { flex:1; font-weight:900; font-size:1rem; min-width:18px; text-align:center; color:#111; font-variant-numeric:tabular-nums; }
 .agregar-btn {
   background:var(--rojo); border:none; border-radius:8px;
@@ -550,7 +555,7 @@ select.inp { appearance: none; cursor: pointer; }
 .toast {
   position:fixed; bottom:24px; left:50%;
   transform:translateX(-50%) translateY(80px);
-  background:var(--amarillo); color:var(--negro);
+  background:var(--amarillo); color:var(--sobre-marca);
   font-family:'Inter',sans-serif; font-weight:900;
   padding:10px 20px; border-radius:50px; z-index:999;
   transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);
@@ -658,17 +663,17 @@ select.inp { appearance: none; cursor: pointer; }
   box-shadow:0 8px 32px rgba(0,0,0,0.4); z-index:140; animation:slideUp 0.3s ease;
 }
 .mini-cart.visible { display:flex; }
-.mc-qty { background:var(--amarillo); color:var(--negro); border-radius:50%; width:30px; height:30px; font-weight:900; font-size:0.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.mc-qty { background:var(--amarillo); color:var(--sobre-marca); border-radius:50%; width:30px; height:30px; font-weight:900; font-size:0.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .mc-txt { flex:1; }
 .mc-lbl { font-size:0.73rem; font-weight:700; color:var(--suave); }
 .mc-total { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.2rem; color:var(--blanco); }
-.mc-btn { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:10px 18px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.88rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.mc-btn { background:var(--amarillo); color:var(--sobre-marca); border:none; border-radius:50px; padding:10px 18px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.88rem; cursor:pointer; white-space:nowrap; flex-shrink:0; }
 
 /* PREMIA */
 #s-premia { background:var(--negro); padding-bottom:80px; }
 .premia-hero { background:linear-gradient(135deg,#2a1f00,#1a1200); padding:28px 20px 24px; text-align:center; position:relative; overflow:hidden; }
 .premia-hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(255,210,0,0.07) 1px,transparent 1px); background-size:20px 20px; }
-.premia-nivel-badge { display:inline-flex; align-items:center; gap:6px; background:var(--amarillo); color:var(--negro); border-radius:50px; padding:5px 14px; font-weight:900; font-size:0.8rem; margin-bottom:14px; position:relative; }
+.premia-nivel-badge { display:inline-flex; align-items:center; gap:6px; background:var(--amarillo); color:var(--sobre-marca); border-radius:50px; padding:5px 14px; font-weight:900; font-size:0.8rem; margin-bottom:14px; position:relative; }
 .premia-num { font-family:'Archivo',sans-serif; font-weight:700; font-size:5rem; color:var(--amarillo); line-height:1; position:relative; }
 .premia-lbl { font-size:0.85rem; font-weight:700; color:rgba(255,255,255,0.4); margin-top:4px; position:relative; }
 .premia-prog-wrap { margin:18px 0 6px; background:rgba(255,255,255,0.1); border-radius:50px; height:8px; overflow:hidden; position:relative; }
@@ -688,7 +693,7 @@ select.inp { appearance: none; cursor: pointer; }
 .bene-desc { font-size:0.73rem; color:var(--suave); font-weight:600; }
 .bene-lock { margin-left:auto; font-size:0.72rem; font-weight:800; color:#444; white-space:nowrap; }
 /* Crunchy Club a la manera de Premia Juntos+ (18 sep 2026) */
-.club-top { background:linear-gradient(135deg,#FFD200,#f0a800); padding:22px 20px 58px; text-align:center; color:var(--negro); }
+.club-top { background:linear-gradient(135deg,#FFD200,#f0a800); padding:22px 20px 58px; text-align:center; color:var(--sobre-marca); }
 .club-hola { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.25rem; }
 .club-act { font-size:0.7rem; font-weight:700; opacity:0.7; margin-top:2px; }
 .club-card-wrap { padding:0 16px; margin-top:-44px; position:relative; }
@@ -699,7 +704,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-card-num { font-family:'Archivo',sans-serif; font-weight:800; font-size:2.4rem; color:var(--blanco); line-height:1.1; }
 .club-card-eq { font-size:0.72rem; font-weight:700; color:var(--suave); }
 .club-card-vence { font-size:0.72rem; font-weight:800; color:var(--amarillo); margin-top:2px; }
-.club-canjear { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+.club-canjear { background:var(--amarillo); color:var(--sobre-marca); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
 .club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
 .club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave); line-height:1.55; }
 .club-retos { padding:0 0 14px; }
@@ -791,15 +796,15 @@ select.inp { appearance: none; cursor: pointer; }
 .tc-pts { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.2rem; color:var(--amarillo); }
 .tc-pts small { font-size:0.7rem; font-family:'Inter',sans-serif; }
 .tc-paso { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:auto; }
-.tc-paso button { width:32px; height:32px; border-radius:50%; border:none; font-size:1.1rem; font-weight:900; cursor:pointer; background:var(--amarillo); color:var(--negro); }
+.tc-paso button { width:32px; height:32px; border-radius:50%; border:none; font-size:1.1rem; font-weight:900; cursor:pointer; background:var(--amarillo); color:var(--sobre-marca); }
 .tc-paso button:disabled { background:var(--gris3); color:#666; cursor:default; }
 .tc-paso span { flex:1; text-align:center; background:var(--gris2); border-radius:8px; padding:5px 0; font-weight:800; font-size:0.85rem; }
 .tc-barra { position:fixed; left:0; right:0; bottom:calc(66px + env(safe-area-inset-bottom)); z-index:140; background:var(--gris); border-top:1px solid var(--gris3); }
-.tc-barra-top { display:flex; justify-content:space-between; padding:8px 16px; font-size:0.78rem; font-weight:800; color:var(--negro); background:var(--amarillo); }
+.tc-barra-top { display:flex; justify-content:space-between; padding:8px 16px; font-size:0.78rem; font-weight:800; color:var(--sobre-marca); background:var(--amarillo); }
 .tc-barra-bot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 16px; }
 .tc-total-lbl { font-size:0.72rem; font-weight:700; color:var(--suave); }
 .tc-total { font-family:'Archivo',sans-serif; font-weight:800; font-size:1.3rem; color:var(--blanco); }
-.tc-ir { background:var(--amarillo); color:var(--negro); border:none; border-radius:50px; padding:12px 22px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.9rem; cursor:pointer; }
+.tc-ir { background:var(--amarillo); color:var(--sobre-marca); border:none; border-radius:50px; padding:12px 22px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.9rem; cursor:pointer; }
 .tc-ir:disabled { background:var(--gris3); color:#777; cursor:default; }
 /* En la tienda de canje manda su barra: el mini carrito flotante tapaba «Ir a carrito». */
 body:has(#s-club-canje.active) #mini-cart { display:none; }
@@ -1146,7 +1151,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .tk-paso:last-child::before { display:none; }
 .tk-paso.hecho::before { background:var(--amarillo); }
 .tk-circulo { flex:0 0 28px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.85rem; border:2px solid var(--gris3); color:var(--suave); background:var(--gris); position:relative; z-index:1; }
-.tk-paso.hecho .tk-circulo { background:var(--amarillo); border-color:var(--amarillo); color:var(--negro); }
+.tk-paso.hecho .tk-circulo { background:var(--amarillo); border-color:var(--amarillo); color:var(--sobre-marca); }
 .tk-paso.actual .tk-circulo { border-color:var(--amarillo); color:var(--amarillo); animation:pulse-glow 1.5s ease-in-out infinite; }
 .tk-texto { display:flex; flex-direction:column; gap:2px; padding-top:4px; min-width:0; }
 .tk-titulo { font-weight:800; font-size:0.9rem; color:var(--suave); line-height:1.2; }
@@ -1361,3 +1366,36 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
    titular de 24px o mas, y sigue siendo un color de la marca. */
 #s-catalogo.active .banner-cat .banner-h .hl { color: var(--rojo); }
 #s-catalogo.active .banner-cat .banner-slogan { color: #56524C; }
+
+/* El «+» que sustituye al boton ancho «Agregar» (23 nov 2026, lo pidio Abraham
+   al comparar la pantalla con la maqueta). Rojo de marca, blanco encima:
+   4.45:1. La palabra no se pierde, vive en el aria-label; quien navegue con
+   lector de pantalla sigue oyendo «Agregar» o «Agregar una caja». */
+.add-btn {
+  background:var(--rojo); border:none; border-radius:50%;
+  width:38px; height:38px; min-height:38px; color:#fff;
+  font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:900;
+  line-height:1; cursor:pointer; margin-left:auto;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.add-btn:hover { background:#c71d22; }
+
+/* ── Los cinco ajustes que pidio Abraham el 23 nov mirando la pantalla ── */
+
+/* El nombre del saludo: de rojo a negro. */
+#s-catalogo.active .banner-cat .banner-h .hl { color:#1A1714; }
+
+/* La cabecera iba apretada: el logo come el ancho que necesita el nombre.
+   Mas chico y con aire, no mas angosto el chip. */
+#s-catalogo.active .header { gap:10px; padding:10px 12px; }
+#s-catalogo.active .logo { font-size:1.05rem; padding:5px 9px; line-height:1.05; }
+#s-catalogo.active .user-chip { padding:5px 8px; }
+#s-catalogo.active .user-chip .nom { font-size:0.72rem; max-width:none; }
+
+/* El menu de abajo pesaba demasiado: en oscuro --suave #888 es un susurro y
+   en claro #56524C grita. Los inactivos bajan, y el icono baja mas que la
+   etiqueta -un icono es un grafico, le basta 3:1; la etiqueta de 9px no-. */
+#s-catalogo.active ~ #navbar .nav-lbl { color:#6B6560; }
+#s-catalogo.active ~ #navbar .nav-icon { color:#8A847D; stroke-width:1.6; }
+#s-catalogo.active ~ #navbar .nav-item.active .nav-lbl,
+#s-catalogo.active ~ #navbar .nav-item.active .nav-icon { color:#1A1714; }

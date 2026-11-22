@@ -1498,7 +1498,7 @@ window.renderCatalogo = function() {
       <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
     ` : `
       ${nU===0
-        ? `<div class="qty-ctrl"><button class="agregar-btn" onclick="agregarUnidad('${key}',1)">${u > 1 ? 'Agregar caja' : 'Agregar'}</button></div>`
+        ? `<div class="qty-ctrl"><button class="add-btn" onclick="agregarUnidad('${key}',1)" aria-label="${u > 1 ? 'Agregar una caja' : 'Agregar'}">+</button></div>`
         : `<div class="qty-ctrl">
         <button class="qty-btn" onclick="agregarUnidad('${key}',-1)" aria-label="Quitar ${u > 1 ? 'una caja' : 'uno'}">−</button>
         <span class="qty-num">${nU}${u > 1 ? `<small class="u-unit">caja${nU === 1 ? '' : 's'}</small>` : ''}</span>
