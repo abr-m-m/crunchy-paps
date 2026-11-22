@@ -103,6 +103,13 @@ const esBinario = (ruta) => BINARIOS.some((e) => ruta.endsWith(e));
 // 13 sep 2026: cada cambio puede traer una subcarpeta con sus parches, guiones
 // y SQL (cambios/2026-09-13-precio-por-caja/…). Se recorre un nivel más, con
 // las mismas extensiones más .mjs, .sh y .sql, que es lo que hay ahí.
+// 22 nov 2026: Excel deja un archivo de bloqueo `~$nombre.xlsx` mientras el
+// libro está abierto. El respaldo lo subió una vez (`~$Mapa-Crunchy.xlsx`): es
+// basura binaria que cambia cada vez que alguien abre el libro y no respalda
+// nada. Se salta por el prefijo, no por la extensión, porque la extensión es
+// la del libro de verdad.
+const esTemporalDeOffice = (nombre) => nombre.startsWith('~$');
+
 const listarCarpeta = ({ ruta, ext }) => {
   const dir = join(ORIGEN, ruta);
   if (!existsSync(dir)) return [];
@@ -112,10 +119,12 @@ const listarCarpeta = ({ ruta, ext }) => {
   const recorrer = (rel) => readdirSync(join(ORIGEN, rel), { withFileTypes: true })
     .flatMap((d) => d.isDirectory()
       ? recorrer(`${rel}/${d.name}`)
-      : (extSub.some((e) => d.name.endsWith(e)) ? [`${rel}/${d.name}`] : []));
+      : (!esTemporalDeOffice(d.name) && extSub.some((e) => d.name.endsWith(e))
+          ? [`${rel}/${d.name}`] : []));
   return readdirSync(dir, { withFileTypes: true })
     .flatMap((d) => {
       if (d.isDirectory()) return recorrer(`${ruta}/${d.name}`);
+      if (esTemporalDeOffice(d.name)) return [];
       return ext.some((e) => d.name.endsWith(e)) ? [`${ruta}/${d.name}`] : [];
     })
     .sort();
