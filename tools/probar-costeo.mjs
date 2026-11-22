@@ -227,6 +227,71 @@ sql(`update vendedores set secciones = array_remove(secciones,'gastos') where id
 
 sql(`delete from insumos_costos where vigente_desde > current_date`);
 
+console.log('\nCaso 15: la línea POR PIEZA se costea por su RECETA, el granel por su PESO');
+// EL CASO QUE FALTABA, y el defecto que encontró. Hasta el 21 nov el disparador
+// abría con `if gramos_vendidos > 0 then` creyendo que solo el granel llena ese
+// campo. No: TODA línea por pieza de papa lo lleva con el peso de su
+// presentación -65 líneas de 100 g, 49 de 250 g, medido en producción-, así que
+// la rama de granel se comía las de pieza y `costo_sku` no se llamaba NUNCA.
+//
+// No se vio porque hoy los dos caminos dan el MISMO número: la receta de un SKU
+// es kg de base y nada más. El caso 8 lo comprueba contra `costoHoy * 0.1`, que
+// es justo lo que no distingue un camino del otro (regla 53: una aserción que
+// mira la FORMA y no la propiedad que importa).
+//
+// Este caso rompe el empate: le mete una BOLSA a la receta del SKU. Si manda la
+// receta, la pieza encarece 1.50 y el granel no se mueve. Con el disparador
+// viejo los dos salían iguales -y el empaque desaparecía en silencio-.
+const idP15 = Number(uno(`select p.id from productos p
+   where p.activo and p.gramos = 100 and p.sabor not like 'EDIT-%' limit 1`).id);
+const idRec15 = Number(uno(`select r.id from recetas r
+   where r.tipo='sku' and r.id_producto = ${idP15} and r.activa
+   order by r.vigente_desde desc limit 1`).id || 0);
+const idBolsa15 = Number(uno(`insert into insumos (nombre, unidad, activo, tipo)
+   values ('ZZ-prueba-costeo Bolsa ${sufijo}', 'pieza', true, 'empaque') returning id`).id);
+sql(`insert into insumos_costos (id_insumo, costo_unidad, vigente_desde, fuente)
+     values (${idBolsa15}, 1.50, '2026-01-01', 'capturado')`);
+
+const sinBolsa = Number(uno(`select public.costo_sku(${idP15}, current_date) c`).c);
+sql(`insert into receta_lineas (id_receta, id_insumo, cantidad, unidad)
+     values (${idRec15}, ${idBolsa15}, 1, 'pieza')`);
+const conBolsa = Number(uno(`select public.costo_sku(${idP15}, current_date) c`).c);
+ok(Math.abs(conBolsa - sinBolsa - 1.50) < 0.001,
+   `C15 la receta ya cuesta 1.50 más: ${sinBolsa} → ${conBolsa}`);
+
+const idOrd15 = Number(uno(`insert into ordenes (consecutivo, estatus_pedido, tipo_interno)
+   values ('ZZ-COSTEO-' || substr(md5(random()::text),1,6), 'Pendiente', 'prueba') returning id`).id);
+// La línea se escribe COMO LA ESCRIBE LA APP: por pieza y con los gramos de su
+// presentación puestos, que es el dato que engañaba al disparador (regla 55).
+const pz15 = uno(`insert into ordenes_detalle
+   (id_orden, id_producto, cantidad, gramos_vendidos, subtotal, tipo_venta, presentacion)
+   values (${idOrd15}, '${idP15}', 1, 100, 32, 'Por Pieza', '100g')
+   returning costo_unitario::numeric cu`);
+ok(Math.abs(Number(pz15.cu) - conBolsa) < 0.001,
+   `C15 la pieza costó ${pz15.cu}: pasó por la receta y LLEVA la bolsa`);
+ok(Number(pz15.cu) > sinBolsa + 1.0,
+   'C15 con el disparador viejo habría costado ' + sinBolsa + ' y la bolsa se habría perdido');
+
+const idGr15 = Number(uno(`select p.id from productos p
+   where p.activo and coalesce(p.gramos,0) = 0 limit 1`).id || 0);
+if (idGr15) {
+  const gr15 = uno(`insert into ordenes_detalle
+     (id_orden, id_producto, cantidad, gramos_vendidos, subtotal, tipo_venta, presentacion)
+     values (${idOrd15}, '${idGr15}', 1, 100, 32, 'A granel', 'Granel')
+     returning costo_unitario::numeric cu`);
+  ok(Math.abs(Number(gr15.cu) - costoHoy * 0.1) < 0.01,
+     `C15 y 100 g a granel siguen en ${gr15.cu}: base pura, SIN bolsa`);
+  ok(Number(pz15.cu) > Number(gr15.cu) + 1.0,
+     'C15 el mismo peso cuesta más en bolsa que a granel, que es la verdad');
+} else {
+  ok(false, 'C15 no hay producto a granel en staging para contrastar');
+}
+
+sql(`delete from receta_lineas where id_insumo = ${idBolsa15}`);
+sql(`delete from ordenes_detalle where id_orden = ${idOrd15}; delete from ordenes where id = ${idOrd15}`);
+ok(Number(uno(`select public.costo_sku(${idP15}, current_date) c`).c) === sinBolsa,
+   'C15 limpieza: la receta volvió a su costo de antes');
+
 // ── Limpieza: el fixture no se queda en staging ──────────────────────────────
 barrer();
 const resto = Number(uno(`select count(*) n from insumos where nombre like 'ZZ-prueba-costeo%'`).n);
