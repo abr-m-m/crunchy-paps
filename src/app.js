@@ -1502,7 +1502,7 @@ window.renderCatalogo = function() {
         : `<div class="qty-ctrl">
         <button class="qty-btn" onclick="agregarUnidad('${key}',-1)" aria-label="Quitar ${u > 1 ? 'una caja' : 'uno'}">−</button>
         <span class="qty-num">${nU}${u > 1 ? `<small class="u-unit">caja${nU === 1 ? '' : 's'}</small>` : ''}</span>
-        <button class="qty-btn" onclick="agregarUnidad('${key}',1)" aria-label="Agregar ${u > 1 ? 'una caja' : 'uno'}">+</button>
+        <button class="qty-btn qty-mas" onclick="agregarUnidad('${key}',1)" aria-label="Agregar ${u > 1 ? 'una caja' : 'uno'}">+</button>
       </div>`}
     `;
 

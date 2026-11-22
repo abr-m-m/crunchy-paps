@@ -345,17 +345,19 @@ select.inp { appearance: none; cursor: pointer; }
 .prod-vigencia { font-size:0.68rem; color:var(--rojo); font-weight:800; }
 .prod-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:#111; margin-top:2px; }
 .prod-precio-orig { font-size:0.78rem; color:#aaa; text-decoration:line-through; }
-.qty-ctrl { display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:8px; }
+.qty-ctrl { display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:6px; }
 .qty-btn {
   background:#222; border:none; border-radius:8px;
-  width:36px; height:36px; color:var(--blanco);
+  width:30px; height:30px; color:var(--blanco);
   font-size:1rem; font-weight:900; cursor:pointer;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
   transition:background 0.15s; position:relative;
 }
 /* Zona de toque de 44px sin agrandar el dibujo: el boton mide 28px (24 en
    pantallas chicas) y el pulgar necesita mas. */
-.qty-btn::after { content:''; position:absolute; inset:-4px; border-radius:12px; }
+/* El boton se ve de 30px para que mande el product shot, pero se TOCA a
+   44: el ::after estira el area sin estirar el dibujo. 30+7+7 = 44. */
+.qty-btn::after { content:''; position:absolute; inset:-7px; border-radius:12px; }
 .qty-btn:hover { background:var(--amarillo); color:var(--sobre-marca); }
 .qty-num { flex:1; font-weight:900; font-size:1rem; min-width:18px; text-align:center; color:#111; font-variant-numeric:tabular-nums; }
 .agregar-btn {
@@ -1373,8 +1375,8 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
    lector de pantalla sigue oyendo «Agregar» o «Agregar una caja». */
 .add-btn {
   background:var(--rojo); border:none; border-radius:50%;
-  width:38px; height:38px; min-height:38px; color:#fff;
-  font-family:'Inter',sans-serif; font-size:1.3rem; font-weight:900;
+  width:30px; height:30px; min-height:30px; color:#fff; position:relative;
+  font-family:'Inter',sans-serif; font-size:1.05rem; font-weight:900;
   line-height:1; cursor:pointer; margin-left:auto;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
 }
@@ -1382,8 +1384,11 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 
 /* ── Los cinco ajustes que pidio Abraham el 23 nov mirando la pantalla ── */
 
-/* El nombre del saludo: de rojo a negro. */
+/* El nombre del saludo: de rojo a negro. Y «PAPS» con el: en la piel clara el
+   logotipo va entero en tinta sobre la pastilla amarilla. El rojo se queda
+   donde si trabaja: el «+» de agregar y la insignia del carrito. */
 #s-catalogo.active .banner-cat .banner-h .hl { color:#1A1714; }
+#s-catalogo.active .logo span { color:#1A1714; }
 
 /* La cabecera iba apretada: el logo come el ancho que necesita el nombre.
    Mas chico y con aire, no mas angosto el chip. */
@@ -1399,3 +1404,57 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 #s-catalogo.active ~ #navbar .nav-icon { color:#8A847D; stroke-width:1.6; }
 #s-catalogo.active ~ #navbar .nav-item.active .nav-lbl,
 #s-catalogo.active ~ #navbar .nav-item.active .nav-icon { color:#1A1714; }
+
+/* El «+» del contador, en rojo como el de agregar: es la misma accion. El «−»
+   se queda neutro a proposito -quitar no se destaca-. Abraham, 23 nov 2026.
+   Va en las DOS pieles: el color de la accion no depende del fondo. */
+.qty-btn.qty-mas { background:var(--rojo); color:#fff; }
+.qty-btn.qty-mas:hover { background:#c71d22; color:#fff; }
+
+/* Area de toque del «+» de agregar: igual que la del contador. */
+.add-btn::after { content:''; position:absolute; inset:-7px; border-radius:50%; }
+
+/* EL «+» DEL CONTADOR, EN ROJO — y va aqui, no arriba, por especificidad:
+   `#s-catalogo.active .qty-btn` lleva un id y le gana a `.qty-btn.qty-mas`.
+   Lo vi en pantalla, salia gris (regla 30). El «−» no se toca. */
+#s-catalogo.active .qty-btn.qty-mas { background:var(--rojo); color:#fff; }
+#s-catalogo.active .qty-btn.qty-mas:hover { background:#c71d22; color:#fff; }
+
+/* LA CABECERA, COMO EN LA MAQUETA (lo pidio Abraham el 23 nov al compararlas).
+   Logo redondo y chico, el chip ancho y centrado con el TELEFONO arriba y el
+   nombre debajo en gris, y el carrito como circulo con borde.
+   Nota para el futuro: en el chip `.nom` es el TELEFONO y `.badge` el nombre
+   del vendedor (app.js:917). Yo los enseñe al reves en una prueba y la
+   cabecera parecia otra; el codigo estaba bien, los datos de prueba no. */
+#s-catalogo.active .header { gap:10px; padding:10px 12px; }
+#s-catalogo.active .logo {
+  width:44px; height:44px; min-width:44px; border-radius:50%;
+  padding:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center;
+  font-size:0.44rem; line-height:1.2; letter-spacing:0.2px;
+}
+#s-catalogo.active .user-chip {
+  flex:1; min-width:0; align-items:center; gap:1px;
+  background:#FFFFFF; border:1px solid var(--gris3);
+  border-radius:14px; padding:7px 10px;
+}
+#s-catalogo.active .user-chip .nom { font-size:0.92rem; font-weight:800; max-width:none; }
+/* La insignia amarilla se va: en la maqueta el nombre es texto gris. De paso
+   desaparece el ultimo sitio donde el amarillo era fondo de un texto chico. */
+#s-catalogo.active .user-chip .badge {
+  background:transparent; color:#56524C;
+  font-size:0.68rem; font-weight:600; padding:0; letter-spacing:0;
+}
+#s-catalogo.active .carrito-btn {
+  width:44px; height:44px; min-width:44px; border-radius:50%;
+  padding:0; justify-content:center; position:relative;
+}
+#s-catalogo.active .cart-badge {
+  position:absolute; top:-2px; right:-2px; width:18px; height:18px;
+  font-size:0.62rem; border:2px solid #F4F1EC;
+}
+
+/* El chip solo podia crecer DENTRO de .header-right, que no crecia: por eso
+   quedaba angosto aunque llevara flex:1. Lo que tiene que estirarse es el
+   contenedor. Visto midiendo el DOM (chip 122px dentro de 174px), no mirando. */
+#s-catalogo.active .header-right { flex:1; min-width:0; }
