@@ -69,7 +69,7 @@ window.usarGpsAjuste = function() {
 };
 window.guardarAjusteUbicacion = async function() {
   const msg = document.getElementById('au-msg');
-  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? '#0d2d0d' : '#3a1515'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
+  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
   if (!window._auTel) { showMsg('Primero busca al cliente.'); return; }
   if (!window._auGps) { showMsg('Captura la ubicación con el botón de GPS.'); return; }
   const btn = document.getElementById('au-guardar'); const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
@@ -137,7 +137,7 @@ window.usarGpsAltaNegocio = function() {
 window.guardarAltaNegocio = async function() {
   const val = id => (document.getElementById(id)?.value || '').trim();
   const msg = document.getElementById('an-msg');
-  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? '#0d2d0d' : '#3a1515'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
+  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
   const tipo = window._altaNegTipo;
   if (!tipo) { showMsg('Elige el tipo de negocio.'); return; }
   const tel = val('an-tel').replace(/\D/g, '').slice(-10);
@@ -329,7 +329,7 @@ function initGridInsumos() {
         <input type="number" class="inp" id="cond-${s.replace(/\s/g,'_')}-kg" placeholder="kg" min="0" step="0.1"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="cond-${s.replace(/\s/g,'_')}-min" placeholder="mín" min="0" step="0.1"
-          style="padding:6px;text-align:center;font-size:0.75rem;background:#1a1000;">
+          style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
       </div>`).join('');
     condGrid.insertAdjacentHTML('beforebegin',
       '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">KG</span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">ALERTA</span></div>');
@@ -344,7 +344,7 @@ function initGridInsumos() {
         <input type="number" class="inp" id="bolsa-${p}-piezas" placeholder="pzas" min="0"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="bolsa-${p}-min" placeholder="mín" min="0"
-          style="padding:6px;text-align:center;font-size:0.75rem;background:#1a1000;">
+          style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
       </div>`).join('');
   }
 
@@ -357,7 +357,7 @@ function initGridInsumos() {
         <input type="number" class="inp" id="etiq-${p}-piezas" placeholder="pzas" min="0"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="etiq-${p}-min" placeholder="mín" min="0"
-          style="padding:6px;text-align:center;font-size:0.75rem;background:#1a1000;">
+          style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
       </div>`).join('');
   }
 }
@@ -507,7 +507,7 @@ function initGridConsumibles() {
       <input type="number" class="inp" id="cons-${c.id}-qty" placeholder="${c.unidad}" min="0"
         style="padding:6px;text-align:center;font-size:0.82rem;">
       <input type="number" class="inp" id="cons-${c.id}-min" placeholder="mín" min="0"
-        style="padding:6px;text-align:center;font-size:0.75rem;background:#1a1000;">
+        style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
     </div>`).join('') +
     '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">CANT.</span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">ALERTA</span></div>';
 }
@@ -572,7 +572,7 @@ async function renderProduccion() {
           <div style="color:var(--suave);font-size:0.84rem;margin-bottom:12px;">
             Inicializa el inventario con los sabores actuales o registra producción para empezar.
           </div>
-          <button onclick="inicializarSaboresProduccion()" style="background:var(--amarillo);color:var(--negro);border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;">
+          <button onclick="inicializarSaboresProduccion()" style="background:var(--amarillo);color:var(--sobre-marca);border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;">
             Inicializar ${SABORES_DEFAULT.length} sabores en 0kg
           </button>
         </div>`;
@@ -603,7 +603,7 @@ async function renderProduccion() {
           <div style="font-size:0.65rem;font-weight:700;color:#555;margin-bottom:4px;">KG DISPONIBLES</div>
           <input type="number" id="inv-${idx}" value="${s.kilosDisponibles.toFixed(2)}"
             min="0" step="0.1"
-            style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
+            style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
             onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
         </div>
       </div>
@@ -644,7 +644,7 @@ async function renderProduccion() {
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
                 <div>
                   <div style="font-weight:800;font-size:0.88rem;color:${esActivo?'var(--amarillo)':'var(--suave)'};">
-                    ${l.idLote} ${esActivo?'<span style="font-size:0.65rem;background:#2a1f00;color:var(--amarillo);border-radius:4px;padding:2px 5px;">ACTIVO</span>':''}
+                    ${l.idLote} ${esActivo?'<span style="font-size:0.65rem;background:var(--aviso-bg);color:var(--aviso-txt);border-radius:4px;padding:2px 5px;">ACTIVO</span>':''}
                   </div>
                   <div style="font-size:0.7rem;color:#555;">
                     ${l.fechaProduccion ? fechaSoloDia(l.fechaProduccion).toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—'}
@@ -655,7 +655,7 @@ async function renderProduccion() {
                   <div style="font-size:0.68rem;color:${colorPct};">${pct}% vendido</div>
                 </div>
               </div>
-              <div style="background:#222;border-radius:4px;height:6px;margin-bottom:8px;">
+              <div style="background:var(--gris2);border-radius:4px;height:6px;margin-bottom:8px;">
                 <div style="background:${colorPct};height:6px;border-radius:4px;width:${pct}%;transition:width 0.5s;"></div>
               </div>
               <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#555;margin-bottom:${l.notas?'6px':'0'};">
@@ -666,8 +666,8 @@ async function renderProduccion() {
               ${esActivo ? `
               <div style="display:flex;gap:6px;margin-top:6px;">
                 <button onclick="editarLote('${l.idLote}', ${l.kilosTotales}, ${l.kilosDisponibles})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--amarillo);cursor:pointer;">Editar</button>
-                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid #555;border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#888;cursor:pointer;">Comentario</button>
-                <button onclick="cerrarLote('${l.idLote}')" style="flex:1;background:transparent;border:1px solid #333;border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#555;cursor:pointer;">✕ Cerrar</button>
+                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#888;cursor:pointer;">Comentario</button>
+                <button onclick="cerrarLote('${l.idLote}')" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#555;cursor:pointer;">✕ Cerrar</button>
               </div>` : ''}
             </div>`}).join('');
         }
@@ -932,7 +932,7 @@ async function renderHoraLimiteCfg() {
         <label for="hl-normal">Días si pide antes</label>${num('hl-normal', cfg.diasNormal)}
         <label for="hl-tarde">Días si pide después</label>${num('hl-tarde', cfg.diasTarde)}
       </div>
-      <button onclick="guardarHoraLimiteCfg()" style="width:100%;min-height:44px;margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.86rem;color:var(--negro);cursor:pointer;">Guardar hora límite</button>
+      <button onclick="guardarHoraLimiteCfg()" style="width:100%;min-height:44px;margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">Guardar hora límite</button>
     </div>`;
 }
 
@@ -984,7 +984,7 @@ async function renderMayoreoAdminCfg() {
   if (!cont) return;
   if (!esAdminEstricto()) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
   cont.style.display = 'block';
-  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:var(--suave);font-size:0.8rem;">Cargando mínimos de mayoreo…</div>';
+  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:var(--suave2);font-size:0.8rem;">Cargando mínimos de mayoreo…</div>';
   let mins = N.MAYOREO_MINIMOS;
   try {
     const cfg = await supabaseCall('POST', 'rpc/get_mayoreo_config', {});
@@ -1001,7 +1001,7 @@ async function renderMayoreoAdminCfg() {
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
       <div style="font-size:0.72rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mínimos de mayoreo (admin)</div>
       ${presentaciones.map(fila).join('')}
-      <button onclick="guardarMayoreoCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--negro);cursor:pointer;">Guardar mínimos</button>
+      <button onclick="guardarMayoreoCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar mínimos</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">0 = sin mínimo. Aplica solo a pedidos de canal Mayorista.</div>
     </div>`;
 }
@@ -1267,7 +1267,7 @@ function pintarDashboard() {
           <span>Cuota:</span>
           <input id="cuota-${id}" type="number" inputmode="numeric" value="${cuota||''}" placeholder="0"
             style="width:90px;background:var(--gris);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--blanco);font-size:0.72rem;">
-          <button onclick="guardarCuotaDash('${id}','${(v.nombre||'').replace(/'/g,'')}')" style="background:var(--amarillo);border:none;border-radius:6px;padding:3px 8px;font-weight:800;font-size:0.66rem;color:var(--negro);cursor:pointer;">Guardar</button>
+          <button onclick="guardarCuotaDash('${id}','${(v.nombre||'').replace(/'/g,'')}')" style="background:var(--amarillo);border:none;border-radius:6px;padding:3px 8px;font-weight:800;font-size:0.66rem;color:var(--sobre-marca);cursor:pointer;">Guardar</button>
           ${cuota>0?`<span style="margin-left:auto;font-weight:800;color:${pct>=100?'#4caf50':'var(--amarillo)'};">${pct}%</span>`:''}
         </div>` : ''}
       </div>`;
@@ -1393,10 +1393,10 @@ window.descargarInformePDF = function() {
   if (!dash && !prod && !stock) { if (typeof mostrarToast==='function') mostrarToast('El informe aún no carga'); return; }
   const fecha = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const css = `
-    :root{--amarillo:#FFD200;--rojo:#E8242A;--negro:#0e0e0e;--gris:#1a1a1a;--gris2:#222222;--gris3:#2e2e2e;--blanco:#FAFAFA;--suave:#888;}
+    :root{--amarillo:#E5B312;--rojo:#E8242A;--negro:#0e0e0e;--gris:#1a1a1a;--gris2:#222222;--gris3:#2e2e2e;--blanco:#FAFAFA;--suave:#888;}
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{font-family:'Inter',Arial,sans-serif;background:#fff;color:#111;margin:0;padding:22px;}
-    .cp-head{display:flex;align-items:center;gap:10px;border-bottom:3px solid #FFD200;padding-bottom:12px;margin-bottom:18px;}
+    .cp-head{display:flex;align-items:center;gap:10px;border-bottom:3px solid #E5B312;padding-bottom:12px;margin-bottom:18px;}
     .cp-head h1{font-size:18px;margin:0;color:#111;font-family:'Archivo',Arial,sans-serif; font-weight:700;letter-spacing:1px;}
     .cp-head .d{margin-left:auto;color:#666;font-size:12px;text-transform:capitalize;}
     @media print { .noprint{display:none!important;} }
@@ -1410,7 +1410,7 @@ window.descargarInformePDF = function() {
     '<style>' + css + '</style></head><body>' +
     '<div class="cp-head"><h1>Crunchy Paps — Informe</h1><span class="d">' + fecha + '</span></div>' +
     dash + prod + stock +
-    '<button class="noprint" onclick="window.print()" style="position:fixed;bottom:16px;right:16px;background:#FFD200;border:none;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);">Guardar como PDF</button>' +
+    '<button class="noprint" onclick="window.print()" style="position:fixed;bottom:16px;right:16px;background:#E5B312;border:none;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);">Guardar como PDF</button>' +
     '</body></html>'
   );
   w.document.close();
@@ -1463,7 +1463,7 @@ window.cargarRecordatoriosPago = async function() {
     }).join('');
     const conTel = items.filter(x => x.to).length;
     cont.innerHTML = filas + (conTel > 1 ? `
-      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.8rem;color:#fff;cursor:pointer;">Enviar a todos (${conTel})</button>` : '');
+      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Enviar a todos (${conTel})</button>` : '');
   } catch(e) {
     cont.innerHTML = `<div style="color:var(--rojo);font-size:0.8rem;">Error: ${e.message}</div>`;
   }
@@ -1599,7 +1599,7 @@ window.cargarEmbudo = async function(dias) {
         const pctCaida = prev ? Math.round(caida * 100 / prev) : 0;
         const esPeor = (i === peorIdx && caida > 0);
         html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;font-size:0.75rem;">' +
-          '<div style="flex:0 0 118px;color:var(--suave);">' + p.nombre + '</div>' +
+          '<div style="flex:0 0 118px;color:var(--suave2);">' + p.nombre + '</div>' +
           '<div style="flex:1;background:var(--gris2);border-radius:4px;height:16px;overflow:hidden;min-width:40px;">' +
             '<div style="width:' + pct + '%;height:100%;background:' +
             (esPeor ? 'var(--rojo)' : 'var(--amarillo)') + ';"></div>' +
@@ -1871,12 +1871,12 @@ window.renderKardexLote = async function(idLote) {
 async function renderResumenInventario(elId, incluirLote) {
   const cont = document.getElementById(elId);
   if (!cont) return;
-  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;">Cargando inventario…</div>';
+  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave2);font-size:0.82rem;">Cargando inventario…</div>';
   try {
     const _rl4 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { soloActivos: true, limit: 1 } });
     const arrL = (_rl4 && _rl4.ok) ? _rl4.lotes : [];
     if (!Array.isArray(arrL) || arrL.length === 0) {
-      cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
+      cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave2);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
       return;
     }
     const l = arrL[0];
@@ -1944,7 +1944,7 @@ async function renderResumenInventario(elId, incluirLote) {
           <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${ven.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
           <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
         </div>
-        <div style="background:#222;border-radius:6px;height:8px;overflow:hidden;margin-top:8px;"><div style="background:${colP};height:8px;width:${pct}%;"></div></div>
+        <div style="background:var(--gris2);border-radius:6px;height:8px;overflow:hidden;margin-top:8px;"><div style="background:${colP};height:8px;width:${pct}%;"></div></div>
         <div style="font-size:0.66rem;color:#666;margin-top:4px;text-align:right;">${pct}% agotado</div>
       </div>` : '';
 
@@ -1956,7 +1956,7 @@ async function renderResumenInventario(elId, incluirLote) {
 
     cont.innerHTML = loteHTML + `<div style="background:var(--gris);border-radius:14px;padding:14px;">${fisicoHTML}</div>`;
   } catch(e) {
-    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--rojo);font-size:0.82rem;">Error al cargar inventario</div>';
+    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--error-txt);font-size:0.82rem;">Error al cargar inventario</div>';
   }
 }
 
@@ -1964,12 +1964,12 @@ async function renderResumenInventario(elId, incluirLote) {
 async function cargarResumenProduccion() {
   const cont = document.getElementById('resumen-produccion');
   if (!cont) return;
-  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;">Cargando producción…</div>';
+  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave2);font-size:0.82rem;">Cargando producción…</div>';
   try {
     const _rl5 = await supabaseCall('POST', 'rpc/obtener_lotes', { p_data: { soloActivos: true, limit: 1 } });
     const arr = (_rl5 && _rl5.ok) ? _rl5.lotes : [];
     if (!Array.isArray(arr) || arr.length === 0) {
-      cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
+      cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--suave2);font-size:0.82rem;text-align:center;">Sin lote activo</div>';
       return;
     }
     const l        = arr[0];
@@ -2012,7 +2012,7 @@ async function cargarResumenProduccion() {
             <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${vendidos.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
             <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
           </div>
-          <div style="background:#222;border-radius:6px;height:8px;overflow:hidden;"><div style="background:${colorPct};height:8px;width:${pct}%;transition:width .5s;"></div></div>
+          <div style="background:var(--gris2);border-radius:6px;height:8px;overflow:hidden;"><div style="background:${colorPct};height:8px;width:${pct}%;transition:width .5s;"></div></div>
           <div style="font-size:0.7rem;color:${colorPct};margin-top:4px;text-align:right;">${pct}% agotado</div>
         </div>
         <div style="background:var(--gris);border-radius:14px;padding:14px;${alerta==='pronto'?'border:1px solid var(--amarillo);':alerta==='agotado'?'border:1px solid var(--rojo);':''}">
@@ -2026,7 +2026,7 @@ async function cargarResumenProduccion() {
         </div>
       </div>`;
   } catch(e) {
-    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--rojo);font-size:0.82rem;">Error al cargar producción</div>';
+    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;color:var(--error-txt);font-size:0.82rem;">Error al cargar producción</div>';
   }
 }
 
@@ -2139,10 +2139,10 @@ function pintarResumen() {
   }
 
   const estColor = (est, pago, interno) => {
-    if (est === 'Cancelado') return 'background:#3a1515;color:#ff8a8a;';
-    if (interno)            return 'background:#2a1f00;color:var(--amarillo);';
-    if (pago === 'Pagado')  return 'background:#143a1a;color:#7fe0a0;';
-    return 'background:#2a2200;color:#ffd24d;';
+    if (est === 'Cancelado') return 'background:var(--error-br);color:#ff8a8a;';
+    if (interno)            return 'background:var(--aviso-bg);color:var(--amarillo);';
+    if (pago === 'Pagado')  return 'background:var(--ok-br);color:#7fe0a0;';
+    return 'background:var(--aviso-bg);color:#ffd24d;';
   };
   const estLbl = (r) => r.estatus === 'Cancelado' ? 'Cancelado'
     : r.esInterno ? 'Interno'
@@ -2372,7 +2372,7 @@ async function renderGridInventarioFisico(idLote) {
         ${PRESENTACIONES.map(p => `
           <input type="number" min="0" step="1" value="0"
             id="if-${sabor.replace(/\s/g,'_')}-${p.id}"
-            style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:4px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1rem;text-align:center;width:100%;outline:none;"
+            style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:4px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1rem;text-align:center;width:100%;outline:none;"
             onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
         `).join('')}
       </div>`).join('')}
@@ -2474,7 +2474,7 @@ window.elegirModoCliente = function(modo) {
     const activo = m === modo;
     btn.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
     btn.style.color       = activo ? 'var(--amarillo)' : 'var(--suave)';
-    btn.style.background  = activo ? '#2a1f00' : 'var(--gris)';
+    btn.style.background  = activo ? 'var(--aviso-bg)' : 'var(--gris)';
   });
 
   const buscarEl = document.getElementById('paso-buscar-cliente');
@@ -2646,7 +2646,7 @@ window.seleccionarCliente = function(idx) {
 
   // Confirmar selección con botón para cambiar
   document.getElementById('resultados-cliente').innerHTML =
-    `<div style="background:#0d2d0d;border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:700;color:#4caf50;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    `<div style="background:var(--ok-bg);border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:700;color:var(--ok-txt);display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="flex:1;min-width:0;">
         <div>${c.nombre}</div>
         <div style="color:#888;font-size:0.7rem;font-weight:500;margin-top:2px;">${c.telefono}</div>
@@ -3106,7 +3106,7 @@ function pedidoCardVendedorHTML(p) {
     <div class="estatus-row">
       <span class="pedido-estatus ${estClass}">${p.estatus||'Pendiente'}</span>
       ${p.esInterno
-        ? `<span class="pedido-estatus" style="background:#2a1f00;color:var(--amarillo);">${tipoInternoLbl||'Interno'}</span>`
+        ? `<span class="pedido-estatus" style="background:var(--aviso-bg);color:var(--aviso-txt);">${tipoInternoLbl||'Interno'}</span>`
         : `<span class="pedido-estatus ${pagoClass}">${p.estatusPago==='Pagado'?'Pagado':''+p.estatusPago}</span>`}
     </div>
     ${(!p.esInterno && p.estatus !== 'Cancelado')
@@ -3115,7 +3115,7 @@ function pedidoCardVendedorHTML(p) {
          <button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); imprimirTicketPedido(${p.id})">Ticket</button>`
       : ''}
     ${(typeof esAdminEstricto === 'function' && esAdminEstricto() && p.estatus !== 'Cancelado')
-      ? `<button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--amarillo);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); abrirReasignarLote(${p.id}, '${p.consecutivo||''}')">Lote del pedido</button>
+      ? `<button class="btn-confirm-wpp" style="background:var(--gris2);color:var(--acento-txt);border:1px solid var(--gris3);margin-top:6px;" onclick="event.stopPropagation(); abrirReasignarLote(${p.id}, '${p.consecutivo||''}')">Lote del pedido</button>
          <div id="reasignar-lote-${p.id}" style="display:none;margin-top:8px;" onclick="event.stopPropagation();"></div>`
       : ''}
   </div>`;
@@ -3337,7 +3337,7 @@ function pintarDetallePedido({ orden, lineas }) {
   const motivoTxt = (N.MOTIVO_EDICION.vendedor || {})[orden.motivo] || '';
   const editarHTML = !puedeEditar || orden.editable === undefined ? '' : orden.editable ? `
     <div style="margin-top:12px;">
-      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
+      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
       ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--amarillo);margin-top:4px;">${motivoTxt}</div>` : ''}
       ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : orden.puedeForzar ? `
@@ -3370,14 +3370,14 @@ function pintarDetallePedido({ orden, lineas }) {
       <div class="estatus-row">
         <span class="pedido-estatus ${estPedido==='Entregado'?'entregado':(cancelado?'cancelado':'')}">${estPedido}</span>
         ${esInterno
-          ? `<span class="pedido-estatus" style="background:#2a1f00;color:var(--amarillo);">${tiposInternosLbl[tipoInterno] || 'Interno'}</span>`
+          ? `<span class="pedido-estatus" style="background:var(--aviso-bg);color:var(--aviso-txt);">${tiposInternosLbl[tipoInterno] || 'Interno'}</span>`
           : `<span class="pedido-estatus ${estPago==='Pagado'?'pagado':'pendiente-pago'}">${estPago}</span>`}
       </div>
     </div>
 
     ${esInterno ? `
       <!-- Banner: pedido interno -->
-      <div style="background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div>
           <div style="font-size:0.7rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
@@ -3407,7 +3407,7 @@ function pintarDetallePedido({ orden, lineas }) {
             <input type="date" id="dp-fecha-prog"
               value="${fechaParaInput(orden.fecha_entrega)}"
               onchange="actualizarFechaPedido(${orden.id}, 'fechaEntrega', this.value)"
-              style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
+              style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
           ` : `
             <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${fEntrega}</div>
           `}
@@ -3418,7 +3418,7 @@ function pintarDetallePedido({ orden, lineas }) {
             <input type="date" id="dp-fecha-real"
               value="${fechaParaInput(orden.fecha_entrega_real)}"
               onchange="actualizarFechaPedido(${orden.id}, 'fechaEntregaReal', this.value)"
-              style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
+              style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
           ` : `
             <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${orden.fecha_entrega_real ? new Date(orden.fecha_entrega_real).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
           `}
@@ -3469,7 +3469,7 @@ function pintarDetallePedido({ orden, lineas }) {
       <button onclick="cerrarDetallePedido();abrirTracking('${orden.consecutivo}')" style="flex:1;min-width:130px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
         Seguimiento
       </button>
-      <button onclick="cerrarDetallePedido()" style="background:transparent;border:1px solid #333;border-radius:10px;padding:12px 16px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.85rem;color:var(--suave);cursor:pointer;">
+      <button onclick="cerrarDetallePedido()" style="background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:12px 16px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.85rem;color:var(--suave);cursor:pointer;">
         Cerrar
       </button>
     </div>
@@ -3737,7 +3737,7 @@ window.imprimirTicket = function() {
       <div class="tk-h2">PAPS</div>
 
       <div class="tk-sub">${esInternoTk ? 'DOCUMENTO INTERNO' : 'Pre-ticket de venta'}</div>
-      ${esInternoTk ? `<div style="text-align:center;font-weight:700;background:#000;color:#FFD200;padding:2pt 4pt;display:inline-block;font-size:9pt;margin:0 auto 4pt;">${tiposInternosLblTk[tipoInternoTk] || tipoInternoTk.toUpperCase() || 'INTERNO'}</div>` : ''}
+      ${esInternoTk ? `<div style="text-align:center;font-weight:700;background:#000;color:var(--amarillo);padding:2pt 4pt;display:inline-block;font-size:9pt;margin:0 auto 4pt;">${tiposInternosLblTk[tipoInternoTk] || tipoInternoTk.toUpperCase() || 'INTERNO'}</div>` : ''}
 
       <div class="tk-meta">
         CRUNCHY PAPS<br>
@@ -3767,7 +3767,7 @@ window.imprimirTicket = function() {
           <span>VOLUMEN</span>
           <span>${(gramosTotalTk/1000).toFixed(3)} kg</span>
         </div>
-        <div style="text-align:center;font-weight:700;background:#000;color:#FFD200;padding:4pt;margin-top:6pt;font-size:10pt;">SIN CARGO — NO ES VENTA</div>
+        <div style="text-align:center;font-weight:700;background:#000;color:var(--amarillo);padding:4pt;margin-top:6pt;font-size:10pt;">SIN CARGO — NO ES VENTA</div>
       ` : `
         ${desc > 0 ? `
           <div class="tk-field" style="border:none;margin-top:4pt;"><b>Subtotal:</b><span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></div>
@@ -4003,7 +4003,7 @@ function renderB2BLista() {
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Vendedor:</span>
               <select onchange="reasignarVendedor(${c.id}, this.value, this.options[this.selectedIndex].text)"
-                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;flex:1;max-width:170px;">
+                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;flex:1;max-width:170px;">
                 <option value="">— Sin asignar —</option>
                 ${_vendedoresActivos.map(v => `<option value="${v.id}" ${String(v.id)===String(c.idVendedor)?'selected':''}>${v.nombre}</option>`).join('')}
               </select>
@@ -4015,7 +4015,7 @@ function renderB2BLista() {
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Ruta:</span>
               <select onchange="reasignarRuta(${c.id}, this.value)" aria-label="Ruta de reparto"
-                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;min-height:32px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;">
+                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;min-height:32px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;">
                 <option value="">— Sin ruta —</option>
                 ${(window._rutasCache || []).filter(r => r.activa !== false).map(r => `<option value="${r.id}" ${String(r.id)===String(c.idRuta)?'selected':''}>${r.nombre}</option>`).join('')}
               </select>
@@ -4026,7 +4026,7 @@ function renderB2BLista() {
           ${c.rfc ? `<div style="font-size:0.72rem;color:var(--suave);">RFC: ${c.rfc}</div>` : ''}
         </div>
         <div style="font-size:0.66rem;font-weight:800;padding:3px 8px;border-radius:50px;white-space:nowrap;
-          ${c.aprobadoB2B ? 'background:#0d2d0d;color:#4caf50' : 'background:#2a1f00;color:var(--amarillo)'}">
+          ${c.aprobadoB2B ? 'background:var(--ok-bg);color:#4caf50' : 'background:var(--aviso-bg);color:var(--amarillo)'}">
           ${c.aprobadoB2B ? 'Aprobado' : 'Pendiente'}
         </div>
       </div>
@@ -4051,14 +4051,14 @@ function renderB2BLista() {
 
       <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <a href="https://wa.me/52${String(c.telefono||'').replace(/\D/g,'').slice(-10)}" target="_blank"
-          style="background:#0d2d0d;border:1px solid #25D366;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:#25D366;text-decoration:none;">
+          style="background:var(--ok-bg);border:1px solid #25D366;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">
           Contactar
         </a>
         ${c.coordenadas
-          ? `<a href="https://www.google.com/maps?q=${c.coordenadas}" target="_blank" style="background:#0d2d0d;border:1px solid #2a5a2a;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:#4caf50;text-decoration:none;">Ver en Maps (entrega)</a>`
-          : `<span style="background:#2a1f00;border:1px solid #5a4a2a;border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:700;color:var(--amarillo);">Sin ubicación capturada</span>`}
+          ? `<a href="https://www.google.com/maps?q=${c.coordenadas}" target="_blank" style="background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">Ver en Maps (entrega)</a>`
+          : `<span style="background:var(--aviso-bg);border:1px solid var(--aviso-br);border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:700;color:var(--aviso-txt);">Sin ubicación capturada</span>`}
         ${c.coordenadasGps
-          ? `<a href="https://www.google.com/maps?q=${c.coordenadasGps}" target="_blank" style="background:#0d1a2d;border:1px solid #2a4a5a;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:#4ab3ff;text-decoration:none;">GPS</a>`
+          ? `<a href="https://www.google.com/maps?q=${c.coordenadasGps}" target="_blank" style="background:var(--info-bg);border:1px solid var(--info-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--info-txt);text-decoration:none;">GPS</a>`
           : ''}
         ${(() => { const d = distanciaCoords(c.coordenadas, c.coordenadasGps); if (d === null) return ''; const cerca = d <= 150; const col = cerca ? '#7ee787' : (d <= 500 ? '#ffb454' : '#ff8a8a'); const bg = cerca ? '#0d2d0d' : (d <= 500 ? '#2a1f00' : '#3a1515'); const txt = d < 1000 ? `${Math.round(d)} m` : `${(d/1000).toFixed(1)} km`; return `<span title="Distancia entre la dirección y el GPS detectado" style="background:${bg};border:1px solid ${col}55;border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:800;color:${col};">${cerca ? '✓' : ''} GPS a ${txt}</span>`; })()}
       </div>
@@ -4072,14 +4072,14 @@ function renderB2BLista() {
             Aprobar
           </button>
           <button onclick="rechazarB2B(${c.id})" style="
-            flex:1;background:transparent;border:1px solid #333;border-radius:8px;
+            flex:1;background:transparent;border:1px solid var(--gris3);border-radius:8px;
             padding:8px;font-family:'Inter',sans-serif;font-weight:800;
             font-size:0.8rem;color:var(--suave);cursor:pointer;">
             ✕ Rechazar
           </button>
         </div>` : `
         <button onclick="revocarB2B(${c.id})" style="
-          background:transparent;border:1px solid #333;border-radius:8px;
+          background:transparent;border:1px solid var(--gris3);border-radius:8px;
           padding:6px 12px;font-family:'Inter',sans-serif;font-weight:700;
           font-size:0.75rem;color:#555;cursor:pointer;margin-top:6px;">
           Revocar aprobación
@@ -4293,7 +4293,7 @@ async function pintarMapaProspectos() {
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 0,
-          fillColor: '#FFD200',
+          fillColor: '#E5B312',
           fillOpacity: 1,
         },
         zIndex: 9999,
@@ -4332,7 +4332,7 @@ async function pintarMapaProspectos() {
 
   const colorPorEstatus = {
     pendiente:  '#e74c3c',
-    contactado: '#FFD200',
+    contactado: '#E5B312',
     convertido: '#4caf50',
     descartado: '#666'
   };
@@ -4352,7 +4352,7 @@ async function pintarMapaProspectos() {
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: seleccionadoRuta ? 14 : escalaPunto(p.score),
-          fillColor: seleccionadoRuta ? '#FFD200' : color,
+          fillColor: seleccionadoRuta ? '#E5B312' : color,
           fillOpacity: seleccionadoRuta ? 1 : 0.85,
           strokeColor: '#000',
           strokeWeight: seleccionadoRuta ? 3 : grosorPunto(),
@@ -4449,7 +4449,7 @@ async function pintarRutasEnMapa() {
   if (!rutas.length) return;
   await cargarGeoCP();
   for (const r of rutas) {
-    const color = r.color || '#ffd200';
+    const color = r.color || '#E5B312';
     for (const cp of cpsDeCobertura(r.cobertura)) {
       for (const poli of (_cpZona[cp] || [])) {
         try {
@@ -4660,7 +4660,7 @@ window.calcularRutaOptima = async function() {
     if (_rutaPolyline) _rutaPolyline.setMap(null);
     _rutaPolyline = new google.maps.Polyline({
       path: route.overview_path,
-      strokeColor: '#FFD200',
+      strokeColor: '#E5B312',
       strokeOpacity: 0.8,
       strokeWeight: 5,
       map: _prosMapa,
@@ -4773,7 +4773,7 @@ window.abrirNuevoProspecto = async function() {
   // Capturar ubicación GPS
   const info = document.getElementById('np-coords-info');
   info.innerHTML = 'Capturando tu ubicación... <span class="loader loader-w"></span>';
-  info.style.background = '#2a1f00';
+  info.style.background = 'var(--aviso-bg)';
   info.style.borderColor = 'rgba(255,210,0,0.4)';
   info.style.color = 'var(--amarillo)';
 
@@ -4781,8 +4781,8 @@ window.abrirNuevoProspecto = async function() {
   if (loc) {
     _coordsNuevoProspecto = { lat: loc.lat, lng: loc.lng };
     info.innerHTML = `Ubicación capturada: ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
-    info.style.background = '#0d2d0d';
-    info.style.borderColor = '#2a5a2a';
+    info.style.background = 'var(--ok-bg)';
+    info.style.borderColor = 'var(--ok-br)';
     info.style.color = '#4caf50';
   } else {
     // Fallback: usar la última ubicación conocida o el centro del mapa
@@ -4793,12 +4793,12 @@ window.abrirNuevoProspecto = async function() {
       const c = _prosMapa.getCenter();
       _coordsNuevoProspecto = { lat: c.lat(), lng: c.lng() };
       info.innerHTML = `Sin GPS — usando centro del mapa: ${c.lat().toFixed(6)}, ${c.lng().toFixed(6)}`;
-      info.style.background = '#2d0d0d';
+      info.style.background = 'var(--error-bg)';
       info.style.borderColor = 'var(--rojo)';
       info.style.color = 'var(--rojo)';
     } else {
       info.innerHTML = 'No se pudo obtener ubicación. Activa GPS y vuelve a intentar.';
-      info.style.background = '#2d0d0d';
+      info.style.background = 'var(--error-bg)';
       info.style.borderColor = 'var(--rojo)';
       info.style.color = 'var(--rojo)';
     }
@@ -4962,9 +4962,9 @@ function pintarListaProspectos() {
     // Distancia destacada según modo
     let distLabel = '';
     if (_ordenProspectos === 'cerca_mi' && tengoUbicacion && p._distMi < 999999) {
-      distLabel = `<span style="background:#0d2d0d;color:#4caf50;font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p._distMi)}</span>`;
+      distLabel = `<span style="background:var(--ok-bg);color:var(--ok-txt);font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p._distMi)}</span>`;
     } else if (_ordenProspectos === 'cerca_planta' && p.distanciaMetros) {
-      distLabel = `<span style="background:#2a1f00;color:var(--amarillo);font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p.distanciaMetros)}</span>`;
+      distLabel = `<span style="background:var(--aviso-bg);color:var(--aviso-txt);font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p.distanciaMetros)}</span>`;
     }
 
     return `<div onclick="verDetalleProspecto(${p.id})" style="
@@ -5020,7 +5020,7 @@ window.verDetalleProspecto = function(id) {
       ${(p.colonia || p.codigoPostal) ? `<div style="font-size:0.74rem;color:var(--suave);">${p.colonia||''} ${p.codigoPostal?'· CP '+p.codigoPostal:''}</div>` : ''}
       ${p.telefono ? `<div style="font-size:0.78rem;color:var(--suave);">${p.telefono}</div>` : ''}
       ${p.distanciaMetros > 0 ? `<div style="font-size:0.72rem;color:#888;margin-top:3px;">A ${Math.round(p.distanciaMetros)}m de la planta</div>` : ''}
-      ${p.lat && p.lng ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="display:inline-block;margin-top:6px;background:#0d2d0d;border:1px solid #2a5a2a;border-radius:6px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:#4caf50;text-decoration:none;">Abrir en Maps</a>` : ''}
+      ${p.lat && p.lng ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="display:inline-block;margin-top:6px;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">Abrir en Maps</a>` : ''}
     </div>
 
     <!-- Info de seguimiento -->
@@ -5042,7 +5042,7 @@ window.verDetalleProspecto = function(id) {
       </div>` : ''}
 
     ${descartado && p.motivoDescarte ? `
-      <div style="background:#2d0d0d;border:1px solid var(--rojo);border-radius:12px;padding:10px;margin-bottom:10px;font-size:0.78rem;color:var(--rojo);">
+      <div style="background:var(--error-bg);border:1px solid var(--rojo);border-radius:12px;padding:10px;margin-bottom:10px;font-size:0.78rem;color:var(--error-txt);">
         Descartado: ${p.motivoDescarte}
       </div>` : ''}
 
@@ -5060,25 +5060,25 @@ window.verDetalleProspecto = function(id) {
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${RESULTADOS_VISITA.map(r => `<button onclick="elegirResultadoVisita(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.descarta ? 'var(--rojo)' : (r.codigo === 'convertido' ? '#4caf50' : 'var(--gris3)')};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}${r.descarta ? '<span style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sale de la ruta</span>' : ''}</button>`).join('')}
         </div>
-        ${!p.telefono ? `<label for="visita-telefono" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Teléfono del cliente, solo si se convierte</label>
-        <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
+        ${!p.telefono ? `<label for="visita-telefono" style="display:block;font-size:0.72rem;color:var(--suave2);margin:10px 0 4px;">Teléfono del cliente, solo si se convierte</label>
+        <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
         <label for="visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
-        <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+        <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
         <label for="visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
-        <input id="visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
-        <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
+        <input id="visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
+        <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
       <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
         ↩️ Reactivar prospecto
       </button>
     ` : `
-      <div style="background:#0d2d0d;border:1px solid #4caf50;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:#4caf50;font-size:0.84rem;">
+      <div style="background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:var(--ok-txt);font-size:0.84rem;">
         Convertido a cliente${p.idClienteConvertido ? ' #' + p.idClienteConvertido : ''}
       </div>
     `}
 
-    <button onclick="cerrarDetalleProspecto()" style="width:100%;background:transparent;border:1px solid #333;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:10px;">
+    <button onclick="cerrarDetalleProspecto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:10px;">
       Cerrar
     </button>
   `;
@@ -5128,7 +5128,7 @@ async function renderRuta() {
   catch (e) { r = { ok: false, error: e.message }; }
   if (!r || !r.ok) {
     cab.innerHTML = '';
-    lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">No se pudo cargar la ruta: ${rutaEsc((r && r.error) || 'sin respuesta')}</div>`;
+    lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave2);font-size:0.86rem;">No se pudo cargar la ruta: ${rutaEsc((r && r.error) || 'sin respuesta')}</div>`;
     return;
   }
   window._rutaDia = r;
@@ -5154,7 +5154,7 @@ function pintarRutaDia() {
   if (!r.ruta) {
     cab.innerHTML = '';
     const prox = r.proximaFecha ? new Date(r.proximaFecha + 'T12:00:00') : null;
-    lista.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);font-size:0.86rem;">No hay ruta para este día.${prox ? ' La siguiente es el ' + RUTA_DIA_NOMBRE[prox.getDay()] + ' ' + prox.getDate() + '.' : ''}</div>`;
+    lista.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave2);font-size:0.86rem;">No hay ruta para este día.${prox ? ' La siguiente es el ' + RUTA_DIA_NOMBRE[prox.getDay()] + ' ' + prox.getDate() + '.' : ''}</div>`;
     return;
   }
   const a = r.avance || {};
@@ -5163,7 +5163,7 @@ function pintarRutaDia() {
   const paradas = r.paradas || [];
   const hayPendientes = paradas.some(p => !p.visitadaHoy && p.lat != null && p.lng != null);
   cab.innerHTML = `
-    <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid ${rutaEsc(r.ruta.color || '#ffd200')};">
+    <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid ${rutaEsc(r.ruta.color || '#E5B312')};">
       <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);">${rutaEsc(r.ruta.nombre)}</div>
       <div style="color:var(--suave);font-size:0.78rem;margin-top:2px;">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${r.ruta.vendedor ? rutaEsc(r.ruta.vendedor) : 'sin vendedor asignado'}</div>
       <div role="progressbar" aria-label="Avance del día" aria-valuemin="0" aria-valuemax="${a.programadas || 0}" aria-valuenow="${a.visitadas || 0}" style="margin-top:10px;height:8px;background:var(--gris3);border-radius:999px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--amarillo);"></div></div>
@@ -5204,7 +5204,7 @@ function pintarRutaDia() {
     ? `<div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
     : '';
   const html = bloque('Clientes', paradas.filter(p => p.tipo === 'cliente')) + bloque('Prospectos', paradas.filter(p => p.tipo === 'prospecto'));
-  lista.innerHTML = (html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>') + cierreDelDiaHTML(a);
+  lista.innerHTML = (html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave2);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>') + cierreDelDiaHTML(a);
 }
 
 // El cierre del día. Si todavía no hay ninguna visita NO dice «0 de N»: dice que aún no sales. Un
@@ -5217,7 +5217,7 @@ function cierreDelDiaHTML(avance) {
   const sinResultado = Math.max(0, prog - Number((avance && avance.visitadas) || 0));
   const money = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (!hechas) {
-    return `<div style="margin-top:16px;background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:14px;color:var(--suave);font-size:0.84rem;text-align:center;">Aún no sales. ${prog} parada${prog === 1 ? '' : 's'} te esperan.</div>`;
+    return `<div style="margin-top:16px;background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:14px;color:var(--suave2);font-size:0.84rem;text-align:center;">Aún no sales. ${prog} parada${prog === 1 ? '' : 's'} te esperan.</div>`;
   }
   return `
     <div style="margin-top:16px;background:var(--gris);border-radius:14px;padding:14px;border-left:4px solid var(--amarillo);">
@@ -5263,10 +5263,10 @@ window.abrirVisitaCliente = function(id) {
       ${RESULTADOS_VISITA_CLIENTE.map(r => `<button type="button" onclick="registrarVisitaCliente(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.codigo === 'pedido' ? '#4caf50' : 'var(--gris3)'};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}</button>`).join('')}
     </div>
     <label for="ruta-visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
-    <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
+    <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
     <label for="ruta-visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
-    <input id="ruta-visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
-    <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid #333;border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
+    <input id="ruta-visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
+    <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
   hoja.hidden = false;
 };
 
@@ -5352,14 +5352,14 @@ function repartoFila(p, acciones) {
 function repartoBotonEntregar(p) {
   if (p.estatusPedido === 'Entregado') return '';
   if (p.metodoEntrega === 'paqueteria') return p.estatusPedido === 'En camino' ? '' : `<button onclick="repartoEnviado(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Enviado</button>`;
-  return `<button onclick="repartoEntregar(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 12px;color:var(--negro);font-weight:800;">Entregado</button>`;
+  return `<button onclick="repartoEntregar(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 12px;color:var(--sobre-marca);font-weight:800;">Entregado</button>`;
 }
 
 function repartoBloque(titulo, pedidos, clave, conSalir) {
   const pend = pedidos.filter(p => p.estatusPedido === 'En proceso').map(p => p.id);
   const sinArmar = pedidos.filter(p => !p.armadoEn && p.estatusPedido === 'En proceso').length;
   const ent = pedidos.filter(p => p.estatusPedido === 'Entregado').length;
-  const salir = conSalir && pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', ${sinArmar})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 14px;color:var(--negro);font-weight:800;">Salir a ruta</button>` : '';
+  const salir = conSalir && pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', ${sinArmar})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 14px;color:var(--sobre-marca);font-weight:800;">Salir a ruta</button>` : '';
   const rec = pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('${clave}')" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Recorrido</button>` : '';
   return `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
@@ -5380,7 +5380,7 @@ async function renderReparto() {
   if (fecha && fecha.value) payload.fecha = fecha.value;
   let r = null;
   try { r = await supabaseCall('POST', 'rpc/reparto_del_dia', { p_data: payload }); } catch (e) { r = { ok: false, error: e.message }; }
-  if (!r || !r.ok) { cuerpo.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);">No se pudo cargar el reparto: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
+  if (!r || !r.ok) { cuerpo.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave2);">No se pudo cargar el reparto: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
   window._reparto = r;
   if (fecha && !fecha.value) fecha.value = r.fecha;
   let html = '';
@@ -5388,7 +5388,7 @@ async function renderReparto() {
   for (const g of r.consumidores) html += repartoBloque('Consumidores · ' + rutaEsc(g.nombre || 'sin repartidor'), g.pedidos, 'cons:' + g.idRepartidor, true);
   if (r.paqueteria.length) html += repartoBloque('Paquetería', r.paqueteria, 'paq', false);
   if (r.sinRuta.length) html += repartoBloque('Sin ruta', r.sinRuta, 'sin', false);
-  if (!html) html = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);">Nada que repartir ese día.</div>`;
+  if (!html) html = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave2);">Nada que repartir ese día.</div>`;
   if (r.porConfirmar) html += `<div style="font-size:0.8rem;color:var(--suave);text-align:center;margin-top:4px;">${r.porConfirmar} por confirmar, fuera del reparto hasta confirmarse.</div>`;
   cuerpo.innerHTML = html;
 }
@@ -5456,7 +5456,7 @@ async function renderEntregas() {
   lista.innerHTML = '<div style="text-align:center;color:var(--suave);padding:20px;"><span class="loader"></span> Cargando tus entregas…</div>';
   let r = null;
   try { r = await supabaseCall('POST', 'rpc/reparto_del_dia', { p_data: {} }); } catch (e) { r = { ok: false, error: e.message }; }
-  if (!r || !r.ok) { cab.innerHTML = ''; lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave);">No se pudieron cargar tus entregas: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
+  if (!r || !r.ok) { cab.innerHTML = ''; lista.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave2);">No se pudieron cargar tus entregas: ${rutaEsc((r && r.error) || 'Sin respuesta')}</div>`; return; }
   window._reparto = r;
   let pedidos = r.consumidores.flatMap(g => g.pedidos);
   // Orden desde donde está el teléfono; sin ubicación se queda el orden del servidor (desde la planta).
@@ -5474,11 +5474,11 @@ async function renderEntregas() {
   cab.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
     <div style="font-family:'Archivo',sans-serif;color:var(--blanco);">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${pedidos.length} entregas · ${ent} entregada${ent === 1 ? '' : 's'}</div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      ${pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', 0)" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;color:var(--negro);font-weight:800;">Salir</button>` : ''}
+      ${pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', 0)" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;color:var(--sobre-marca);font-weight:800;">Salir</button>` : ''}
       ${pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('entregas')" style="flex:1;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-weight:800;">Recorrido</button>` : ''}
     </div></div>`;
   lista.innerHTML = pedidos.length ? pedidos.map(p => repartoFila(p, repartoBotonEntregar(p))).join('')
-    : `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave);">No tienes entregas hoy.</div>`;
+    : `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave2);">No tienes entregas hoy.</div>`;
 }
 window.renderEntregas = renderEntregas;
 
@@ -5931,7 +5931,7 @@ window.confirmarImportacion = async function() {
   }
 
   resultadoEl.innerHTML = `
-    <div style="background:#0d2d0d;border:1px solid #4caf50;border-radius:8px;padding:10px;color:#4caf50;font-weight:700;">
+    <div style="background:var(--ok-bg);border:1px solid #4caf50;border-radius:8px;padding:10px;color:var(--ok-txt);font-weight:700;">
       Importación completa<br>
       <span style="font-weight:500;font-size:0.78rem;color:var(--suave);">
         ${importadosTotal} nuevos · ${duplicadosTotal} duplicados (omitidos) · ${invalidosTotal} inválidos
@@ -6468,7 +6468,7 @@ window.verDetalleGasto = function(id) {
     <!-- Datos del gasto -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;font-size:0.82rem;">
       <div><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Categoría:</strong> <span style="color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</span></div>
-      ${g.cantidad > 0 ? `<div style="background:#2a1f00;border-radius:8px;padding:8px;margin:4px 0;">
+      ${g.cantidad > 0 ? `<div style="background:var(--aviso-bg);border-radius:8px;padding:8px;margin:4px 0;">
         <strong style="color:var(--amarillo);font-size:0.7rem;text-transform:uppercase;">Métrica:</strong>
         <div style="color:var(--blanco);margin-top:2px;">
           ${g.cantidad} ${g.unidad} · <strong style="color:var(--amarillo);">$${g.precioUnitario.toFixed(2)}/${g.unidad}</strong>
@@ -6485,7 +6485,7 @@ window.verDetalleGasto = function(id) {
     </div>
 
     <!-- Trazabilidad -->
-    <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--suave);">
+    <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--suave2);">
       <div>Registrado por: <strong style="color:var(--amarillo);">${g.nombreVendedor || 'Sin nombre'}</strong></div>
       <div>${fechaReg}</div>
       ${g.aprobadoPor ? `<div style="margin-top:4px;">${g.estatusAprobacion === 'aprobado' ? '' : ''} ${g.estatusAprobacion === 'aprobado' ? 'Aprobado' : 'Rechazado'} por: <strong style="color:var(--amarillo);">${g.aprobadoPor}</strong></div>` : ''}
@@ -6494,7 +6494,7 @@ window.verDetalleGasto = function(id) {
 
     ${g.tieneTicket && g.ticketUrl ? `
       <div style="margin-bottom:10px;">
-        <a href="#" onclick="abrirTicket(event, ${'${g.id}'})" style="display:block;background:#0d2d0d;border:1px solid #2a5a2a;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:#4caf50;text-decoration:none;font-size:0.84rem;">
+        <a href="#" onclick="abrirTicket(event, ${'${g.id}'})" style="display:block;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:10px;padding:11px;text-align:center;font-weight:800;color:var(--ok-txt);text-decoration:none;font-size:0.84rem;">
           Ver foto del ticket
         </a>
       </div>
@@ -6503,19 +6503,19 @@ window.verDetalleGasto = function(id) {
     <!-- Acciones admin -->
     ${puedeAprobar ? `
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:#0d2d0d;border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:#4caf50;cursor:pointer;">Aprobar</button>
-        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:#2d0d0d;border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--rojo);cursor:pointer;">Rechazar</button>
+        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:#4caf50;cursor:pointer;">Aprobar</button>
+        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:var(--error-bg);border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--rojo);cursor:pointer;">Rechazar</button>
       </div>
     ` : ''}
 
     ${puedeEditar ? `
       <div style="display:flex;gap:8px;margin-bottom:6px;">
         <button onclick="editarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--amarillo);cursor:pointer;">Editar</button>
-        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid #555;border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:#888;cursor:pointer;">Eliminar</button>
+        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:#888;cursor:pointer;">Eliminar</button>
       </div>
     ` : ''}
 
-    <button onclick="cerrarDetalleGasto()" style="width:100%;background:transparent;border:1px solid #333;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:6px;">
+    <button onclick="cerrarDetalleGasto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:6px;">
       Cerrar
     </button>
   `;
@@ -6721,7 +6721,7 @@ function armadoPintarNuevos(nuevos) {
     <div style="background:var(--gris);border:1px solid var(--amarillo);border-radius:14px;padding:12px 14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
         <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;">NUEVOS (${n})</div>
-        <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:0.8rem;color:var(--negro);cursor:pointer;">Visto</button>
+        <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Visto</button>
       </div>
       ${nuevos.map(p => `
         <button onclick="verDetallePedido(${p.id})" style="display:block;width:100%;background:transparent;border:0;border-top:1px solid var(--gris3);padding:10px 0;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;min-height:44px;">
@@ -6751,7 +6751,7 @@ async function renderArmado(silencioso) {
   if (!r || !r.ok) {
     const caduco = sesionExpirada(r) || /autorizado/i.test(r?.error || '');
     if (caduco) { armadoPararRefresco(); armadoTitulo(0); }
-    elR.innerHTML = `<div style="background:var(--gris);border-radius:12px;padding:16px;color:var(--suave);font-size:0.86rem;">${caduco ? 'Tu sesión no tiene la sección Armado o caducó. Vuelve a entrar.' : 'No se pudo cargar: ' + (r?.error || 'sin respuesta')}</div>`;
+    elR.innerHTML = `<div style="background:var(--gris);border-radius:12px;padding:16px;color:var(--suave2);font-size:0.86rem;">${caduco ? 'Tu sesión no tiene la sección Armado o caducó. Vuelve a entrar.' : 'No se pudo cargar: ' + (r?.error || 'sin respuesta')}</div>`;
     return;
   }
   armadoPintarNuevos(Array.isArray(r.nuevos) ? r.nuevos : []);
@@ -6763,7 +6763,7 @@ async function renderArmado(silencioso) {
   const porConfirmar = Array.isArray(r.porConfirmar) ? r.porConfirmar : [];
   // Consolidado
   if (!resumen.length) {
-    elR.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:22px;text-align:center;color:var(--suave);"><div class="ico-solo" style="margin-bottom:8px;">${ARMADO_VACIO}</div>Nada que armar para el ${armadoFechaLarga(fecha)}</div>`;
+    elR.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:22px;text-align:center;color:var(--suave2);"><div class="ico-solo" style="margin-bottom:8px;">${ARMADO_VACIO}</div>Nada que armar para el ${armadoFechaLarga(fecha)}</div>`;
   } else {
     const filas = resumen.map(x => {
       const cajas = (x.cajas || []).map(c => `${c.cajas} × caja de ${c.piezasPorCaja}`).join(', ');
@@ -6817,7 +6817,7 @@ async function armadoPushPintar() {
       <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">${titulo}</div>
       <div style="font-size:0.8rem;color:var(--suave);margin-bottom:${boton ? '10px' : '0'};">${texto}</div>${boton || ''}
     </div>`;
-  const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.84rem;color:var(--negro);cursor:pointer;">${txt}</button>`;
+  const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">${txt}</button>`;
   const btnGris = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;">${txt}</button>`;
   if (armadoEsIphoneSinInstalar()) { el.innerHTML = caja('Avisos en este dispositivo', 'En iPhone los avisos solo llegan con la app instalada. Instálala primero.', btnGris('Cómo instalar la app', 'mostrarInstruccionesInstalar')); return; }
   if (!armadoPushSoporte()) { el.innerHTML = caja('Avisos en este dispositivo', 'Este navegador no puede recibir avisos, o el servidor no tiene configurado el push.'); return; }
@@ -6867,7 +6867,7 @@ window._armadoBusqueda = '';
 const ARMADO_ESTILO = document.createElement('style');
 ARMADO_ESTILO.textContent = `
   .armado-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--gris3);background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer}
-  .armado-chip[aria-pressed="true"]{background:var(--amarillo);border-color:var(--amarillo);color:var(--negro)}
+  .armado-chip[aria-pressed="true"]{background:var(--amarillo);border-color:var(--amarillo);color:var(--sobre-marca)}
   .armado-chip:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}
   .armado-tabla{width:100%;border-collapse:collapse;font-size:0.8rem;color:var(--blanco)}
   .armado-tabla th{text-align:left;padding:6px 6px;color:var(--suave);font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--gris3)}
@@ -6875,7 +6875,7 @@ ARMADO_ESTILO.textContent = `
   .armado-tabla tr.hecho td{opacity:.6}
   .armado-tabla .folio{color:var(--suave);font-size:0.7rem}
   .armado-ruta{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--negro);white-space:nowrap}
-  .armado-editado{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--blanco);background:var(--rojo);white-space:nowrap}
+  .armado-editado{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:#fff;background:var(--rojo);white-space:nowrap}
   .armado-fila-btn{background:transparent;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px;display:block;width:100%}
 `;
 document.head.appendChild(ARMADO_ESTILO);
@@ -6948,7 +6948,7 @@ function armadoPintarPedidos() {
   else if (f === 'armados') filas = pedidos.filter(p => !!p.armadoEn).map(p => ({ p, tipo: 'proceso' }));
   else if (f === 'por-confirmar') filas = porConfirmar.map(p => ({ p, tipo: 'pendiente' }));
   else filas = [...porConfirmar.map(p => ({ p, tipo: 'pendiente' })), ...pedidos.map(p => ({ p, tipo: 'proceso' }))];
-  if (!filas.length) { elP.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:18px;text-align:center;color:var(--suave);font-size:0.86rem;">Nada en este filtro${window._armadoBusqueda ? ' con «' + window._armadoBusqueda + '»' : ''}.</div>`; return; }
+  if (!filas.length) { elP.innerHTML = `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:18px;text-align:center;color:var(--suave2);font-size:0.86rem;">Nada en este filtro${window._armadoBusqueda ? ' con «' + window._armadoBusqueda + '»' : ''}.</div>`; return; }
   const tr = ({ p, tipo }) => {
     const { piezas, kg } = armadoPiezasKg(p);
     const quien = p.negocio || p.cliente || 'Sin nombre';
@@ -7092,7 +7092,7 @@ async function verificarCajasAbiertasAnteriores() {
       return `<li style="margin-top:4px;"><strong>${nombre}</strong> — abierta desde ${fecha}</li>`;
     }).join('');
     cont.innerHTML = `
-      <div style="background:#2d1a00;border-left:3px solid #ffa500;border-radius:8px;padding:10px 12px;font-size:0.84rem;color:var(--blanco);">
+      <div style="background:var(--aviso-bg);border-left:3px solid #ffa500;border-radius:8px;padding:10px 12px;font-size:0.84rem;color:var(--blanco);">
         <div style="font-weight:800;color:#ffa500;margin-bottom:6px;">Hay cajas abiertas de días anteriores</div>
         <ul style="margin:0;padding-left:18px;color:var(--suave);font-size:0.78rem;">${lista}</ul>
         <div style="margin-top:6px;font-size:0.72rem;color:var(--suave);">Navega con ◀ a esos días para cerrarlas antes de continuar.</div>
@@ -7142,7 +7142,7 @@ async function cargarPendientesCaja() {
     }
 
     if (efectivoArr.length === 0 && transferArr.length === 0) {
-      html += '<div style="background:var(--gris);border-radius:12px;padding:14px;margin-top:8px;font-size:0.84rem;color:var(--suave);text-align:center;">No hay pedidos pendientes de procesar.</div>';
+      html += '<div style="background:var(--gris);border-radius:12px;padding:14px;margin-top:8px;font-size:0.84rem;color:var(--suave2);text-align:center;">No hay pedidos pendientes de procesar.</div>';
     }
 
     cont.innerHTML = html;
@@ -7246,7 +7246,7 @@ function renderPuntoCaja(p, esHoy) {
   // Alerta fondo mínimo
   const fondoMin = Number(p.fondoMinimo) || 0;
   const alertaFondo = (p.tipo === 'efectivo' && fondoMin > 0 && saldoCalculado < fondoMin && estatusDia === 'abierta')
-    ? `<div style="background:#2d0d0d;border:1px solid var(--rojo);border-radius:8px;padding:8px;margin:10px 0;font-size:0.78rem;color:var(--rojo);">Saldo bajo el fondo mínimo de $${fondoMin}</div>`
+    ? `<div style="background:var(--error-bg);border:1px solid var(--rojo);border-radius:8px;padding:8px;margin:10px 0;font-size:0.78rem;color:var(--error-txt);">Saldo bajo el fondo mínimo de $${fondoMin}</div>`
     : '';
 
   // Acciones
@@ -7256,14 +7256,14 @@ function renderPuntoCaja(p, esHoy) {
   } else if (estatusDia === 'abierta') {
     acciones = `
       <button onclick="abrirMovCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--amarillo);cursor:pointer;">+ Movimiento</button>
-      <button onclick="abrirCierreCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid #555;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar caja</button>
+      <button onclick="abrirCierreCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar caja</button>
     `;
   } else if (estatusDia === 'cerrada') {
     const diferencia = Number(cajaDia.diferencia) || 0;
     const declarado = Number(cajaDia.saldo_cierre_declarado) || 0;
     const calculado = Number(cajaDia.saldo_cierre_calculado) || 0;
     acciones = `
-      <div style="flex:1;background:var(--gris2);border-radius:10px;padding:10px;font-size:0.78rem;color:var(--suave);">
+      <div style="flex:1;background:var(--gris2);border-radius:10px;padding:10px;font-size:0.78rem;color:var(--suave2);">
         Cierre: $${declarado.toLocaleString('es-MX')} declarado · $${calculado.toLocaleString('es-MX')} calculado<br>
         ${diferencia !== 0 ? `<span style="color:${diferencia>0?'#4caf50':'var(--rojo)'};">Diferencia: ${diferencia>0?'+':''}$${diferencia.toLocaleString('es-MX')}</span>` : '<span style="color:#4caf50;">Cuadrado ✓</span>'}
       </div>
@@ -7286,7 +7286,7 @@ function renderPuntoCaja(p, esHoy) {
         const color = monto > 0 ? '#4caf50' : monto < 0 ? 'var(--rojo)' : 'var(--blanco)';
         const signo = monto > 0 ? '+' : '';
         return `
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a1a;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris);">
             
             <div style="flex:1;min-width:0;">
               <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.descripcion || m.tipo}</div>
@@ -7372,7 +7372,7 @@ window.abrirAperturaCaja = async function(idPunto) {
       document.getElementById('ap-saldo').value = saldoUlt.toFixed(2);
       document.getElementById('ap-info').innerHTML = `
         <div style="margin-bottom:6px;">Vas a abrir caja de <strong style="color:var(--amarillo);">${p.nombre}</strong> para hoy.</div>
-        <div style="background:#1a2a1a;border-left:3px solid #4caf50;padding:8px 10px;border-radius:6px;font-size:0.78rem;color:var(--blanco);">
+        <div style="background:var(--ok-bg);border-left:3px solid #4caf50;padding:8px 10px;border-radius:6px;font-size:0.78rem;color:var(--blanco);">
           Saldo de cierre de <strong>${fechaFmt}</strong>: <strong style="color:var(--amarillo);">$${saldoUlt.toLocaleString('es-MX', {minimumFractionDigits:2})}</strong><br>
           <span style="color:var(--suave);font-size:0.72rem;">Se precargó automáticamente. Ajusta si el efectivo físico difiere.</span>
         </div>
@@ -7437,7 +7437,7 @@ window.abrirCierreCaja = function(idPunto) {
     <div style="display:flex;justify-content:space-between;color:var(--suave);font-size:0.78rem;margin-bottom:3px;"><span>Apertura</span><span>$${saldoApertura.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:#4caf50;font-size:0.78rem;margin-bottom:3px;"><span>Ingresos</span><span>+$${ingresos.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--rojo);font-size:0.78rem;margin-bottom:6px;"><span>Egresos</span><span>$${egresos.toLocaleString('es-MX')}</span></div>
-    <div style="display:flex;justify-content:space-between;color:var(--amarillo);font-weight:800;border-top:1px solid #333;padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--amarillo);font-weight:800;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
   `;
   document.getElementById('ci-saldo').value = calculado.toFixed(2);
   document.getElementById('ci-notas').value = '';
@@ -7811,7 +7811,7 @@ async function pintarPermisosPorVendedor() {
         const tieneOverride = override.length > 0;
         return `
           <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-            <div style="font-weight:900;color:var(--amarillo);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:#0d2d0d;color:#4caf50;padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:#888;font-weight:600;">(usa config rol)</span>'}</div>
+            <div style="font-weight:900;color:var(--amarillo);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:#888;font-weight:600;">(usa config rol)</span>'}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;">
               ${disp.map(sec => {
                 const checked = override.indexOf(sec) >= 0;
@@ -7823,7 +7823,7 @@ async function pintarPermisosPorVendedor() {
             </div>
             <div style="display:flex;gap:6px;margin-top:8px;">
               <button onclick="guardarPermisosVendedor('${v.id}')" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:7px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.74rem;color:var(--negro);cursor:pointer;">Guardar override</button>
-              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid #555;border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:#888;cursor:pointer;">Quitar override</button>
+              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:#888;cursor:pointer;">Quitar override</button>
             </div>
           </div>`;
       }).join('')}
@@ -7909,7 +7909,7 @@ async function pintarMatrizPermisos() {
     const admins = vendedores.filter(v => String(v.rol||'').toLowerCase().startsWith('admin'));
     const noAdmins = vendedores.filter(v => !String(v.rol||'').toLowerCase().startsWith('admin'));
 
-    const celdaFija = `<td style="position:sticky;left:0;z-index:1;background:var(--gris2);padding:8px 6px;font-weight:800;color:var(--amarillo);font-size:0.74rem;white-space:nowrap;border-bottom:1px solid var(--gris3);">`;
+    const celdaFija = `<td style="position:sticky;left:0;z-index:1;background:var(--gris2);padding:8px 6px;font-weight:800;color:var(--acento-txt);font-size:0.74rem;white-space:nowrap;border-bottom:1px solid var(--gris3);">`;
 
     const filaAdmin = admins.map(v => `
       <tr>
@@ -8119,7 +8119,7 @@ function pintarEstadoActual() {
       : '<span style="color:var(--rojo);">Fuera de planta</span>';
 
     cont.innerHTML = `
-      <div style="background:linear-gradient(135deg,#0d2d0d,#1a4a1a);border:1px solid #4caf50;border-radius:14px;padding:14px;">
+      <div style="background:linear-gradient(135deg,var(--ok-bg),var(--ok-br));border:1px solid #4caf50;border-radius:14px;padding:14px;">
         <div style="font-size:0.7rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Jornada activa</div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">${horas}h ${mins}m</div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:4px;">
@@ -8135,7 +8135,7 @@ function pintarEstadoActual() {
     cont.innerHTML = `
       <div style="background:var(--gris);border-radius:14px;padding:18px;text-align:center;">
         <div style="font-size:2.2rem;margin-bottom:8px;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V3h12v18"/><path d="M16 12h4"/><circle cx="12" cy="12" r="1"/></svg></div>
-        <div style="font-weight:900;color:var(--blanco);font-size:1.05rem;margin-bottom:4px;">Sin jornada activa</div>
+        <div style="font-weight:900;color:var(--sobre-marca);font-size:1.05rem;margin-bottom:4px;">Sin jornada activa</div>
         <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Registra tu entrada cuando llegues a la planta o empieces tu día.</div>
         <button onclick="abrirIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;">
           Registrar entrada
@@ -8273,7 +8273,7 @@ window.abrirIniciarJornada = async function() {
   // Capturar GPS
   const info = document.getElementById('ij-coords-info');
   info.innerHTML = 'Capturando ubicación... <span class="loader loader-w"></span>';
-  info.style.background = '#2a1f00';
+  info.style.background = 'var(--aviso-bg)';
   info.style.borderColor = 'rgba(255,210,0,0.4)';
   info.style.color = 'var(--amarillo)';
 
@@ -8284,14 +8284,14 @@ window.abrirIniciarJornada = async function() {
     const d = distanciaMetros(loc.lat, loc.lng, PLANTA_LAT, PLANTA_LNG);
     if (d <= 100) {
       info.innerHTML = `En la planta (a ${Math.round(d)}m)`;
-      info.style.background = '#0d2d0d'; info.style.borderColor = '#2a5a2a'; info.style.color = '#4caf50';
+      info.style.background = 'var(--ok-bg)'; info.style.borderColor = 'var(--ok-br)'; info.style.color = '#4caf50';
     } else {
       info.innerHTML = `Estás a ${Math.round(d)}m de la planta. Se registrará como "fuera".`;
-      info.style.background = '#2d0d0d'; info.style.borderColor = 'var(--rojo)'; info.style.color = 'var(--rojo)';
+      info.style.background = 'var(--error-bg)'; info.style.borderColor = 'var(--rojo)'; info.style.color = 'var(--rojo)';
     }
   } else {
     info.innerHTML = 'No se pudo obtener ubicación. Activa GPS y reintenta.';
-    info.style.background = '#2d0d0d'; info.style.borderColor = 'var(--rojo)'; info.style.color = 'var(--rojo)';
+    info.style.background = 'var(--error-bg)'; info.style.borderColor = 'var(--rojo)'; info.style.color = 'var(--rojo)';
   }
 };
 
@@ -8490,11 +8490,11 @@ window.verDetalleJornada = function(id) {
       <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
         <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Actividades</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${j.actividades.map(a => `<span style="background:var(--amarillo);color:var(--negro);font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:50px;">${a}</span>`).join('')}
+          ${j.actividades.map(a => `<span style="background:var(--amarillo);color:var(--sobre-marca);font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:50px;">${a}</span>`).join('')}
         </div>
       </div>` : ''}
     ${j.notas ? `<div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--blanco);"><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Notas:</strong><br>${j.notas}</div>` : ''}
-    <button onclick="cerrarDetalleJornada()" style="width:100%;background:transparent;border:1px solid #333;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar</button>
+    <button onclick="cerrarDetalleJornada()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar</button>
   `;
 };
 
@@ -8619,7 +8619,7 @@ window.togglePapa = async function(id, nuevoActivo, el) {
     slider.style.background = 'var(--amarillo)';
     knob.style.right = '3px'; knob.style.left = '';
   } else {
-    slider.style.background = '#444';
+    slider.style.background = 'var(--gris3)';
     knob.style.left = '3px'; knob.style.right = '';
   }
   try {
@@ -8655,7 +8655,7 @@ function cardProducto(p) {
     ? `<div style="font-size:0.72rem;color:var(--amarillo);font-weight:600;margin-top:1px;">${[p.sabor, p.presentacion].filter(Boolean).join(' · ')}</div>`
     : '';
   const badge = inactivo
-    ? `<span style="background:#5a1a1a;color:#ff8888;padding:2px 8px;border-radius:50px;font-size:0.6rem;font-weight:800;letter-spacing:0.5px;">AGOTADO</span>`
+    ? `<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.6rem;font-weight:800;letter-spacing:0.5px;">AGOTADO</span>`
     : '';
   return `<div onclick="editarProducto('${p.id}')" style="
     background:var(--gris2);border-radius:10px;padding:11px;margin-bottom:6px;cursor:pointer;
@@ -8738,7 +8738,7 @@ window.actualizarSwitchActivo = function() {
     knob.style.right = '3px';
     knob.style.left = '';
   } else {
-    slider.style.background = '#444';
+    slider.style.background = 'var(--gris3)';
     knob.style.left = '3px';
     knob.style.right = '';
   }
@@ -8995,10 +8995,10 @@ function pintarListaCupones() {
     const agotado = c.usos_maximos > 0 && c.usos_actuales >= c.usos_maximos;
 
     let estado = '';
-    if (inactivo) estado = '<span style="background:#444;color:#888;padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">DESACTIVADO</span>';
-    else if (expirado) estado = '<span style="background:#5a1a1a;color:var(--rojo);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">EXPIRADO</span>';
-    else if (agotado) estado = '<span style="background:#5a1a1a;color:var(--rojo);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">AGOTADO</span>';
-    else estado = '<span style="background:#0d2d0d;color:#4caf50;padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">ACTIVO</span>';
+    if (inactivo) estado = '<span style="background:var(--gris3);color:var(--suave2);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">DESACTIVADO</span>';
+    else if (expirado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">EXPIRADO</span>';
+    else if (agotado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">AGOTADO</span>';
+    else estado = '<span style="background:var(--ok-bg);color:var(--ok-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">ACTIVO</span>';
 
     let valorStr = '';
     if (c.tipo === 'descuento_pct') valorStr = `-${c.valor}%`;
@@ -9396,7 +9396,7 @@ window.cargarCostos = async function cargarCostos() {
             ${campo('eq-fijos', 'Fijos al mes', '', '350')}
             ${campo('eq-objetivo', 'Ganancia que quieres', '', '0')}
           </div>
-          <button onclick="calcularEquilibrio()" style="background:var(--amarillo);border:none;color:var(--negro);
+          <button onclick="calcularEquilibrio()" style="background:var(--amarillo);border:none;color:var(--sobre-marca);
             border-radius:999px;padding:14px;font-weight:600;font-size:0.9375rem;cursor:pointer;width:100%;">Calcular</button>
           <div id="eq-salida"></div>
         </div>`;

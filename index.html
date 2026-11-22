@@ -107,7 +107,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 </script>
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#FFD200">
+<meta name="theme-color" content="#E5B312">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Crunchy Paps">
@@ -122,14 +122,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <noscript><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="/src/estilos.css">
 </head>
-<body>
+<body class="piel-clara">
 
 <!-- ══════════════════════════════════
      SCREEN 1 — BIENVENIDA
 ══════════════════════════════════ -->
 <div class="screen active" id="s-welcome">
   <!-- Hero visual -->
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:radial-gradient(ellipse at 60% 20%, #2a2000, var(--negro) 65%);text-align:center;gap:0;">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;background:radial-gradient(ellipse at 60% 20%, var(--aviso-bg), var(--negro) 65%);text-align:center;gap:0;">
 
     <!-- Logo / marca -->
     <div style="margin-bottom:24px;">
@@ -248,7 +248,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
      SCREEN: PIN VENDEDOR
 ══════════════════════════════════ -->
 <div class="screen" id="s-pin">
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(ellipse at 50% 0%,#1a1200,var(--negro) 60%);">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(ellipse at 50% 0%,var(--aviso-bg),var(--negro) 60%);">
     <div style="max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
       <div style="font-size:3rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
       <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;">ACCESO VENDEDOR</div>
@@ -288,7 +288,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 ══════════════════════════════════ -->
 <div class="screen" id="s-tipo">
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:40px 24px;background:radial-gradient(ellipse at 60% 20%,#2a2000,var(--negro) 65%);gap:0;">
+    padding:40px 24px;background:radial-gradient(ellipse at 60% 20%,var(--aviso-bg),var(--negro) 65%);gap:0;">
 
     <div style="text-align:center;margin-bottom:28px;">
       <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);letter-spacing:3px;line-height:1;">
@@ -447,7 +447,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Teléfono del cliente *</label>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <div style="flex:0 0 auto;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 14px;display:flex;align-items:center;font-weight:800;color:var(--suave);">+52</div>
+        <div style="flex:0 0 auto;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 14px;display:flex;align-items:center;font-weight:800;color:var(--suave2);">+52</div>
         <input class="inp" id="an-tel" type="tel" maxlength="10" inputmode="numeric" placeholder="10 dígitos del dueño" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;">
       </div>
 
@@ -465,7 +465,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <input class="inp" id="an-estado" type="text" maxlength="60" placeholder="Estado" style="flex:1;">
       </div>
 
-      <div id="an-aviso-pv" style="display:none;font-size:0.76rem;background:#2a1f00;border:1px solid #5a4a2a;color:var(--amarillo);border-radius:8px;padding:9px 11px;margin-bottom:12px;line-height:1.4;">Esta dirección coincide con tu punto de venta. Asegúrate de poner la dirección <strong>del cliente</strong>, no la tuya.</div>
+      <div id="an-aviso-pv" style="display:none;font-size:0.76rem;background:var(--aviso-bg);border:1px solid var(--aviso-br);color:var(--aviso-txt);border-radius:8px;padding:9px 11px;margin-bottom:12px;line-height:1.4;">Esta dirección coincide con tu punto de venta. Asegúrate de poner la dirección <strong>del cliente</strong>, no la tuya.</div>
 
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ubicación de la tienda *</label>
       <div style="font-size:0.74rem;color:var(--suave);margin-bottom:8px;line-height:1.4;">Estás en el negocio: captura el <strong style="color:var(--blanco);">GPS exacto</strong> desde aquí. Es la ubicación más confiable.</div>
@@ -569,7 +569,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   </div>
 
   <!-- Banner B2B pendiente de aprobación -->
-  <div id="banner-b2b-pendiente" style="display:none;background:#2a1f00;border-left:4px solid var(--amarillo);padding:10px 16px;font-size:0.78rem;font-weight:700;color:rgba(255,210,0,0.8);">
+  <div id="banner-b2b-pendiente" style="display:none;background:var(--aviso-bg);border-left:4px solid var(--amarillo);padding:10px 16px;font-size:0.78rem;font-weight:700;color:var(--aviso-txt);">
     Tu cuenta de mayoreo está en revisión. Estás viendo precios de consumidor. Te notificaremos cuando sea aprobada.
   </div>
 
@@ -581,13 +581,13 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   </div>
 
   <!-- Banner modo interno (solo vendedor + cuando está en modo interno) -->
-  <div id="banner-interno" style="display:none;margin:0 16px 8px;background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:10px;padding:10px 12px;">
+  <div id="banner-interno" style="display:none;margin:0 16px 8px;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:10px;padding:10px 12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div>
         <div style="font-size:0.74rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;">Modo: pedido interno</div>
         <div style="font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sin cargo · Descuenta inventario · Elegirás el motivo al confirmar</div>
       </div>
-      <button onclick="setModo('pieza')" style="background:transparent;border:1px solid #555;border-radius:6px;padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--suave);cursor:pointer;white-space:nowrap;">Salir</button>
+      <button onclick="setModo('pieza')" style="background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--suave);cursor:pointer;white-space:nowrap;">Salir</button>
     </div>
   </div>
   <!-- Selector de canal para vendedor -->
@@ -595,9 +595,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="font-size:0.68rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Venta para:</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       <button id="canal-consumidor" onclick="setCanalVenta('consumidor')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--sel-br);background:var(--sel-bg);color:var(--sel-fg);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Consumidor</button>
-      <button id="canal-tienda" onclick="setCanalVenta('tienda')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Tienda</button>
-      <button id="canal-restaurante" onclick="setCanalVenta('restaurante')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Restaurante</button>
-      <button id="canal-mayorista" onclick="setCanalVenta('mayorista')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Mayorista</button>
+      <button id="canal-tienda" onclick="setCanalVenta('tienda')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave2);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Tienda</button>
+      <button id="canal-restaurante" onclick="setCanalVenta('restaurante')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave2);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Restaurante</button>
+      <button id="canal-mayorista" onclick="setCanalVenta('mayorista')" style="flex:1 1 45%;padding:7px 4px;border-radius:8px;border:2px solid var(--gris3);background:var(--gris);color:var(--suave2);font-family:'Inter',sans-serif;font-weight:800;font-size:0.72rem;cursor:pointer;">Mayorista</button>
     </div>
   </div>
 
@@ -785,7 +785,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
     <!-- Avatar y nombre -->
     <div style="text-align:center;padding:24px 0 20px;">
-      <div style="width:72px;height:72px;background:var(--amarillo);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--negro);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div style="width:72px;height:72px;background:var(--amarillo);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--sobre-marca);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
       <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);letter-spacing:1px;" id="cuenta-nombre">—</div>
       <div style="font-size:0.8rem;font-weight:700;color:var(--suave);" id="cuenta-tipo">—</div>
     </div>
@@ -829,7 +829,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </div>
 
       <!-- Promociones (opt-in marketing, editable desde el perfil) -->
-      <button id="btn-alta-negocio" onclick="abrirAltaNegocio()" style="display:none;width:100%;background:var(--amarillo);color:#000;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:4px;">Dar de alta negocio (B2B)</button>
+      <button id="btn-alta-negocio" onclick="abrirAltaNegocio()" style="display:none;width:100%;background:var(--amarillo);color:var(--sobre-marca);border:none;border-radius:12px;padding:14px;font-weight:800;font-size:0.88rem;cursor:pointer;margin-bottom:4px;">Dar de alta negocio (B2B)</button>
       <button id="btn-ajustar-ubicacion" onclick="abrirAjustarUbicacion()" style="display:none;width:100%;background:var(--gris2);color:var(--blanco);border:1px solid var(--gris3);border-radius:12px;padding:12px;font-weight:700;font-size:0.84rem;cursor:pointer;margin-bottom:4px;">Ajustar ubicación de un cliente</button>
 
       <div id="cuenta-promos-card" style="background:var(--gris);border-radius:14px;padding:16px;">
@@ -841,7 +841,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           </div>
           <label style="position:relative;display:inline-block;width:48px;height:28px;flex:0 0 auto;">
             <input type="checkbox" id="cuenta-promos-chk" onchange="togglePromosPerfil(this)" style="opacity:0;width:0;height:0;position:absolute;">
-            <span id="cuenta-promos-slider" style="position:absolute;cursor:pointer;inset:0;background:#444;border-radius:28px;transition:.2s;"></span>
+            <span id="cuenta-promos-slider" style="position:absolute;cursor:pointer;inset:0;background:var(--gris3);border-radius:28px;transition:.2s;"></span>
             <span id="cuenta-promos-knob" style="position:absolute;height:22px;width:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none;"></span>
           </label>
         </div>
@@ -891,7 +891,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
               Guardar
             </button>
             <button onclick="cerrarCambioPin()" style="
-              flex:0 0 auto;background:transparent;border:2px solid #333;border-radius:12px;padding:12px 16px;
+              flex:0 0 auto;background:transparent;border:2px solid var(--gris3);border-radius:12px;padding:12px 16px;
               font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:#555;cursor:pointer;">
               Cancelar
             </button>
@@ -907,12 +907,12 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <!-- Cerrar sesión -->
       <button onclick="cerrarSesion()" style="
-        background:transparent;border:2px solid #333;border-radius:14px;
+        background:transparent;border:2px solid var(--gris3);border-radius:14px;
         padding:14px;width:100%;font-family:'Inter',sans-serif;
         font-weight:800;font-size:0.9rem;color:#555;cursor:pointer;
         transition:border-color 0.2s,color 0.2s;margin-top:4px;
       " onmouseover="this.style.borderColor='var(--rojo)';this.style.color='var(--rojo)'"
-         onmouseout="this.style.borderColor='#333';this.style.color='#555'">
+         onmouseout="this.style.borderColor='var(--gris3)';this.style.color='#555'">
         Cerrar sesión
       </button>
     </div>
@@ -978,7 +978,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">HISTORIAL DE LOTES</div>
-          <select id="lotes-filtro" onchange="renderProduccion()" style="background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:4px 8px;color:var(--suave);font-size:0.72rem;font-weight:700;">
+          <select id="lotes-filtro" onchange="renderProduccion()" style="background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:4px 8px;color:var(--suave2);font-size:0.72rem;font-weight:700;">
             <option value="5">Últimos 5</option>
             <option value="10">Últimos 10</option>
             <option value="999">Todos</option>
@@ -1127,7 +1127,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </div>
 
       <!-- Alertas activas -->
-      <div id="alertas-insumos" style="display:none;background:#2a0d0d;border:1px solid var(--rojo);border-radius:14px;padding:14px;">
+      <div id="alertas-insumos" style="display:none;background:var(--error-bg);border:1px solid var(--rojo);border-radius:14px;padding:14px;">
         <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--rojo);margin-bottom:8px;">ALERTAS DE STOCK BAJO</div>
         <div id="alertas-insumos-lista" style="font-size:0.8rem;font-weight:700;color:#ff8080;"></div>
       </div>
@@ -1178,15 +1178,15 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <!-- Tabs B2B -->
   <div style="display:flex;gap:8px;padding:14px 16px 0;overflow-x:auto;">
     <button class="b2b-tab" id="b2b-tab-pend" onclick="filtrarB2B('pendiente')"
-      style="background:var(--amarillo);border:2px solid var(--amarillo);border-radius:50px;padding:6px 14px;color:var(--negro);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
+      style="background:var(--amarillo);border:2px solid var(--amarillo);border-radius:50px;padding:6px 14px;color:var(--sobre-marca);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
       Pendientes
     </button>
     <button class="b2b-tab" id="b2b-tab-apro" onclick="filtrarB2B('aprobado')"
-      style="background:var(--gris);border:2px solid var(--gris3);border-radius:50px;padding:6px 14px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
+      style="background:var(--gris);border:2px solid var(--gris3);border-radius:50px;padding:6px 14px;color:var(--suave2);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
       Aprobados
     </button>
     <button class="b2b-tab" id="b2b-tab-todos" onclick="filtrarB2B('todos')"
-      style="background:var(--gris);border:2px solid var(--gris3);border-radius:50px;padding:6px 14px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
+      style="background:var(--gris);border:2px solid var(--gris3);border-radius:50px;padding:6px 14px;color:var(--suave2);font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;cursor:pointer;white-space:nowrap;">
       Todos
     </button>
   </div>
@@ -1271,13 +1271,13 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="pros-ruta-banner" style="display:none;position:absolute;top:8px;left:24px;right:80px;background:rgba(255,210,0,0.95);color:#000;border-radius:10px;padding:9px 12px;z-index:11;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;display:flex;align-items:center;gap:8px;">
       <span class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm14 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0zM3 12l2-6h14l2 6"/><path d="M3 12h18v5H3z"/></svg></span>
       <span id="pros-ruta-cuenta" style="flex:1;">Toca prospectos para agregar a la ruta</span>
-      <button onclick="cancelarModoRuta()" style="background:#000;color:#FFD200;border:none;border-radius:6px;padding:4px 8px;font-weight:900;font-size:0.7rem;cursor:pointer;">✕</button>
+      <button onclick="cancelarModoRuta()" style="background:#000;color:var(--amarillo);border:none;border-radius:6px;padding:4px 8px;font-weight:900;font-size:0.7rem;cursor:pointer;">✕</button>
     </div>
     <!-- Botones flotantes sobre el mapa -->
     <div style="position:absolute;right:24px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:10;">
       <button onclick="abrirNuevoProspecto()" title="Nuevo prospecto aquí" style="
         width:48px;height:48px;border-radius:50%;background:var(--amarillo);border:none;
-        font-size:1.4rem;font-weight:900;color:var(--negro);cursor:pointer;
+        font-size:1.4rem;font-weight:900;color:var(--sobre-marca);cursor:pointer;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);" aria-label="Nuevo prospecto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       <button id="pros-btn-ruta" onclick="toggleModoRuta()" title="Planear ruta" style="
         width:44px;height:44px;border-radius:50%;background:var(--gris);border:1px solid var(--gris3);
@@ -1334,14 +1334,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Ruta óptima</div>
-    <button onclick="cerrarRuta()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarRuta()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="ruta-resumen" style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.82rem;"></div>
   <div id="ruta-paradas" style="margin-bottom:10px;"></div>
-  <button onclick="abrirEnMaps()" style="width:100%;background:#0d2d0d;border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;margin-bottom:8px;">
+  <button onclick="abrirEnMaps()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;margin-bottom:8px;">
     Abrir en Google Maps
   </button>
-  <button onclick="cerrarRuta()" style="width:100%;background:transparent;border:1px solid #333;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">
+  <button onclick="cerrarRuta()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">
     Cerrar
   </button>
 </div>
@@ -1352,9 +1352,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Nuevo prospecto</div>
-    <button onclick="cerrarNuevoProspecto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarNuevoProspecto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
-  <div id="np-coords-info" style="background:#0d2d0d;border:1px solid #2a5a2a;border-radius:10px;padding:9px 12px;font-size:0.74rem;color:#4caf50;margin-bottom:10px;">
+  <div id="np-coords-info" style="background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:10px;padding:9px 12px;font-size:0.74rem;color:var(--ok-txt);margin-bottom:10px;">
     Capturando tu ubicación...
   </div>
   <div style="display:flex;flex-direction:column;gap:10px;">
@@ -1391,7 +1391,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="dpr-titulo">Prospecto</div>
-    <button onclick="cerrarDetalleProspecto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarDetalleProspecto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="dpr-contenido"></div>
 </div>
@@ -1404,7 +1404,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Importar prospectos</div>
-    <button onclick="cerrarImportador()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarImportador()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="font-size:0.78rem;color:var(--suave);margin-bottom:10px;line-height:1.5;">
     Sube un archivo CSV con columnas: <strong style="color:var(--amarillo);">nombre, tipo, direccion, lat, lng, score, telefono</strong> (opcional). La primera fila debe ser el encabezado.
@@ -1417,7 +1417,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     Confirmar importación
   </button>
   <button onclick="probarImportUnaFila()"
-    style="width:100%;background:transparent;border:1px solid #444;border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:var(--suave);cursor:pointer;margin-top:6px;">
+    style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:var(--suave);cursor:pointer;margin-top:6px;">
     Probar con 1 fila (diagnóstico)
   </button>
   <div id="pros-csv-resultado" style="margin-top:10px;font-size:0.8rem;"></div>
@@ -1539,7 +1539,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Saldo inicial</label>
       <input type="number" id="ap-saldo" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
     </div>
     <div style="margin-bottom:14px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Notas (opcional)</label>
@@ -1564,10 +1564,10 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Saldo físico contado</label>
       <input type="number" id="ci-saldo" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;"
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;"
         oninput="actualizarDiferenciaCierre()">
     </div>
-    <div id="ci-diferencia" style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:14px;font-size:0.84rem;color:var(--suave);text-align:center;"></div>
+    <div id="ci-diferencia" style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:14px;font-size:0.84rem;color:var(--suave2);text-align:center;"></div>
     <div style="margin-bottom:14px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Notas</label>
       <textarea id="ci-notas" rows="2" placeholder="Si hay diferencia, explica por qué..."
@@ -1604,7 +1604,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="margin-bottom:12px;">
       <label style="font-size:0.72rem;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Monto</label>
       <input type="number" id="mc-monto" placeholder="0.00" step="0.01" min="0"
-        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--amarillo);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
+        style="width:100%;background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:12px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.4rem;outline:none;margin-top:4px;">
     </div>
 
     <div style="margin-bottom:12px;">
@@ -1704,7 +1704,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="ng-titulo">Nuevo gasto</div>
-    <button onclick="cerrarNuevoGasto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarNuevoGasto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px;">
     <div>
@@ -1792,7 +1792,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="dg-titulo">Gasto</div>
-    <button onclick="cerrarDetalleGasto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarDetalleGasto()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="dg-contenido"></div>
 </div>
@@ -1827,10 +1827,10 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Iniciar jornada</div>
-    <button onclick="cerrarIniciarJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarIniciarJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
 
-  <div id="ij-coords-info" style="background:#0d2d0d;border:1px solid #2a5a2a;border-radius:10px;padding:9px 12px;font-size:0.74rem;color:#4caf50;margin-bottom:10px;">
+  <div id="ij-coords-info" style="background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:10px;padding:9px 12px;font-size:0.74rem;color:var(--ok-txt);margin-bottom:10px;">
     Capturando ubicación...
   </div>
 
@@ -1852,13 +1852,13 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Cerrar jornada</div>
-    <button onclick="cerrarCerrarJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarCerrarJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="cj-resumen" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;font-size:0.82rem;"></div>
   <div style="font-size:0.74rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Actividades realizadas</div>
   <div id="cj-actividades" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
   <textarea class="inp" id="cj-notas" placeholder="Notas (opcional)" rows="2" style="resize:vertical;margin-bottom:10px;"></textarea>
-  <button onclick="confirmarCerrarJornada()" style="width:100%;background:#0d2d0d;border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;">
+  <button onclick="confirmarCerrarJornada()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;">
     Cerrar jornada
   </button>
 </div>
@@ -1869,7 +1869,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="dj-titulo">Jornada</div>
-    <button onclick="cerrarDetalleJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarDetalleJornada()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="dj-contenido"></div>
 </div>
@@ -1970,7 +1970,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="pf-titulo">Nueva bebida</div>
-    <button onclick="cerrarProdForm()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarProdForm()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;flex-direction:column;gap:8px;">
     <div>
@@ -2067,7 +2067,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Escanear código de barras</div>
-    <button onclick="cerrarEscanerCB()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarEscanerCB()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div id="esc-status" style="font-size:0.78rem;color:var(--suave);margin-bottom:10px;text-align:center;">Iniciando cámara...</div>
   <div id="esc-video-wrap" style="width:100%;border-radius:12px;overflow:hidden;background:#000;position:relative;aspect-ratio:1.4;">
@@ -2092,7 +2092,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;" id="cf-titulo">Nuevo cupón</div>
-    <button onclick="cerrarCupForm()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarCupForm()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;flex-direction:column;gap:8px;">
     <div>
@@ -2155,7 +2155,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
     <div class="drawer-title" style="margin-bottom:0;">Permisos de secciones</div>
-    <button onclick="cerrarPermisos()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="cerrarPermisos()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:10px;">
     <button id="pm-tab-rol" onclick="setTabPermisos('rol')" style="flex:1;background:var(--amarillo);border:1px solid var(--amarillo);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--negro);cursor:pointer;">Por rol</button>
@@ -2199,7 +2199,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
       <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);letter-spacing:1px;">Resumen de pedidos</div>
       <div style="display:flex;gap:6px;">
-        <button onclick="copiarResumenDia()" style="background:#25D366;border:none;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">Compartir</button>
+        <button onclick="copiarResumenDia()" style="background:#25D366;border:none;color:var(--sobre-marca);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">Compartir</button>
         <button onclick="descargarInformePDF()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">PDF</button>
         <button onclick="exportarResumenCSV()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">CSV</button>
       </div>
@@ -2242,7 +2242,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="font-size:0.72rem;color:var(--suave);font-weight:700;margin-bottom:6px;">Mensaje del SMS · usa {nombre} {folio} {total} {link}</div>
         <textarea id="recordatorios-copy-txt" rows="4" placeholder="Cargando…" style="width:100%;box-sizing:border-box;background:var(--gris);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;resize:vertical;"></textarea>
         <div style="display:flex;gap:6px;margin-top:8px;">
-          <button onclick="guardarCopyRecordatorio(this)" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-weight:800;font-size:0.78rem;color:var(--negro);cursor:pointer;">Guardar mensaje</button>
+          <button onclick="guardarCopyRecordatorio(this)" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-weight:800;font-size:0.78rem;color:var(--sobre-marca);cursor:pointer;">Guardar mensaje</button>
           <button onclick="document.getElementById('recordatorios-copy').style.display='none'" style="background:var(--gris3);border:none;border-radius:8px;padding:9px 12px;font-weight:800;font-size:0.78rem;color:var(--blanco);cursor:pointer;">Cerrar</button>
         </div>
         <div id="recordatorios-copy-msg" style="font-size:0.7rem;color:var(--suave);margin-top:6px;"></div>
@@ -2411,7 +2411,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <div id="cupon-aplicado-codigo" style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--amarillo);line-height:1;margin-top:2px;">CODIGO</div>
           <div id="cupon-aplicado-desc" style="font-size:0.74rem;color:var(--blanco);margin-top:2px;">Descuento</div>
         </div>
-        <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid #555;border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">Quitar</button>
+        <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">Quitar</button>
       </div>
     </div>
   </div>
@@ -2430,7 +2430,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <span class="lbl" id="cart-total-lbl">Total</span>
     <span class="mnt" id="cart-total-mnt">$0</span>
   </div>
-  <div id="cart-ahorro" style="display:none;background:#0d2d0d;border-radius:10px;padding:10px 14px;font-size:0.82rem;font-weight:700;color:#4caf50;margin:6px 0;"></div>
+  <div id="cart-ahorro" style="display:none;background:var(--ok-bg);border-radius:10px;padding:10px 14px;font-size:0.82rem;font-weight:700;color:var(--ok-txt);margin:6px 0;"></div>
   <div class="min-msg" id="min-msg"></div>
 
   <div id="form-pedido" style="display:none">
@@ -2438,7 +2438,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- Datos personales -->
     <div class="form-section">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
-        <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-cliente">1</span>
+        <span style="background:var(--amarillo);color:var(--sobre-marca);font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-cliente">1</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">CLIENTE</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
@@ -2452,13 +2452,13 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="display:flex;gap:8px;">
           <button onclick="elegirModoCliente('existente')" id="btn-cliente-existente" style="
             flex:1;padding:10px;border-radius:10px;border:2px solid var(--gris3);
-            background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;
+            background:var(--gris);color:var(--suave2);font-family:'Inter',sans-serif;
             font-weight:800;font-size:0.82rem;cursor:pointer;">
             Sí, buscar
           </button>
           <button onclick="elegirModoCliente('nuevo')" id="btn-cliente-nuevo" style="
             flex:1;padding:10px;border-radius:10px;border:2px solid var(--gris3);
-            background:var(--gris);color:var(--suave);font-family:'Inter',sans-serif;
+            background:var(--gris);color:var(--suave2);font-family:'Inter',sans-serif;
             font-weight:800;font-size:0.82rem;cursor:pointer;">
             No, es nuevo
           </button>
@@ -2510,7 +2510,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- v2.10: Método de entrega (solo consumidor — B2B coordina con vendedor) -->
     <div id="entrega-wrap" style="display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
-        <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-entrega">2</span>
+        <span style="background:var(--amarillo);color:var(--sobre-marca);font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-entrega">2</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
@@ -2526,7 +2526,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <div style="font-size:0.66rem;color:var(--amarillo);margin-top:2px;" id="entrega-paq-costo">+$80</div>
         </div>
       </div>
-      <div id="entrega-info" style="display:none;background:var(--gris2);border-radius:8px;padding:8px 12px;font-size:0.74rem;color:var(--suave);margin-bottom:14px;line-height:1.4;"></div>
+      <div id="entrega-info" style="display:none;background:var(--gris2);border-radius:8px;padding:8px 12px;font-size:0.74rem;color:var(--suave2);margin-bottom:14px;line-height:1.4;"></div>
 
       <!-- v2.11: Selector de vendedor (solo cuando elige "Coordinar") -->
       <div id="vendedor-selector-wrap" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:10px;padding:12px;margin-bottom:14px;">
@@ -2535,7 +2535,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         </div>
 
         <!-- Vendedor seleccionado (visible cuando hay uno) -->
-        <div id="vend-seleccionado" style="display:none;background:#1a2a1a;border:1px solid #4caf50;border-radius:8px;padding:10px;margin-bottom:8px;align-items:center;justify-content:space-between;">
+        <div id="vend-seleccionado" style="display:none;background:var(--ok-bg);border:1px solid #4caf50;border-radius:8px;padding:10px;margin-bottom:8px;align-items:center;justify-content:space-between;">
           <div style="flex:1;min-width:0;">
             <div style="color:#4caf50;font-size:0.7rem;font-weight:700;">✓ TU CONTACTO</div>
             <div id="vend-sel-nombre" style="color:var(--blanco);font-weight:700;font-size:0.9rem;">—</div>
@@ -2558,7 +2558,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- Dirección -->
     <div class="form-section">
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
-        <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-direccion">3</span>
+        <span style="background:var(--amarillo);color:var(--sobre-marca);font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-direccion">3</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">DIRECCIÓN</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
@@ -2573,12 +2573,12 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <option value="">Elige tu colonia</option>
         </select></div>
       </div>
-      <div id="cp-info" style="display:none;background:var(--gris2);border-radius:10px;padding:9px 12px;font-size:0.8rem;font-weight:700;color:var(--suave);">
+      <div id="cp-info" style="display:none;background:var(--gris2);border-radius:10px;padding:9px 12px;font-size:0.8rem;font-weight:700;color:var(--suave2);">
         <span id="cp-mun"></span>, <span id="cp-est"></span>
       </div>
       <button type="button" id="btn-usar-ubicacion" onclick="usarMiUbicacion()" style="
         background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;
-        padding:9px 12px;width:100%;color:var(--amarillo);
+        padding:9px 12px;width:100%;color:var(--acento-txt);
         font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;cursor:pointer;
         display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.2s;
         margin-bottom:0;">
@@ -2590,18 +2590,18 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         autocomplete="off" oninput="onDirInput(this.value)">
       <div id="maps-sug" style="display:none;position:relative;"></div>
       <div id="mapa-wrap" style="display:none;border-radius:10px;overflow:hidden;border:2px solid var(--gris3);">
-        <div style="background:var(--gris2);padding:7px 12px;font-size:0.73rem;font-weight:800;color:var(--suave);display:flex;align-items:center;justify-content:space-between;">
+        <div style="background:var(--gris2);padding:7px 12px;font-size:0.73rem;font-weight:800;color:var(--suave2);display:flex;align-items:center;justify-content:space-between;">
           <span><span id="mapa-lbl">Arrastra el pin para ajustar</span></span>
           <span style="font-size:0.65rem;color:#555;">Mueve el pin al punto exacto</span>
         </div>
         <div id="mapa-div" style="width:100%;height:200px;"></div>
-        <div id="mapa-coords" style="background:var(--gris3);padding:5px 12px;font-size:0.68rem;font-weight:700;color:#555;"></div>
+        <div id="mapa-coords" style="background:var(--gris3);padding:5px 12px;font-size:0.68rem;font-weight:700;color:var(--suave2);"></div>
       </div>
     </div>
 
     <!-- Método de pago -->
     <div style="display:flex;align-items:center;gap:8px;margin:2px 0 12px;">
-      <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-pago">4</span>
+      <span style="background:var(--amarillo);color:var(--sobre-marca);font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-pago">4</span>
       <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">PAGO</span>
       <span style="flex:1;height:1px;background:var(--gris3);"></span>
     </div>
@@ -2622,7 +2622,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
     <!-- Stripe -->
     <div class="stripe-wrap" id="stripe-wrap" style="margin-top:10px;">
-      <div style="background:var(--gris2);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--suave);line-height:1.5;">
+      <div style="background:var(--gris2);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--suave2);line-height:1.5;">
         Al confirmar te llevaremos a la <strong style="color:var(--blanco);">página segura de Stripe</strong> para pagar con tarjeta. Tu pedido se registra y, al completar el pago, queda confirmado.
       </div>
     </div>
@@ -2650,7 +2650,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- Fecha de entrega sugerida -->
     <div id="fecha-entrega-wrap" style="background:var(--gris2);border-radius:10px;padding:10px 14px;margin-top:10px;display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;">
-        <span style="background:var(--amarillo);color:#000;font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-fecha">5</span>
+        <span style="background:var(--amarillo);color:var(--sobre-marca);font-weight:900;min-width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;" id="secnum-fecha">5</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--blanco);letter-spacing:1px;">FECHA DE ENTREGA</span>
         <span style="flex:1;height:1px;background:var(--gris3);"></span>
       </div>
@@ -2661,7 +2661,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <label style="display:block;font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Cambiar fecha (opcional)</label>
         <input type="date" id="f-fecha-entrega"
           onchange="onCambioFechaEntrega(this.value)"
-          style="width:100%;background:var(--gris3);border:1px solid #444;border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;">
+          style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;">
       </div>
     </div>
     <label class="lbl-campo" for="f-notas" style="margin-top:10px;">Notas (opcional)</label>
@@ -2680,7 +2680,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     </label>
 
     <!-- v2.11.1: Aviso de validaciones faltantes (visible y claro) -->
-    <div id="checkout-faltantes" style="display:none;background:#2d1a00;border:1px solid #ffa500;border-radius:10px;padding:12px;margin-bottom:10px;color:#ffa500;font-size:0.84rem;line-height:1.5;"></div>
+    <div id="checkout-faltantes" style="display:none;background:var(--aviso-bg);border:1px solid #ffa500;border-radius:10px;padding:12px;margin-bottom:10px;color:var(--aviso-txt);font-size:0.84rem;line-height:1.5;"></div>
 
     <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarPedido()">
       Confirmar pedido
@@ -2759,10 +2759,10 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
 <!-- v2.7.3: PERFORMANCE MONITOR (admin only) -->
 <div id="perf-monitor" style="display:none;position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.92);border:1px solid var(--amarillo);border-radius:10px;padding:8px 10px;min-width:240px;max-width:300px;font-family:monospace;font-size:0.7rem;color:#ddd;box-shadow:0 4px 16px rgba(0,0,0,0.6);">
-  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #444;padding-bottom:4px;margin-bottom:6px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gris3);padding-bottom:4px;margin-bottom:6px;">
     <span style="color:var(--amarillo);font-weight:800;">Performance</span>
     <div>
-      <button onclick="perfClear()" style="background:transparent;border:1px solid #555;border-radius:4px;color:#aaa;padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
+      <button onclick="perfClear()" style="background:transparent;border:1px solid var(--gris3);border-radius:4px;color:#aaa;padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
       <button onclick="perfHide()" style="background:transparent;border:none;color:#888;font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
     </div>
   </div>

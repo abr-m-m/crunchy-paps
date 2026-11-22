@@ -257,7 +257,7 @@ function pintarBannerCatalogo() {
 const SABORES_ORDER = ['Natural','Adobada','Feroz','Habanero','Queso Jalapeño','Queso Cheddar','Crunchy Mix'];
 // Rediseno visual, paso 3: en pantalla cada sabor es un punto de color, no un
 // emoji. El nombre va al lado siempre; el color solo acelera el reconocimiento.
-const SABOR_COLOR   = { 'Natural':'#FFD200','Adobada':'#B5432E','Feroz':'#FF6A00','Habanero':'#E8242A','Queso Jalapeño':'#7CB342','Queso Cheddar':'#F5A623','Crunchy Mix':'mix' };
+const SABOR_COLOR   = { 'Natural':'#E5B312','Adobada':'#B5432E','Feroz':'#FF6A00','Habanero':'#E8242A','Queso Jalapeño':'#7CB342','Queso Cheddar':'#F5A623','Crunchy Mix':'mix' };
 function saborDot(sabor, px) {
   const c = SABOR_COLOR[sabor] || '#777';
   const tam = px ? `width:${px}px;height:${px}px;` : '';
@@ -697,7 +697,7 @@ window.guardarDatosTienda = async function() {
   const showMsg = (txt, ok) => {
     if (!msg) return;
     msg.style.display = 'block'; msg.textContent = txt;
-    msg.style.background = ok ? '#0d2d0d' : '#3a1515';
+    msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)';
     msg.style.color = ok ? '#7ee787' : '#ff8a8a';
   };
 
@@ -1112,7 +1112,7 @@ async function cargarCatalogo(forzarFresh) {
       setTimeout(() => refrescarCatalogoEnBackground_(), 1000);
       return;
     }
-    perfPush(`cache miss: catalogo`, '#FFD200');
+    perfPush(`cache miss: catalogo`, '#E5B312');
   }
 
   // 2) Sin cache (o fresh forzado): cargar todo desde Supabase
@@ -1310,9 +1310,8 @@ function renderDetalleQty() {
       <div class="qty-ctrl pd-qty">
         <button class="qty-btn" onclick="detalleAgregar(-1)" aria-label="Quitar ${uPD > 1 ? 'una caja' : 'uno'}">−</button>
         <span class="qty-num pd-qty-num">${nUPD}${uPD > 1 ? `<small class="u-unit">caja${nUPD === 1 ? '' : 's'}</small>` : ''}</span>
-        <button class="qty-btn" onclick="detalleAgregar(1)" aria-label="Agregar ${uPD > 1 ? 'una caja' : 'uno'}">+</button>
+        <button class="qty-btn qty-mas" onclick="detalleAgregar(1)" aria-label="Agregar ${uPD > 1 ? 'una caja' : 'uno'}">+</button>
       </div>
-      <button class="pd-add ${nUPD > 0 ? 'pd-add-sec' : ''}" onclick="detalleAgregar(1)">${etiqueta}</button>
     </div>`;
 }
 window.detalleAgregar = function(delta) { agregarUnidad(String(detalleKey), delta); renderDetalleQty(); };
@@ -1455,9 +1454,9 @@ window.renderCatalogo = function() {
     // Precios B2B visibles para vendedores (solo en papas, no bebidas)
     const preciosB2BHTML = (esVendedor && !esBebida) ? `
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;" title="Solo referencia de precios">
-        <div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_tienda||0}</div>
-        <div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_restaurante||0}</div>
-        ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:#1a1a1a;color:#666;border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">Mayoreo $${p.precio_mayorista}</div>` : ''}
+        <div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_tienda||0}</div>
+        <div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">$${p.precio_restaurante||0}</div>
+        ${Number(p.precio_mayorista) > 0 ? `<div style="font-size:0.63rem;font-weight:700;background:var(--gris);color:var(--suave2);border-radius:4px;padding:2px 5px;pointer-events:none;user-select:none;">Mayoreo $${p.precio_mayorista}</div>` : ''}
       </div>` : '';
 
     // Sin foto: el mismo placeholder de trazo para papas y bebidas
@@ -1478,7 +1477,7 @@ window.renderCatalogo = function() {
          <div class="prod-pres">${p.presentacion}</div>`;
 
     // Si está agotado: badge + sin botón agregar
-    const agotadoBadge = agotado ? `<div style="position:absolute;top:8px;right:8px;background:#5a1a1a;color:#ff8888;padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:900;letter-spacing:0.5px;z-index:3;">AGOTADO</div>` : '';
+    const agotadoBadge = agotado ? `<div style="position:absolute;top:8px;right:8px;background:var(--error-br);color:var(--error-txt);padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:900;letter-spacing:0.5px;z-index:3;">AGOTADO</div>` : '';
     // Venta por caja (tienda/mayorista, papas de 50/100/250 g): se ELIGE cómo se
     // lleva (pieza o caja de 3/6/12) y un solo control agrega esa unidad. Antes
     // había tres botones que agregaban al instante y parecían una selección.
@@ -1495,7 +1494,7 @@ window.renderCatalogo = function() {
       </div>
       ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precioCaja(p, u)}</b></div>${ahorroCajaHTML(p, u, 'u-ahorro')}` : ''}` : '';
     const ctrlHTML = agotado ? `
-      <div style="margin-top:6px;font-size:0.74rem;color:#888;font-weight:700;text-align:center;padding:6px;background:#1a1a1a;border-radius:6px;">No disponible</div>
+      <div style="margin-top:6px;font-size:0.74rem;color:var(--suave2);font-weight:700;text-align:center;padding:6px;background:var(--gris);border-radius:6px;">No disponible</div>
     ` : `
       ${nU===0
         ? `<div class="qty-ctrl"><button class="add-btn" onclick="agregarUnidad('${key}',1)" aria-label="${u > 1 ? 'Agregar una caja' : 'Agregar'}">+</button></div>`
@@ -2002,7 +2001,7 @@ function renderDrawer() {
       { id:'merma',    label:'Merma' },
     ];
     const selectorHTML = `
-      <div style="background:linear-gradient(135deg,#2a1f00,#1a1200);border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin:6px 0 10px;">
+      <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin:6px 0 10px;">
         <div style="font-size:0.7rem;font-weight:900;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           ${TIPOS.map(t => {
@@ -2401,7 +2400,7 @@ function esFueraCDMX() {
 }
 function avisoEnvioCDMX() {
   if (esFueraCDMX() !== true) return '';
-  return `<div style="margin-top:8px;background:#2d1a00;border:1px solid #ffa500;border-radius:8px;padding:10px;color:#ffd699;font-size:0.74rem;line-height:1.45;">
+  return `<div style="margin-top:8px;background:var(--aviso-bg);border:1px solid #ffa500;border-radius:8px;padding:10px;color:var(--aviso-txt);font-size:0.74rem;line-height:1.45;">
     <strong style="color:#ffa500;">Destino fuera de CDMX.</strong> Tu pedido sí se puede enviar, pero el <strong>costo de envío puede variar según la distancia</strong> y quizá requiera un <strong>pago adicional</strong>. Confirmaremos el costo final contigo y <strong>el total se ajusta y se cobra antes de enviar</strong>.
   </div>`;
 }
@@ -2424,7 +2423,7 @@ window.setEntrega = function(id) {
   document.querySelectorAll('.entrega-btn').forEach(b => {
     const activo = b.dataset.id === id;
     b.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
-    b.style.background = activo ? '#2a1f00' : 'var(--gris2)';
+    b.style.background = activo ? 'var(--aviso-bg)' : 'var(--gris2)';
   });
   // Paquetería => solo cobro en línea
   aplicarRestriccionPagoEntrega(id);
@@ -2717,7 +2716,7 @@ function pintarHintUltimoContacto(vend) {
   const subtitulo = esMostrador ? 'Punto de venta local' : '';
 
   cont.innerHTML = `
-    <div style="background:#2d1a00;border:1px dashed #ffa500;border-radius:8px;padding:12px;margin-bottom:10px;">
+    <div style="background:var(--aviso-bg);border:1px dashed #ffa500;border-radius:8px;padding:12px;margin-bottom:10px;">
       <div style="color:#ffa500;font-size:0.74rem;font-weight:700;margin-bottom:6px;">LA ÚLTIMA VEZ ELEGISTE</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <span style="font-size:1.4rem;">${ico}</span>
@@ -2727,7 +2726,7 @@ function pintarHintUltimoContacto(vend) {
         </div>
       </div>
       <button onclick='seleccionarVendedor(${JSON.stringify(vend).replace(/'/g, "&apos;")})'
-        style="width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:10px;color:#000;font-weight:800;font-size:0.86rem;cursor:pointer;">
+        style="width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:10px;color:var(--sobre-marca);font-weight:800;font-size:0.86rem;cursor:pointer;">
         ✓ Usar este contacto otra vez
       </button>
     </div>
@@ -2751,7 +2750,7 @@ function detectarZona(cp) {
       msg: null };
   }
   if ((cpNum >= 50000 && cpNum <= 57999) || (cpNum >= 52000 && cpNum <= 54999)) {
-    return { zona: 'edomex', label: 'Estado de México', color: '#FFD200', entrega: 'coordinacion',
+    return { zona: 'edomex', label: 'Estado de México', color: '#E5B312', entrega: 'coordinacion',
       msg: 'Tu pedido requiere coordinación de entrega. El equipo de Crunchy Paps se pondrá en contacto contigo para confirmar fecha y costo de envío.' };
   }
   return { zona: 'foraneo', label: 'Envío foráneo', color: '#E8242A', entrega: 'paqueteria',
@@ -4008,7 +4007,7 @@ window.enviarWpp = function() {
     setTimeout(() => window.open(wppUrlPend.bodega, '_blank'), 1000);
   }
   const btn=document.getElementById('g-btn-wpp');
-  btn.textContent='✓ Resumen enviado'; btn.disabled=true; btn.style.background='#1a7a3a';
+  btn.textContent='✓ Resumen enviado'; btn.disabled=true; btn.style.background='var(--ok-br)';
 };
 
 // v2.10: enviar resumen a otro contacto (abre WhatsApp para que el usuario elija)
@@ -4104,7 +4103,7 @@ window.perfClear = function() {
 window.perfShow = function() {
   PERF.enabled = true;
   document.getElementById('perf-monitor').style.display = 'block';
-  perfPush('Monitor activado', '#FFD200');
+  perfPush('Monitor activado', '#E5B312');
 };
 
 window.perfHide = function() {
@@ -4127,7 +4126,7 @@ function perfStartNav(seccion) {
 function perfEndNav(handle) {
   if (!handle || !PERF.enabled) return;
   const ms = Math.round(performance.now() - handle.t0);
-  const color = ms < 200 ? '#4caf50' : ms < 700 ? '#FFD200' : '#ff8888';
+  const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
   perfPush(`📺 nav→${handle.label}: <b style="color:${color};">${ms}ms</b>`, '#bbb');
 }
 
@@ -4153,7 +4152,7 @@ async function sheetsCall(payload) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#FFD200' : '#ff8888';
+      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
       perfPush(`🌐 ${accion}: <b style="color:${color};">${ms}ms</b>`, '#999');
     }
     return data;
@@ -4230,7 +4229,7 @@ async function supabaseCall(method, path, body, opciones) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#FFD200' : '#ff8888';
+      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
       const shortPath = path.split('?')[0];
       perfPush(`⚡ supabase ${method} ${shortPath}: <b style="color:${color};">${ms}ms</b>`, '#4caf50');
     }
@@ -4445,7 +4444,7 @@ window.renderCuenta = function() {
 function pintarSwitchPromos(on) {
   const slider = document.getElementById('cuenta-promos-slider');
   const knob = document.getElementById('cuenta-promos-knob');
-  if (slider) slider.style.background = on ? 'var(--amarillo)' : '#444';
+  if (slider) slider.style.background = on ? 'var(--amarillo)' : 'var(--gris3)';
   if (knob) knob.style.left = on ? '23px' : '3px';
 }
 
@@ -4967,12 +4966,12 @@ async function renderClubAdminCfg() {
   if (!cont) return;
   if (!esAdminEstricto()) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
   cont.style.display = 'block';
-  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:var(--suave);font-size:0.8rem;">Cargando reglas del club…</div>';
+  cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:var(--suave2);font-size:0.8rem;">Cargando reglas del club…</div>';
   let cfg;
   try {
     cfg = await supabaseCall('POST', 'rpc/get_lealtad_config', {});
   } catch (e) {
-    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:#ff6b6b;font-size:0.8rem;">No se pudieron cargar las reglas.</div>';
+    cont.innerHTML = '<div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;color:var(--error-txt);font-size:0.8rem;">No se pudieron cargar las reglas.</div>';
     return;
   }
   const g = (cfg && cfg.generacion) || {};
@@ -4990,7 +4989,7 @@ async function renderClubAdminCfg() {
       ${fila('Valor del punto al canjear ($)', 'cuánto descuenta 1 punto', inp('cfg-vpm', r.valor_punto_mxn, '0.01'))}
       ${fila('% máx. del pedido con puntos', 'nunca llega a 100%', inp('cfg-pct', r.pct_max_pedido, '1'))}
       ${fila('Pago mínimo en $', 'siempre debe quedar un cobro real', inp('cfg-pmin', r.pago_minimo_mxn, '1'))}
-      <button onclick="guardarLealtadCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--negro);cursor:pointer;">Guardar reglas</button>
+      <button onclick="guardarLealtadCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar reglas</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">La generación aplica al confirmar pago + entrega. La redención usa estos topes.</div>
     </div>`;
 }
@@ -5046,7 +5045,7 @@ function renderPedidos() {
   const ultimo  = pedidos[0];
   lista.innerHTML = `
     <!-- Último pedido destacado -->
-    <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,#1a1200,#2a2000);border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
+    <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
       <div style="font-size:0.68rem;font-weight:800;color:var(--amarillo);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
@@ -5533,7 +5532,7 @@ async function cargarTracking(idOrden) {
   try {
     const res = await supabaseCall('POST', 'rpc/get_tracking_pedido', { p_id_orden: String(idOrden) });
     if (!res || !res.ok) {
-      cont.innerHTML = `<div style="background:#2d0d0d;border:1px solid var(--rojo);border-radius:12px;padding:18px;text-align:center;">
+      cont.innerHTML = `<div style="background:var(--error-bg);border:1px solid var(--rojo);border-radius:12px;padding:18px;text-align:center;">
         <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--blanco);">No encontramos ese pedido</div>
         <div style="font-size:0.8rem;color:var(--suave);margin-top:6px;">${(res && res.error) || 'Pedido no encontrado'}. Verifica el código del pedido.</div>
       </div>`;
@@ -5722,7 +5721,7 @@ window.editarMiPedidoWpp = function () {
     b.setAttribute('role', 'status');
     b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:300;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;background:var(--gris2);color:var(--blanco);border:1px solid var(--amarillo);box-shadow:0 8px 24px rgba(0,0,0,.4);font-family:Inter,sans-serif;font-size:.85rem;';
     b.innerHTML = '<span style="flex:1">Hay una versión nueva de la app</span>' +
-      '<button type="button" id="cp-version-actualizar" style="background:var(--amarillo);color:var(--negro);border:0;border-radius:50px;padding:8px 14px;font-weight:800;font-family:inherit;font-size:.82rem;cursor:pointer">Actualizar</button>' +
+      '<button type="button" id="cp-version-actualizar" style="background:var(--amarillo);color:var(--sobre-marca);border:0;border-radius:50px;padding:8px 14px;font-weight:800;font-family:inherit;font-size:.82rem;cursor:pointer">Actualizar</button>' +
       '<button type="button" id="cp-version-cerrar" aria-label="Después" style="background:none;border:0;color:var(--suave);font-size:1.3rem;line-height:1;padding:4px 6px;cursor:pointer">×</button>';
     document.body.appendChild(b);
     document.getElementById('cp-version-actualizar').onclick = () => location.reload();
@@ -5902,7 +5901,7 @@ function mostrarBannerInstalar() {
   banner.id = 'cp-install-banner';
   banner.style.cssText = `
     position:fixed;bottom:80px;left:12px;right:12px;
-    background:linear-gradient(135deg,#FFD200,#e6bc00);
+    background:linear-gradient(135deg,#E5B312,#e6bc00);
     color:#000;border-radius:14px;padding:12px 14px;
     box-shadow:0 8px 24px rgba(0,0,0,0.4);
     z-index:300;display:flex;align-items:center;gap:10px;
@@ -5914,7 +5913,7 @@ function mostrarBannerInstalar() {
       <div style="font-weight:900;font-size:0.86rem;line-height:1.1;">Instalar Crunchy Paps</div>
       <div style="font-size:0.7rem;font-weight:600;opacity:0.85;">Acceso directo desde tu pantalla</div>
     </div>
-    <button id="cp-install-btn" style="background:#000;color:#FFD200;border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:900;font-size:0.78rem;cursor:pointer;">Instalar</button>
+    <button id="cp-install-btn" style="background:#000;color:var(--amarillo);border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:900;font-size:0.78rem;cursor:pointer;">Instalar</button>
     <button id="cp-install-x" style="background:transparent;border:none;color:#000;font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
   `;
   document.body.appendChild(banner);
@@ -5957,7 +5956,7 @@ window.addEventListener('load', () => {
       banner.id = 'cp-ios-install-banner';
       banner.style.cssText = `
         position:fixed;bottom:80px;left:12px;right:12px;
-        background:linear-gradient(135deg,#FFD200,#e6bc00);
+        background:linear-gradient(135deg,#E5B312,#e6bc00);
         color:#000;border-radius:14px;padding:12px 14px;
         box-shadow:0 8px 24px rgba(0,0,0,0.4);
         z-index:300;display:flex;align-items:center;gap:10px;
@@ -6011,21 +6010,21 @@ window.mostrarInstruccionesInstalar = function() {
     pasos = `
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca el botón <span style="display:inline-block;background:#fff;color:#007AFF;border-radius:4px;padding:1px 6px;font-weight:900;">⬆️</span> de Compartir</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca el botón <span style="display:inline-block;background:#fff;color:#0A5FC2;border-radius:4px;padding:1px 6px;font-weight:900;">⬆️</span> de Compartir</div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">Está en la barra inferior del navegador (Safari) o arriba a la derecha (Chrome)</div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Desliza y elige <strong style="color:var(--amarillo);">"Añadir a inicio"</strong></div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">Aparece en el menú entre las opciones</div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Añadir"</strong> arriba a la derecha</div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">El ícono aparecerá en tu pantalla principal</div>
@@ -6033,24 +6032,24 @@ window.mostrarInstruccionesInstalar = function() {
     `;
   } else if (isAndroid) {
     pasos = `
-      <div style="background:#0d2d0d;border:1px solid #4caf50;border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:#4caf50;">
+      <div style="background:var(--ok-bg);border:1px solid #4caf50;border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--ok-txt);">
         ℹ️ Si aún no aparece el banner automático, sigue estos pasos:
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Abre el menú <span style="background:#fff;color:#000;padding:1px 6px;border-radius:4px;font-weight:900;">⋮</span> arriba a la derecha</div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Instalar app"</strong> o <strong style="color:var(--amarillo);">"Agregar a pantalla de inicio"</strong></div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Confirma <strong style="color:var(--amarillo);">"Instalar"</strong></div>
         </div>
       </div>
@@ -6060,13 +6059,13 @@ window.mostrarInstruccionesInstalar = function() {
     pasos = `
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Busca el ícono <strong style="color:var(--amarillo);">⊕</strong> en la barra de direcciones</div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
           <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--amarillo);">"Instalar"</strong></div>
         </div>
       </div>
@@ -6077,7 +6076,7 @@ window.mostrarInstruccionesInstalar = function() {
     <div style="background:var(--negro);border-top:4px solid var(--amarillo);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:18px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">INSTALAR LA APP</div>
-        <button id="cp-instr-close" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave);font-size:1.1rem;cursor:pointer;">✕</button>
+        <button id="cp-instr-close" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;">✕</button>
       </div>
       <div style="font-size:0.82rem;color:var(--suave);margin-bottom:14px;line-height:1.4;">
         Tendrás Crunchy Paps como una app nativa: ícono en pantalla principal, pantalla completa, acceso rápido sin abrir el navegador.
@@ -6212,11 +6211,11 @@ function mostrarPagoConfirmado(ok) {
   const msg = ok
     ? 'Recibimos tu pago y tu pedido quedó registrado. El equipo Crunchy Paps se pondrá en contacto para coordinar la entrega.'
     : 'Tu pago se canceló o no se completó. Tu pedido quedó guardado como pendiente; puedes intentar pagar de nuevo.';
-  ov.innerHTML = '<div style="background:#0e0e0e;border:1px solid #222;border-radius:16px;max-width:360px;width:100%;padding:28px 22px;text-align:center;">'
+  ov.innerHTML = '<div style="background:var(--negro);border:1px solid var(--gris2);border-radius:16px;max-width:360px;width:100%;padding:28px 22px;text-align:center;">'
     + '<div style="font-size:3rem;line-height:1;margin-bottom:10px;">' + icon + '</div>'
     + '<div style="font-weight:900;font-size:1.3rem;color:#fff;margin-bottom:8px;">' + titulo + '</div>'
     + '<div style="font-size:0.92rem;color:rgba(255,255,255,0.78);line-height:1.5;margin-bottom:20px;">' + msg + '</div>'
-    + '<button id="pago-ok-btn" style="background:#ffd200;color:#111;border:none;border-radius:10px;padding:13px 20px;font-weight:900;font-size:0.95rem;cursor:pointer;width:100%;">Entendido</button>'
+    + '<button id="pago-ok-btn" style="background:#E5B312;color:#111;border:none;border-radius:10px;padding:13px 20px;font-weight:900;font-size:0.95rem;cursor:pointer;width:100%;">Entendido</button>'
     + '</div>';
   document.body.appendChild(ov);
   const b = ov.querySelector('#pago-ok-btn');
@@ -6232,8 +6231,8 @@ function mostrarPagoConfirmado(ok) {
     if (document.body) {
       const cover = document.createElement('div');
       cover.id = 'pago-cover';
-      cover.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#0e0e0e;display:flex;align-items:center;justify-content:center;';
-      cover.innerHTML = '<div style="text-align:center;color:#fff;"><div class="loader loader-w" style="margin:0 auto 14px;"></div><div style="font-weight:800;">Confirmando tu pago…</div></div>';
+      cover.style.cssText = 'position:fixed;inset:0;z-index:10000;background:var(--negro);display:flex;align-items:center;justify-content:center;';
+      cover.innerHTML = '<div style="text-align:center;color:var(--blanco);"><div class="loader loader-w" style="margin:0 auto 14px;"></div><div style="font-weight:800;">Confirmando tu pago…</div></div>';
       document.body.appendChild(cover);
     }
     let graciasRaw = null;
