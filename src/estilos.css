@@ -1663,3 +1663,14 @@ body.con-banner-instalar .screen { padding-bottom: 150px; }
   .res-card-cuando { font-size:0.7rem; }
   .res-card-techo { font-size:0.68rem; }
 }
+
+/* La tendencia: linea suavizada con sus dos extremos marcados. Los puntos NO
+   van dentro del SVG porque ese SVG se estira a lo ancho de la tarjeta y un
+   circulo saldria como elipse; van encima, colocados por porcentaje. */
+.res-graf { position:relative; margin-top:8px; }
+.res-pt { position:absolute; width:7px; height:7px; border-radius:50%;
+          transform:translate(-50%,-50%); pointer-events:none; }
+.res-pt-alto { background:var(--amarillo); border:1.5px solid var(--gris);
+               box-shadow:0 0 0 1px var(--acento-txt); }
+.res-pt-bajo { background:var(--gris); border:1.5px solid var(--suave); }
+.res-ejes { display:flex; margin-top:3px; }

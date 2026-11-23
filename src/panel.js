@@ -2075,20 +2075,76 @@ function _resCuboLargo(clave) {
 }
 
 // Barras en SVG. Sin librería: son seis valores y una altura.
-function _resBarras(valores, etiquetas, resaltado) {
-  const max = Math.max(...valores.map((v) => Number(v) || 0), 0);
+// La tendencia es una LINEA suavizada, no barras. Abraham, 23 nov 2026:
+// «la tendencia en linea suavizada, no en barras. Destaca el punto mas alto y
+// el mas bajo».
+//
+// DOS TRAMPAS DEL SVG ESTIRADO, y las dos se ven solo al mirarlo:
+//   · `preserveAspectRatio="none"` estira el dibujo para llenar el ancho de la
+//     tarjeta. Con barras daba igual -son rectangulos-, pero a una linea le
+//     deforma el GROSOR: grueso en las subidas, fino en los tramos planos. Se
+//     arregla con `vector-effect="non-scaling-stroke"`, que mantiene el trazo.
+//   · Un `<circle>` dentro de ese mismo SVG saldria como ELIPSE. Por eso los
+//     dos puntos no van dentro del SVG: son dos marcas de HTML colocadas por
+//     porcentaje encima, y asi siguen siendo redondas midan lo que midan.
+function _resLinea(valores, etiquetas) {
   const n = valores.length || 1;
-  const ancho = 100 / n;
-  const barras = valores.map((v, i) => {
-    const alto = max > 0 ? Math.max((Number(v) || 0) / max * 72, (Number(v) > 0 ? 3 : 0)) : 0;
-    const x = i * ancho + ancho * 0.18;
-    const w = ancho * 0.64;
-    const esUlt = i === (resaltado === undefined ? n - 1 : resaltado);
-    // Un mes en cero no desaparece: se queda su hueco y su etiqueta. Si se
-    // omitiera, la serie mentiría por omisión.
-    return `<rect x="${x}%" y="${80 - alto}" width="${w}%" height="${Math.max(alto, 0)}"
-             rx="2" fill="${esUlt ? 'var(--amarillo)' : 'var(--gris3)'}"></rect>`;
-  }).join('');
+  const vals = valores.map((v) => Number(v) || 0);
+  const max = Math.max(...vals, 0);
+  const min = Math.min(...vals);
+  const ALTO = 82, SUELO = 80, TECHO = 8;   // unidades del viewBox
+
+  // Un valor en cero NO desaparece: se dibuja en el suelo. Si se saltara, la
+  // serie mentiria por omision — un mes sin venta es un dato, no un hueco.
+  const y = (v) => (max > 0 ? SUELO - (v / max) * (SUELO - TECHO) : SUELO);
+  const x = (i) => (n === 1 ? 50 : (i / (n - 1)) * 100);
+  const pts = vals.map((v, i) => [x(i), y(v)]);
+
+  // Suavizado de Catmull-Rom pasado a bezier cubica: la curva pasa POR los
+  // puntos, no cerca. Una curva que se aleja del dato lo falsea.
+  let d = '';
+  if (pts.length === 1) {
+    d = `M ${pts[0][0]} ${pts[0][1]}`;
+  } else {
+    d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const t = 0.2;   // tension baja: suaviza sin inventar lomos
+      // Los puntos de control se SUJETAN al rango del dibujo. Sin esto la
+      // curva se mete por debajo del suelo al caer a cero -se vio en «clientes
+      // que compran», entre oct y nov- y ahi esta inventando valores
+      // negativos: no existe vender menos que nada.
+      const sujeta = (v) => Math.max(TECHO - 4, Math.min(SUELO, v));
+      const c1x = p1[0] + (p2[0] - p0[0]) * t;
+      const c1y = sujeta(p1[1] + (p2[1] - p0[1]) * t);
+      const c2x = p2[0] - (p3[0] - p1[0]) * t;
+      const c2y = sujeta(p2[1] - (p3[1] - p1[1]) * t);
+      d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+    }
+  }
+  const area = pts.length > 1 ? `${d} L 100 ${SUELO} L 0 ${SUELO} Z` : '';
+
+  // Cuando varios empatan en el minimo -y con dias en cero empatan a menudo-
+  // se marca el MAS RECIENTE: es el que describe como va la cosa ahora.
+  const iMax = vals.lastIndexOf(max);
+  const iMin = vals.lastIndexOf(min);
+  const marca = (i, clase, titulo) =>
+    `<span class="res-pt ${clase}" style="left:${x(i)}%;top:${(y(vals[i]) / ALTO) * 100}%;"
+       title="${titulo}"></span>`;
+  // Si toda la serie es plana -o esta en cero- no hay alto ni bajo que marcar:
+  // dos puntos sobre una recta no dicen nada.
+  // El mas bajo se marca SOLO si esta por encima de cero. Un minimo en cero ya
+  // se ve -la linea toca el suelo- y ademas suele haber varios empatados, asi
+  // que el punto quedaria pegado al eje, encima de las etiquetas, senialando
+  // uno cualquiera de ellos.
+  const puntos = (max > 0 && max !== min)
+    ? marca(iMax, 'res-pt-alto', 'el mas alto: ' + etiquetas[iMax]) +
+      (min > 0 ? marca(iMin, 'res-pt-bajo', 'el mas bajo: ' + etiquetas[iMin]) : '')
+    : '';
+
   // Con doce cubos caben las doce etiquetas; con treinta dias no caben y se
   // vuelven una mancha. Se enseña una de cada cinco, y la ultima siempre.
   const salto = etiquetas.length > 14 ? 5 : 1;
@@ -2100,13 +2156,19 @@ function _resBarras(valores, etiquetas, resaltado) {
     return `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:600;
              color:var(--suave);white-space:nowrap;">${ver ? e : ''}</span>`;
   }).join('');
-  return `<div style="margin-top:8px;">
-            <svg viewBox="0 0 100 82" preserveAspectRatio="none" width="100%" height="58"
-              role="img" aria-hidden="true" style="display:block;">
-              <line x1="0" y1="80" x2="100" y2="80" stroke="var(--gris3)" stroke-width="0.6"></line>
-              ${barras}
+
+  return `<div class="res-graf">
+            <svg viewBox="0 0 100 ${ALTO}" preserveAspectRatio="none" width="100%" height="58"
+              role="img" aria-hidden="true" style="display:block;overflow:visible;">
+              <line x1="0" y1="${SUELO}" x2="100" y2="${SUELO}" stroke="var(--gris3)"
+                stroke-width="0.6" vector-effect="non-scaling-stroke"></line>
+              ${area ? `<path d="${area}" fill="var(--acento-txt)" opacity="0.08"></path>` : ''}
+              <path d="${d}" fill="none" stroke="var(--acento-txt)" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"></path>
             </svg>
-            <div style="display:flex;margin-top:3px;">${textos}</div>
+            ${puntos}
+            <div class="res-ejes">${textos}</div>
           </div>`;
 }
 
@@ -2132,7 +2194,7 @@ function _resTarjeta({ titulo, valor, cuando, delta, techo, valores, etiquetas, 
         ${flecha}
       </div>
       <div class="res-card-cuando">${cuando}</div>
-      ${_resBarras(valores, etiquetas)}
+      ${_resLinea(valores, etiquetas)}
       <div class="res-card-techo">${techo}</div>
     </div>`;
 }
