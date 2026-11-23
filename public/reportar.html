@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Reportar · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25; --ok:#1E6B2A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:'Inter',system-ui,sans-serif;
+     padding:16px 16px calc(28px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto}
+header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);
+      font-size:0.4rem;font-weight:800;line-height:1.2;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:'Archivo',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:0.5px}
+.sub{font-size:0.78rem;color:var(--tinta2);margin-top:2px}
+.tarjeta{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:0.62rem;font-weight:800;letter-spacing:0.08em;
+      text-transform:uppercase;color:var(--tinta2);margin-bottom:6px}
+textarea,input,select{width:100%;background:var(--papel);border:1px solid var(--linea);
+      border-radius:10px;padding:10px 12px;color:var(--tinta);font-family:inherit;font-size:0.92rem}
+textarea{min-height:110px;resize:vertical;line-height:1.45}
+.fila{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fila>div{flex:1 1 140px}
+.tipos{display:flex;gap:6px;flex-wrap:wrap}
+.tipo{flex:1 1 auto;padding:9px 12px;border-radius:999px;border:1px solid var(--linea);
+      background:transparent;color:var(--tinta2);font-family:inherit;font-weight:600;
+      font-size:0.82rem;cursor:pointer;min-height:40px}
+.tipo[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel);font-weight:700}
+.enviar{width:100%;min-height:48px;margin-top:14px;background:var(--rojo);color:#fff;border:none;
+        border-radius:12px;font-family:inherit;font-weight:800;font-size:0.95rem;cursor:pointer}
+.enviar:disabled{background:var(--linea);color:var(--tinta2);cursor:default}
+.aviso{font-size:0.82rem;line-height:1.5;color:var(--tinta2)}
+.aviso b{color:var(--tinta)}
+.ok{color:var(--ok);font-weight:700}
+.mal{color:var(--rojo);font-weight:700}
+.pie{font-size:0.72rem;color:var(--tinta2);line-height:1.5;margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>REPORTAR</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<div class="tarjeta" id="sin-sesion" style="display:none">
+  <p class="aviso">Para reportar hace falta tu sesión de la app.
+  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+  <p class="aviso" style="margin-top:10px">Se usa para saber quién lo reporta: nada más.</p>
+</div>
+
+<div id="formulario" style="display:none">
+  <div class="tarjeta">
+    <label for="texto">Qué viste</label>
+    <textarea id="texto" maxlength="2000" placeholder="Escríbelo como se lo contarías a alguien: qué pasó, en qué pantalla, qué esperabas que pasara."></textarea>
+
+    <div class="fila">
+      <div>
+        <label>Qué es</label>
+        <div class="tipos">
+          <button type="button" class="tipo" data-tipo="ux" aria-pressed="true">Se ve mal</button>
+          <button type="button" class="tipo" data-tipo="error" aria-pressed="false">Falla</button>
+          <button type="button" class="tipo" data-tipo="idea" aria-pressed="false">Idea</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fila">
+      <div>
+        <label for="pantalla">En qué pantalla</label>
+        <input id="pantalla" list="pantallas" placeholder="Inicio, Pedidos, Prospectos…">
+        <datalist id="pantallas">
+          <option value="Inicio"></option><option value="Pedidos"></option>
+          <option value="Crunchy Club"></option><option value="B2B"></option>
+          <option value="Producción"></option><option value="Prospectos"></option>
+          <option value="Caja"></option><option value="Gastos"></option>
+          <option value="Jornada"></option><option value="Mi ruta"></option>
+          <option value="Reparto"></option><option value="Armado"></option>
+          <option value="Resumen"></option><option value="Costos"></option>
+          <option value="Mi cuenta"></option><option value="Checkout"></option>
+        </datalist>
+      </div>
+    </div>
+
+    <button class="enviar" id="enviar" disabled>Enviar</button>
+    <p class="aviso" id="estado" style="margin-top:10px"></p>
+  </div>
+
+  <p class="pie">Esto llega a una bandeja, no al mapa de trabajo.<br>
+  Abraham lo lee y decide a qué frente va, o si se descarta.</p>
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var URL_API = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var tipo = 'ux';
+
+  // La sesion YA existe en la app (cp_session, 60 dias). Reportar no puede
+  // costar un login nuevo: quien ve algo raro en la calle no vuelve a entrar.
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  var ses = sesion();
+  if (!ses) {
+    $('sin-sesion').style.display = '';
+    $('quien').textContent = 'Sin sesión';
+    return;
+  }
+  $('formulario').style.display = '';
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tipo'), function (b) {
+    b.addEventListener('click', function () {
+      tipo = b.getAttribute('data-tipo');
+      Array.prototype.forEach.call(document.querySelectorAll('.tipo'), function (o) {
+        o.setAttribute('aria-pressed', String(o === b));
+      });
+    });
+  });
+
+  $('texto').addEventListener('input', function () {
+    $('enviar').disabled = $('texto').value.trim().length < 3;
+  });
+
+  $('enviar').addEventListener('click', async function () {
+    var btn = $('enviar'), est = $('estado');
+    btn.disabled = true; btn.textContent = 'Enviando…'; est.textContent = '';
+    try {
+      var r = await fetch(URL_API + 'reportar', {
+        method: 'POST',
+        headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+        body: JSON.stringify({ p_data: {
+          token: ses.token,
+          texto: $('texto').value.trim(),
+          tipo: tipo,
+          pantalla: $('pantalla').value.trim()
+        } })
+      }).then(function (x) { return x.json(); });
+      // Se mira lo que VUELVE, no que la llamada no reviente (regla 56).
+      if (r && r.ok) {
+        est.className = 'aviso ok';
+        est.textContent = 'Enviado. Gracias — queda en la bandeja con tu nombre.';
+        $('texto').value = ''; $('pantalla').value = '';
+        btn.textContent = 'Enviar otro';
+      } else {
+        est.className = 'aviso mal';
+        est.textContent = (r && r.error === 'sin_sesion')
+          ? 'Tu sesión caducó. Abre la app, entra otra vez y vuelve aquí.'
+          : 'No se pudo enviar. Inténtalo otra vez.';
+        btn.textContent = 'Enviar';
+      }
+    } catch (e) {
+      est.className = 'aviso mal';
+      est.textContent = 'Sin conexión. Inténtalo cuando tengas señal.';
+      btn.textContent = 'Enviar';
+    }
+    btn.disabled = $('texto').value.trim().length < 3;
+  });
+})();
+</script>
+</body>
+</html>

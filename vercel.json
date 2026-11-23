@@ -2,27 +2,62 @@
   "buildCommand": "npm run validar",
   "outputDirectory": "dist",
   "redirects": [
-    { "source": "/ig", "destination": "/?utm_source=instagram&utm_medium=bio&utm_campaign=perfil", "permanent": false }
+    {
+      "source": "/ig",
+      "destination": "/?utm_source=instagram&utm_medium=bio&utm_campaign=perfil",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/api/sheets", "destination": "/api/sheets" },
-    { "source": "/planeador", "destination": "/planeador.html" },
-    { "source": "/privacidad", "destination": "/privacidad.html" },
-    { "source": "/retos", "destination": "/retos.html" },
-    { "source": "/radar", "destination": "/radar.html" },
-    { "source": "/agente", "destination": "/agente.html" }
+    {
+      "source": "/api/sheets",
+      "destination": "/api/sheets"
+    },
+    {
+      "source": "/planeador",
+      "destination": "/planeador.html"
+    },
+    {
+      "source": "/privacidad",
+      "destination": "/privacidad.html"
+    },
+    {
+      "source": "/retos",
+      "destination": "/retos.html"
+    },
+    {
+      "source": "/reportar",
+      "destination": "/reportar.html"
+    },
+    {
+      "source": "/radar",
+      "destination": "/radar.html"
+    },
+    {
+      "source": "/agente",
+      "destination": "/agente.html"
+    }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
   ],
   "crons": [
-    { "path": "/api/recordatorios-pago", "schedule": "0 17 * * *" },
-    { "path": "/api/contador", "schedule": "0 7 * * *" }
+    {
+      "path": "/api/recordatorios-pago",
+      "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/contador",
+      "schedule": "0 7 * * *"
+    }
   ],
   "functions": {
     "api/recordatorios-pago.js": {
