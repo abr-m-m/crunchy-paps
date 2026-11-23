@@ -27,9 +27,19 @@
 // en oscuro e ilegible en claro -justo lo que paso con --negro, que se
 // invierte-, y asi no hace falta acordarse.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const ARCHIVOS = ['index.html', 'src/estilos.css', 'src/app.js', 'src/panel.js'];
+
+// Las pantallas de `public/` NO comparten el CSS de la app: cada una trae su
+// propio `:root`. Se escaparon de esta prueba desde que nacio -y ya son cinco,
+// con la consola y los precios-, asi que se juzgan tambien, pero con SUS
+// tokens. Resolverlas contra src/estilos.css daria un verde falso, que es peor
+// que no comprobar (regla 31: una prueba que no puede decirte si llego al
+// codigo que prueba no es una prueba).
+const PAGINAS = readdirSync('public')
+  .filter((f) => f.endsWith('.html'))
+  .map((f) => `public/${f}`);
 const MINIMO = 4.5;          // AA para texto normal
 const MINIMO_GRANDE = 3.0;   // AA para >=24px o >=18.66px en negrita
 
@@ -124,12 +134,26 @@ const PIELES = [
   ['clara', { ...leerTokens(css, ':root'), ...leerTokens(css, 'body.piel-clara') }],
 ];
 
+// Un ambito es un grupo de archivos con los tokens que los resuelven. La app
+// es uno (dos pieles, un CSS); cada pagina de `public/` es el suyo.
+const AMBITOS = [{ archivos: ARCHIVOS, pieles: PIELES, propia: false }];
+for (const pagina of PAGINAS) {
+  const texto = readFileSync(pagina, 'utf8');
+  const raiz = leerTokens(texto, ':root');
+  if (!Object.keys(raiz).length) continue;      // pagina sin tokens: nada que resolver
+  const pieles = [['propia', raiz]];
+  const oscuro = leerTokens(texto, ':root[data-theme="dark"]');
+  if (Object.keys(oscuro).length) pieles.push(['oscura', { ...raiz, ...oscuro }]);
+  AMBITOS.push({ archivos: [pagina], pieles, propia: true });
+}
+
 const fallos = [];
 let revisados = 0, sinResolver = 0;
 
-for (const archivo of ARCHIVOS) {
+for (const { archivos, pieles } of AMBITOS)
+for (const archivo of archivos) {
   for (const p of paresDe(readFileSync(archivo, 'utf8'), archivo)) {
-    for (const [piel, tokens] of PIELES) {
+    for (const [piel, tokens] of pieles) {
       const bg = resolver(p.fondo, tokens), fg = resolver(p.texto, tokens);
       if (!bg || !fg) { sinResolver++; continue; }
       revisados++;
@@ -152,16 +176,27 @@ for (const archivo of ARCHIVOS) {
 //
 // Un texto claro declarado JUNTO a un fondo oscuro no se marca: ese par se ve
 // entero y ya lo juzga la primera comprobacion.
+// En las paginas de `public/` la sospecha va mas lejos: ahi SI se puede
+// resolver un token contra el `:root` de la propia pagina, asi que un
+// `color: var(--papel)` sin fondo al lado se marca igual que un `#fff` a pelo.
+// En la app no: con dos pieles, la mitad de los tokens resuelven claro en una
+// y oscuro en la otra, y marcarlos todos daria cientos de avisos -una
+// herramienta ruidosa se ignora, que es el punto de toda esta prueba.
 const CLARO = /^(#fff|#ffffff|white|rgba?\(\s*255\s*,\s*255\s*,\s*255)/i;
 const sospechosos = [];
-for (const archivo of ARCHIVOS) {
+for (const { archivos, pieles, propia } of AMBITOS)
+for (const archivo of archivos) {
   const texto = readFileSync(archivo, 'utf8');
   const mirar = (decl, donde) => {
     const t = decl.match(RE_TEXTO);
     if (!t) return;
     const v = t[1].trim();   // en ESTE archivo el valor es el grupo 1
-    const esClaro = CLARO.test(v);
+    let esClaro = CLARO.test(v);
     const esMarca = /var\(--amarillo\b/.test(v);
+    if (!esClaro && propia) {
+      const rgb = resolver(v, pieles[0][1]);
+      if (rgb && luminancia(rgb) > 0.5) esClaro = true;
+    }
     if (!esClaro && !esMarca) return;
     if (decl.match(RE_FONDO)) return;     // hay fondo al lado: lo juzga la otra
     sospechosos.push({ archivo, donde, valor: v, tipo: esClaro ? 'texto claro' : 'amarillo de marca' });
@@ -193,9 +228,9 @@ if (!fallos.length && !sospechosos.length) {
 }
 if (!fallos.length) process.exit(1);
 
-const porPiel = { oscura: [], clara: [] };
-for (const f of fallos) porPiel[f.piel].push(f);
-for (const piel of ['clara', 'oscura']) {
+const porPiel = {};
+for (const f of fallos) (porPiel[f.piel] ||= []).push(f);
+for (const piel of Object.keys(porPiel)) {
   if (!porPiel[piel].length) continue;
   console.log(`  PIEL ${piel.toUpperCase()} — ${porPiel[piel].length} pares ilegibles:`);
   for (const f of porPiel[piel]) {

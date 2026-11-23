@@ -305,7 +305,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     if (!archivo) return;
     if (archivo.size > 1.5 * 1024 * 1024) { $('f-err').textContent = 'La imagen pesa más de 1.5 MB.'; $('f-imagen').value = ''; return; }
     $('f-err').textContent = 'Subiendo imagen…';
-    const r = await fetch('/api/imagen-reto', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, mimeType: archivo.type }) }).then(x => x.json()).catch(() => null);
+    const r = await fetch('/api/imagen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, mimeType: archivo.type, carpeta: 'retos' }) }).then(x => x.json()).catch(() => null);
     if (!r || !r.ok) { $('f-err').textContent = (r && r.error) || 'No se pudo preparar la subida.'; return; }
     const put = await fetch(r.url, { method: 'PUT', headers: { 'content-type': archivo.type }, body: archivo }).catch(() => null);
     if (!put || !put.ok) { $('f-err').textContent = 'No se pudo subir la imagen.'; return; }

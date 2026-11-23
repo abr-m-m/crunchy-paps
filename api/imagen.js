@@ -1,12 +1,19 @@
 // ============================================================================
-//  Crunchy Paps — Imagen de un reto del Club
-//  Vercel Serverless Function · /api/imagen-reto
+//  Crunchy Paps — Subida de imágenes del dueño
+//  Vercel Serverless Function · /api/imagen
 //
-//  POST {token, mimeType} → {ok, ruta, url}. Valida que el token sea del dueño
-//  (sesion_es_dueno, con la llave de servicio) y emite una URL firmada de
-//  subida a contenido/retos/<uuid>.<ext>; el navegador sube directo a Storage
-//  con PUT. Mismo patrón que api/ticket.js. La ruta la arma el servidor: el
-//  nombre del archivo del navegador no se usa. 20 sep 2026.
+//  POST {token, mimeType, carpeta} → {ok, ruta, url}. Valida que el token sea
+//  del dueño (sesion_es_dueno, con la llave de servicio) y emite una URL
+//  firmada de subida a contenido/<carpeta>/<uuid>.<ext>; el navegador sube
+//  directo a Storage con PUT. Mismo patrón que api/ticket.js.
+//
+//  LA RUTA LA ARMA EL SERVIDOR. El nombre del archivo del navegador no se
+//  usa, y la carpeta sale de una LISTA BLANCA: una carpeta que venga del
+//  cliente sin filtrar es un «../» a cualquier sitio del bucket.
+//
+//  Nacio el 20 sep 2026 como /api/imagen-reto. Generalizado el 23 nov 2026
+//  para las fotos de producto y los banners, que piden lo mismo: el dueño
+//  sube una imagen a una carpeta conocida.
 // ============================================================================
 const crypto = require('crypto');
 
@@ -14,6 +21,8 @@ const SUPA_URL = process.env.SUPABASE_URL;
 const SUPA_SR  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET   = 'contenido';
 const TIPOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+// Lista blanca. Cerrado por omision (regla 37): lo que no esta aqui, no entra.
+const CARPETAS = { retos: 'retos', productos: 'productos', banner: 'banner', logo: 'logo' };
 
 async function supa(ruta, metodo, cuerpo) {
   const r = await fetch(SUPA_URL + ruta, {
@@ -52,15 +61,16 @@ module.exports = async function (req, res) {
     const ext = TIPOS[payload.mimeType];
     if (!ext) return res.status(400).json({ ok: false, error: 'Formato no admitido. Usa JPG, PNG o WEBP.' });
 
-    const ruta = `retos/${crypto.randomUUID()}.${ext}`;
+    const carpeta = CARPETAS[payload.carpeta] || CARPETAS.retos;
+    const ruta = `${carpeta}/${crypto.randomUUID()}.${ext}`;
     const f = await supa(`/storage/v1/object/upload/sign/${BUCKET}/${ruta}`, 'POST', {});
     if (!f.ok || !f.datos || !f.datos.url) {
-      console.error('[imagen-reto.js] no se pudo firmar la subida:', f.estado, f.datos);
+      console.error('[imagen.js] no se pudo firmar la subida:', f.estado, f.datos);
       return res.status(500).json({ ok: false, error: 'No se pudo preparar la subida' });
     }
     return res.status(200).json({ ok: true, ruta, url: SUPA_URL + '/storage/v1' + f.datos.url });
   } catch (e) {
-    console.error('[imagen-reto.js] error:', e.message);
+    console.error('[imagen.js] error:', e.message);
     return res.status(500).json({ ok: false, error: 'Error interno' });
   }
 };

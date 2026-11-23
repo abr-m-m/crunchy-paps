@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Precios y canje · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25;
+  --bien-bg:#E0F0E5; --bien-tx:#13512A;
+  --ojo-bg:#FDF1D2;  --ojo-tx:#6B4E00;
+  --mal-bg:#FBE3E3;  --mal-tx:#8C1114;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);font-size:.4rem;
+      font-weight:800;line-height:1.2;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+.sub{font-size:.78rem;color:var(--tinta2);margin-top:2px}
+.nota{font-size:.82rem;color:var(--tinta2);line-height:1.5;margin:10px 0 14px;max-width:62ch}
+.nota b{color:var(--tinta)}
+
+.barra{display:flex;gap:8px;align-items:center;margin-bottom:12px;overflow-x:auto;
+       padding-bottom:4px;scrollbar-width:none}
+.barra::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;white-space:nowrap}
+.chip{padding:8px 13px;border-radius:999px;border:1px solid var(--linea);background:transparent;
+      color:var(--tinta2);font-family:inherit;font-weight:600;font-size:.82rem;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel);font-weight:700}
+
+.sku{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+.sku.toc{border-color:var(--marca);box-shadow:0 0 0 2px rgba(229,179,18,.25)}
+.sku-top{display:flex;gap:12px;align-items:flex-start}
+.foto{width:62px;height:62px;border-radius:12px;object-fit:cover;background:var(--papel);
+      border:1px solid var(--linea);flex-shrink:0}
+.foto.vacia{display:flex;align-items:center;justify-content:center;font-size:.62rem;
+            color:var(--tinta2);text-align:center;font-weight:700}
+.sku-id{flex:1;min-width:0}
+.sku-id h2{font-family:Archivo,sans-serif;font-size:1rem;font-weight:700;line-height:1.2}
+.sku-id .meta{font-size:.76rem;color:var(--tinta2);margin-top:3px}
+.mini{min-height:32px;padding:5px 10px;border-radius:8px;border:1px solid var(--linea);
+      background:transparent;color:var(--tinta);font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer}
+
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:9px;margin-top:12px}
+.campo label{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+             color:var(--tinta2);margin-bottom:4px}
+.campo input,.campo select{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+      padding:9px 10px;color:var(--tinta);font-family:inherit;font-size:.95rem;font-weight:600;min-height:42px}
+.campo input:focus,.campo select:focus{outline:2px solid var(--tinta);outline-offset:-1px}
+.margen{display:inline-block;margin-top:5px;padding:2px 7px;border-radius:999px;font-size:.68rem;font-weight:800}
+.m-bien{background:var(--bien-bg);color:var(--bien-tx)}
+.m-ojo{background:var(--ojo-bg);color:var(--ojo-tx)}
+.m-mal{background:var(--mal-bg);color:var(--mal-tx)}
+
+.linea-club{margin-top:12px;padding-top:12px;border-top:1px solid var(--linea)}
+.pill{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;min-height:40px}
+.pill input[type=checkbox]{width:22px;height:22px;accent-color:var(--rojo);flex-shrink:0}
+
+.guardar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--linea);
+         padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;
+         justify-content:center;z-index:9}
+.guardar .cuenta{font-size:.82rem;color:var(--tinta2);font-weight:600}
+.btn{min-height:48px;padding:0 20px;background:var(--rojo);color:#fff;border:none;border-radius:12px;
+     font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer}
+.btn:disabled{background:var(--linea);color:var(--tinta2);cursor:default}
+.btn.ghost{background:transparent;color:var(--tinta);border:1px solid var(--linea);font-weight:700}
+.aviso{font-size:.84rem;line-height:1.5}
+.aviso.mal{color:var(--mal-tx);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:var(--tinta);color:var(--papel);
+       padding:11px 16px;border-radius:12px;font-size:.86rem;font-weight:700;z-index:20;max-width:92vw}
+.caja{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>PRECIOS Y CANJE</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<p class="nota" id="intro">
+  El <b>margen</b> de cada precio sale del motor de costeo, no de un número
+  escrito a mano. Nada se guarda hasta que lo mandes.
+  <a href="/consola">Volver a la consola</a>
+</p>
+
+<div class="caja" id="sin-sesion" hidden>
+  <p class="aviso">Esta pantalla es solo para el dueño.
+  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+</div>
+
+<div id="app" hidden>
+  <div class="barra" id="filtros"></div>
+  <div id="lista"></div>
+</div>
+
+<div class="guardar" id="pie" hidden>
+  <span class="cuenta" id="cuenta">Sin cambios</span>
+  <button class="btn ghost" id="deshacer" hidden>Deshacer</button>
+  <button class="btn" id="mandar" disabled>Guardar</button>
+</div>
+
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var RPC = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var PUB = (CFG.SUPABASE_URL || '') + '/storage/v1/object/public/contenido/';
+  var $ = function (id) { return document.getElementById(id); };
+
+  var CANALES = [
+    ['consumidor', 'Consumidor'], ['mostrador', 'Mostrador'],
+    ['restaurante', 'Restaurante'], ['tienda', 'Tienda'], ['mayorista', 'Mayorista']
+  ];
+
+  var datos = [];      // lo que trajo el servidor
+  var cambios = {};    // { id: { campo: valor } }  — solo lo tocado
+  var valorPunto = 0.30;
+  var filtro = 'todos';
+  var token = '';
+
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  function rpc(fn, cuerpo) {
+    return fetch(RPC + fn, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+  }
+
+  function toast(t) {
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 3200);
+  }
+
+  var urlFoto = function (v) {
+    if (!v) return '';
+    return (v.indexOf('http') === 0) ? v : PUB + v;
+  };
+  var pesos = function (n) { return '$' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); };
+
+  // El margen es la razon de ser de esta pantalla: el historico cerro en 9.2 %
+  // porque nadie veia el costo al lado del precio. Aqui se ve siempre.
+  function margen(precio, costo) {
+    var p = Number(precio), c = Number(costo);
+    if (!(p > 0) || !(c > 0)) return null;
+    return (p - c) / p * 100;
+  }
+  function claseMargen(m) { return m < 15 ? 'm-mal' : (m < 30 ? 'm-ojo' : 'm-bien'); }
+
+  function valorDe(p, campo) {
+    var c = cambios[p.id];
+    if (c && Object.prototype.hasOwnProperty.call(c, campo)) return c[campo];
+    return p[campo];
+  }
+  function tocar(p, campo, valor) {
+    if (!cambios[p.id]) cambios[p.id] = {};
+    if (String(valor) === String(p[campo] === null ? '' : p[campo])) delete cambios[p.id][campo];
+    else cambios[p.id][campo] = valor;
+    if (!Object.keys(cambios[p.id]).length) delete cambios[p.id];
+    pintarPie();
+    var tarjeta = document.querySelector('[data-sku="' + p.id + '"]');
+    if (tarjeta) tarjeta.classList.toggle('toc', !!cambios[p.id]);
+  }
+
+  function pintarPie() {
+    var n = Object.keys(cambios).length;
+    $('cuenta').textContent = n ? (n === 1 ? '1 producto por guardar' : n + ' productos por guardar') : 'Sin cambios';
+    $('mandar').disabled = !n;
+    $('mandar').textContent = n ? 'Guardar ' + n : 'Guardar';
+    $('deshacer').hidden = !n;
+  }
+
+  function campo(etq, p, clave, extra) {
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.textContent = etq; d.appendChild(l);
+    var i = document.createElement('input');
+    i.type = 'number'; i.inputMode = 'decimal'; i.min = '0';
+    if (extra && extra.max) i.max = extra.max;
+    i.step = (extra && extra.step) || '1';
+    var v = valorDe(p, clave);
+    i.value = (v === null || v === undefined) ? '' : v;
+    i.setAttribute('aria-label', etq + ' de ' + p.sabor + ' ' + (p.presentacion || ''));
+    var badge = null;
+    if (extra && extra.margen) {
+      badge = document.createElement('span'); badge.className = 'margen';
+      var pinta = function () {
+        var m = margen(i.value, p.costo);
+        if (m === null) { badge.textContent = p.costo ? 'sin precio' : 'sin costo'; badge.className = 'margen m-ojo'; return; }
+        badge.textContent = m.toFixed(0) + ' % margen';
+        badge.className = 'margen ' + claseMargen(m);
+      };
+      pinta();
+      i.addEventListener('input', pinta);
+    }
+    i.addEventListener('input', function () { tocar(p, clave, i.value); });
+    d.appendChild(i);
+    if (badge) d.appendChild(badge);
+    return d;
+  }
+
+  function tarjeta(p) {
+    var c = document.createElement('div');
+    c.className = 'sku' + (cambios[p.id] ? ' toc' : '');
+    c.setAttribute('data-sku', p.id);
+
+    var top = document.createElement('div'); top.className = 'sku-top';
+    var ruta = valorDe(p, 'imagen');
+    var foto;
+    if (ruta) { foto = document.createElement('img'); foto.className = 'foto'; foto.src = urlFoto(ruta); foto.alt = ''; }
+    else { foto = document.createElement('div'); foto.className = 'foto vacia'; foto.textContent = 'sin foto'; }
+    top.appendChild(foto);
+
+    var id = document.createElement('div'); id.className = 'sku-id';
+    var h = document.createElement('h2'); h.textContent = p.sabor + ' · ' + (p.presentacion || 'granel');
+    id.appendChild(h);
+    var meta = document.createElement('div'); meta.className = 'meta';
+    meta.textContent = 'SKU ' + p.id + (p.costo ? ' · cuesta ' + pesos(p.costo) : ' · sin costo en el motor');
+    id.appendChild(meta);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'mini'; b.textContent = ruta ? 'Cambiar foto' : 'Subir foto';
+    b.style.marginTop = '6px';
+    b.addEventListener('click', function () { pedirFoto(p); });
+    id.appendChild(b);
+    top.appendChild(id);
+    c.appendChild(top);
+
+    var r = document.createElement('div'); r.className = 'rejilla';
+    if (p.presentacion === 'Granel' || p.gramos === null) {
+      r.appendChild(campo('Granel por kg', p, 'granel_kg', { margen: false }));
+    } else {
+      CANALES.forEach(function (par) {
+        r.appendChild(campo(par[1], p, par[0], { margen: true }));
+      });
+    }
+    c.appendChild(r);
+
+    // El descuento no es un canal: va aparte o se lee como un sexto precio.
+    var rd = document.createElement('div'); rd.className = 'rejilla';
+    rd.style.marginTop = '9px';
+    rd.appendChild(campo('Descuento de lista %', p, 'descuento', { max: '100', step: '1' }));
+    c.appendChild(rd);
+
+    var club = document.createElement('div'); club.className = 'linea-club';
+    var lab = document.createElement('label'); lab.className = 'pill';
+    var ch = document.createElement('input'); ch.type = 'checkbox'; ch.checked = !!valorDe(p, 'canje_activo');
+    var txt = document.createElement('span'); txt.textContent = 'Se puede canjear con puntos';
+    lab.appendChild(ch); lab.appendChild(txt); club.appendChild(lab);
+
+    var rc = document.createElement('div'); rc.className = 'rejilla';
+    var cp = campo('Puntos de canje', p, 'puntos_canje', { step: '1' });
+    var eq = document.createElement('span'); eq.className = 'margen m-ojo';
+    var entrada = cp.querySelector('input');
+    var pintaEq = function () {
+      var pts = Number(entrada.value);
+      eq.textContent = pts > 0 ? 'valen ' + pesos(pts * valorPunto) : 'sin precio en puntos';
+    };
+    pintaEq(); entrada.addEventListener('input', pintaEq);
+    cp.appendChild(eq);
+    rc.appendChild(cp);
+    club.appendChild(rc);
+
+    var sincro = function () { rc.style.display = ch.checked ? '' : 'none'; };
+    sincro();
+    ch.addEventListener('change', function () { tocar(p, 'canje_activo', ch.checked); sincro(); });
+    c.appendChild(club);
+
+    return c;
+  }
+
+  function pintar() {
+    var cont = $('lista'); cont.replaceChildren();
+    var vistos = datos.filter(function (p) {
+      return filtro === 'todos' || (p.presentacion || 'Granel') === filtro;
+    });
+    if (!vistos.length) { cont.appendChild(document.createElement('p')).textContent = 'Nada con ese filtro.'; return; }
+    vistos.forEach(function (p) { cont.appendChild(tarjeta(p)); });
+  }
+
+  function pintarFiltros() {
+    var pres = [];
+    datos.forEach(function (p) {
+      var v = p.presentacion || 'Granel';
+      if (pres.indexOf(v) < 0) pres.push(v);
+    });
+    var cont = $('filtros'); cont.replaceChildren();
+    [['todos', 'Todos (' + datos.length + ')']].concat(pres.map(function (v) { return [v, v]; }))
+      .forEach(function (par) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip'; b.textContent = par[1];
+        b.setAttribute('aria-pressed', String(filtro === par[0]));
+        b.addEventListener('click', function () { filtro = par[0]; pintarFiltros(); pintar(); });
+        cont.appendChild(b);
+      });
+  }
+
+  // ── Foto. La ruta la arma /api/imagen con lista blanca de carpetas ──────────
+  function pedirFoto(p) {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp';
+    inp.addEventListener('change', async function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) { toast('La foto pesa más de 5 MB.'); return; }
+      toast('Subiendo foto…');
+      var r = await fetch('/api/imagen', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: token, mimeType: f.type, carpeta: 'productos' })
+      }).then(function (x) { return x.json(); }).catch(function () { return null; });
+      if (!r || !r.ok) { toast((r && r.error) || 'No se pudo preparar la subida.'); return; }
+      var put = await fetch(r.url, { method: 'PUT', headers: { 'content-type': f.type }, body: f })
+        .catch(function () { return null; });
+      if (!put || !put.ok) { toast('No se pudo subir la foto.'); return; }
+      tocar(p, 'imagen', r.ruta);
+      pintar();
+      toast('Foto lista. Falta guardar.');
+    });
+    inp.click();
+  }
+
+  // ── Guardar ────────────────────────────────────────────────────────────────
+  async function mandar() {
+    var lista = Object.keys(cambios).map(function (id) {
+      var f = Object.assign({ id: Number(id) }, cambios[id]);
+      return f;
+    });
+    if (!lista.length) return;
+    $('mandar').disabled = true; $('mandar').textContent = 'Guardando…';
+    var r = await rpc('guardar_precios', { p_data: { token: token, cambios: lista } });
+    // Se mira lo que VUELVE, no que la llamada no reviente (regla 56). Y el
+    // servidor puede rechazar filas que la pantalla dejo escribir: se dicen.
+    if (!r || !r.ok) {
+      toast(r && r.error === 'solo_dueno' ? 'Tu sesión no es de dueño.' : 'No se pudo guardar.');
+      pintarPie(); return;
+    }
+    var malos = (r.rechazados || []).length;
+    cambios = {};
+    await cargar();
+    toast(malos ? (r.guardados + ' guardados, ' + malos + ' rechazados: ' + r.rechazados.join('; '))
+                : 'Guardado: ' + r.guardados + '.');
+  }
+
+  async function cargar() {
+    var r = await rpc('precios_admin', { p_data: { token: token } });
+    if (!r || !r.ok) {
+      $('app').hidden = true; $('pie').hidden = true;
+      $('sin-sesion').hidden = false;
+      $('quien').textContent = 'Sin permiso';
+      return;
+    }
+    datos = r.productos || [];
+    valorPunto = Number(r.valor_punto) || 0.30;
+    $('app').hidden = false; $('pie').hidden = false;
+    pintarFiltros(); pintar(); pintarPie();
+  }
+
+  var ses = sesion();
+  if (!ses) {
+    $('sin-sesion').hidden = false;
+    $('quien').textContent = 'Sin sesión';
+    return;
+  }
+  token = ses.token;
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+  $('mandar').addEventListener('click', mandar);
+  $('deshacer').addEventListener('click', function () { cambios = {}; pintar(); pintarPie(); });
+  cargar();
+})();
+</script>
+</body>
+</html>

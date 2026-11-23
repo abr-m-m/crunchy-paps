@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Consola · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25;
+  --ojo-bg:#FDF1D2; --ojo-tx:#6B4E00;
+  --bien-bg:#E0F0E5; --bien-tx:#13512A;
+  --mal-tx:#8C1114;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:860px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);font-size:.4rem;
+      font-weight:800;line-height:1.2;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+.sub{font-size:.78rem;color:var(--tinta2);margin-top:2px}
+h2{font-family:Archivo,sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.1em;
+   text-transform:uppercase;color:var(--tinta2);margin:26px 0 10px}
+.nota{font-size:.84rem;color:var(--tinta2);line-height:1.55;max-width:62ch;margin:10px 0 0}
+.nota b{color:var(--tinta)}
+
+.caja{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:10px}
+a.puerta{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--linea);
+         border-radius:16px;padding:13px 14px;margin-bottom:9px;text-decoration:none;color:inherit;min-height:56px}
+a.puerta:focus-visible{outline:3px solid var(--marca);outline-offset:2px}
+.ico{width:38px;height:38px;border-radius:11px;background:var(--papel);border:1px solid var(--linea);
+     display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.puerta .t{font-family:Archivo,sans-serif;font-weight:700;font-size:.98rem}
+.puerta .d{font-size:.8rem;color:var(--tinta2);line-height:1.45;margin-top:2px}
+.tag{display:inline-block;margin-top:5px;padding:2px 7px;border-radius:999px;font-size:.64rem;font-weight:800;
+     letter-spacing:.04em;text-transform:uppercase;background:var(--papel);color:var(--tinta2);border:1px solid var(--linea)}
+.pend{background:var(--ojo-bg);color:var(--ojo-tx);border-color:transparent}
+
+label{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--tinta2);margin-bottom:4px}
+input,select,textarea{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+      padding:9px 10px;color:var(--tinta);font-family:inherit;font-size:.92rem;min-height:42px}
+textarea{min-height:64px;resize:vertical}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
+.rejilla>div{min-width:0}
+.btn{min-height:46px;padding:0 16px;background:var(--rojo);color:#fff;border:none;border-radius:12px;
+     font-family:inherit;font-weight:800;font-size:.9rem;cursor:pointer;margin-top:10px}
+.btn.ghost{background:transparent;color:var(--tinta);border:1px solid var(--linea);font-weight:700}
+.mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);background:transparent;
+      color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.salida{margin-top:12px;background:var(--papel);border:1px dashed var(--linea);border-radius:10px;
+        padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;word-break:break-all;line-height:1.5}
+.rep{border-top:1px solid var(--linea);padding:12px 0}
+.rep:first-of-type{border-top:none;padding-top:2px}
+.rep .q{font-size:.72rem;color:var(--tinta2);font-weight:700}
+.rep .tx{margin:4px 0 8px;white-space:pre-wrap}
+.acc{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--tinta);color:var(--papel);
+       padding:11px 16px;border-radius:12px;font-size:.86rem;font-weight:700;z-index:20;max-width:92vw}
+.mal{color:var(--mal-tx);font-weight:700;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>CONSOLA</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<p class="nota">Todo lo que se ajusta fuera de la app, en un solo sitio.
+<b>Cada pantalla decide quién entra en el servidor</b>, no este menú: aquí solo están los enlaces.</p>
+
+<h2>Bandeja</h2>
+<div class="caja" id="bandeja">
+  <p class="nota" style="margin:0" id="bandeja-estado">Cargando…</p>
+</div>
+
+<h2>Pantallas</h2>
+<div id="puertas"></div>
+
+<h2>Enlaces con medición</h2>
+<div class="caja">
+  <p class="nota" style="margin:0 0 12px">Un enlace con UTM dice en GA4 <b>de dónde llegó</b> quien abrió la app.
+  Sin UTM, la visita entra como directa y no se puede atribuir.</p>
+  <div class="rejilla">
+    <div>
+      <label for="u-dest">A dónde lleva</label>
+      <select id="u-dest">
+        <option value="/">Inicio (catálogo)</option>
+        <option value="/?ir=club">Crunchy Club</option>
+        <option value="/retos">Retos</option>
+        <option value="/privacidad">Aviso de privacidad</option>
+        <option value="/terminos">Términos y condiciones</option>
+      </select>
+    </div>
+    <div>
+      <label for="u-source">Fuente</label>
+      <input id="u-source" list="l-source" placeholder="instagram" value="instagram">
+      <datalist id="l-source">
+        <option value="instagram"></option><option value="facebook"></option>
+        <option value="whatsapp"></option><option value="tiktok"></option>
+        <option value="qr"></option><option value="volante"></option>
+        <option value="google"></option><option value="correo"></option>
+      </datalist>
+    </div>
+    <div>
+      <label for="u-medium">Medio</label>
+      <input id="u-medium" list="l-medium" placeholder="bio" value="bio">
+      <datalist id="l-medium">
+        <option value="bio"></option><option value="historia"></option>
+        <option value="publicacion"></option><option value="reel"></option>
+        <option value="mensaje"></option><option value="impreso"></option>
+        <option value="cpc"></option><option value="organico"></option>
+      </datalist>
+    </div>
+    <div>
+      <label for="u-campaign">Campaña</label>
+      <input id="u-campaign" placeholder="perfil">
+    </div>
+  </div>
+  <div class="salida" id="u-salida">—</div>
+  <button class="btn ghost mini" id="u-copiar" style="min-height:46px;padding:0 16px;font-size:.9rem">Copiar enlace</button>
+</div>
+
+<h2>Atajos ya publicados</h2>
+<div class="caja">
+  <p class="nota" style="margin:0 0 10px">Rutas cortas que ya existen en producción: se pueden
+  escribir a mano o poner en un cartel, y llevan sus UTM puestos.</p>
+  <div class="salida" id="atajos"></div>
+</div>
+
+<p class="nota" style="margin-top:26px">¿Viste algo raro usando la app?
+<a href="/reportar">Repórtalo</a> — entra a esta misma bandeja.</p>
+
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var RPC = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = '';
+
+  var PUERTAS = [
+    { h: '/productos', i: '◉', t: 'Precios y canje',
+      d: 'Precio por canal con su margen al lado, descuento de lista, puntos de canje y el product shot.', q: 'solo el dueño' },
+    { h: '/retos', i: '◆', t: 'Retos del Club',
+      d: 'Qué reto está vivo, con qué meta y qué bono. Se pausa, no se borra, si ya dio puntos.', q: 'solo el dueño' },
+    { h: '/planeador', i: '◫', t: 'Planeador de rutas',
+      d: 'Cobertura por colonia y código postal, días de reparto y de preventa, y revisar tiendas.', q: 'solo el dueño · computadora' },
+    { h: '/radar', i: '◎', t: 'Radar',
+      d: 'Lo que se publica y lo que se mide alrededor de la cuenta.', q: 'solo el dueño' },
+    { h: '/agente', i: '◈', t: 'Agente',
+      d: 'Los ajustes del agente de alta y atención.', q: 'solo el dueño' },
+    { h: '/reportar', i: '✎', t: 'Reportar',
+      d: 'Lo que cualquiera del equipo ve en la calle: se ve mal, falla o idea.', q: 'todo el equipo' },
+    { h: '/terminos', i: '§', t: 'Términos y condiciones',
+      d: 'Lo que acepta quien compra. Pendiente: razón social, RFC y si los precios llevan IVA.', q: 'público' },
+    { h: '/privacidad', i: '§', t: 'Aviso de privacidad',
+      d: 'Qué datos se guardan y para qué.', q: 'público' }
+  ];
+
+  var ATAJOS = [
+    ['/ig', 'Instagram, liga de la biografía — ya trae utm_source=instagram&utm_medium=bio&utm_campaign=perfil']
+  ];
+
+  function rpc(fn, cuerpo) {
+    return fetch(RPC + fn, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+  }
+  function toast(t) {
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 3000);
+  }
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  // ── Las puertas ────────────────────────────────────────────────────────────
+  function pintarPuertas(pendientes) {
+    var cont = $('puertas'); cont.replaceChildren();
+    PUERTAS.forEach(function (p) {
+      var a = document.createElement('a');
+      a.className = 'puerta'; a.href = p.h;
+      var ico = document.createElement('div'); ico.className = 'ico';
+      ico.textContent = p.i; ico.setAttribute('aria-hidden', 'true');
+      a.appendChild(ico);
+      var d = document.createElement('div');
+      var t = document.createElement('div'); t.className = 't'; t.textContent = p.t; d.appendChild(t);
+      var de = document.createElement('div'); de.className = 'd'; de.textContent = p.d; d.appendChild(de);
+      var tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = p.q; d.appendChild(tag);
+      if (p.h === '/reportar' && pendientes) {
+        var b = document.createElement('span'); b.className = 'tag pend';
+        b.textContent = pendientes + ' sin triar'; b.style.marginLeft = '6px'; d.appendChild(b);
+      }
+      a.appendChild(d);
+      cont.appendChild(a);
+    });
+  }
+
+  // ── La bandeja. Lo que el equipo reportó y nadie ha clasificado todavia. ───
+  async function bandeja() {
+    var r = await rpc('reportes_admin', { p_data: { token: token, estado: 'nuevo' } });
+    var caja = $('bandeja');
+    if (!r || !r.ok) {
+      caja.replaceChildren();
+      var p = document.createElement('p'); p.className = 'nota'; p.style.margin = '0';
+      p.textContent = (r && r.error === 'solo_dueno')
+        ? 'La bandeja es solo del dueño. Las pantallas de abajo deciden cada una quién entra.'
+        : 'No se pudo leer la bandeja.';
+      caja.appendChild(p);
+      pintarPuertas(0);
+      return;
+    }
+    var lista = r.reportes || [];
+    pintarPuertas(lista.length);
+    caja.replaceChildren();
+    if (!lista.length) {
+      var vacia = document.createElement('p'); vacia.className = 'nota'; vacia.style.margin = '0';
+      vacia.textContent = 'Nada sin triar. Lo que llegue por /reportar aparece aquí.';
+      caja.appendChild(vacia);
+      return;
+    }
+    var enc = document.createElement('p'); enc.className = 'nota'; enc.style.margin = '0 0 10px';
+    enc.innerHTML = '<b>' + lista.length + ' sin triar.</b> Triar no los arregla: los saca de la bandeja '
+      + 'para que entren al mapa de trabajo, o se descartan con su motivo.';
+    caja.appendChild(enc);
+    var TIPO = { ux: 'Se ve mal', error: 'Falla', idea: 'Idea' };
+    lista.forEach(function (rep) {
+      var d = document.createElement('div'); d.className = 'rep';
+      var q = document.createElement('div'); q.className = 'q';
+      q.textContent = (TIPO[rep.tipo] || rep.tipo) + ' · ' + (rep.nombre || 'alguien')
+        + (rep.pantalla ? ' · ' + rep.pantalla : '')
+        + ' · ' + String(rep.creado_en || '').slice(0, 10);
+      d.appendChild(q);
+      var tx = document.createElement('div'); tx.className = 'tx'; tx.textContent = rep.texto;
+      d.appendChild(tx);
+      var acc = document.createElement('div'); acc.className = 'acc';
+      [['triado', 'Al mapa'], ['descartado', 'Descartar']].forEach(function (par) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'mini'; b.textContent = par[1];
+        b.addEventListener('click', async function () {
+          var nota = window.prompt(par[0] === 'triado'
+            ? 'A qué frente va (opcional):' : 'Por qué se descarta (opcional):') ;
+          if (nota === null) return;
+          b.disabled = true;
+          var res = await rpc('triar_reporte', { p_data: { token: token, id: rep.id, estado: par[0], nota: nota } });
+          if (!res || !res.ok) { toast('No se pudo. ' + ((res && res.error) || '')); b.disabled = false; return; }
+          toast(par[0] === 'triado' ? 'Fuera de la bandeja.' : 'Descartado.');
+          bandeja();
+        });
+        acc.appendChild(b);
+      });
+      d.appendChild(acc);
+      caja.appendChild(d);
+    });
+  }
+
+  // ── Constructor de UTM ─────────────────────────────────────────────────────
+  var limpia = function (s) {
+    return String(s || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+  };
+  function enlace() {
+    var base = 'https://crunchypaps.mx';
+    var dest = $('u-dest').value;
+    var partes = [];
+    var s = limpia($('u-source').value), m = limpia($('u-medium').value), c = limpia($('u-campaign').value);
+    if (s) partes.push('utm_source=' + s);
+    if (m) partes.push('utm_medium=' + m);
+    if (c) partes.push('utm_campaign=' + c);
+    if (!partes.length) return base + dest;
+    return base + dest + (dest.indexOf('?') >= 0 ? '&' : '?') + partes.join('&');
+  }
+  function pintarEnlace() {
+    var u = enlace();
+    $('u-salida').textContent = u;
+    return u;
+  }
+  ['u-dest', 'u-source', 'u-medium', 'u-campaign'].forEach(function (id) {
+    $(id).addEventListener('input', pintarEnlace);
+    $(id).addEventListener('change', pintarEnlace);
+  });
+  $('u-copiar').addEventListener('click', async function () {
+    var u = pintarEnlace();
+    try { await navigator.clipboard.writeText(u); toast('Copiado.'); }
+    catch (e) { toast('Cópialo a mano: está arriba.'); }
+  });
+  pintarEnlace();
+
+  var at = $('atajos');
+  ATAJOS.forEach(function (par) {
+    var d = document.createElement('div');
+    d.textContent = 'https://crunchypaps.mx' + par[0] + '  →  ' + par[1];
+    d.style.marginBottom = '6px';
+    at.appendChild(d);
+  });
+
+  var ses = sesion();
+  if (!ses) {
+    $('quien').textContent = 'Sin sesión';
+    $('bandeja-estado').textContent = 'Para ver la bandeja hace falta tu sesión de la app.';
+    pintarPuertas(0);
+    return;
+  }
+  token = ses.token;
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+  bandeja();
+})();
+</script>
+</body>
+</html>
