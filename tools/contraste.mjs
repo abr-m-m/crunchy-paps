@@ -119,10 +119,16 @@ function paresDe(texto, archivo) {
     if (sel.startsWith('@') || sel.startsWith(':root') || sel.includes('piel-clara')) continue;
     empuja(m[2], sel.slice(0, 70));
   }
-  // Estilos en linea: style="..." y style=`...`
-  for (const m of texto.matchAll(/style\s*=\s*["'`]([^"'`]*)["'`]/g)) {
+  // Estilos en linea. OJO con las comillas: un `style="..."` puede llevar comillas
+  // SIMPLES dentro (`font-family:'Inter'`). La primera version usaba UNA clase
+  // ["'`] para abrir y para cerrar, asi que cualquier estilo con una fuente
+  // entre comillas simples era INVISIBLE. Eran justo los botones del panel: 20
+  // botones amarillos con letra clara (1.73:1) pasaron el CI en verde, y los
+  // encontro un auditor que corre DENTRO del navegador. Esta prueba los daba por
+  // buenos sin haberlos mirado nunca, que es peor que no comprobarlos (regla 31).
+  for (const m of texto.matchAll(/style\s*=\s*"([^"]*)"|style\s*=\s*'([^']*)'/g)) {
     const linea = texto.slice(0, m.index).split('\n').length;
-    empuja(m[1], `linea ${linea}`);
+    empuja(m[1] ?? m[2], `linea ${linea}`);
   }
   return pares;
 }
@@ -206,8 +212,8 @@ for (const archivo of archivos) {
     if (sel.startsWith('@') || sel.startsWith(':root') || sel.includes('piel-clara')) continue;
     mirar(m[2], sel.slice(0, 70));
   }
-  for (const m of texto.matchAll(/style\s*=\s*["'`]([^"'`]*)["'`]/g)) {
-    mirar(m[1], `linea ${texto.slice(0, m.index).split('\n').length}`);
+  for (const m of texto.matchAll(/style\s*=\s*"([^"]*)"|style\s*=\s*'([^']*)'/g)) {
+    mirar(m[1] ?? m[2], `linea ${texto.slice(0, m.index).split('\n').length}`);
   }
 }
 

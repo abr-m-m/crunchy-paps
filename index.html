@@ -133,7 +133,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
     <!-- Logo / marca -->
     <div style="margin-bottom:24px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--amarillo);letter-spacing:4px;line-height:1;">CRUNCHY</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--acento-txt);letter-spacing:4px;line-height:1;">CRUNCHY</div>
       <div style="font-family:'Archivo',sans-serif;font-size:clamp(3rem,12vw,5rem);color:var(--rojo);letter-spacing:4px;line-height:1;margin-top:-8px;">PAPS</div>
       <div style="font-size:0.85rem;font-weight:600;color:var(--blanco);letter-spacing:2px;text-transform:uppercase;margin-top:8px;">Adictivamente crujientes</div>
     </div>
@@ -147,7 +147,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
          fuga más cara de la app, y además invisible para el embudo, porque
          view_catalog solo se dispara después de verificar. -->
     <div style="width:100%;max-width:360px;margin-bottom:22px;">
-      <button onclick="usarComoConsumidor()" style="background:var(--amarillo);border:none;border-radius:12px;padding:16px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:1.05rem;color:var(--negro);cursor:pointer;">
+      <button onclick="usarComoConsumidor()" style="background:var(--amarillo);border:none;border-radius:12px;padding:16px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:1.05rem;color:var(--sobre-marca);cursor:pointer;">
         Ver el catálogo
       </button>
       <div style="font-size:0.74rem;font-weight:600;color:var(--blanco);margin-top:8px;">
@@ -200,19 +200,19 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <!-- Confirmación del número antes de enviar -->
         <div id="confirm-tel-wrap" style="display:none;width:100%;background:var(--gris2);border-radius:12px;padding:14px;text-align:center;">
           <div style="font-size:0.75rem;font-weight:700;color:var(--suave);margin-bottom:6px;">¿Tu número es correcto?</div>
-          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--amarillo);letter-spacing:2px;" id="confirm-tel-display">—</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--acento-txt);letter-spacing:2px;" id="confirm-tel-display">—</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
-            <button onclick="corregirTel()" style="flex:1;background:var(--gris3);border:none;border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">
+            <button onclick="corregirTel()" style="flex:1;background:var(--gris3);border:none;border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave2);cursor:pointer;">
               Corregir
             </button>
-            <button onclick="enviarSMS()" id="btn-sms" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;color:var(--negro);cursor:pointer;">
+            <button onclick="enviarSMS()" id="btn-sms" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">
               ✓ Sí, enviar código
             </button>
           </div>
           <div id="otp-email-wrap" style="margin-top:12px;border-top:1px solid var(--gris3);padding-top:12px;">
             <div style="font-size:0.72rem;font-weight:700;color:var(--suave);margin-bottom:6px;">¿No te llega el SMS? Recíbelo por correo</div>
             <input class="inp" id="inp-email-otp" type="email" inputmode="email" placeholder="tucorreo@ejemplo.com" style="margin-bottom:8px;">
-            <button onclick="enviarOTPEmail()" id="btn-email-otp" style="width:100%;background:var(--gris3);border:1px solid var(--amarillo);border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">Enviar código por correo</button>
+            <button onclick="enviarOTPEmail()" id="btn-email-otp" style="width:100%;background:var(--gris3);border:1px solid var(--amarillo);border-radius:8px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">Enviar código por correo</button>
             <p class="msg info" id="msg-email-otp" style="margin-top:6px;"></p>
           </div>
         </div>
@@ -251,7 +251,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(ellipse at 50% 0%,var(--aviso-bg),var(--negro) 60%);">
     <div style="max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
       <div style="font-size:3rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;">ACCESO VENDEDOR</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--acento-txt);letter-spacing:2px;">ACCESO VENDEDOR</div>
       <div style="font-size:0.85rem;font-weight:700;color:var(--suave);" id="pin-nombre-label">Ingresa tu PIN</div>
 
       <!-- Dígitos PIN — SEIS casillas. Antes eran cuatro, y como el mínimo al
@@ -291,7 +291,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     padding:40px 24px;background:radial-gradient(ellipse at 60% 20%,var(--aviso-bg),var(--negro) 65%);gap:0;">
 
     <div style="text-align:center;margin-bottom:28px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);letter-spacing:3px;line-height:1;">
+      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--acento-txt);letter-spacing:3px;line-height:1;">
         BIENVENIDO
       </div>
       <div style="font-size:0.85rem;font-weight:600;color:var(--blanco);margin-top:6px;">
@@ -356,7 +356,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;">
     <div style="max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;">
       <div style="font-size:4rem" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9"/><path d="M10 21v-6h4v6"/></svg></div>
-      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--amarillo);letter-spacing:2px;line-height:1;">VALIDANDO<br>TU NEGOCIO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2rem;color:var(--acento-txt);letter-spacing:2px;line-height:1;">VALIDANDO<br>TU NEGOCIO</div>
       <div style="background:var(--gris);border:2px solid var(--gris3);border-radius:16px;padding:20px;text-align:left;width:100%;">
         <div style="font-size:0.86rem;font-weight:700;color:var(--suave);line-height:1.6;">
           Estamos validando tu <strong style="color:var(--blanco)" id="pend-tipo">tienda</strong> para darte <strong style="color:var(--acento-txt)">precios de mayoreo</strong><br><br>
@@ -383,7 +383,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9"/><path d="M10 21v-6h4v6"/></svg></div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">COMPLETA LOS DATOS<br>DE TU NEGOCIO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--acento-txt);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">COMPLETA LOS DATOS<br>DE TU NEGOCIO</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">
           Necesitamos estos datos para validar tu negocio y darte <strong style="color:var(--acento-txt)">precios de mayoreo</strong>.
         </div>
@@ -434,7 +434,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9"/><path d="M10 21v-6h4v6"/></svg></div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">DAR DE ALTA NEGOCIO</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--acento-txt);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">DAR DE ALTA NEGOCIO</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Registra una tienda, restaurante o mayorista en sitio. Queda <strong style="color:var(--acento-txt);">pendiente de aprobación</strong>.</div>
       </div>
 
@@ -485,7 +485,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div style="max-width:420px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:18px;">
         <div style="font-size:2.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--amarillo);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">AJUSTAR UBICACIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.7rem;color:var(--acento-txt);letter-spacing:1.5px;line-height:1.1;margin-top:4px;">AJUSTAR UBICACIÓN</div>
         <div style="font-size:0.8rem;color:var(--suave);font-weight:600;margin-top:8px;line-height:1.5;">Estás en el negocio: busca al cliente y captura su <strong style="color:var(--acento-txt);">GPS exacto</strong>. Solo cambia la ubicación.</div>
       </div>
 
@@ -535,22 +535,22 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     width:280px; box-shadow:0 8px 32px rgba(0,0,0,0.5);
   ">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">
         TU HISTORIAL
       </div>
       <button onclick="toggleHistorial()" aria-label="Cerrar" style="background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;min-width:44px;min-height:44px;">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-pedidos">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="h-pedidos">0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Pedidos</div>
       </div>
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-mes">$0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="h-mes">$0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Este mes</div>
       </div>
       <div style="background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="h-puntos">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="h-puntos">0</div>
         <div style="font-size:0.65rem;font-weight:700;color:#555;text-transform:uppercase;">Puntos</div>
       </div>
     </div>
@@ -677,7 +677,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div class="pv" id="p-mes">$0</div><div class="pv" id="p-ultimo">—</div>
   </div>
   <div class="club-retos club-cliente" id="club-retos" style="display:none">
-    <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:1.1rem;color:var(--amarillo);letter-spacing:1px;margin:14px 0 10px;">RETOS</h3>
+    <h3 style="font-family:'Archivo',sans-serif;font-weight:700;font-size:1.1rem;color:var(--acento-txt);letter-spacing:1px;margin:14px 0 10px;">RETOS</h3>
     <div class="club-retos-pista" id="club-retos-lista"></div>
     <div class="club-retos-puntos" id="club-retos-puntos"></div>
   </div>
@@ -773,12 +773,12 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
          renderCuenta salía en silencio y quedaba la pantalla en blanco, que se
          lee como una app rota en vez de como «te falta identificarte». -->
     <div id="cuenta-invitado" style="display:none;background:var(--gris);border-radius:14px;padding:20px;margin-bottom:16px;text-align:center;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;">ESTÁS COMO INVITADO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);letter-spacing:1px;">ESTÁS COMO INVITADO</div>
       <div style="font-size:0.82rem;font-weight:600;color:var(--suave);margin:8px 0 16px;line-height:1.45;">
         Puedes ver el catálogo y armar tu carrito.<br>
         Verifica tu número para guardar tus pedidos y acumular puntos.
       </div>
-      <button onclick="ir('s-otp')" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.9rem;color:var(--negro);cursor:pointer;">
+      <button onclick="ir('s-otp')" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
         Verificar mi número
       </button>
     </div>
@@ -814,15 +814,15 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mi actividad</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-pedidos">0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--acento-txt);" id="cuenta-pedidos">0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">PEDIDOS</div>
           </div>
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-total">$0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--acento-txt);" id="cuenta-total">$0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">TOTAL</div>
           </div>
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="cuenta-puntos">0</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--acento-txt);" id="cuenta-puntos">0</div>
             <div style="font-size:0.65rem;font-weight:700;color:#555;">PUNTOS</div>
           </div>
         </div>
@@ -851,7 +851,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <button id="btn-instalar-app" onclick="mostrarInstruccionesInstalar()" style="
         background:transparent;border:1px solid var(--amarillo);border-radius:14px;
         padding:14px;width:100%;font-family:'Inter',sans-serif;
-        font-weight:800;font-size:0.9rem;color:var(--amarillo);cursor:pointer;margin-top:4px;">
+        font-weight:800;font-size:0.9rem;color:var(--acento-txt);cursor:pointer;margin-top:4px;">
         Instalar como app
       </button>
 
@@ -859,7 +859,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <button id="btn-permisos-cuenta" onclick="abrirPermisos()" style="display:none;
         background:transparent;border:1px solid var(--amarillo);border-radius:14px;
         padding:14px;width:100%;font-family:'Inter',sans-serif;
-        font-weight:800;font-size:0.9rem;color:var(--amarillo);cursor:pointer;margin-top:4px;">
+        font-weight:800;font-size:0.9rem;color:var(--acento-txt);cursor:pointer;margin-top:4px;">
         Permisos de secciones
       </button>
 
@@ -887,7 +887,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <div style="display:flex;gap:8px;">
             <button id="pin-guardar" onclick="guardarPinPropio()" style="
               flex:1;background:var(--amarillo);border:none;border-radius:12px;padding:12px;
-              font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:var(--negro);cursor:pointer;">
+              font-family:'Inter',sans-serif;font-weight:800;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">
               Guardar
             </button>
             <button onclick="cerrarCambioPin()" style="
@@ -923,7 +923,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-produccion">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCCIÓN</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">PRODUCCIÓN</div>
   </div>
 
   <!-- Tabs de producción -->
@@ -944,7 +944,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <!-- Registrar nuevo lote -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">REGISTRAR LOTE</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:12px;">REGISTRAR LOTE</div>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:10px;">
           <div>
             <div style="font-size:0.68rem;font-weight:700;color:#555;margin-bottom:4px;">FECHA</div>
@@ -957,7 +957,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           </div>
         </div>
         <textarea id="lote-notas" class="inp" rows="2" placeholder="Comentario del lote (calidad, incidencias...)" style="margin-bottom:10px;resize:none;"></textarea>
-        <button onclick="registrarNuevoLote()" style="background:var(--amarillo);border:none;border-radius:10px;padding:10px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--negro);cursor:pointer;">
+        <button onclick="registrarNuevoLote()" style="background:var(--amarillo);border:none;border-radius:10px;padding:10px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">
           + Registrar lote
         </button>
       </div>
@@ -966,7 +966,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <!-- Próxima producción -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:12px;">PRÓXIMA PRODUCCIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:12px;">PRÓXIMA PRODUCCIÓN</div>
         <div style="display:flex;gap:10px;align-items:center;">
           <input type="date" id="fecha-prod-input" class="inp" style="flex:1;">
           <button onclick="guardarFechaProduccion()" style="background:var(--gris2);border:2px solid var(--gris3);border-radius:10px;padding:10px 14px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--blanco);cursor:pointer;white-space:nowrap;">Guardar</button>
@@ -977,7 +977,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <!-- Historial lotes -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">HISTORIAL DE LOTES</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">HISTORIAL DE LOTES</div>
           <select id="lotes-filtro" onchange="renderProduccion()" style="background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:4px 8px;color:var(--suave2);font-size:0.72rem;font-weight:700;">
             <option value="5">Últimos 5</option>
             <option value="10">Últimos 10</option>
@@ -989,7 +989,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
       <!-- Estadísticas de lotes -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">ESTADÍSTICAS DE LOTES</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:10px;">ESTADÍSTICAS DE LOTES</div>
         <div id="lotes-stats" style="font-size:0.82rem;font-weight:700;color:var(--suave);">Cargando...</div>
       </div>
     </div>
@@ -1003,7 +1003,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="prod-tab-insumos" style="display:none;">
 
       <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">INSUMOS DE PRODUCCIÓN</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:14px;">INSUMOS DE PRODUCCIÓN</div>
 
         <!-- Aceite -->
         <div style="margin-bottom:14px;border-bottom:1px solid var(--gris3);padding-bottom:14px;">
@@ -1032,7 +1032,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
             <input type="range" id="ins-gas-pct" min="0" max="100" step="5" value="50"
               oninput="document.getElementById('ins-gas-display').textContent=this.value+'%'"
               style="width:100%;accent-color:var(--amarillo);">
-            <div style="text-align:center;font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--amarillo);" id="ins-gas-display">50%</div>
+            <div style="text-align:center;font-family:'Archivo',sans-serif;font-size:1.5rem;color:var(--acento-txt);" id="ins-gas-display">50%</div>
           </div>
           <div style="margin-top:6px;">
             <div style="font-size:0.65rem;font-weight:700;color:#555;margin-bottom:3px;">ALERTA MÍNIMA (%)</div>
@@ -1121,7 +1121,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <div id="uso-historial-mini" style="margin-top:8px;font-size:0.72rem;color:#555;"></div>
         </div>
 
-        <button onclick="guardarInsumos()" style="margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--negro);cursor:pointer;">
+        <button onclick="guardarInsumos()" style="margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">
           Guardar inventario de insumos
         </button>
       </div>
@@ -1136,9 +1136,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- ══ TAB: CONSUMIBLES ══ -->
     <div id="prod-tab-consumibles" style="display:none;">
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:14px;">CONSUMIBLES</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:14px;">CONSUMIBLES</div>
         <div id="consumibles-grid" style="display:flex;flex-direction:column;gap:10px;"></div>
-        <button onclick="guardarConsumibles()" style="margin-top:16px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--negro);cursor:pointer;">
+        <button onclick="guardarConsumibles()" style="margin-top:16px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">
           Guardar consumibles
         </button>
       </div>
@@ -1147,7 +1147,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- ══ TAB: INVENTARIO FÍSICO ══ -->
     <div id="prod-tab-inventario" style="display:none;">
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">INVENTARIO FÍSICO DE PIEZAS</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:4px;">INVENTARIO FÍSICO DE PIEZAS</div>
         <div style="font-size:0.72rem;font-weight:700;color:#555;margin-bottom:12px;">Cuenta las piezas que quedan al final del lote</div>
         <div style="margin-bottom:10px;">
           <div style="font-size:0.68rem;font-weight:700;color:#555;margin-bottom:4px;">LOTE</div>
@@ -1156,7 +1156,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div id="inv-fisico-grid" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
           <div style="color:var(--suave);font-size:0.78rem;">Selecciona un lote para registrar</div>
         </div>
-        <button onclick="guardarInventarioFisico()" style="background:var(--gris2);border:2px solid var(--amarillo);border-radius:10px;padding:10px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--amarillo);cursor:pointer;">
+        <button onclick="guardarInventarioFisico()" style="background:var(--gris2);border:2px solid var(--amarillo);border-radius:10px;padding:10px;width:100%;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--acento-txt);cursor:pointer;">
           Guardar conteo físico
         </button>
         <div style="text-align:center;font-size:0.6rem;color:#444;margin-top:8px;letter-spacing:0.5px;">build 13-jun-2026 · s19</div>
@@ -1172,7 +1172,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-b2b">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">B2B</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">B2B</div>
   </div>
 
   <!-- Tabs B2B -->
@@ -1195,15 +1195,15 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div id="b2b-resumen" style="padding:12px 16px 0;display:none;">
     <div style="background:var(--gris);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-total">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="b2b-r-total">0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Clientes</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-ventas">$0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="b2b-r-ventas">$0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Ventas mes</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="b2b-r-pend">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="b2b-r-pend">0</div>
         <div style="font-size:0.62rem;font-weight:700;color:#555;text-transform:uppercase;">Pendientes</div>
       </div>
     </div>
@@ -1223,14 +1223,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-prospeccion">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PROSPECTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">PROSPECTOS</div>
   </div>
 
   <!-- Resumen + acciones -->
   <div style="padding:14px 16px 0;">
     <div id="pros-resumen" style="background:var(--gris);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;text-align:center;margin-bottom:10px;">
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-total">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="pros-r-total">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Total</div>
       </div>
       <div>
@@ -1238,11 +1238,11 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Pendientes</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);" id="pros-r-cont">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);" id="pros-r-cont">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Contactados</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:#4caf50;" id="pros-r-conv">0</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--ok-txt);" id="pros-r-conv">0</div>
         <div style="font-size:0.6rem;font-weight:800;color:#555;text-transform:uppercase;">Convertidos</div>
       </div>
     </div>
@@ -1250,7 +1250,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- Importar CSV (admin only) -->
     <div style="display:flex;gap:6px;margin-bottom:10px;">
       <button id="pros-btn-import" onclick="abrirImportadorProspectos()" style="display:none;
-        background:transparent;border:1px solid var(--amarillo);border-radius:50px;padding:7px 14px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--amarillo);cursor:pointer;white-space:nowrap;">
+        background:transparent;border:1px solid var(--amarillo);border-radius:50px;padding:7px 14px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;white-space:nowrap;">
         Importar CSV
       </button>
     </div>
@@ -1269,9 +1269,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
              aria-label="Buscar prospecto" oninput="buscarProspectos(this.value)" class="mapa-busca">
       <div id="pros-filtros" class="mapa-chips">
 <button class="pros-fchip" data-est="todos"      onclick="filtrarProspectos('todos')"      style="background:var(--sel-bg);border:1px solid var(--sel-br);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--sel-fg);cursor:pointer;">Todos</button>
-      <button class="pros-fchip" data-est="pendiente"  onclick="filtrarProspectos('pendiente')"  style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est pend"></span>Pendientes</button>
-      <button class="pros-fchip" data-est="contactado" onclick="filtrarProspectos('contactado')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est cont"></span>Contactados</button>
-      <button class="pros-fchip" data-est="convertido" onclick="filtrarProspectos('convertido')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est conv"></span>Convertidos</button>
+      <button class="pros-fchip" data-est="pendiente"  onclick="filtrarProspectos('pendiente')"  style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;"><span class="dot-est pend"></span>Pendientes</button>
+      <button class="pros-fchip" data-est="contactado" onclick="filtrarProspectos('contactado')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;"><span class="dot-est cont"></span>Contactados</button>
+      <button class="pros-fchip" data-est="convertido" onclick="filtrarProspectos('convertido')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;"><span class="dot-est conv"></span>Convertidos</button>
       </div>
     </div>
     <div id="pros-mapa-div" style="width:100%;height:62vh;border-radius:12px;overflow:hidden;border:2px solid var(--gris3);background:var(--gris);position:relative;"></div>
@@ -1304,7 +1304,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="pros-ruta-footer" style="display:none;position:absolute;bottom:16px;left:24px;right:80px;z-index:11;">
       <button id="pros-ruta-calcular" onclick="calcularRutaOptima()" disabled style="
         width:100%;background:var(--amarillo);border:none;border-radius:12px;padding:12px;
-        font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:#000;cursor:pointer;
+        font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;
         box-shadow:0 4px 12px rgba(0,0,0,0.5);opacity:0.5;">
         Selecciona al menos 2 puntos
       </button>
@@ -1358,7 +1358,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   </div>
   <div id="ruta-resumen" style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.82rem;"></div>
   <div id="ruta-paradas" style="margin-bottom:10px;"></div>
-  <button onclick="abrirEnMaps()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;margin-bottom:8px;">
+  <button onclick="abrirEnMaps()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--ok-txt);cursor:pointer;margin-bottom:8px;">
     Abrir en Google Maps
   </button>
   <button onclick="cerrarRuta()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">
@@ -1397,7 +1397,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </div>
     </div>
     <textarea class="inp" id="np-notas" placeholder="Notas (opcional)" rows="2" style="resize:vertical;"></textarea>
-    <button onclick="guardarNuevoProspecto()" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;">
+    <button onclick="guardarNuevoProspecto()" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
       Registrar prospecto
     </button>
   </div>
@@ -1433,7 +1433,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     style="display:block;width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:10px;color:var(--blanco);margin-bottom:10px;">
   <div id="pros-csv-preview" style="display:none;background:var(--gris2);border-radius:8px;padding:10px;font-size:0.78rem;margin-bottom:10px;"></div>
   <button id="pros-csv-confirm" onclick="confirmarImportacion()" disabled
-    style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.88rem;color:var(--negro);cursor:pointer;opacity:0.5;">
+    style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;opacity:0.5;">
     Confirmar importación
   </button>
   <button onclick="probarImportUnaFila()"
@@ -1449,7 +1449,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-ruta">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">MI RUTA</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">MI RUTA</div>
   </div>
   <div style="padding:14px 16px 90px;">
     <div id="ruta-filtros" style="display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
@@ -1465,7 +1465,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-reparto">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">REPARTO</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">REPARTO</div>
   </div>
   <div style="padding:14px 16px 90px;">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
@@ -1478,7 +1478,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-entregas">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">MIS ENTREGAS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">MIS ENTREGAS</div>
   </div>
   <div style="padding:14px 16px 90px;">
     <div id="entregas-cabecera"></div>
@@ -1489,7 +1489,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-armado">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">ARMADO</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">ARMADO</div>
   </div>
   <div style="padding:14px 16px 90px;">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
@@ -1526,14 +1526,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-caja">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CAJA</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">CAJA</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
     <!-- Selector de fecha -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
       <button onclick="cambiarFechaCaja(-1)" style="background:var(--gris);border:1px solid var(--gris3);border-radius:8px;padding:8px 12px;color:var(--blanco);font-size:1rem;cursor:pointer;">◀</button>
-      <div id="caja-fecha-label" style="flex:1;text-align:center;font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);letter-spacing:0;white-space:nowrap;">—</div>
+      <div id="caja-fecha-label" style="flex:1;text-align:center;font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);letter-spacing:0;white-space:nowrap;">—</div>
       <button onclick="cambiarFechaCaja(1)" style="background:var(--gris);border:1px solid var(--gris3);border-radius:8px;padding:8px 12px;color:var(--blanco);font-size:1rem;cursor:pointer;">▶</button>
       <button onclick="cajaHoy()" id="caja-hoy-btn" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--suave);font-size:0.75rem;cursor:pointer;">HOY</button>
     </div>
@@ -1552,7 +1552,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="drawer" id="drawer-apertura-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">ABRIR CAJA</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);letter-spacing:1px;">ABRIR CAJA</div>
       <button onclick="cerrarAperturaCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ap-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;color:var(--blanco);font-size:0.85rem;"></div>
@@ -1566,7 +1566,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <textarea id="ap-notas" rows="2" placeholder="Ej: Fondo recibido del día anterior"
         style="width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-size:0.84rem;outline:none;margin-top:4px;resize:none;"></textarea>
     </div>
-    <button id="ap-btn" onclick="confirmarApertura()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--negro);cursor:pointer;">
+    <button id="ap-btn" onclick="confirmarApertura()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--sobre-marca);cursor:pointer;">
       Abrir caja
     </button>
   </div>
@@ -1577,7 +1577,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="drawer" id="drawer-cierre-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">CERRAR CAJA</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);letter-spacing:1px;">CERRAR CAJA</div>
       <button onclick="cerrarCierreCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ci-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.85rem;"></div>
@@ -1593,7 +1593,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <textarea id="ci-notas" rows="2" placeholder="Si hay diferencia, explica por qué..."
         style="width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-size:0.84rem;outline:none;margin-top:4px;resize:none;"></textarea>
     </div>
-    <button id="ci-btn" onclick="confirmarCierre()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--negro);cursor:pointer;">
+    <button id="ci-btn" onclick="confirmarCierre()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--sobre-marca);cursor:pointer;">
       Cerrar caja
     </button>
   </div>
@@ -1604,7 +1604,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="drawer" id="drawer-mov-caja">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">NUEVO MOVIMIENTO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);letter-spacing:1px;">NUEVO MOVIMIENTO</div>
       <button onclick="cerrarMovCaja()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="mc-punto-info" style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:12px;font-size:0.85rem;color:var(--blanco);"></div>
@@ -1633,7 +1633,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         style="width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:10px;color:var(--blanco);font-size:0.88rem;outline:none;margin-top:4px;">
     </div>
 
-    <button id="mc-btn" onclick="confirmarMovCaja()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--negro);cursor:pointer;">
+    <button id="mc-btn" onclick="confirmarMovCaja()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.95rem;color:var(--sobre-marca);cursor:pointer;">
       Registrar movimiento
     </button>
   </div>
@@ -1644,13 +1644,13 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="drawer" id="drawer-accion-pendiente">
   <div style="padding:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);letter-spacing:1px;">PEDIDO PENDIENTE</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);letter-spacing:1px;">PEDIDO PENDIENTE</div>
       <button onclick="cerrarAccionesPendiente()" style="background:transparent;border:none;color:var(--suave);font-size:1.4rem;cursor:pointer;">×</button>
     </div>
     <div id="ap-pend-info" style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.85rem;color:var(--blanco);"></div>
 
     <div style="margin-bottom:10px;">
-      <button id="ap-confirmar" onclick="ejecutarConfirmarPedido()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.92rem;color:var(--negro);cursor:pointer;margin-bottom:10px;">
+      <button id="ap-confirmar" onclick="ejecutarConfirmarPedido()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:14px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.92rem;color:var(--sobre-marca);cursor:pointer;margin-bottom:10px;">
         ✓ Confirmar (entró en caja/banco)
       </button>
     </div>
@@ -1664,7 +1664,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
           <option value="Transferencia">Transferencia</option>
           <option value="Tarjeta">Tarjeta</option>
         </select>
-        <button onclick="ejecutarCorregirMetodo()" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:10px;color:var(--amarillo);font-weight:800;font-size:0.84rem;cursor:pointer;">
+        <button onclick="ejecutarCorregirMetodo()" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:10px;color:var(--acento-txt);font-weight:800;font-size:0.84rem;cursor:pointer;">
           Cambiar método de pago
         </button>
       </div>
@@ -1678,7 +1678,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-gastos">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">GASTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">GASTOS</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
@@ -1686,7 +1686,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="g-resumen" style="background:var(--gris);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <div style="font-size:0.7rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;">Total mes</div>
-        <div id="g-total" style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);">$0</div>
+        <div id="g-total" style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);">$0</div>
       </div>
       <div id="g-resumen-detalle" style="display:flex;gap:10px;flex-wrap:wrap;font-size:0.72rem;color:var(--suave);"></div>
     </div>
@@ -1695,7 +1695,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <button onclick="abrirNuevoGasto()" style="
       width:100%;background:var(--amarillo);border:none;border-radius:10px;
       padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;
-      color:var(--negro);cursor:pointer;margin-bottom:12px;">
+      color:var(--sobre-marca);cursor:pointer;margin-bottom:12px;">
       Registrar gasto
     </button>
 
@@ -1704,11 +1704,11 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <button class="g-fchip" data-est="todos" onclick="filtrarGastos('todos')"
         style="background:var(--sel-bg);border:1px solid var(--sel-br);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--sel-fg);cursor:pointer;">Todos</button>
       <button class="g-fchip" data-est="pendiente" onclick="filtrarGastos('pendiente')"
-        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;">Pendientes</button>
+        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;">Pendientes</button>
       <button class="g-fchip" data-est="aprobado" onclick="filtrarGastos('aprobado')"
-        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;">Aprobados</button>
+        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;">Aprobados</button>
       <button class="g-fchip" data-est="rechazado" onclick="filtrarGastos('rechazado')"
-        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;">Rechazados</button>
+        style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave2);cursor:pointer;">Rechazados</button>
     </div>
 
     <!-- Lista -->
@@ -1798,9 +1798,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <label style="display:block;font-size:0.7rem;font-weight:800;color:var(--suave);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Foto del ticket (opcional)</label>
       <input type="file" id="ng-ticket-file" accept="image/*"
         style="display:block;width:100%;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-size:0.78rem;">
-      <div id="ng-ticket-preview" style="display:none;margin-top:6px;font-size:0.74rem;color:#4caf50;"></div>
+      <div id="ng-ticket-preview" style="display:none;margin-top:6px;font-size:0.74rem;color:var(--ok-txt);"></div>
     </div>
-    <button onclick="guardarGasto()" id="ng-btn-guardar" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;">
+    <button onclick="guardarGasto()" id="ng-btn-guardar" style="background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
       Guardar gasto
     </button>
   </div>
@@ -1823,7 +1823,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-jornadas">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">JORNADA</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">JORNADA</div>
   </div>
 
   <div style="padding:14px 16px 80px;">
@@ -1861,7 +1861,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 
   <textarea class="inp" id="ij-notas" placeholder="Notas (opcional)" rows="2" style="resize:vertical;margin-bottom:10px;"></textarea>
 
-  <button onclick="confirmarIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;">
+  <button onclick="confirmarIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
     Registrar entrada
   </button>
 </div>
@@ -1878,7 +1878,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div style="font-size:0.74rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Actividades realizadas</div>
   <div id="cj-actividades" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
   <textarea class="inp" id="cj-notas" placeholder="Notas (opcional)" rows="2" style="resize:vertical;margin-bottom:10px;"></textarea>
-  <button onclick="confirmarCerrarJornada()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#4caf50;cursor:pointer;">
+  <button onclick="confirmarCerrarJornada()" style="width:100%;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--ok-txt);cursor:pointer;">
     Cerrar jornada
   </button>
 </div>
@@ -1928,7 +1928,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-tracking">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">SEGUIMIENTO</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">SEGUIMIENTO</div>
   </div>
   <div style="padding:14px 16px 100px;">
     <div id="tk-contenido">
@@ -1945,14 +1945,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-productos">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">PRODUCTOS</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">PRODUCTOS</div>
   </div>
   <div style="padding:14px 16px 100px;">
     <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <button onclick="abrirNuevoProducto()" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--negro);cursor:pointer;">
+      <button onclick="abrirNuevoProducto()" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">
         Nuevo producto
       </button>
-      <button onclick="abrirEscanerCB()" style="flex:1;background:transparent;border:1.5px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
+      <button onclick="abrirEscanerCB()" style="flex:1;background:transparent;border:1.5px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
         Escanear código
       </button>
     </div>
@@ -1970,10 +1970,10 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 <div class="screen" id="s-cupones">
   <div class="header">
     <div class="logo">Crunchy<span> Paps</span></div>
-    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--amarillo);letter-spacing:1px;">CUPONES</div>
+    <div style="font-family:'Archivo',sans-serif;font-size:0.9rem;color:var(--acento-txt);letter-spacing:1px;">CUPONES</div>
   </div>
   <div style="padding:14px 16px 100px;">
-    <button onclick="abrirNuevoCupon()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--negro);cursor:pointer;margin-bottom:14px;">
+    <button onclick="abrirNuevoCupon()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;margin-bottom:14px;">
       Nuevo cupón
     </button>
     <div id="cup-lista">
@@ -2072,7 +2072,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </div>
     </div>
 
-    <button onclick="guardarProducto()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;margin-top:8px;">
+    <button onclick="guardarProducto()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;margin-top:8px;">
       Guardar
     </button>
     <button id="pf-eliminar" onclick="eliminarBebidaActual()" style="display:none;width:100%;background:transparent;border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--rojo);cursor:pointer;margin-top:4px;">
@@ -2163,7 +2163,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <option value="nuevos">Solo clientes nuevos</option>
       </select>
     </div>
-    <button onclick="guardarCupon()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;margin-top:8px;">
+    <button onclick="guardarCupon()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;margin-top:8px;">
       Guardar cupón
     </button>
   </div>
@@ -2178,9 +2178,9 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <button onclick="cerrarPermisos()" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:10px;">
-    <button id="pm-tab-rol" onclick="setTabPermisos('rol')" style="flex:1;background:var(--amarillo);border:1px solid var(--amarillo);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--negro);cursor:pointer;">Por rol</button>
-    <button id="pm-tab-vend" onclick="setTabPermisos('vend')" style="flex:1;background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--suave);cursor:pointer;">Por vendedor</button>
-    <button id="pm-tab-resumen" onclick="setTabPermisos('resumen')" style="flex:1;background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--suave);cursor:pointer;">Matriz</button>
+    <button id="pm-tab-rol" onclick="setTabPermisos('rol')" style="flex:1;background:var(--amarillo);border:1px solid var(--amarillo);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--sobre-marca);cursor:pointer;">Por rol</button>
+    <button id="pm-tab-vend" onclick="setTabPermisos('vend')" style="flex:1;background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--suave2);cursor:pointer;">Por vendedor</button>
+    <button id="pm-tab-resumen" onclick="setTabPermisos('resumen')" style="flex:1;background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:7px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--suave2);cursor:pointer;">Matriz</button>
   </div>
   <div id="pm-contenido"></div>
 </div>
@@ -2217,7 +2217,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div class="header"><div class="logo">Crunchy<span> Paps</span></div></div>
   <div style="padding:14px 14px 120px;">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);letter-spacing:1px;">Resumen de pedidos</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);letter-spacing:1px;">Resumen de pedidos</div>
       <div style="display:flex;gap:6px;">
         <button onclick="copiarResumenDia()" style="background:#25D366;border:none;color:var(--sobre-marca);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">Compartir</button>
         <button onclick="descargarInformePDF()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:7px 12px;font-weight:800;font-size:0.74rem;cursor:pointer;white-space:nowrap;">PDF</button>
@@ -2252,7 +2252,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="resumen-stock" style="margin-bottom:14px;"></div>
     <div id="recordatorios-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">RECORDATORIOS DE PAGO</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">RECORDATORIOS DE PAGO</span>
         <div style="display:flex;gap:6px;">
           <button onclick="editarCopyRecordatorio()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;white-space:nowrap;">Mensaje</button>
           <button onclick="cargarRecordatoriosPago()" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;white-space:nowrap;">↻ Ver pendientes</button>
@@ -2271,7 +2271,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     </div>
     <div id="kardex-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">KÁRDEX DE LOTE</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">KÁRDEX DE LOTE</span>
         <select id="kardex-lote-select" onchange="renderKardexLote(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;max-width:60%;">
           <option value="">Selecciona lote…</option>
         </select>
@@ -2280,14 +2280,14 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     </div>
     <div id="regalos-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">REGALOS VS VENTAS</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">REGALOS VS VENTAS</span>
         <input type="month" id="regalos-mes" onchange="cargarMetricaRegalo(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;">
       </div>
       <div id="regalos-cont"><div style="color:var(--suave);font-size:0.8rem;">Cargando métrica…</div></div>
     </div>
     <div id="embudo-card" style="display:none;background:var(--gris);border-radius:14px;padding:14px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">¿DÓNDE SE CAE LA GENTE?</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">¿DÓNDE SE CAE LA GENTE?</span>
         <select id="embudo-dias" onchange="cargarEmbudo(this.value)" style="background:var(--gris2);border:1px solid var(--gris3);color:var(--blanco);border-radius:8px;padding:6px 10px;font-weight:700;font-size:0.75rem;cursor:pointer;">
           <option value="7">7 días</option>
           <option value="30" selected>30 días</option>
@@ -2417,7 +2417,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <!-- Cupón de descuento (v2.7) -->
   <div id="cupon-wrap" style="display:none;margin:8px 0;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:10px;">
     <div id="cupon-input-wrap">
-      <div style="font-size:0.7rem;font-weight:800;color:#777;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cupón de descuento</div>
+      <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cupón de descuento</div>
       <div style="display:flex;gap:6px;">
         <input class="inp" id="cupon-codigo" type="text" placeholder="Código" style="flex:1;text-transform:uppercase;" maxlength="20">
         <button onclick="aplicarCuponDesdeCarrito()" id="cupon-btn-aplicar" style="background:var(--amarillo);border:none;border-radius:8px;padding:0 14px;font-weight:900;cursor:pointer;font-size:0.82rem;">Aplicar</button>
@@ -2427,8 +2427,8 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <div id="cupon-aplicado" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:0.74rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;">Cupón aplicado</div>
-          <div id="cupon-aplicado-codigo" style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--amarillo);line-height:1;margin-top:2px;">CODIGO</div>
+          <div style="font-size:0.74rem;font-weight:800;color:var(--ok-txt);text-transform:uppercase;letter-spacing:1px;">Cupón aplicado</div>
+          <div id="cupon-aplicado-codigo" style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--acento-txt);line-height:1;margin-top:2px;">CODIGO</div>
           <div id="cupon-aplicado-desc" style="font-size:0.74rem;color:var(--blanco);margin-top:2px;">Descuento</div>
         </div>
         <button onclick="quitarCuponDelCarrito()" style="background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:4px 8px;color:var(--suave);font-weight:800;font-size:0.7rem;cursor:pointer;">Quitar</button>
@@ -2441,7 +2441,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <span>Subtotal</span>
     <span id="cart-subtotal-mnt">$0</span>
   </div>
-  <div id="cart-descuento-row" style="display:none;justify-content:space-between;align-items:center;padding:6px 0;font-size:0.82rem;color:#4caf50;">
+  <div id="cart-descuento-row" style="display:none;justify-content:space-between;align-items:center;padding:6px 0;font-size:0.82rem;color:var(--ok-txt);">
     <span id="cart-descuento-lbl">Descuento</span>
     <span id="cart-descuento-mnt">-$0</span>
   </div>
@@ -2509,7 +2509,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <button onclick="habilitarEdicionCliente()" style="
           background:transparent;border:1px solid var(--amarillo);border-radius:8px;
           padding:7px 14px;font-family:'Inter',sans-serif;font-weight:700;
-          font-size:0.78rem;color:var(--amarillo);cursor:pointer;">
+          font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">
           Editar datos del cliente
         </button>
       </div>
@@ -2557,7 +2557,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <!-- Vendedor seleccionado (visible cuando hay uno) -->
         <div id="vend-seleccionado" style="display:none;background:var(--ok-bg);border:1px solid #4caf50;border-radius:8px;padding:10px;margin-bottom:8px;align-items:center;justify-content:space-between;">
           <div style="flex:1;min-width:0;">
-            <div style="color:#4caf50;font-size:0.7rem;font-weight:700;">✓ TU CONTACTO</div>
+            <div style="color:var(--ok-txt);font-size:0.7rem;font-weight:700;">✓ TU CONTACTO</div>
             <div id="vend-sel-nombre" style="color:var(--blanco);font-weight:700;font-size:0.9rem;">—</div>
             <div id="vend-sel-rol" style="color:var(--suave);font-size:0.72rem;">—</div>
           </div>
@@ -2738,7 +2738,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <button id="g-btn-tracking" onclick="abrirTrackingDesdeGracias()" style="
       width:100%;background:transparent;border:1.5px solid var(--amarillo);
       border-radius:12px;padding:12px;font-family:'Inter',sans-serif;
-      font-weight:800;font-size:0.86rem;color:var(--amarillo);cursor:pointer;
+      font-weight:800;font-size:0.86rem;color:var(--acento-txt);cursor:pointer;
       margin-top:10px;">
       Ver seguimiento de mi pedido
     </button>
@@ -2782,8 +2782,8 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
   <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gris3);padding-bottom:4px;margin-bottom:6px;">
     <span style="color:var(--acento-txt);font-weight:800;">Performance</span>
     <div>
-      <button onclick="perfClear()" style="background:transparent;border:1px solid var(--gris3);border-radius:4px;color:#aaa;padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
-      <button onclick="perfHide()" style="background:transparent;border:none;color:#888;font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
+      <button onclick="perfClear()" style="background:transparent;border:1px solid var(--gris3);border-radius:4px;color:var(--suave);padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
+      <button onclick="perfHide()" style="background:transparent;border:none;color:var(--suave);font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
     </div>
   </div>
   <div id="perf-log" style="max-height:240px;overflow-y:auto;line-height:1.5;"></div>
@@ -2978,12 +2978,12 @@ window.onerror = function(msg, src, line) {
   .ffe-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px}
   .ffe-overlay.ffe-open{display:flex}
   .ffe-card{background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:22px 20px 18px;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-  .ffe-close{position:absolute;top:10px;right:12px;border:none;background:none;font-size:26px;line-height:1;color:#999;cursor:pointer}
+  .ffe-close{position:absolute;top:10px;right:12px;border:none;background:none;font-size:26px;line-height:1;color:var(--suave);cursor:pointer}
   .ffe-h{margin:0 28px 4px 0;font-size:1.15rem;color:#222}
-  .ffe-sub{margin:0 0 14px;font-size:.85rem;color:#777}
+  .ffe-sub{margin:0 0 14px;font-size:.85rem;color:var(--suave)}
   .ffe-q{margin-bottom:14px}
   .ffe-lbl{display:block;font-size:.9rem;font-weight:600;color:#333;margin-bottom:7px}
-  .ffe-opt{font-weight:400;color:#999;font-size:.8rem}
+  .ffe-opt{font-weight:400;color:var(--suave);font-size:.8rem}
   .ffe-stars{display:flex;gap:4px}
   .ffe-stars button{border:none;background:none;font-size:30px;line-height:1;color:#ddd;cursor:pointer;padding:0 2px;transition:color .12s}
   .ffe-stars button.ffe-on{color:#FFC400}
@@ -2995,7 +2995,7 @@ window.onerror = function(msg, src, line) {
   .ffe-textarea:focus{outline:none;border-color:#FFC400}
   .ffe-submit{width:100%;border:none;background:#FFC400;color:#222;font-weight:700;font-size:1rem;border-radius:14px;padding:13px;cursor:pointer;margin-top:6px}
   .ffe-submit:active{transform:scale(.99)}
-  .ffe-later{width:100%;border:none;background:none;color:#999;font-size:.85rem;padding:10px;cursor:pointer;margin-top:2px}
+  .ffe-later{width:100%;border:none;background:none;color:var(--suave);font-size:.85rem;padding:10px;cursor:pointer;margin-top:2px}
 </style>
 <div id="prod-detalle" class="pd-overlay" onclick="if(event.target===this) cerrarProducto()">
   <div class="pd-panel">

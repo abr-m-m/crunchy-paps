@@ -24,13 +24,13 @@ window.buscarClienteUbicacion = async function() {
   const msg = document.getElementById('au-msg'); if (msg) msg.style.display = 'none';
   window._auTel = null;
   if (wrap) wrap.style.display = 'none';
-  if (q.length < 3) { if (cont) { cont.style.display = 'block'; cont.innerHTML = '<span style="color:#ff8a8a;">Escribe al menos 3 letras del nombre o el teléfono.</span>'; } return; }
+  if (q.length < 3) { if (cont) { cont.style.display = 'block'; cont.innerHTML = '<span style="color:var(--error-txt);">Escribe al menos 3 letras del nombre o el teléfono.</span>'; } return; }
   if (cont) { cont.style.display = 'block'; cont.innerHTML = 'Buscando…'; }
   try {
     const r = await supabaseCall('POST', 'rpc/buscar_clientes_ubicacion', { p_q: q });
     const lista = (r && r.ok && Array.isArray(r.clientes)) ? r.clientes : [];
     if (!lista.length) {
-      cont.innerHTML = '<span style="color:#ff8a8a;">Sin resultados. Prueba con otra parte del nombre o el teléfono.</span>';
+      cont.innerHTML = '<span style="color:var(--error-txt);">Sin resultados. Prueba con otra parte del nombre o el teléfono.</span>';
       return;
     }
     cont.innerHTML = lista.map(c => {
@@ -44,7 +44,7 @@ window.buscarClienteUbicacion = async function() {
       </div>`;
     }).join('');
   } catch(e) {
-    cont.innerHTML = '<span style="color:#ff8a8a;">Error al buscar: ' + e.message + '</span>';
+    cont.innerHTML = '<span style="color:var(--error-txt);">Error al buscar: ' + e.message + '</span>';
   }
 };
 window.elegirClienteUbicacion = function(tel, nombre) {
@@ -56,20 +56,20 @@ window.elegirClienteUbicacion = function(tel, nombre) {
 };
 window.usarGpsAjuste = function() {
   const st = document.getElementById('au-gps-status');
-  if (!navigator.geolocation) { if (st) { st.textContent = 'Tu dispositivo no soporta GPS.'; st.style.color = '#ff8a8a'; } return; }
+  if (!navigator.geolocation) { if (st) { st.textContent = 'Tu dispositivo no soporta GPS.'; st.style.color = 'var(--error-txt)'; } return; }
   if (st) { st.textContent = 'Obteniendo ubicación…'; st.style.color = 'var(--suave)'; }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       window._auGps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      if (st) { st.textContent = `Ubicación capturada (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)})`; st.style.color = '#7ee787'; }
+      if (st) { st.textContent = `Ubicación capturada (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)})`; st.style.color = 'var(--ok-txt)'; }
     },
-    (_e) => { if (st) { st.textContent = 'No se pudo obtener el GPS. Revisa los permisos de ubicación.'; st.style.color = '#ff8a8a'; } },
+    (_e) => { if (st) { st.textContent = 'No se pudo obtener el GPS. Revisa los permisos de ubicación.'; st.style.color = 'var(--error-txt)'; } },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 };
 window.guardarAjusteUbicacion = async function() {
   const msg = document.getElementById('au-msg');
-  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
+  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? 'var(--ok-txt)' : 'var(--error-txt)'; };
   if (!window._auTel) { showMsg('Primero busca al cliente.'); return; }
   if (!window._auGps) { showMsg('Captura la ubicación con el botón de GPS.'); return; }
   const btn = document.getElementById('au-guardar'); const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
@@ -115,7 +115,7 @@ function pintarTipoAltaBtn(t, on) {
   const b = document.getElementById('an-tipo-' + t); if (!b) return;
   b.style.background = on ? 'var(--amarillo)' : 'var(--gris2)';
   b.style.color = on ? '#000' : 'var(--blanco)';
-  b.style.borderColor = on ? 'var(--amarillo)' : 'var(--gris3)';
+  b.style.borderColor = on ? 'var(--acento-txt)' : 'var(--gris3)';
 }
 window.setTipoAltaNegocio = function(t) {
   window._altaNegTipo = t;
@@ -123,21 +123,21 @@ window.setTipoAltaNegocio = function(t) {
 };
 window.usarGpsAltaNegocio = function() {
   const st = document.getElementById('an-gps-status');
-  if (!navigator.geolocation) { if (st) { st.textContent = 'Tu dispositivo no soporta GPS.'; st.style.color = '#ff8a8a'; } return; }
+  if (!navigator.geolocation) { if (st) { st.textContent = 'Tu dispositivo no soporta GPS.'; st.style.color = 'var(--error-txt)'; } return; }
   if (st) { st.textContent = 'Obteniendo ubicación…'; st.style.color = 'var(--suave)'; }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       window._altaNegGps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      if (st) { st.textContent = `Ubicación capturada (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)})`; st.style.color = '#7ee787'; }
+      if (st) { st.textContent = `Ubicación capturada (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)})`; st.style.color = 'var(--ok-txt)'; }
     },
-    (_e) => { if (st) { st.textContent = 'No se pudo obtener el GPS. Revisa los permisos de ubicación.'; st.style.color = '#ff8a8a'; } },
+    (_e) => { if (st) { st.textContent = 'No se pudo obtener el GPS. Revisa los permisos de ubicación.'; st.style.color = 'var(--error-txt)'; } },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 };
 window.guardarAltaNegocio = async function() {
   const val = id => (document.getElementById(id)?.value || '').trim();
   const msg = document.getElementById('an-msg');
-  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? '#7ee787' : '#ff8a8a'; };
+  const showMsg = (t, ok) => { if (!msg) return; msg.style.display = 'block'; msg.textContent = t; msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)'; msg.style.color = ok ? 'var(--ok-txt)' : 'var(--error-txt)'; };
   const tipo = window._altaNegTipo;
   if (!tipo) { showMsg('Elige el tipo de negocio.'); return; }
   const tel = val('an-tel').replace(/\D/g, '').slice(-10);
@@ -604,7 +604,7 @@ async function renderProduccion() {
           <input type="number" id="inv-${idx}" value="${s.kilosDisponibles.toFixed(2)}"
             min="0" step="0.1"
             style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
-            onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
+            onfocus="this.style.borderColor='var(--acento-txt)'" onblur="this.style.borderColor='var(--gris3)'">
         </div>
       </div>
     `).join('');
@@ -637,13 +637,13 @@ async function renderProduccion() {
           const lotesParaMostrar = lotes.slice(0, limite); // ya viene ordenado DESC
           lotesEl.innerHTML = lotesParaMostrar.map((l,idx) => {
             const pct = l.kilosTotales > 0 ? Math.round((l.kilosVendidos/l.kilosTotales)*100) : 0;
-            const colorPct = pct > 80 ? '#4caf50' : pct > 40 ? 'var(--amarillo)' : 'var(--suave)';
+            const colorPct = pct > 80 ? 'var(--ok-txt)' : pct > 40 ? 'var(--amarillo)' : 'var(--suave)';
             const esActivo = l.estatus === 'Activo';
             return `
             <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ${esActivo?'var(--amarillo)':'#333'};">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
                 <div>
-                  <div style="font-weight:800;font-size:0.88rem;color:${esActivo?'var(--amarillo)':'var(--suave)'};">
+                  <div style="font-weight:800;font-size:0.88rem;color:${esActivo?'var(--acento-txt)':'var(--suave)'};">
                     ${l.idLote} ${esActivo?'<span style="font-size:0.65rem;background:var(--aviso-bg);color:var(--aviso-txt);border-radius:4px;padding:2px 5px;">ACTIVO</span>':''}
                   </div>
                   <div style="font-size:0.7rem;color:#555;">
@@ -662,11 +662,11 @@ async function renderProduccion() {
                 <span>Vendido: ${l.kilosVendidos?.toFixed(2)||0}kg</span>
                 <span>Disponible: ${l.kilosDisponibles?.toFixed(2)||0}kg</span>
               </div>
-              ${l.notas ? `<div style="font-size:0.72rem;color:#888;font-style:italic;margin-bottom:6px;">"${l.notas}"</div>` : ''}
+              ${l.notas ? `<div style="font-size:0.72rem;color:var(--suave);font-style:italic;margin-bottom:6px;">"${l.notas}"</div>` : ''}
               ${esActivo ? `
               <div style="display:flex;gap:6px;margin-top:6px;">
-                <button onclick="editarLote('${l.idLote}', ${l.kilosTotales}, ${l.kilosDisponibles})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--amarillo);cursor:pointer;">Editar</button>
-                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#888;cursor:pointer;">Comentario</button>
+                <button onclick="editarLote('${l.idLote}', ${l.kilosTotales}, ${l.kilosDisponibles})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
+                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--suave);cursor:pointer;">Comentario</button>
                 <button onclick="cerrarLote('${l.idLote}')" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#555;cursor:pointer;">✕ Cerrar</button>
               </div>` : ''}
             </div>`}).join('');
@@ -760,9 +760,9 @@ window.previewKilosLote = function() {
   const enteros = Math.floor(kg);
   const gramos = Math.round((kg - enteros) * 1000);
   if (kg > 200) {
-    el.innerHTML = `<span style="color:#ff8a8a;">${kg.toLocaleString('es-MX')} kg = ${(kg/1000).toFixed(1)} toneladas. ¿Quisiste decir ${(kg/1000).toFixed(3)} kg?</span>`;
+    el.innerHTML = `<span style="color:var(--error-txt);">${kg.toLocaleString('es-MX')} kg = ${(kg/1000).toFixed(1)} toneladas. ¿Quisiste decir ${(kg/1000).toFixed(3)} kg?</span>`;
   } else {
-    el.innerHTML = `<span style="color:#7ee787;">✓ = ${enteros} kg ${gramos} g</span>`;
+    el.innerHTML = `<span style="color:var(--ok-txt);">✓ = ${enteros} kg ${gramos} g</span>`;
   }
 };
 
@@ -867,7 +867,7 @@ window.guardarPinPropio = async function() {
       p_data: { token: tokenVendedor(), pinActual: actual, pinNuevo: nuevo }
     });
     if (res && res.ok) {
-      msg.style.color = '#4caf50';
+      msg.style.color = 'var(--ok-txt)';
       msg.textContent = '✓ PIN actualizado. Vuelve a entrar con el nuevo.';
       // El servidor revoca TODAS las sesiones de esta persona al cambiar el
       // PIN — incluida ésta. Si no lo hiciéramos, cambiar el PIN por sospecha
@@ -924,7 +924,7 @@ async function renderHoraLimiteCfg() {
   const num = (id, v) => `<input id="${id}" type="number" inputmode="numeric" min="0" max="7" step="1" value="${v}" style="width:70px;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--blanco);font-size:0.9rem;text-align:right;">`;
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:16px;margin-bottom:14px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:6px;">HORA LÍMITE DE PEDIDO</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:6px;">HORA LÍMITE DE PEDIDO</div>
       <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Un pedido antes de esta hora se entrega en los días «normales»; después, en los días «tarde». Hora de la Ciudad de México.</div>
       <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:0.86rem;color:var(--blanco);">
         <label for="hl-hora">Hora límite</label>
@@ -1253,14 +1253,14 @@ function pintarDashboard() {
       <div style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <span style="font-weight:800;color:var(--blanco);font-size:0.82rem;">${medalla} ${v.nombre || ('Vendedor '+id)}</span>
-          <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">$${ventas.toLocaleString('es-MX')}</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);">$${ventas.toLocaleString('es-MX')}</span>
         </div>
         <div style="background:var(--gris3);border-radius:4px;height:7px;overflow:hidden;margin-bottom:4px;">
           <div style="background:${pct>=100?'#4caf50':'var(--amarillo)'};height:100%;width:${Math.max(2,Math.round((ventas/maxVend)*100))}%;"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.66rem;margin-bottom:4px;">
           <span style="color:var(--suave);">${pedidos} pedido${pedidos===1?'':'s'} este mes</span>
-          <span style="font-weight:800;color:${pctPend>0?'#ff6b6b':'#4caf50'};">${pctPend}% pend. de pago${pend>0?` (${pend})`:''}</span>
+          <span style="font-weight:800;color:${pctPend>0?'var(--error-txt)':'var(--ok-txt)'};">${pctPend}% pend. de pago${pend>0?` (${pend})`:''}</span>
         </div>
         ${id != null ? `
         <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--suave);">
@@ -1268,7 +1268,7 @@ function pintarDashboard() {
           <input id="cuota-${id}" type="number" inputmode="numeric" value="${cuota||''}" placeholder="0"
             style="width:90px;background:var(--gris);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--blanco);font-size:0.72rem;">
           <button onclick="guardarCuotaDash('${id}','${(v.nombre||'').replace(/'/g,'')}')" style="background:var(--amarillo);border:none;border-radius:6px;padding:3px 8px;font-weight:800;font-size:0.66rem;color:var(--sobre-marca);cursor:pointer;">Guardar</button>
-          ${cuota>0?`<span style="margin-left:auto;font-weight:800;color:${pct>=100?'#4caf50':'var(--amarillo)'};">${pct}%</span>`:''}
+          ${cuota>0?`<span style="margin-left:auto;font-weight:800;color:${pct>=100?'var(--ok-txt)':'var(--acento-txt)'};">${pct}%</span>`:''}
         </div>` : ''}
       </div>`;
   }).join('') : '<div style="color:var(--suave);font-size:0.78rem;">Sin ventas este mes</div>';
@@ -1280,14 +1280,14 @@ function pintarDashboard() {
     </div>`;
   const miniStat = (lbl, val, color) => `
     <div style="flex:1;min-width:70px;background:var(--gris2);border-radius:10px;padding:10px;text-align:center;">
-      <div style="font-family:'Archivo',sans-serif;font-size:${String(val).length>8?'0.95rem':String(val).length>6?'1.15rem':'1.4rem'};color:${color||'var(--amarillo)'};line-height:1;">${val}</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:${String(val).length>8?'0.95rem':String(val).length>6?'1.15rem':'1.4rem'};color:${color||'var(--acento-txt)'};line-height:1;">${val}</div>
       <div style="font-size:0.6rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">${lbl}</div>
     </div>`;
 
   // Comparativo MTD vs MTD
   const deltaTxt = deltaPct === null
     ? '<span style="color:var(--suave);font-size:0.72rem;">sin mes anterior para comparar</span>'
-    : `<span style="font-weight:800;color:${deltaPct>=0?'#4caf50':'#ff6b6b'};">${deltaPct>=0?'▲':'▼'} ${Math.abs(deltaPct)}%</span> <span style="color:var(--suave);font-size:0.72rem;">vs mismo periodo mes anterior ($${mtdPrev.toLocaleString('es-MX')})</span>`;
+    : `<span style="font-weight:800;color:${deltaPct>=0?'var(--ok-txt)':'var(--error-txt)'};">${deltaPct>=0?'▲':'▼'} ${Math.abs(deltaPct)}%</span> <span style="color:var(--suave);font-size:0.72rem;">vs mismo periodo mes anterior ($${mtdPrev.toLocaleString('es-MX')})</span>`;
 
   // Objetivo vs avance
   const objBloque = objetivo > 0 ? `
@@ -1298,7 +1298,7 @@ function pintarDashboard() {
       <div style="background:var(--gris3);border-radius:5px;height:12px;overflow:hidden;margin-bottom:4px;">
         <div style="background:${avancePct>=100?'#4caf50':'var(--amarillo)'};height:100%;width:${Math.min(100,avancePct)}%;"></div>
       </div>
-      <div style="text-align:right;font-weight:800;color:${avancePct>=100?'#4caf50':'var(--amarillo)'};font-size:0.8rem;">${avancePct}% del objetivo</div>`
+      <div style="text-align:right;font-weight:800;color:${avancePct>=100?'var(--ok-txt)':'var(--acento-txt)'};font-size:0.8rem;">${avancePct}% del objetivo</div>`
     : '<div style="color:var(--suave);font-size:0.74rem;">Define las cuotas por vendedor (abajo) para ver el objetivo del mes.</div>';
 
   // Bruto y neto (dashboard_resumen.ingresos): bruto − descuentos = neto; neto + envío cobrado = total cobrado.
@@ -1323,7 +1323,7 @@ function pintarDashboard() {
 
   cont.innerHTML =
     card(`Ingreso neto del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
-      `<div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
+      `<div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--acento-txt);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
        <div style="font-size:0.66rem;color:var(--suave);margin-top:4px;">Producto después de descuentos, sin envío</div>
        <div style="margin:4px 0 12px;">${deltaTxt}</div>
        <div style="display:flex;align-items:flex-end;gap:2px;height:70px;">${barrasDia}</div>
@@ -1332,9 +1332,9 @@ function pintarDashboard() {
     card('Objetivo vs avance', objBloque) +
     card('Estatus de pedidos',
       `<div style="display:flex;gap:8px;flex-wrap:wrap;">
-        ${miniStat('Por entregar', Number(D.por_entregar)||0, (Number(D.por_entregar)||0)>0?'var(--amarillo)':'#4caf50')}
-        ${miniStat('Por cobrar', '$'+(Number(D.por_cobrar_monto)||0).toLocaleString('es-MX'), (Number(D.por_cobrar_monto)||0)>0?'var(--amarillo)':'#4caf50')}
-        ${miniStat('Entregados', Number(D.entregados)||0, '#4caf50')}
+        ${miniStat('Por entregar', Number(D.por_entregar)||0, (Number(D.por_entregar)||0)>0?'var(--acento-txt)':'var(--ok-txt)')}
+        ${miniStat('Por cobrar', '$'+(Number(D.por_cobrar_monto)||0).toLocaleString('es-MX'), (Number(D.por_cobrar_monto)||0)>0?'var(--acento-txt)':'var(--ok-txt)')}
+        ${miniStat('Entregados', Number(D.entregados)||0, 'var(--ok-txt)')}
       </div>`) +
     card('Top sabores (piezas)', barrasSab) +
     card('Top presentaciones (piezas)', barrasPres) +
@@ -1398,7 +1398,7 @@ window.descargarInformePDF = function() {
     body{font-family:'Inter',Arial,sans-serif;background:#fff;color:#111;margin:0;padding:22px;}
     .cp-head{display:flex;align-items:center;gap:10px;border-bottom:3px solid #E5B312;padding-bottom:12px;margin-bottom:18px;}
     .cp-head h1{font-size:18px;margin:0;color:#111;font-family:'Archivo',Arial,sans-serif; font-weight:700;letter-spacing:1px;}
-    .cp-head .d{margin-left:auto;color:#666;font-size:12px;text-transform:capitalize;}
+    .cp-head .d{margin-left:auto;color:var(--suave);font-size:12px;text-transform:capitalize;}
     @media print { .noprint{display:none!important;} }
   `;
   const w = window.open('', '_blank');
@@ -1443,7 +1443,7 @@ window.cargarRecordatoriosPago = async function() {
       return;
     }
     const items = d.detalle || [];
-    if (!items.length) { cont.innerHTML = '<div style="color:#4caf50;font-size:0.82rem;">✓ No hay pedidos pendientes de pago.</div>'; return; }
+    if (!items.length) { cont.innerHTML = '<div style="color:var(--ok-txt);font-size:0.82rem;">✓ No hay pedidos pendientes de pago.</div>'; return; }
     const filas = items.map(x => {
       const sinTel = !x.to;
       return `
@@ -1643,7 +1643,7 @@ window.cargarMetricaRegalo = async function(yyyymm) {
     const fmtMx = (n) => '$' + (Number(n) || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 });
     const pctV = (r.pct_volumen == null) ? '—' : r.pct_volumen + '%';
     const pctD = (r.pct_dinero == null) ? '—' : r.pct_dinero + '%';
-    const colorPct = (p) => p == null ? 'var(--blanco)' : (p < 5 ? '#7ee787' : (p <= 10 ? '#ffa500' : '#ff6b6b'));
+    const colorPct = (p) => p == null ? 'var(--blanco)' : (p < 5 ? 'var(--ok-txt)' : (p <= 10 ? 'var(--aviso-txt)' : 'var(--error-txt)'));
 
     let html = `
       <div style="display:flex;gap:10px;margin-bottom:12px;">
@@ -1809,20 +1809,20 @@ window.renderKardexLote = async function(idLote) {
     const rowsHtml = filas.map(r => {
       saldo -= r.kg;
       const cancel = String(r.estatus).toLowerCase() === 'cancelado';
-      const estColor = cancel ? '#ff8a8a' : (String(r.estatus).toLowerCase() === 'entregado' ? '#7ee787' : 'var(--suave)');
+      const estColor = cancel ? 'var(--error-txt)' : (String(r.estatus).toLowerCase() === 'entregado' ? 'var(--ok-txt)' : 'var(--suave)');
       return `<tr style="border-bottom:1px solid var(--gris3);">
         <td style="padding:7px 8px;white-space:nowrap;color:var(--suave);font-size:0.74rem;">${fmtFecha(r.fecha)}</td>
         <td style="padding:7px 8px;white-space:nowrap;font-weight:700;font-size:0.76rem;color:var(--acento-txt);">${r.folio}</td>
         <td style="padding:7px 8px;font-size:0.76rem;">${r.cliente}</td>
         <td style="padding:7px 8px;font-size:0.72rem;color:var(--suave);">${r.items.join(', ')}</td>
-        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.76rem;color:#ff8a8a;">−${fmtKg(r.kg)}</td>
+        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.76rem;color:var(--error-txt);">−${fmtKg(r.kg)}</td>
         <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.78rem;">${fmtKg(saldo)}</td>
       </tr>`;
     }).join('');
 
     const reconcilia = Math.abs(saldo - disponible) < 0.01;
     const aviso = reconcilia
-      ? `<span style="color:#7ee787;">✓ Cuadra con disponible</span>`
+      ? `<span style="color:var(--ok-txt);">✓ Cuadra con disponible</span>`
       : `<span style="color:#ffb454;">Saldo calculado ${fmtKg(saldo)} vs disponible ${fmtKg(disponible)} (revisar)</span>`;
 
     cont.innerHTML = `
@@ -1833,11 +1833,11 @@ window.renderKardexLote = async function(idLote) {
         </div>
         <div style="background:var(--gris2);border-radius:8px;padding:8px 10px;flex:1;min-width:90px;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;">Vendido</div>
-          <div style="font-size:1rem;font-weight:800;color:#ff8a8a;">${fmtKg(vendido)}kg</div>
+          <div style="font-size:1rem;font-weight:800;color:var(--error-txt);">${fmtKg(vendido)}kg</div>
         </div>
         <div style="background:var(--gris2);border-radius:8px;padding:8px 10px;flex:1;min-width:90px;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;">Disponible</div>
-          <div style="font-size:1rem;font-weight:800;color:#7ee787;">${fmtKg(disponible)}kg</div>
+          <div style="font-size:1rem;font-weight:800;color:var(--ok-txt);">${fmtKg(disponible)}kg</div>
         </div>
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
@@ -1853,7 +1853,7 @@ window.renderKardexLote = async function(idLote) {
             </tr>
             <tr style="border-bottom:1px solid var(--gris3);">
               <td colspan="5" style="padding:7px 8px;font-size:0.72rem;color:var(--suave);">Lote registrado ${fmtFecha(lote.fecha)} · producción inicial</td>
-              <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:0.78rem;color:#7ee787;">${fmtKg(producido)}</td>
+              <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:0.78rem;color:var(--ok-txt);">${fmtKg(producido)}</td>
             </tr>
           </thead>
           <tbody>${rowsHtml || '<tr><td colspan="6" style="padding:12px 8px;color:var(--suave);font-size:0.8rem;text-align:center;">Sin pedidos que consuman de este lote todavía.</td></tr>'}</tbody>
@@ -1884,7 +1884,7 @@ async function renderResumenInventario(elId, incluirLote) {
     const tot = Number(l.kilos_totales)||0, ven = Number(l.kilos_vendidos)||0;
     const disp = (l.kilos_disponibles!=null) ? Number(l.kilos_disponibles) : (tot-ven);
     const pct = tot>0 ? Math.min(100,Math.round((ven/tot)*100)) : 0;
-    const colP = pct>80?'var(--rojo)':pct>50?'var(--amarillo)':'#4caf50';
+    const colP = pct>80?'var(--error-txt)':pct>50?'var(--aviso-txt)':'var(--ok-txt)';
 
     // Último conteo físico de este lote
     const _rs1 = await supabaseCall('POST', 'rpc/obtener_stock_lote', { p_data: { idLote } });
@@ -1899,7 +1899,7 @@ async function renderResumenInventario(elId, incluirLote) {
       const dias = fConteo ? Math.floor((Date.now()-fConteo.getTime())/msDia) : null;
       let badge = '';
       if (dias!==null) {
-        if (dias<=1) badge = `<span style="color:#4caf50;"><span class="dot-est conv"></span>${dias===0?'hoy':'ayer'}</span>`;
+        if (dias<=1) badge = `<span style="color:var(--ok-txt);"><span class="dot-est conv"></span>${dias===0?'hoy':'ayer'}</span>`;
         else if (dias<=5) badge = `<span style="color:var(--acento-txt);">hace ${dias} días</span>`;
         else badge = `<span style="color:var(--rojo);">hace ${dias} días</span>`;
       }
@@ -1914,13 +1914,13 @@ async function renderResumenInventario(elId, incluirLote) {
       const filas = Object.keys(porSabor).map(sab => {
         const celdas = PRES.map(p => {
           const n = porSabor[sab][p]||0;
-          return `<span style="flex:1;text-align:center;color:${n>0?'var(--amarillo)':'#444'};font-family:'Archivo',sans-serif;font-size:1rem;">${n}</span>`;
+          return `<span style="flex:1;text-align:center;color:${n>0?'var(--acento-txt)':'#444'};font-family:'Archivo',sans-serif;font-size:1rem;">${n}</span>`;
         }).join('');
         return `<div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--gris3);"><span style="flex:1.4;font-size:0.76rem;font-weight:700;color:var(--blanco);">${sab}</span>${celdas}</div>`;
       }).join('');
       fisicoHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">STOCK TERMINADO</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">STOCK TERMINADO</span>
           <span style="font-size:0.64rem;">${badge}</span>
         </div>
         <div style="display:flex;align-items:center;padding:2px 0;"><span style="flex:1.4;"></span>${PRES.map(p=>`<span style="flex:1;text-align:center;font-size:0.6rem;font-weight:800;color:#555;">${p}</span>`).join('')}</div>
@@ -1936,16 +1936,16 @@ async function renderResumenInventario(elId, incluirLote) {
     const loteHTML = incluirLote ? `
       <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">LOTE ACTIVO</span>
-          <span style="font-size:0.7rem;color:#666;">${idLote}</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">LOTE ACTIVO</span>
+          <span style="font-size:0.7rem;color:var(--suave);">${idLote}</span>
         </div>
         <div style="display:flex;justify-content:space-between;text-align:center;">
-          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${tot.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
-          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${ven.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
-          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${tot.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">PRODUCIDO kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);">${ven.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">VENDIDO kg</span></span>
+          <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'var(--ok-txt)'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">DISPONIBLE kg</span></span>
         </div>
         <div style="background:var(--gris2);border-radius:6px;height:8px;overflow:hidden;margin-top:8px;"><div style="background:${colP};height:8px;width:${pct}%;"></div></div>
-        <div style="font-size:0.66rem;color:#666;margin-top:4px;text-align:right;">${pct}% agotado</div>
+        <div style="font-size:0.66rem;color:var(--suave);margin-top:4px;text-align:right;">${pct}% agotado</div>
       </div>` : '';
 
     window._invResumenTxt =
@@ -1977,7 +1977,7 @@ async function cargarResumenProduccion() {
     const vendidos = Number(l.kilos_vendidos) || 0;
     const disp     = (l.kilos_disponibles != null) ? Number(l.kilos_disponibles) : (totales - vendidos);
     const pct      = totales > 0 ? Math.min(100, Math.round((vendidos / totales) * 100)) : 0;
-    const colorPct = pct > 80 ? 'var(--rojo)' : pct > 50 ? 'var(--amarillo)' : '#4caf50';
+    const colorPct = pct > 80 ? 'var(--error-txt)' : pct > 50 ? 'var(--acento-txt)' : 'var(--ok-txt)';
 
     // Promedio de venta diaria a partir del lote
     const msDia       = 1000 * 60 * 60 * 24;
@@ -2004,23 +2004,23 @@ async function cargarResumenProduccion() {
       <div style="display:grid;grid-template-columns:1fr;gap:10px;">
         <div style="background:var(--gris);border-radius:14px;padding:14px;${alerta==='agotado'?'border:1px solid var(--rojo);':''}">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;">LOTE ACTIVO</span>
-            <span style="font-size:0.72rem;color:#666;">${l.id_lote || ('LOTE-'+l.id)} · ${fechaLoteTxt}</span>
+            <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">LOTE ACTIVO</span>
+            <span style="font-size:0.72rem;color:var(--suave);">${l.id_lote || ('LOTE-'+l.id)} · ${fechaLoteTxt}</span>
           </div>
           <div style="display:flex;justify-content:space-between;gap:8px;text-align:center;margin-bottom:10px;">
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${totales.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">PRODUCIDO kg</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${vendidos.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">VENDIDO kg</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'#4caf50'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:#666;">DISPONIBLE kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${totales.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">PRODUCIDO kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);">${vendidos.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">VENDIDO kg</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.3rem;color:${disp<=0?'var(--rojo)':'var(--ok-txt)'};">${disp.toFixed(2)}</span><span style="font-size:0.62rem;color:var(--suave);">DISPONIBLE kg</span></span>
           </div>
           <div style="background:var(--gris2);border-radius:6px;height:8px;overflow:hidden;"><div style="background:${colorPct};height:8px;width:${pct}%;transition:width .5s;"></div></div>
           <div style="font-size:0.7rem;color:${colorPct};margin-top:4px;text-align:right;">${pct}% agotado</div>
         </div>
         <div style="background:var(--gris);border-radius:14px;padding:14px;${alerta==='pronto'?'border:1px solid var(--amarillo);':alerta==='agotado'?'border:1px solid var(--rojo);':''}">
-          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:10px;">INVENTARIO RESTANTE</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:10px;">INVENTARIO RESTANTE</div>
           <div style="display:flex;justify-content:space-between;gap:8px;text-align:center;">
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--blanco);">${promDiario>0?promDiario.toFixed(2):'—'}</span><span style="font-size:0.62rem;color:#666;">PROM. kg/día</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:${alerta?'var(--amarillo)':'var(--blanco)'};">${diasRestTxt}</span><span style="font-size:0.62rem;color:#666;">TE ALCANZA</span></span>
-            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:0.95rem;color:${alerta?'var(--amarillo)':'#4caf50'};margin-top:6px;">${fechaSugTxt}</span><span style="font-size:0.62rem;color:#666;">PRODUCIR ~</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--blanco);">${promDiario>0?promDiario.toFixed(2):'—'}</span><span style="font-size:0.62rem;color:var(--suave);">PROM. kg/día</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:1.4rem;color:${alerta?'var(--acento-txt)':'var(--blanco)'};">${diasRestTxt}</span><span style="font-size:0.62rem;color:var(--suave);">TE ALCANZA</span></span>
+            <span style="flex:1;"><span style="display:block;font-family:'Archivo',sans-serif;font-size:0.95rem;color:${alerta?'var(--acento-txt)':'var(--ok-txt)'};margin-top:6px;">${fechaSugTxt}</span><span style="font-size:0.62rem;color:var(--suave);">PRODUCIR ~</span></span>
           </div>
           <div style="font-size:0.66rem;color:#555;margin-top:8px;font-style:italic;">Estimado con el promedio de venta del lote (${diasActivos} día${diasActivos>1?'s':''}).</div>
         </div>
@@ -2139,10 +2139,10 @@ function pintarResumen() {
   }
 
   const estColor = (est, pago, interno) => {
-    if (est === 'Cancelado') return 'background:var(--error-br);color:#ff8a8a;';
-    if (interno)            return 'background:var(--aviso-bg);color:var(--amarillo);';
-    if (pago === 'Pagado')  return 'background:var(--ok-br);color:#7fe0a0;';
-    return 'background:var(--aviso-bg);color:#ffd24d;';
+    if (est === 'Cancelado') return 'background:var(--error-br);color:var(--error-txt);';
+    if (interno)            return 'background:var(--aviso-bg);color:var(--aviso-txt);';
+    if (pago === 'Pagado')  return 'background:var(--ok-br);color:var(--ok-txt);';
+    return 'background:var(--aviso-bg);color:var(--aviso-txt);';
   };
   const estLbl = (r) => r.estatus === 'Cancelado' ? 'Cancelado'
     : r.esInterno ? 'Interno'
@@ -2373,7 +2373,7 @@ async function renderGridInventarioFisico(idLote) {
           <input type="number" min="0" step="1" value="0"
             id="if-${sabor.replace(/\s/g,'_')}-${p.id}"
             style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:4px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1rem;text-align:center;width:100%;outline:none;"
-            onfocus="this.style.borderColor='var(--amarillo)'" onblur="this.style.borderColor='var(--gris3)'">
+            onfocus="this.style.borderColor='var(--acento-txt)'" onblur="this.style.borderColor='var(--gris3)'">
         `).join('')}
       </div>`).join('')}
     <div style="margin-top:8px;font-size:0.72rem;font-weight:700;color:#555;text-align:center;" id="inv-total-display">Total: 0g</div>
@@ -2472,8 +2472,8 @@ window.elegirModoCliente = function(modo) {
     const btn = document.getElementById('btn-cliente-' + m);
     if (!btn) return;
     const activo = m === modo;
-    btn.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
-    btn.style.color       = activo ? 'var(--amarillo)' : 'var(--suave)';
+    btn.style.borderColor = activo ? 'var(--acento-txt)' : 'var(--gris3)';
+    btn.style.color       = activo ? 'var(--acento-txt)' : 'var(--suave)';
     btn.style.background  = activo ? 'var(--aviso-bg)' : 'var(--gris)';
   });
 
@@ -2572,7 +2572,7 @@ window.buscarCliente = async function(q) {
         <div onclick="seleccionarCliente(${i})" style="
           background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;
           padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color 0.2s;
-        " onmouseover="this.style.borderColor='var(--amarillo)'" onmouseout="this.style.borderColor='var(--gris3)'">
+        " onmouseover="this.style.borderColor='var(--acento-txt)'" onmouseout="this.style.borderColor='var(--gris3)'">
           <div style="font-weight:800;font-size:0.85rem;color:var(--blanco);">${c.nombre}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
             ${c.telefono} · ${c.tipo} · ${c.colonia||''} ${c.municipio||''}
@@ -2649,9 +2649,9 @@ window.seleccionarCliente = function(idx) {
     `<div style="background:var(--ok-bg);border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:700;color:var(--ok-txt);display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="flex:1;min-width:0;">
         <div>${c.nombre}</div>
-        <div style="color:#888;font-size:0.7rem;font-weight:500;margin-top:2px;">${c.telefono}</div>
+        <div style="color:var(--suave);font-size:0.7rem;font-weight:500;margin-top:2px;">${c.telefono}</div>
       </div>
-      <button onclick="limpiarBusqueda()" style="background:transparent;border:1px solid #4caf50;color:#4caf50;border-radius:6px;padding:4px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;">✕ Cambiar</button>
+      <button onclick="limpiarBusqueda()" style="background:transparent;border:1px solid #4caf50;color:var(--ok-txt);border-radius:6px;padding:4px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;">✕ Cambiar</button>
     </div>`;
 
   mostrarToast('Cliente cargado ✓');
@@ -2828,7 +2828,7 @@ function pintarVistaPedidosVendedor() {
       <div style="flex:1;display:flex;align-items:center;gap:6px;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#4caf50;flex-shrink:0;"></span>
         <span style="color:var(--suave);">Cobrado</span>
-        <span style="color:#4caf50;margin-left:auto;">$${pagado.toLocaleString('es-MX')}</span>
+        <span style="color:var(--ok-txt);margin-left:auto;">$${pagado.toLocaleString('es-MX')}</span>
       </div>
       <div style="flex:1;display:flex;align-items:center;gap:6px;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background-image:repeating-linear-gradient(45deg,rgba(255,210,0,0.9) 0,rgba(255,210,0,0.9) 2px,rgba(255,210,0,0.3) 2px,rgba(255,210,0,0.3) 4px);flex-shrink:0;"></span>
@@ -2877,11 +2877,11 @@ function pintarVistaPedidosVendedor() {
           <div class="l">Pedidos totales</div>
         </div>
         <div class="vend-stat">
-          <div class="v" style="color:${(r.pendientesEntrega||0)>0?'var(--amarillo)':'#4caf50'}">${r.pendientesEntrega||0}</div>
+          <div class="v" style="color:${(r.pendientesEntrega||0)>0?'var(--acento-txt)':'var(--ok-txt)'}">${r.pendientesEntrega||0}</div>
           <div class="l">Por entregar</div>
         </div>
         <div class="vend-stat">
-          <div class="v" style="color:${(r.pendientesCobro||0)>0?'var(--amarillo)':'#4caf50'}">${r.pendientesCobro||0}</div>
+          <div class="v" style="color:${(r.pendientesCobro||0)>0?'var(--acento-txt)':'var(--ok-txt)'}">${r.pendientesCobro||0}</div>
           <div class="l">Por cobrar</div>
         </div>
       </div>
@@ -2889,7 +2889,7 @@ function pintarVistaPedidosVendedor() {
         <div style="margin-top:10px;background:rgba(255,210,0,0.06);border:1px dashed rgba(255,210,0,0.3);border-radius:10px;padding:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
             <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Volumen interno este mes</div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);line-height:1;">${(r.kgInternosMes||0).toFixed(2)} kg</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);line-height:1;">${(r.kgInternosMes||0).toFixed(2)} kg</div>
           </div>
           ${r.kgInternosPorTipo ? `
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:0.7rem;color:var(--suave);font-weight:700;">
@@ -2964,7 +2964,7 @@ function pintarVistaPedidosVendedor() {
     </div>`;
   } else {
     listaHTML = filtrosHTML + `
-      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--amarillo);letter-spacing:1px;margin:6px 0 10px;">
+      <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin:6px 0 10px;">
         ${filtro==='todos'    ? 'PEDIDOS RECIENTES' :
              filtro==='nuevos'   ? 'NUEVOS — POR CONFIRMAR' :
              filtro==='entregar' ? 'POR ENTREGAR' :
@@ -3158,7 +3158,7 @@ window.abrirReasignarLote = async function(idOrden, consecutivo) {
         <button class="btn-confirm-wpp" style="margin-top:0;" onclick="guardarReasignacionLote(${idOrden}, '${consecutivo}')">Guardar reasignación</button>
       </div>`;
   } catch(e) {
-    cont.innerHTML = `<div style="font-size:0.76rem;color:#ff8a8a;">Error al cargar: ${e.message}</div>`;
+    cont.innerHTML = `<div style="font-size:0.76rem;color:var(--error-txt);">Error al cargar: ${e.message}</div>`;
   }
 };
 
@@ -3261,9 +3261,9 @@ function pintarDetallePedido({ orden, lineas }) {
         <div style="flex:1;">
           <div style="font-weight:800;color:var(--blanco);">${cantStr} ${l.sabor||''}</div>
           <div style="font-size:0.74rem;color:var(--suave);">${l.presentacion||''}${esInterno ? '' : ` · $${(l.precio_unitario||0).toLocaleString('es-MX')} c/u`}</div>
-          ${l.notas ? `<div style="font-size:0.7rem;color:#888;font-style:italic;">${l.notas}</div>` : ''}
+          ${l.notas ? `<div style="font-size:0.7rem;color:var(--suave);font-style:italic;">${l.notas}</div>` : ''}
         </div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);white-space:nowrap;">
+        <div style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);white-space:nowrap;">
           ${esInterno ? `${pesoLinea.toFixed(3)} kg` : `$${sub}`}
         </div>
       </div>
@@ -3286,14 +3286,14 @@ function pintarDetallePedido({ orden, lineas }) {
             flex:1;border:none;border-radius:8px;
             padding:8px 4px;font-family:'Inter',sans-serif;font-weight:800;
             font-size:0.7rem;cursor:pointer;
-            background:${sel ? (colorOk?'#0d2d0d':colorBad?'#2d0d0d':'var(--amarillo)') : 'transparent'};
-            color:${sel ? (colorOk?'#4caf50':colorBad?'var(--rojo)':'var(--negro)') : 'var(--suave)'};
+            background:${sel ? (colorOk?'var(--ok-bg)':colorBad?'var(--error-bg)':'var(--acento-txt)') : 'transparent'};
+            color:${sel ? (colorOk?'var(--ok-txt)':colorBad?'var(--rojo)':'var(--negro)') : 'var(--suave)'};
             ${sel && !colorOk && !colorBad ? '' : ''}">
             ${opt}
           </button>`;
         }).join('')}
       </div>
-      ${orden.fecha_entrega_real ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Entregado el ${new Date(orden.fecha_entrega_real).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
+      ${orden.fecha_entrega_real ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Entregado el ${new Date(orden.fecha_entrega_real).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
     </div>
   ` : '';
 
@@ -3323,13 +3323,13 @@ function pintarDetallePedido({ orden, lineas }) {
             flex:1;border:none;border-radius:8px;
             padding:9px;font-family:'Inter',sans-serif;font-weight:800;
             font-size:0.78rem;cursor:pointer;
-            background:${sel ? (colorOk?'#0d2d0d':'#2a1f00') : 'transparent'};
-            color:${sel ? (colorOk?'#4caf50':'var(--amarillo)') : 'var(--suave)'};">
+            background:${sel ? (colorOk?'var(--ok-bg)':'var(--aviso-bg)') : 'transparent'};
+            color:${sel ? (colorOk?'var(--ok-txt)':'var(--acento-txt)') : 'var(--suave)'};">
             ${opt}
           </button>`;
         }).join('')}
       </div>
-      ${orden.fecha_pago ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Pagado el ${new Date(orden.fecha_pago).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
+      ${orden.fecha_pago ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Pagado el ${new Date(orden.fecha_pago).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
     </div>
   ` : '';
 
@@ -3339,12 +3339,12 @@ function pintarDetallePedido({ orden, lineas }) {
     <div style="margin-top:12px;">
       <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
       ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--acento-txt);margin-top:4px;">${motivoTxt}</div>` : ''}
-      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : orden.puedeForzar ? `
     <div style="margin-top:12px;">
       <div style="font-size:0.76rem;color:var(--suave);margin-bottom:6px;">${motivoTxt || 'Este pedido no se puede editar'}</div>
       <button type="button" onclick="editarPedidoDesdeDrawer(true)" style="width:100%;min-height:44px;background:transparent;border:1px dashed var(--suave);border-radius:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.8rem;cursor:pointer;">Editar de todos modos (admin)</button>
-      ${orden.editado_en ? `<div style="font-size:0.7rem;color:#666;margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
+      ${orden.editado_en ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : `
     <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
 
@@ -3356,12 +3356,12 @@ function pintarDetallePedido({ orden, lineas }) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div>
-          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);">${consec}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);">${consec}</div>
           <div style="font-size:0.75rem;color:var(--suave);font-weight:600;text-transform:capitalize;">${fechaStr} · ${horaStr}</div>
         </div>
         <div style="text-align:right;">
           ${esInterno
-            ? `<div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">SIN CARGO</div>
+            ? `<div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">SIN CARGO</div>
                <div style="font-size:0.7rem;color:var(--suave);">${(gramosTotalPedido/1000).toFixed(2)} kg de producto</div>`
             : `<div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--blanco);line-height:1;">$${(orden.total||0).toLocaleString('es-MX')}</div>
                <div style="font-size:0.7rem;color:var(--suave);">${orden.tipo_pago||''}</div>`}
@@ -3383,7 +3383,7 @@ function pintarDetallePedido({ orden, lineas }) {
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">${(gramosTotalPedido/1000).toFixed(2)}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">${(gramosTotalPedido/1000).toFixed(2)}</div>
           <div style="font-size:0.65rem;color:var(--suave);font-weight:700;text-transform:uppercase;">kg del lote</div>
         </div>
       </div>
@@ -3424,7 +3424,7 @@ function pintarDetallePedido({ orden, lineas }) {
           `}
         </div>
       </div>
-      <div style="font-size:0.65rem;color:#666;margin-top:6px;">
+      <div style="font-size:0.65rem;color:var(--suave);margin-top:6px;">
         Pedido creado: ${fechaStr} ${horaStr}
       </div>
     </div>
@@ -3438,14 +3438,14 @@ function pintarDetallePedido({ orden, lineas }) {
           <span>Subtotal</span>
           <span>$${(Number(orden.subtotal) || (Number(orden.total)+Number(orden.descuento))).toLocaleString('es-MX')}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.82rem;color:#4caf50;font-weight:700;">
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.82rem;color:var(--ok-txt);font-weight:700;">
           <span>Cupón ${orden.cupon_codigo || ''}</span>
           <span>-$${Number(orden.descuento).toLocaleString('es-MX')}</span>
         </div>
       ` : ''}
       <div style="display:flex;justify-content:space-between;padding:10px 0 4px;border-top:2px solid var(--amarillo);margin-top:8px;">
         <span style="font-weight:800;color:var(--blanco);">${esInterno ? 'Total kg' : 'Total'}</span>
-        <span style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);">
+        <span style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);">
           ${esInterno
             ? `${(gramosTotalPedido/1000).toFixed(3)} kg`
             : `$${(orden.total||0).toLocaleString('es-MX')}`}
@@ -3463,10 +3463,10 @@ function pintarDetallePedido({ orden, lineas }) {
 
     <!-- Imprimir / Tracking / cerrar -->
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-      <button onclick="imprimirTicket()" style="flex:1;min-width:130px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.88rem;color:var(--negro);cursor:pointer;">
+      <button onclick="imprimirTicket()" style="flex:1;min-width:130px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">
         Imprimir
       </button>
-      <button onclick="cerrarDetallePedido();abrirTracking('${orden.consecutivo}')" style="flex:1;min-width:130px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
+      <button onclick="cerrarDetallePedido();abrirTracking('${orden.consecutivo}')" style="flex:1;min-width:130px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
         Seguimiento
       </button>
       <button onclick="cerrarDetallePedido()" style="background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:12px 16px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.85rem;color:var(--suave);cursor:pointer;">
@@ -3537,12 +3537,12 @@ function preguntarMetodoPago(metodoActual) {
     wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.15s;';
     wrap.innerHTML = `
       <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:14px;padding:18px;max-width:340px;width:100%;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">¿CÓMO TE PAGARON?</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:4px;">¿CÓMO TE PAGARON?</div>
         <div style="color:var(--suave);font-size:0.78rem;margin-bottom:14px;">Confirma el método de pago real para registrar el cobro.</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${opciones.map(o => {
             const activo = metodoActual === o.id;
-            return `<button data-met="${o.id}" style="background:${activo?'#2a1f00':'var(--gris2)'};border:2px solid ${activo?'var(--amarillo)':'var(--gris3)'};border-radius:10px;padding:14px;color:var(--blanco);font-size:0.95rem;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:${activo?'800':'500'};">
+            return `<button data-met="${o.id}" style="background:${activo?'var(--aviso-bg)':'var(--gris2)'};border:2px solid ${activo?'var(--amarillo)':'var(--gris3)'};border-radius:10px;padding:14px;color:var(--blanco);font-size:0.95rem;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:${activo?'800':'500'};">
               <span style="font-size:1.2rem;">${o.ico}</span>
               <span style="flex:1;">${o.label}</span>
               ${activo ? '<span style="color:var(--acento-txt);font-size:0.7rem;font-weight:800;">SUGERIDO</span>' : ''}
@@ -3937,7 +3937,7 @@ window.filtrarB2B = function(filtro) {
     const activo = map[t] === filtro;
     btn.style.background  = activo ? 'var(--amarillo)' : 'var(--gris)';
     btn.style.color       = activo ? 'var(--negro)'   : 'var(--suave)';
-    btn.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
+    btn.style.borderColor = activo ? 'var(--acento-txt)' : 'var(--gris3)';
   });
   renderB2BLista();
 };
@@ -3991,14 +3991,14 @@ function renderB2BLista() {
       ${!c.aprobadoB2B ? 'border-left:3px solid var(--amarillo)' : 'border-left:3px solid #4caf50'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;">
         <div style="flex:1;">
-          <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${c.nombre ? c.nombre : '<span style="color:#888;font-style:italic;font-weight:700;">(Sin nombre — solicitud nueva)</span>'}</div>
+          <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${c.nombre ? c.nombre : '<span style="color:var(--suave);font-style:italic;font-weight:700;">(Sin nombre — solicitud nueva)</span>'}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
             ${c.telefono} · ${c.tipo}
           </div>
           <div style="font-size:0.72rem;color:var(--suave);">
             ${c.colonia||''} ${c.municipio||''} ${c.estado||''}
           </div>
-          ${fSolTxt ? `<div style="font-size:0.72rem;margin-top:2px;color:${!c.aprobadoB2B ? 'var(--amarillo)' : 'var(--suave)'};">${!c.aprobadoB2B ? 'Solicitud: ' + fSolTxt + (esperaTxt ? ' · ' + esperaTxt : '') : 'Cliente desde ' + fSolTxt}</div>` : ''}
+          ${fSolTxt ? `<div style="font-size:0.72rem;margin-top:2px;color:${!c.aprobadoB2B ? 'var(--acento-txt)' : 'var(--suave)'};">${!c.aprobadoB2B ? 'Solicitud: ' + fSolTxt + (esperaTxt ? ' · ' + esperaTxt : '') : 'Cliente desde ' + fSolTxt}</div>` : ''}
           ${esAdmin() ? `
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Vendedor:</span>
@@ -4010,7 +4010,7 @@ function renderB2BLista() {
             </div>
           ` : (c.vendedor
             ? `<div style="font-size:0.72rem;color:var(--suave);">Vendedor: <span style="color:var(--acento-txt);font-weight:700;">${c.vendedor}</span></div>`
-            : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin vendedor asignado</div>`)}
+            : `<div style="font-size:0.7rem;color:var(--suave);font-style:italic;">Sin vendedor asignado</div>`)}
           ${esAdmin() ? `
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Ruta:</span>
@@ -4022,11 +4022,11 @@ function renderB2BLista() {
             </div>
           ` : (c.idRuta
             ? `<div style="font-size:0.72rem;color:var(--suave);">Ruta: <span style="color:var(--acento-txt);font-weight:700;">${nombreRuta(c.idRuta)}</span></div>`
-            : `<div style="font-size:0.7rem;color:#666;font-style:italic;">Sin ruta</div>`)}
+            : `<div style="font-size:0.7rem;color:var(--suave);font-style:italic;">Sin ruta</div>`)}
           ${c.rfc ? `<div style="font-size:0.72rem;color:var(--suave);">RFC: ${c.rfc}</div>` : ''}
         </div>
         <div style="font-size:0.66rem;font-weight:800;padding:3px 8px;border-radius:50px;white-space:nowrap;
-          ${c.aprobadoB2B ? 'background:var(--ok-bg);color:#4caf50' : 'background:var(--aviso-bg);color:var(--amarillo)'}">
+          ${c.aprobadoB2B ? 'background:var(--ok-bg);color:var(--ok-txt)' : 'background:var(--aviso-bg);color:var(--aviso-txt)'}">
           ${c.aprobadoB2B ? 'Aprobado' : 'Pendiente'}
         </div>
       </div>
@@ -4034,19 +4034,19 @@ function renderB2BLista() {
       ${c.aprobadoB2B && (totalHist > 0 || c.numPedidos > 0) ? `
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--gris2);border-radius:8px;padding:8px;margin:6px 0;text-align:center;">
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${ventasMes.toLocaleString('es-MX')}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">$${ventasMes.toLocaleString('es-MX')}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Mes</div>
           </div>
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">$${totalHist.toLocaleString('es-MX')}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">$${totalHist.toLocaleString('es-MX')}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Total</div>
           </div>
           <div>
-            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);line-height:1;">${c.numPedidos||0}</div>
+            <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">${c.numPedidos||0}</div>
             <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Pedidos</div>
           </div>
         </div>
-        <div style="font-size:0.7rem;color:#666;margin-top:2px;">Última compra: ${ult}</div>
+        <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">Última compra: ${ult}</div>
       ` : ''}
 
       <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -4060,7 +4060,7 @@ function renderB2BLista() {
         ${c.coordenadasGps
           ? `<a href="https://www.google.com/maps?q=${c.coordenadasGps}" target="_blank" style="background:var(--info-bg);border:1px solid var(--info-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--info-txt);text-decoration:none;">GPS</a>`
           : ''}
-        ${(() => { const d = distanciaCoords(c.coordenadas, c.coordenadasGps); if (d === null) return ''; const cerca = d <= 150; const col = cerca ? '#7ee787' : (d <= 500 ? '#ffb454' : '#ff8a8a'); const bg = cerca ? '#0d2d0d' : (d <= 500 ? '#2a1f00' : '#3a1515'); const txt = d < 1000 ? `${Math.round(d)} m` : `${(d/1000).toFixed(1)} km`; return `<span title="Distancia entre la dirección y el GPS detectado" style="background:${bg};border:1px solid ${col}55;border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:800;color:${col};">${cerca ? '✓' : ''} GPS a ${txt}</span>`; })()}
+        ${(() => { const d = distanciaCoords(c.coordenadas, c.coordenadasGps); if (d === null) return ''; const cerca = d <= 150; const col = cerca ? 'var(--ok-txt)' : (d <= 500 ? 'var(--aviso-txt)' : 'var(--error-txt)'); const bd = cerca ? 'var(--ok-br)' : (d <= 500 ? 'var(--aviso-br)' : 'var(--error-br)'); const bg = cerca ? 'var(--ok-bg)' : (d <= 500 ? 'var(--aviso-bg)' : 'var(--error-bg)'); const txt = d < 1000 ? `${Math.round(d)} m` : `${(d/1000).toFixed(1)} km`; return `<span title="Distancia entre la dirección y el GPS detectado" style="background:${bg};border:1px solid ${bd};border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:800;color:${col};">${cerca ? '✓' : ''} GPS a ${txt}</span>`; })()}
       </div>
 
       ${!c.aprobadoB2B ? `
@@ -4068,7 +4068,7 @@ function renderB2BLista() {
           <button onclick="aprobarB2B(${c.id}, '${(c.tipo||'').replace(/'/g,'')}')" style="
             flex:1;background:var(--amarillo);border:none;border-radius:8px;
             padding:8px;font-family:'Inter',sans-serif;font-weight:800;
-            font-size:0.8rem;color:var(--negro);cursor:pointer;">
+            font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">
             Aprobar
           </button>
           <button onclick="rechazarB2B(${c.id})" style="
@@ -4601,7 +4601,7 @@ window.toggleModoRuta = function() {
     footer.style.display = 'block';
     btn.style.background = 'var(--amarillo)';
     btn.style.color = '#000';
-    btn.style.borderColor = 'var(--amarillo)';
+    btn.style.borderColor = 'var(--acento-txt)';
     _rutaSeleccion = [];
     actualizarBannerRuta();
     // Re-pintar mapa con marcadores tappeables
@@ -4754,15 +4754,15 @@ function mostrarResultadoRuta() {
   document.getElementById('ruta-resumen').innerHTML = `
     <div style="display:flex;justify-content:space-around;text-align:center;">
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${distKm}km</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${distKm}km</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Distancia</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${tiempoStr}</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${tiempoStr}</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Tiempo total</div>
       </div>
       <div>
-        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">${r.paradas.length}</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${r.paradas.length}</div>
         <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Paradas</div>
       </div>
     </div>
@@ -4772,7 +4772,7 @@ function mostrarResultadoRuta() {
   let html = `<div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Orden óptimo</div>`;
   // Origen
   html += `<div style="background:var(--gris2);border-left:3px solid #4caf50;border-radius:8px;padding:9px 12px;margin-bottom:6px;">
-    <div style="font-size:0.66rem;color:#4caf50;font-weight:800;">SALIDA</div>
+    <div style="font-size:0.66rem;color:var(--ok-txt);font-weight:800;">SALIDA</div>
     <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${r.origen.nombre}</div>
   </div>`;
   // Paradas
@@ -4842,7 +4842,7 @@ window.abrirNuevoProspecto = async function() {
   info.innerHTML = 'Capturando tu ubicación... <span class="loader loader-w"></span>';
   info.style.background = 'var(--aviso-bg)';
   info.style.borderColor = 'rgba(255,210,0,0.4)';
-  info.style.color = 'var(--amarillo)';
+  info.style.color = 'var(--acento-txt)';
 
   const loc = await obtenerMiUbicacion();
   if (loc) {
@@ -4850,7 +4850,7 @@ window.abrirNuevoProspecto = async function() {
     info.innerHTML = `Ubicación capturada: ${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`;
     info.style.background = 'var(--ok-bg)';
     info.style.borderColor = 'var(--ok-br)';
-    info.style.color = '#4caf50';
+    info.style.color = 'var(--ok-txt)';
   } else {
     // Fallback: usar la última ubicación conocida o el centro del mapa
     if (_userLat && _userLng) {
@@ -4888,7 +4888,7 @@ window.setScoreNP = function(score) {
     const s = Number(b.getAttribute('data-s'));
     if (s <= score) {
       b.style.background = 'var(--amarillo)';
-      b.style.borderColor = 'var(--amarillo)';
+      b.style.borderColor = 'var(--acento-txt)';
     } else {
       b.style.background = 'var(--gris2)';
       b.style.borderColor = 'var(--gris3)';
@@ -5044,7 +5044,7 @@ function pintarListaProspectos() {
           <div style="font-size:0.7rem;color:var(--suave);">${p.direccion || 'Sin dirección'}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">
             ${distLabel}
-            <span style="font-size:0.7rem;color:#666;">${p.numContactos>0 ? `${p.numContactos} contacto(s) · últ ${ult}` : 'Sin contactos'}${p.nombreVendedor ? ` · ${p.nombreVendedor}` : ''}</span>
+            <span style="font-size:0.7rem;color:var(--suave);">${p.numContactos>0 ? `${p.numContactos} contacto(s) · últ ${ult}` : 'Sin contactos'}${p.nombreVendedor ? ` · ${p.nombreVendedor}` : ''}</span>
           </div>
         </div>
         <div style="font-size:0.78rem;color:var(--acento-txt);font-weight:700;white-space:nowrap;">${estrellas}</div>
@@ -5079,14 +5079,14 @@ window.verDetalleProspecto = function(id) {
     <!-- Estatus + score -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span class="pedido-estatus" style="background:${p.estatus==='pendiente'?'#2d0d0d':p.estatus==='contactado'?'#2a1f00':p.estatus==='convertido'?'#0d2d0d':'#222'};color:${p.estatus==='pendiente'?'var(--rojo)':p.estatus==='contactado'?'var(--amarillo)':p.estatus==='convertido'?'#4caf50':'#888'};">${ico[p.estatus]||p.estatus}</span>
+        <span class="pedido-estatus" style="background:${p.estatus==='pendiente'?'var(--error-bg)':p.estatus==='contactado'?'var(--aviso-bg)':p.estatus==='convertido'?'var(--ok-bg)':'#222'};color:${p.estatus==='pendiente'?'var(--error-txt)':p.estatus==='contactado'?'var(--aviso-txt)':p.estatus==='convertido'?'var(--ok-txt)':'var(--suave)'};">${ico[p.estatus]||p.estatus}</span>
         <span style="font-size:0.86rem;color:var(--acento-txt);font-weight:700;">${estrellas}</span>
       </div>
       <div style="font-weight:800;color:var(--blanco);font-size:0.94rem;">${p.tipo}${p.tierOriginal?` · <span style="color:var(--acento-txt);font-size:0.78rem;">${p.tierOriginal}</span>`:''}</div>
       ${p.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">${p.direccion}</div>` : ''}
       ${(p.colonia || p.codigoPostal) ? `<div style="font-size:0.74rem;color:var(--suave);">${p.colonia||''} ${p.codigoPostal?'· CP '+p.codigoPostal:''}</div>` : ''}
       ${p.telefono ? `<div style="font-size:0.78rem;color:var(--suave);">${p.telefono}</div>` : ''}
-      ${p.distanciaMetros > 0 ? `<div style="font-size:0.72rem;color:#888;margin-top:3px;">A ${Math.round(p.distanciaMetros)}m de la planta</div>` : ''}
+      ${p.distanciaMetros > 0 ? `<div style="font-size:0.72rem;color:var(--suave);margin-top:3px;">A ${Math.round(p.distanciaMetros)}m de la planta</div>` : ''}
       ${p.lat && p.lng ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="display:inline-block;margin-top:6px;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">Abrir en Maps</a>` : ''}
     </div>
 
@@ -5098,7 +5098,7 @@ window.verDetalleProspecto = function(id) {
       </div>
       ${p.nombreVendedor
         ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">Asignado: <strong style="color:var(--acento-txt);">${p.nombreVendedor}</strong></div>`
-        : `<div style="font-size:0.74rem;color:#888;font-style:italic;margin-top:3px;">Sin vendedor asignado</div>`}
+        : `<div style="font-size:0.74rem;color:var(--suave);font-style:italic;margin-top:3px;">Sin vendedor asignado</div>`}
     </div>
 
     <!-- Notas -->
@@ -5118,7 +5118,7 @@ window.verDetalleProspecto = function(id) {
     <!-- Acciones -->
     ${!descartado && !yaConvertido ? `
       <div id="pros-acciones" style="display:flex;flex-direction:column;gap:8px;">
-        <button onclick="accionRegistrarVisita(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--negro);cursor:pointer;">
+        <button onclick="accionRegistrarVisita(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">
           Registrar visita
         </button>
       </div>
@@ -5136,7 +5136,7 @@ window.verDetalleProspecto = function(id) {
         <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
-      <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--amarillo);cursor:pointer;">
+      <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
         ↩️ Reactivar prospecto
       </button>
     ` : `
@@ -5235,7 +5235,7 @@ function pintarRutaDia() {
       <div style="color:var(--suave);font-size:0.78rem;margin-top:2px;">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${r.ruta.vendedor ? rutaEsc(r.ruta.vendedor) : 'sin vendedor asignado'}</div>
       <div role="progressbar" aria-label="Avance del día" aria-valuemin="0" aria-valuemax="${a.programadas || 0}" aria-valuenow="${a.visitadas || 0}" style="margin-top:10px;height:8px;background:var(--gris3);border-radius:999px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--amarillo);"></div></div>
       <div style="margin-top:6px;font-size:0.84rem;color:var(--blanco);font-variant-numeric:tabular-nums;"><b>${a.visitadas || 0} de ${a.programadas || 0}</b> visitadas · ${a.convertidas || 0} convertidas${a.fueraDelPunto ? ' · <span style="color:var(--rojo);">' + a.fueraDelPunto + ' fuera del punto</span>' : ''}</div>
-      ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--amarillo);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
+      ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
     </div>`;
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   // La prioridad de `ruta_del_dia` NO reordena el recorrido —lo reordena la geografia, y eso esta
@@ -5244,7 +5244,7 @@ function pintarRutaDia() {
     if (p.tipo !== 'cliente' || !p.etapa) return '';
     const d = p.diasSinComprar;
     if (p.etapa === 'dormido') return `<b style="color:var(--rojo);">DORMIDA</b> · ${d} d sin pedido · `;
-    if (p.etapa === 'activo')  return `<b style="color:#4caf50;">Activa</b> · ${d} d sin pedido · `;
+    if (p.etapa === 'activo')  return `<b style="color:var(--ok-txt);">Activa</b> · ${d} d sin pedido · `;
     if (p.etapa === 'cliente') return `1ª compra · ${d} d · `;
     return 'Aún no compra · ';
   };
@@ -5292,7 +5292,7 @@ function cierreDelDiaHTML(avance) {
       <div style="display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">
         <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${hechas}</div><div style="font-size:0.7rem;color:var(--suave);">visitas</div></div>
         <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${Number(c.pedidos || 0)}</div><div style="font-size:0.7rem;color:var(--suave);">pedidos</div></div>
-        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">${money(c.monto)}</div><div style="font-size:0.7rem;color:var(--suave);">vendido</div></div>
+        <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);">${money(c.monto)}</div><div style="font-size:0.7rem;color:var(--suave);">vendido</div></div>
       </div>
       ${sinResultado ? `<div style="margin-top:8px;font-size:0.78rem;color:var(--suave);">Te quedan <b style="color:var(--blanco);">${sinResultado}</b> parada${sinResultado === 1 ? '' : 's'} sin resultado.</div>` : ''}
     </div>`;
@@ -5401,7 +5401,7 @@ window._reparto = null;
 
 function repartoFila(p, acciones) {
   const pagado = (p.estatusPago || '') === 'Pagado';
-  const est = p.estatusPedido === 'Entregado' ? '<span style="color:#4caf50;font-weight:800;">Entregado</span>'
+  const est = p.estatusPedido === 'Entregado' ? '<span style="color:var(--ok-txt);font-weight:800;">Entregado</span>'
     : p.estatusPedido === 'En camino' ? '<span style="color:var(--acento-txt);font-weight:800;">En camino</span>' : '';
   // La marca de Armado solo importa antes de salir: en camino o entregado ya no se enseña.
   const armado = p.estatusPedido !== 'En proceso' ? '' : (p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>');
@@ -6029,7 +6029,7 @@ window.probarImportUnaFila = async function() {
     });
     console.log('[ProbarImport] Respuesta:', res);
     if (res && res.ok) {
-      resultadoEl.innerHTML = `<div style="color:#4caf50;font-weight:700;">Prueba exitosa: ${res.creados} creado(s), ${res.duplicados} dup</div>
+      resultadoEl.innerHTML = `<div style="color:var(--ok-txt);font-weight:700;">Prueba exitosa: ${res.creados} creado(s), ${res.duplicados} dup</div>
         <div style="font-size:0.72rem;color:var(--suave);margin-top:4px;">El backend acepta los datos. Puedes intentar la importación completa.</div>`;
     } else {
       resultadoEl.innerHTML = `<div style="color:var(--rojo);font-weight:700;">El backend respondió error: ${res?.error}</div>
@@ -6272,9 +6272,9 @@ function pintarListaGastos() {
 
   const ico = { pendiente:'', aprobado:'', rechazado:'' };
   const colorEst = {
-    pendiente: { bg:'#2a1f00', fg:'var(--amarillo)' },
-    aprobado:  { bg:'#0d2d0d', fg:'#4caf50' },
-    rechazado: { bg:'#2d0d0d', fg:'var(--rojo)' }
+    pendiente: { bg:'var(--aviso-bg)', fg:'var(--acento-txt)' },
+    aprobado:  { bg:'var(--ok-bg)', fg:'var(--ok-txt)' },
+    rechazado: { bg:'var(--error-bg)', fg:'var(--error-txt)' }
   };
   const fuenteIco = { 'Crunchy': '', 'Inversión': '' };
 
@@ -6289,14 +6289,14 @@ function pintarListaGastos() {
           <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</div>
           ${g.concepto ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:2px;">${g.concepto}</div>` : ''}
           ${g.cantidad > 0 ? `<div style="font-size:0.74rem;color:var(--acento-txt);margin-top:2px;font-weight:700;">${g.cantidad} ${g.unidad} · $${g.precioUnitario.toFixed(2)}/${g.unidad.replace(/^bidón\s*/,'').replace(/L$/,'L').trim()||g.unidad}</div>` : ''}
-          <div style="font-size:0.7rem;color:#888;margin-top:4px;">
+          <div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">
             ${fecha} · ${fuenteIco[g.fuenteDinero]||''} ${g.fuenteDinero}
             ${g.tieneTicket ? ' ·' : ''}
           </div>
-          ${g.nombreVendedor ? `<div style="font-size:0.66rem;color:#666;margin-top:2px;">${g.nombreVendedor}</div>` : ''}
+          ${g.nombreVendedor ? `<div style="font-size:0.66rem;color:var(--suave);margin-top:2px;">${g.nombreVendedor}</div>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap;">
-          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
           <div style="display:inline-block;margin-top:4px;background:${c.bg};color:${c.fg};font-size:0.66rem;font-weight:800;padding:2px 8px;border-radius:50px;">${ico[g.estatusAprobacion]} ${g.estatusAprobacion}</div>
         </div>
       </div>
@@ -6518,9 +6518,9 @@ window.verDetalleGasto = function(id) {
   const fechaReg = g.fechaRegistro ? new Date(g.fechaRegistro).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
   const ico = { pendiente:'Pendiente', aprobado:'Aprobado', rechazado:'Rechazado' };
   const colorEst = {
-    pendiente: { bg:'#2a1f00', fg:'var(--amarillo)' },
-    aprobado:  { bg:'#0d2d0d', fg:'#4caf50' },
-    rechazado: { bg:'#2d0d0d', fg:'var(--rojo)' }
+    pendiente: { bg:'var(--aviso-bg)', fg:'var(--acento-txt)' },
+    aprobado:  { bg:'var(--ok-bg)', fg:'var(--ok-txt)' },
+    rechazado: { bg:'var(--error-bg)', fg:'var(--error-txt)' }
   };
   const c = colorEst[g.estatusAprobacion] || colorEst.pendiente;
   const adminViendo = esAdmin && esAdmin();
@@ -6531,7 +6531,7 @@ window.verDetalleGasto = function(id) {
   document.getElementById('dg-contenido').innerHTML = `
     <!-- Encabezado: monto + estatus -->
     <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-      <div style="font-family:'Archivo',sans-serif;font-size:2.4rem;color:var(--amarillo);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2.4rem;color:var(--acento-txt);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
       <div style="display:inline-block;margin-top:8px;background:${c.bg};color:${c.fg};font-size:0.78rem;font-weight:800;padding:4px 14px;border-radius:50px;">${ico[g.estatusAprobacion]||g.estatusAprobacion}</div>
     </div>
 
@@ -6573,15 +6573,15 @@ window.verDetalleGasto = function(id) {
     <!-- Acciones admin -->
     ${puedeAprobar ? `
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:#4caf50;cursor:pointer;">Aprobar</button>
-        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:var(--error-bg);border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--rojo);cursor:pointer;">Rechazar</button>
+        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--ok-txt);cursor:pointer;">Aprobar</button>
+        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:var(--error-bg);border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--error-txt);cursor:pointer;">Rechazar</button>
       </div>
     ` : ''}
 
     ${puedeEditar ? `
       <div style="display:flex;gap:8px;margin-bottom:6px;">
-        <button onclick="editarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--amarillo);cursor:pointer;">Editar</button>
-        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:#888;cursor:pointer;">Eliminar</button>
+        <button onclick="editarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
+        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:var(--suave);cursor:pointer;">Eliminar</button>
       </div>
     ` : ''}
 
@@ -6735,7 +6735,7 @@ function armadoSonidoActivo() { return armadoLS('cp_armado_sonido') !== '0'; }
 function armadoPintarSonido() {
   const b = document.getElementById('armado-btn-sonido'), l = document.getElementById('armado-sonido-lbl');
   const on = armadoSonidoActivo();
-  if (b) { b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.style.color = on ? 'var(--amarillo)' : 'var(--suave)'; }
+  if (b) { b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.style.color = on ? 'var(--acento-txt)' : 'var(--suave)'; }
   if (l) l.textContent = on ? 'Sonido activado' : 'Sonido apagado';
 }
 window.armadoSonido = function() { armadoLS('cp_armado_sonido', armadoSonidoActivo() ? '0' : '1'); armadoPintarSonido(); if (armadoSonidoActivo()) armadoTono(); };
@@ -6790,7 +6790,7 @@ function armadoPintarNuevos(nuevos) {
   el.innerHTML = `
     <div style="background:var(--gris);border:1px solid var(--amarillo);border-radius:14px;padding:12px 14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;">NUEVOS (${n})</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--acento-txt);letter-spacing:1px;">NUEVOS (${n})</div>
         <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Visto</button>
       </div>
       ${nuevos.map(p => `
@@ -6841,7 +6841,7 @@ async function renderArmado(silencioso) {
     }).join('');
     elR.innerHTML = `
       <div style="background:var(--gris);border-radius:14px;padding:12px 10px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;margin:0 6px 6px;">PARA ARMAR</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--acento-txt);letter-spacing:1px;margin:0 6px 6px;">PARA ARMAR</div>
         <table style="width:100%;border-collapse:collapse;font-size:0.86rem;color:var(--blanco);">
           <thead><tr style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;"><th style="text-align:left;padding:4px 6px;">Producto</th><th style="text-align:right;padding:4px 6px;">Piezas</th><th style="text-align:right;padding:4px 6px;">kg</th></tr></thead>
           <tbody>${filas}</tbody>
@@ -6884,7 +6884,7 @@ async function armadoPushPintar() {
   if (!el) return;
   const caja = (titulo, texto, boton) => `
     <div style="background:var(--gris);border-radius:14px;padding:14px;">
-      <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--amarillo);letter-spacing:1px;margin-bottom:4px;">${titulo}</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:4px;">${titulo}</div>
       <div style="font-size:0.8rem;color:var(--suave);margin-bottom:${boton ? '10px' : '0'};">${texto}</div>${boton || ''}
     </div>`;
   const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">${txt}</button>`;
@@ -6957,7 +6957,7 @@ function armadoEditadoBadge(p) {
   const titulo = p.editadoPor ? `Editado por ${rutaEsc(p.editadoPor)}` : 'Editado';
   return `<span class="armado-editado" title="${titulo}">Editado</span>`;
 }
-function armadoRutaBadge(p) { return p && p.ruta ? `<span class="armado-ruta" style="background:${p.rutaColor || 'var(--amarillo)'};">${p.ruta}</span>` : ''; }
+function armadoRutaBadge(p) { return p && p.ruta ? `<span class="armado-ruta" style="background:${p.rutaColor || 'var(--acento-txt)'};">${p.ruta}</span>` : ''; }
 function armadoFechaCorta(iso, conDia = true) { if (!iso) return '—'; const d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso); return isNaN(d) ? '—' : d.toLocaleDateString('es-MX', conDia ? { weekday: 'short', day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short' }); }
 function armadoHora(iso) { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
 function armadoHoraCorta(iso) { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false }); }
@@ -7024,7 +7024,7 @@ function armadoPintarPedidos() {
     const quien = p.negocio || p.cliente || 'Sin nombre';
     const hecho = !!p.armadoEn;
     const estado = tipo === 'pendiente'
-      ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--amarillo);font-family:'Inter',sans-serif;font-weight:800;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
+      ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
       : `<label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;font-size:0.76rem;color:var(--blanco);white-space:nowrap;"><input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:22px;height:22px;accent-color:var(--amarillo);"> ${hecho ? 'Armado' : 'Armar'}</label>`;
     return `<tr class="${hecho ? 'hecho' : ''}">
       <td><button class="armado-fila-btn" onclick="verDetallePedido(${p.id})"><b>${quien}</b><div class="folio">${p.consecutivo} · ${p.tipoInterno ? 'Interno' : (ARMADO_CANAL[p.canal] || p.canal || '')}${hecho ? ' · ' + (p.armadoPor || '') : ''}</div>${armadoEditadoBadge(p) ? '<div style="margin-top:3px;">' + armadoEditadoBadge(p) + '</div>' : ''}</button></td>
@@ -7163,7 +7163,7 @@ async function verificarCajasAbiertasAnteriores() {
     }).join('');
     cont.innerHTML = `
       <div style="background:var(--aviso-bg);border-left:3px solid #ffa500;border-radius:8px;padding:10px 12px;font-size:0.84rem;color:var(--blanco);">
-        <div style="font-weight:800;color:#ffa500;margin-bottom:6px;">Hay cajas abiertas de días anteriores</div>
+        <div style="font-weight:800;color:var(--acento-txt);margin-bottom:6px;">Hay cajas abiertas de días anteriores</div>
         <ul style="margin:0;padding-left:18px;color:var(--suave);font-size:0.78rem;">${lista}</ul>
         <div style="margin-top:6px;font-size:0.72rem;color:var(--suave);">Navega con ◀ a esos días para cerrarlas antes de continuar.</div>
       </div>
@@ -7193,8 +7193,8 @@ async function cargarPendientesCaja() {
       html += `
         <div style="background:var(--gris);border-radius:10px;padding:10px;margin-bottom:12px;">
           <div style="font-size:0.7rem;color:var(--acento-txt);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Pendientes de procesar</div>
-          ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>Efectivo en vendedores</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
-          ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>Transferencias por verificar</span><span style="font-family:'Archivo',sans-serif;color:#ffc107;">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
+          ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>Efectivo en vendedores</span><span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
+          ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>Transferencias por verificar</span><span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
         </div>
       `;
     }
@@ -7235,8 +7235,8 @@ function renderEfectivoVendedor(v) {
           <div style="font-weight:800;font-size:0.82rem;color:var(--blanco);">${p.consec}</div>
           <div style="font-size:0.7rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cliente || '—'} · ${fechaFmt}</div>
         </div>
-        <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.1rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-        <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'efectivo')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--amarillo);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
+        <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.1rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'efectivo')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
       </div>
     `;
   }).join('');
@@ -7250,7 +7250,7 @@ function renderEfectivoVendedor(v) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Pendiente</div>
-          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:#ffc107;line-height:1;">$${Number(v.montoTotal).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">$${Number(v.montoTotal).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
         </div>
       </div>
       <details style="margin-top:8px;">
@@ -7275,12 +7275,12 @@ function renderTransferPendiente(p) {
           ${alerta}
         </div>
         <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cliente || '—'} · ${fechaFmt}</div>
-        <div style="font-size:0.7rem;color:#888;margin-top:1px;">${p.tipoPago}${p.nombreVendedor ? ' · vía ' + p.nombreVendedor : ''}</div>
+        <div style="font-size:0.7rem;color:var(--suave);margin-top:1px;">${p.tipoPago}${p.nombreVendedor ? ' · vía ' + p.nombreVendedor : ''}</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Archivo',sans-serif;color:#ffc107;font-size:1.2rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
-      <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'transferencia')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--amarillo);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
+      <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'transferencia')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
     </div>
   `;
 }
@@ -7304,7 +7304,7 @@ function renderPuntoCaja(p, esHoy) {
   let estadoColor = '';
   if (estatusDia === 'abierta') {
     estadoBadge = 'ABIERTA';
-    estadoColor = '#4caf50';
+    estadoColor = 'var(--ok-txt)';
   } else if (estatusDia === 'cerrada') {
     estadoBadge = 'CERRADA';
     estadoColor = 'var(--suave)';
@@ -7322,10 +7322,10 @@ function renderPuntoCaja(p, esHoy) {
   // Acciones
   let acciones = '';
   if (estatusDia === 'no_abierta' && esHoy) {
-    acciones = `<button onclick="abrirAperturaCaja(${p.idPunto})" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;color:var(--negro);cursor:pointer;">Abrir caja</button>`;
+    acciones = `<button onclick="abrirAperturaCaja(${p.idPunto})" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">Abrir caja</button>`;
   } else if (estatusDia === 'abierta') {
     acciones = `
-      <button onclick="abrirMovCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--amarillo);cursor:pointer;">+ Movimiento</button>
+      <button onclick="abrirMovCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--acento-txt);cursor:pointer;">+ Movimiento</button>
       <button onclick="abrirCierreCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar caja</button>
     `;
   } else if (estatusDia === 'cerrada') {
@@ -7335,7 +7335,7 @@ function renderPuntoCaja(p, esHoy) {
     acciones = `
       <div style="flex:1;background:var(--gris2);border-radius:10px;padding:10px;font-size:0.78rem;color:var(--suave2);">
         Cierre: $${declarado.toLocaleString('es-MX')} declarado · $${calculado.toLocaleString('es-MX')} calculado<br>
-        ${diferencia !== 0 ? `<span style="color:${diferencia>0?'#4caf50':'var(--rojo)'};">Diferencia: ${diferencia>0?'+':''}$${diferencia.toLocaleString('es-MX')}</span>` : '<span style="color:#4caf50;">Cuadrado ✓</span>'}
+        ${diferencia !== 0 ? `<span style="color:${diferencia>0?'var(--ok-txt)':'var(--rojo)'};">Diferencia: ${diferencia>0?'+':''}$${diferencia.toLocaleString('es-MX')}</span>` : '<span style="color:var(--ok-txt);">Cuadrado ✓</span>'}
       </div>
     `;
   }
@@ -7353,7 +7353,7 @@ function renderPuntoCaja(p, esHoy) {
           ajuste_pos: '', ajuste_neg: '',
         }[m.tipo] || '·';
         const monto = Number(m.monto) || 0;
-        const color = monto > 0 ? '#4caf50' : monto < 0 ? 'var(--rojo)' : 'var(--blanco)';
+        const color = monto > 0 ? 'var(--ok-txt)' : monto < 0 ? 'var(--rojo)' : 'var(--blanco)';
         const signo = monto > 0 ? '+' : '';
         return `
           <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris);">
@@ -7376,7 +7376,7 @@ function renderPuntoCaja(p, esHoy) {
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.66rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">${estatusDia==='cerrada'?'Saldo cierre':'Saldo'} </div>
-          <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--amarillo);line-height:1;">$${saldoCalculado.toLocaleString('es-MX', {minimumFractionDigits:2})}</div>
+          <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">$${saldoCalculado.toLocaleString('es-MX', {minimumFractionDigits:2})}</div>
         </div>
       </div>
 
@@ -7389,7 +7389,7 @@ function renderPuntoCaja(p, esHoy) {
           <span>Apertura</span>
           <span>$${saldoApertura.toLocaleString('es-MX')}</span>
         </div>
-        ${totalIngresos > 0 ? `<div style="display:flex;justify-content:space-between;color:#4caf50;margin-top:4px;">
+        ${totalIngresos > 0 ? `<div style="display:flex;justify-content:space-between;color:var(--ok-txt);margin-top:4px;">
           <span>Ingresos (${numVentas} ventas)</span>
           <span>+$${totalIngresos.toLocaleString('es-MX')}</span>
         </div>` : ''}
@@ -7505,7 +7505,7 @@ window.abrirCierreCaja = function(idPunto) {
   document.getElementById('ci-info').innerHTML = `
     <div style="margin-bottom:6px;color:var(--blanco);"><strong style="color:var(--acento-txt);">${p.nombre}</strong></div>
     <div style="display:flex;justify-content:space-between;color:var(--suave);font-size:0.78rem;margin-bottom:3px;"><span>Apertura</span><span>$${saldoApertura.toLocaleString('es-MX')}</span></div>
-    <div style="display:flex;justify-content:space-between;color:#4caf50;font-size:0.78rem;margin-bottom:3px;"><span>Ingresos</span><span>+$${ingresos.toLocaleString('es-MX')}</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--ok-txt);font-size:0.78rem;margin-bottom:3px;"><span>Ingresos</span><span>+$${ingresos.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--rojo);font-size:0.78rem;margin-bottom:6px;"><span>Egresos</span><span>$${egresos.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--acento-txt);font-weight:800;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
   `;
@@ -7529,9 +7529,9 @@ window.actualizarDiferenciaCierre = function() {
   const dif = declarado - calculado;
   const el = document.getElementById('ci-diferencia');
   if (dif === 0) {
-    el.innerHTML = '<span style="color:#4caf50;">✓ Cuadrado perfecto</span>';
+    el.innerHTML = '<span style="color:var(--ok-txt);">✓ Cuadrado perfecto</span>';
   } else if (dif > 0) {
-    el.innerHTML = `<span style="color:#4caf50;">Sobrante: +$${dif.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>`;
+    el.innerHTML = `<span style="color:var(--ok-txt);">Sobrante: +$${dif.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>`;
   } else {
     el.innerHTML = `<span style="color:var(--rojo);">Faltante: $${dif.toLocaleString('es-MX', {minimumFractionDigits:2})}</span>`;
   }
@@ -7687,7 +7687,7 @@ window.abrirAccionesPendiente = function(idOrden, consec, monto, modo) {
   document.getElementById('ap-pend-info').innerHTML = `
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
       <strong style="color:var(--acento-txt);">${consec}</strong>
-      <span style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;">$${_accionPendActual.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      <span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;">$${_accionPendActual.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
     </div>
     <div style="color:var(--suave);font-size:0.78rem;">Método declarado: ${icoModo}</div>
   `;
@@ -7782,7 +7782,7 @@ window.setTabPermisos = async function(tab) {
   const tV = document.getElementById('pm-tab-vend');
   const tS = document.getElementById('pm-tab-resumen');
   const off = (b) => { b.style.background='var(--gris)'; b.style.color='var(--suave)'; b.style.borderColor='var(--gris3)'; };
-  const on  = (b) => { b.style.background='var(--amarillo)'; b.style.color='var(--negro)'; b.style.borderColor='var(--amarillo)'; };
+  const on  = (b) => { b.style.background='var(--amarillo)'; b.style.color='var(--negro)'; b.style.borderColor='var(--acento-txt)'; };
   off(tR); off(tV); if (tS) off(tS);
   if (tab === 'rol') {
     on(tR);
@@ -7839,7 +7839,7 @@ async function pintarPermisosPorRol() {
             <span>${SECCIONES_LABELS[sec] || sec}</span>
           </label>`;
         }).join('')}
-        <button onclick="guardarPermisosRol('${rol}')" style="margin-top:8px;width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.78rem;color:var(--negro);cursor:pointer;">
+        <button onclick="guardarPermisosRol('${rol}')" style="margin-top:8px;width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.78rem;color:var(--sobre-marca);cursor:pointer;">
           Guardar ${rol}
         </button>
       </div>
@@ -7881,7 +7881,7 @@ async function pintarPermisosPorVendedor() {
         const tieneOverride = override.length > 0;
         return `
           <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-            <div style="font-weight:900;color:var(--acento-txt);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:#888;font-weight:600;">(usa config rol)</span>'}</div>
+            <div style="font-weight:900;color:var(--acento-txt);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:var(--suave);font-weight:600;">(usa config rol)</span>'}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;">
               ${disp.map(sec => {
                 const checked = override.indexOf(sec) >= 0;
@@ -7892,8 +7892,8 @@ async function pintarPermisosPorVendedor() {
               }).join('')}
             </div>
             <div style="display:flex;gap:6px;margin-top:8px;">
-              <button onclick="guardarPermisosVendedor('${v.id}')" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:7px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.74rem;color:var(--negro);cursor:pointer;">Guardar override</button>
-              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:#888;cursor:pointer;">Quitar override</button>
+              <button onclick="guardarPermisosVendedor('${v.id}')" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:7px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.74rem;color:var(--sobre-marca);cursor:pointer;">Guardar override</button>
+              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--suave);cursor:pointer;">Quitar override</button>
             </div>
           </div>`;
       }).join('')}
@@ -7983,7 +7983,7 @@ async function pintarMatrizPermisos() {
 
     const filaAdmin = admins.map(v => `
       <tr>
-        ${celdaFija}${v.nombre}<div style="font-size:0.58rem;color:#888;font-weight:600;">ve todo (fijo)</div></td>
+        ${celdaFija}${v.nombre}<div style="font-size:0.58rem;color:var(--suave);font-weight:600;">ve todo (fijo)</div></td>
         ${disp.map(() => `<td style="text-align:center;padding:8px 4px;border-bottom:1px solid var(--gris3);background:rgba(255,210,0,0.05);">
           <input type="checkbox" checked disabled style="width:16px;height:16px;accent-color:#888;cursor:not-allowed;">
         </td>`).join('')}
@@ -8013,7 +8013,7 @@ async function pintarMatrizPermisos() {
           <tbody>${filaAdmin}${filasVend}</tbody>
         </table>
       </div>
-      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.85rem;color:var(--negro);cursor:pointer;">Guardar todo</button>
+      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">Guardar todo</button>
 
       <!-- Restablecer el PIN de otra persona. Va aparte de la matriz para no
            tocar su layout de celdas fijas, y porque es una acción de otro tipo:
@@ -8068,7 +8068,7 @@ window.restablecerPinVendedor = async function(btn) {
       p_data: { token: tokenVendedor(), idVendedor: Number(idVendedor), pinNuevo: nuevo }
     });
     if (res && res.ok) {
-      msg.style.color = '#4caf50';
+      msg.style.color = 'var(--ok-txt)';
       msg.textContent = `✓ PIN de ${nombre} restablecido. Comunícaselo por un canal seguro.`;
       inp.value = ''; sel.value = '';
     } else {
@@ -8185,20 +8185,20 @@ function pintarEstadoActual() {
     const horas = Math.floor(minTrans / 60);
     const mins  = minTrans % 60;
     const ubicacionInfo = _jornadaAbierta.dentroPlantaEntrada
-      ? '<span style="color:#4caf50;">En planta</span>'
+      ? '<span style="color:var(--ok-txt);">En planta</span>'
       : '<span style="color:var(--rojo);">Fuera de planta</span>';
 
     cont.innerHTML = `
       <div style="background:linear-gradient(135deg,var(--ok-bg),var(--ok-br));border:1px solid #4caf50;border-radius:14px;padding:14px;">
-        <div style="font-size:0.7rem;font-weight:800;color:#4caf50;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Jornada activa</div>
+        <div style="font-size:0.7rem;font-weight:800;color:var(--ok-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Jornada activa</div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">${horas}h ${mins}m</div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:4px;">
           Entrada: ${ent.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})} · ${ubicacionInfo}
         </div>
         ${_jornadaAbierta.actividades.length ? `<div style="margin-top:8px;font-size:0.74rem;color:var(--blanco);">${_jornadaAbierta.actividades.join(' · ')}</div>` : ''}
         <div style="display:flex;gap:8px;margin-top:12px;">
-          <button onclick="abrirEditarActividades()" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--amarillo);cursor:pointer;">Actividades</button>
-          <button onclick="abrirCerrarJornada()" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--negro);cursor:pointer;">Cerrar jornada</button>
+          <button onclick="abrirEditarActividades()" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Actividades</button>
+          <button onclick="abrirCerrarJornada()" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">Cerrar jornada</button>
         </div>
       </div>`;
   } else {
@@ -8207,7 +8207,7 @@ function pintarEstadoActual() {
         <div style="font-size:2.2rem;margin-bottom:8px;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V3h12v18"/><path d="M16 12h4"/><circle cx="12" cy="12" r="1"/></svg></div>
         <div style="font-weight:900;color:var(--sobre-marca);font-size:1.05rem;margin-bottom:4px;">Sin jornada activa</div>
         <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Registra tu entrada cuando llegues a la planta o empieces tu día.</div>
-        <button onclick="abrirIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--negro);cursor:pointer;">
+        <button onclick="abrirIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
           Registrar entrada
         </button>
       </div>`;
@@ -8272,12 +8272,12 @@ async function pintarReporteAdmin() {
           <div style="background:var(--gris2);border-radius:8px;padding:9px;margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;">
               <div style="font-weight:800;color:var(--blanco);font-size:0.84rem;">${v.nombreVendedor}</div>
-              <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${v.horasTotales}h</div>
+              <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;line-height:1;">${v.horasTotales}h</div>
             </div>
             <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">
               ${v.diasTrabajados} día(s) · ${v.promedioHorasDia}h/día prom · ${v.porcentajeEnPlanta}% en planta
             </div>
-            ${Object.keys(v.actividadesConteo).length ? `<div style="font-size:0.68rem;color:#888;margin-top:3px;">${Object.entries(v.actividadesConteo).map(([a,n]) => `${a} (${n})`).join(' · ')}</div>` : ''}
+            ${Object.keys(v.actividadesConteo).length ? `<div style="font-size:0.68rem;color:var(--suave);margin-top:3px;">${Object.entries(v.actividadesConteo).map(([a,n]) => `${a} (${n})`).join(' · ')}</div>` : ''}
           </div>
         `).join('')}
       </div>`;
@@ -8301,7 +8301,7 @@ function pintarHistorialJornadas() {
     const ent = j.horaEntrada ? new Date(j.horaEntrada).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '—';
     const sal = j.horaSalida ? new Date(j.horaSalida).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
     const horas = (j.duracionMinutos / 60).toFixed(1);
-    const colorBorde = j.estatus === 'abierta' ? '#4caf50' : j.autoCerrada ? 'var(--rojo)' : 'var(--amarillo)';
+    const colorBorde = j.estatus === 'abierta' ? 'var(--ok-txt)' : j.autoCerrada ? 'var(--rojo)' : 'var(--amarillo)';
     const adminViendo = esAdmin && esAdmin();
     return `<div onclick="verDetalleJornada(${j.id})" style="
       background:var(--gris);border-radius:12px;padding:11px;margin-bottom:8px;cursor:pointer;
@@ -8312,11 +8312,11 @@ function pintarHistorialJornadas() {
           <div style="font-size:0.74rem;color:var(--suave);margin-top:2px;">
             ${ent} → ${sal} ${j.dentroPlantaEntrada ? '· en planta' : '· fuera de planta'}
           </div>
-          ${j.actividades.length ? `<div style="font-size:0.7rem;color:#888;margin-top:3px;">${j.actividades.join(' · ')}</div>` : ''}
+          ${j.actividades.length ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:3px;">${j.actividades.join(' · ')}</div>` : ''}
           ${j.autoCerrada ? `<div style="font-size:0.66rem;color:var(--rojo);margin-top:2px;">Cerrada automáticamente</div>` : ''}
         </div>
         <div style="text-align:right;white-space:nowrap;">
-          <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">${horas}h</div>
+          <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.4rem;line-height:1;">${horas}h</div>
         </div>
       </div>
     </div>`;
@@ -8345,7 +8345,7 @@ window.abrirIniciarJornada = async function() {
   info.innerHTML = 'Capturando ubicación... <span class="loader loader-w"></span>';
   info.style.background = 'var(--aviso-bg)';
   info.style.borderColor = 'rgba(255,210,0,0.4)';
-  info.style.color = 'var(--amarillo)';
+  info.style.color = 'var(--acento-txt)';
 
   const loc = await obtenerMiUbicacion();
   if (loc) {
@@ -8354,7 +8354,7 @@ window.abrirIniciarJornada = async function() {
     const d = distanciaMetros(loc.lat, loc.lng, PLANTA_LAT, PLANTA_LNG);
     if (d <= 100) {
       info.innerHTML = `En la planta (a ${Math.round(d)}m)`;
-      info.style.background = 'var(--ok-bg)'; info.style.borderColor = 'var(--ok-br)'; info.style.color = '#4caf50';
+      info.style.background = 'var(--ok-bg)'; info.style.borderColor = 'var(--ok-br)'; info.style.color = 'var(--ok-txt)';
     } else {
       info.innerHTML = `Estás a ${Math.round(d)}m de la planta. Se registrará como "fuera".`;
       info.style.background = 'var(--error-bg)'; info.style.borderColor = 'var(--rojo)'; info.style.color = 'var(--rojo)';
@@ -8542,19 +8542,19 @@ window.verDetalleJornada = function(id) {
 
   document.getElementById('dj-contenido').innerHTML = `
     <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
-      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--amarillo);line-height:1;">${horas}h</div>
+      <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--acento-txt);line-height:1;">${horas}h</div>
       <div style="font-size:0.78rem;color:var(--suave);margin-top:4px;">${fecha}</div>
       ${adminViendo ? `<div style="font-size:0.74rem;color:var(--blanco);margin-top:3px;">${j.nombreVendedor}</div>` : ''}
       ${j.autoCerrada ? `<div style="margin-top:8px;font-size:0.72rem;color:var(--rojo);font-weight:700;">Cerrada automáticamente</div>` : ''}
     </div>
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.82rem;">
-      <div style="margin-bottom:4px;"><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Entrada:</strong> ${ent} ${j.dentroPlantaEntrada ? '· <span style="color:#4caf50;">en planta</span>' : '· <span style="color:var(--rojo);">fuera</span>'}</div>
-      <div><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Salida:</strong> ${sal} ${j.horaSalida ? (j.dentroPlantaSalida ? '· <span style="color:#4caf50;">en planta</span>' : '· <span style="color:var(--rojo);">fuera</span>') : ''}</div>
+      <div style="margin-bottom:4px;"><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Entrada:</strong> ${ent} ${j.dentroPlantaEntrada ? '· <span style="color:var(--ok-txt);">en planta</span>' : '· <span style="color:var(--rojo);">fuera</span>'}</div>
+      <div><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Salida:</strong> ${sal} ${j.horaSalida ? (j.dentroPlantaSalida ? '· <span style="color:var(--ok-txt);">en planta</span>' : '· <span style="color:var(--rojo);">fuera</span>') : ''}</div>
     </div>
     ${adminViendo && (j.coordsEntrada || j.coordsSalida) ? `
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        ${j.coordsEntrada ? `<button onclick="abrirCoordsEnMapa('${j.coordsEntrada}')" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--amarillo);cursor:pointer;">Ver entrada en mapa</button>` : ''}
-        ${j.coordsSalida ? `<button onclick="abrirCoordsEnMapa('${j.coordsSalida}')" style="flex:1;background:transparent;border:1px solid #4caf50;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:#4caf50;cursor:pointer;">Ver salida en mapa</button>` : ''}
+        ${j.coordsEntrada ? `<button onclick="abrirCoordsEnMapa('${j.coordsEntrada}')" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Ver entrada en mapa</button>` : ''}
+        ${j.coordsSalida ? `<button onclick="abrirCoordsEnMapa('${j.coordsSalida}')" style="flex:1;background:transparent;border:1px solid #4caf50;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--ok-txt);cursor:pointer;">Ver salida en mapa</button>` : ''}
       </div>` : ''}
     ${j.actividades.length ? `
       <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
@@ -8649,7 +8649,7 @@ function pintarListaProductos() {
   // Sección de papas con switches on/off (solo control de disponibilidad)
   if (_papasLista.length > 0) {
     html += `<div style="font-size:0.74rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
-    html += `<div style="font-size:0.7rem;color:#777;margin-bottom:10px;">Apaga el switch cuando un sabor esté agotado.</div>`;
+    html += `<div style="font-size:0.7rem;color:var(--suave);margin-bottom:10px;">Apaga el switch cuando un sabor esté agotado.</div>`;
     _papasLista.forEach(p => {
       const activo = p.activo !== false;
       const id = p.id;
@@ -8657,8 +8657,8 @@ function pintarListaProductos() {
       html += `<div style="background:var(--gris2);border-radius:10px;padding:11px;margin-bottom:6px;display:flex;gap:10px;align-items:center;${activo?'':'opacity:0.55;'}">
         <div style="display:flex;align-items:center;">${ico}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;color:var(--blanco);font-size:0.86rem;">${p.sabor} <span style="color:#666;font-weight:500;">${p.presentacion}</span></div>
-          <div style="font-size:0.7rem;color:#777;">${activo ? 'Disponible' : 'Agotado'} · $${p.precio_consumidor||0}</div>
+          <div style="font-weight:800;color:var(--blanco);font-size:0.86rem;">${p.sabor} <span style="color:var(--suave);font-weight:500;">${p.presentacion}</span></div>
+          <div style="font-size:0.7rem;color:var(--suave);">${activo ? 'Disponible' : 'Agotado'} · $${p.precio_consumidor||0}</div>
         </div>
         <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">
           <input type="checkbox" ${activo?'checked':''} onchange="togglePapa(${id}, this.checked, this)" style="opacity:0;width:0;height:0;">
@@ -8737,11 +8737,11 @@ function cardProducto(p) {
         ${badge}
       </div>
       ${detalle}
-      <div style="font-size:0.7rem;color:#777;margin-top:2px;">
+      <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">
         ${p.codigo_barras ? ''+p.codigo_barras : ''}
       </div>
     </div>
-    <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;line-height:1;">$${Number(p.precio_consumidor||0).toLocaleString('es-MX')}</div>
+    <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.4rem;line-height:1;">$${Number(p.precio_consumidor||0).toLocaleString('es-MX')}</div>
   </div>`;
 }
 
@@ -9083,17 +9083,17 @@ function pintarListaCupones() {
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:1.1rem;">${ico[c.tipo]||''}</span>
-            <span style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.2rem;line-height:1;">${c.codigo}</span>
+            <span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;line-height:1;">${c.codigo}</span>
             ${estado}
           </div>
           <div style="font-size:0.74rem;color:var(--blanco);margin-top:3px;">${c.descripcion || valorStr}</div>
-          <div style="font-size:0.66rem;color:#888;margin-top:2px;">
+          <div style="font-size:0.66rem;color:var(--suave);margin-top:2px;">
             Usos: ${c.usos_actuales||0}${c.usos_maximos>0?'/'+c.usos_maximos:''}
             ${c.vigencia_fin ? ' · Hasta '+new Date(c.vigencia_fin).toLocaleDateString('es-MX',{day:'numeric',month:'short'}) : ''}
             ${c.min_compra > 0 ? ' · Mín $'+c.min_compra : ''}
           </div>
         </div>
-        <div style="font-family:'Archivo',sans-serif;color:var(--amarillo);font-size:1.4rem;">${valorStr}</div>
+        <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.4rem;">${valorStr}</div>
       </div>
     </div>`;
   }).join('');
@@ -9259,8 +9259,8 @@ function _filaSpec(etq, valor, opt = {}) {
 function pctColor(p) {
   if (p === null || p === undefined || isNaN(Number(p))) return 'var(--suave)';
   const n = Number(p);
-  if (n < 0) return 'var(--rojo)';
-  if (n < 15) return '#ff8a8a';
+  if (n < 0) return 'var(--error-txt)';
+  if (n < 15) return 'var(--error-txt)';
   return 'var(--blanco)';
 }
 

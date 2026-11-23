@@ -616,10 +616,10 @@ window.ubicarTiendaEnMapa = async function() {
   const partes = [dir, val('dt-colonia'), val('dt-cp'), val('dt-municipio'), val('dt-estado'), 'México'].filter(Boolean);
   let coords = null;
   try { coords = await geocodificarDireccionTexto(partes.join(', ')); } catch (_e) {}
-  if (!coords) { if (st) { st.textContent = 'No encontramos esa dirección. Revísala e inténtalo de nuevo.'; st.style.color = '#ff8a8a'; } return; }
+  if (!coords) { if (st) { st.textContent = 'No encontramos esa dirección. Revísala e inténtalo de nuevo.'; st.style.color = 'var(--error-txt)'; } return; }
   window._dtCoords = coords;
   mostrarMapaTienda(coords.lat, coords.lng);
-  if (st) { st.innerHTML = 'Pin colocado. <strong>Arrástralo</strong> a la entrada exacta de tu tienda.'; st.style.color = '#7ee787'; }
+  if (st) { st.innerHTML = 'Pin colocado. <strong>Arrástralo</strong> a la entrada exacta de tu tienda.'; st.style.color = 'var(--ok-txt)'; }
 };
 
 // Mapa con pin arrastrable para la ubicación de ENTREGA de la tienda.
@@ -678,7 +678,7 @@ window.buscarCPTienda = function(cp) {
       sel.style.color = 'var(--blanco)';
       const est = document.getElementById('dt-estado');
       if (est && !est.value && places[0].state) est.value = places[0].state;
-      if (st) { st.style.color = '#4caf50'; st.textContent = `✓ ${places.length} colonia${places.length > 1 ? 's' : ''}`; }
+      if (st) { st.style.color = 'var(--ok-txt)'; st.textContent = `✓ ${places.length} colonia${places.length > 1 ? 's' : ''}`; }
     } catch (e) {
       if (st) { st.style.color = 'var(--rojo)'; st.textContent = '✗ CP no encontrado'; }
     }
@@ -698,7 +698,7 @@ window.guardarDatosTienda = async function() {
     if (!msg) return;
     msg.style.display = 'block'; msg.textContent = txt;
     msg.style.background = ok ? 'var(--ok-bg)' : 'var(--error-br)';
-    msg.style.color = ok ? '#7ee787' : '#ff8a8a';
+    msg.style.color = ok ? 'var(--ok-txt)' : 'var(--error-txt)';
   };
 
   if (!negocio) { showMsg('Escribe el nombre de tu negocio.'); return; }
@@ -2106,7 +2106,7 @@ function renderDrawer() {
       }
       if (envDescRow) {
         envDescRow.style.display = descEnvio > 0 ? 'flex' : 'none';
-        if (descEnvio > 0) envDescRow.innerHTML = `<span>Cupón envío gratis (${_cuponEnCarrito.codigo})</span><span style="color:#4caf50;">-$${descEnvio.toLocaleString('es-MX')}</span>`;
+        if (descEnvio > 0) envDescRow.innerHTML = `<span>Cupón envío gratis (${_cuponEnCarrito.codigo})</span><span style="color:var(--ok-txt);">-$${descEnvio.toLocaleString('es-MX')}</span>`;
       }
 
       if (totalLabelEl) {
@@ -2333,7 +2333,7 @@ window.actualizarChecklistFaltantes = function() {
   } else {
     cont.style.display = 'block';
     cont.innerHTML = `
-      <div style="font-weight:800;color:#ffa500;margin-bottom:6px;font-size:0.86rem;">Falta poco para confirmar tu pedido:</div>
+      <div style="font-weight:800;color:var(--acento-txt);margin-bottom:6px;font-size:0.86rem;">Falta poco para confirmar tu pedido:</div>
       <ul style="margin:0;padding-left:20px;color:#ffd699;">
         ${faltantes.map(f => `<li style="margin:3px 0;">${f.msg}</li>`).join('')}
       </ul>
@@ -2415,7 +2415,7 @@ function esFueraCDMX() {
 function avisoEnvioCDMX() {
   if (esFueraCDMX() !== true) return '';
   return `<div style="margin-top:8px;background:var(--aviso-bg);border:1px solid #ffa500;border-radius:8px;padding:10px;color:var(--aviso-txt);font-size:0.74rem;line-height:1.45;">
-    <strong style="color:#ffa500;">Destino fuera de CDMX.</strong> Tu pedido sí se puede enviar, pero el <strong>costo de envío puede variar según la distancia</strong> y quizá requiera un <strong>pago adicional</strong>. Confirmaremos el costo final contigo y <strong>el total se ajusta y se cobra antes de enviar</strong>.
+    <strong style="color:var(--acento-txt);">Destino fuera de CDMX.</strong> Tu pedido sí se puede enviar, pero el <strong>costo de envío puede variar según la distancia</strong> y quizá requiera un <strong>pago adicional</strong>. Confirmaremos el costo final contigo y <strong>el total se ajusta y se cobra antes de enviar</strong>.
   </div>`;
 }
 function repintarInfoEntrega() {
@@ -2436,7 +2436,7 @@ window.setEntrega = function(id) {
   metodoEntrega = id;
   document.querySelectorAll('.entrega-btn').forEach(b => {
     const activo = b.dataset.id === id;
-    b.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
+    b.style.borderColor = activo ? 'var(--acento-txt)' : 'var(--gris3)';
     b.style.background = activo ? 'var(--aviso-bg)' : 'var(--gris2)';
   });
   // Paquetería => solo cobro en línea
@@ -2448,7 +2448,7 @@ window.setEntrega = function(id) {
     // ¿Hay cupón envío gratis aplicado?
     const tieneCuponEnvio = _cuponEnCarrito && _cuponEnCarrito.tipo === 'envio_gratis';
     if (tieneCuponEnvio) {
-      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--acento-txt);">enviatodo.com</strong>. <strong style="color:#4caf50;">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
+      info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--acento-txt);">enviatodo.com</strong>. <strong style="color:var(--ok-txt);">¡Cupón ${_cuponEnCarrito.codigo} aplicado!</strong> El costo del envío ($${COSTO_PAQUETERIA}) se descuenta automáticamente. Se asignará una guía de rastreo.` + avisoEnvioCDMX();
     } else {
       info.innerHTML = `Tu pedido se enviará por <strong style="color:var(--acento-txt);">enviatodo.com</strong>. Costo: <strong>$${COSTO_PAQUETERIA}</strong> que se sumará al total. Se asignará una guía de rastreo una vez confirmado.` + avisoEnvioCDMX();
     }
@@ -2615,7 +2615,7 @@ function botonCualquiera() {
   return `
     <div onclick="seleccionarVendedor({id:0,nombre:'Cualquier vendedor',rol:'Cualquiera'})"
       style="display:flex;align-items:center;gap:10px;padding:10px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;cursor:pointer;margin-top:4px;"
-      onmouseover="this.style.borderColor='var(--amarillo)'" onmouseout="this.style.borderColor='var(--gris3)'">
+      onmouseover="this.style.borderColor='var(--acento-txt)'" onmouseout="this.style.borderColor='var(--gris3)'">
       <div style="flex:1;">
         <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">No conozco a nadie</div>
         <div style="color:var(--suave);font-size:0.7rem;">Que cualquiera me contacte</div>
@@ -2731,7 +2731,7 @@ function pintarHintUltimoContacto(vend) {
 
   cont.innerHTML = `
     <div style="background:var(--aviso-bg);border:1px dashed #ffa500;border-radius:8px;padding:12px;margin-bottom:10px;">
-      <div style="color:#ffa500;font-size:0.74rem;font-weight:700;margin-bottom:6px;">LA ÚLTIMA VEZ ELEGISTE</div>
+      <div style="color:var(--acento-txt);font-size:0.74rem;font-weight:700;margin-bottom:6px;">LA ÚLTIMA VEZ ELEGISTE</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <span style="font-size:1.4rem;">${ico}</span>
         <div style="flex:1;min-width:0;">
@@ -2760,7 +2760,7 @@ let cpTimer = null;
 function detectarZona(cp) {
   const cpNum = parseInt(cp);
   if (cpNum >= 1000 && cpNum <= 16999) {
-    return { zona: 'cdmx', label: 'CDMX', color: '#4caf50', entrega: 'normal',
+    return { zona: 'cdmx', label: 'CDMX', color: 'var(--ok-txt)', entrega: 'normal',
       msg: null };
   }
   if ((cpNum >= 50000 && cpNum <= 57999) || (cpNum >= 52000 && cpNum <= 54999)) {
@@ -2823,7 +2823,7 @@ window.buscarCP = async function(cp) {
         }
       }
       col.style.color='var(--blanco)';
-      st.style.color='#4caf50'; st.textContent=`✓ ${places.length} colonia${places.length>1?'s':''}`;
+      st.style.color='var(--ok-txt)'; st.textContent=`✓ ${places.length} colonia${places.length>1?'s':''}`;
       document.getElementById('cp-mun').textContent=places[0]['place name'];
       document.getElementById('cp-est').textContent=places[0]['state']||'';
       info.style.display='block';
@@ -4105,7 +4105,7 @@ function perfRender() {
     const hh = String(e.t.getHours()).padStart(2,'0');
     const mm = String(e.t.getMinutes()).padStart(2,'0');
     const ss = String(e.t.getSeconds()).padStart(2,'0');
-    return `<div style="color:${e.color};"><span style="color:#666;">${hh}:${mm}:${ss}</span> ${e.line}</div>`;
+    return `<div style="color:${e.color};"><span style="color:var(--suave);">${hh}:${mm}:${ss}</span> ${e.line}</div>`;
   }).join('');
 }
 
@@ -4140,7 +4140,7 @@ function perfStartNav(seccion) {
 function perfEndNav(handle) {
   if (!handle || !PERF.enabled) return;
   const ms = Math.round(performance.now() - handle.t0);
-  const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
+  const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
   perfPush(`📺 nav→${handle.label}: <b style="color:${color};">${ms}ms</b>`, '#bbb');
 }
 
@@ -4166,7 +4166,7 @@ async function sheetsCall(payload) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
+      const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
       perfPush(`🌐 ${accion}: <b style="color:${color};">${ms}ms</b>`, '#999');
     }
     return data;
@@ -4243,9 +4243,9 @@ async function supabaseCall(method, path, body, opciones) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? '#4caf50' : ms < 700 ? '#E5B312' : '#ff8888';
+      const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
       const shortPath = path.split('?')[0];
-      perfPush(`⚡ supabase ${method} ${shortPath}: <b style="color:${color};">${ms}ms</b>`, '#4caf50');
+      perfPush(`⚡ supabase ${method} ${shortPath}: <b style="color:${color};">${ms}ms</b>`, 'var(--ok-txt)');
     }
     return data;
   } catch(e) {
@@ -4486,19 +4486,19 @@ window.togglePromosPerfil = async function(el) {
   pintarSwitchPromos(on);
   const st = document.getElementById('cuenta-promos-status');
   const tel = String(telefonoVerif || clienteActual?.telefono || '').replace(/\D/g, '').slice(-10);
-  if (tel.length < 10) { if (st) { st.textContent = 'Inicia sesión para cambiar esto.'; st.style.color = '#ff8a8a'; } return; }
+  if (tel.length < 10) { if (st) { st.textContent = 'Inicia sesión para cambiar esto.'; st.style.color = 'var(--error-txt)'; } return; }
   if (st) { st.textContent = 'Guardando…'; st.style.color = 'var(--suave)'; }
   try {
     const r = await supabaseCall('POST', 'rpc/set_opt_in_promos', { p_telefono: tel, p_acepta: on, p_origen: 'perfil' });
     if (r && r.ok) {
-      if (st) { st.textContent = on ? 'Activadas' : 'Desactivadas'; st.style.color = on ? '#7ee787' : 'var(--suave)'; }
+      if (st) { st.textContent = on ? 'Activadas' : 'Desactivadas'; st.style.color = on ? 'var(--ok-txt)' : 'var(--suave)'; }
     } else {
       el.checked = !on; pintarSwitchPromos(!on);
-      if (st) { st.textContent = 'No se pudo guardar.'; st.style.color = '#ff8a8a'; }
+      if (st) { st.textContent = 'No se pudo guardar.'; st.style.color = 'var(--error-txt)'; }
     }
   } catch (e) {
     el.checked = !on; pintarSwitchPromos(!on);
-    if (st) { st.textContent = 'Error: ' + e.message; st.style.color = '#ff8a8a'; }
+    if (st) { st.textContent = 'Error: ' + e.message; st.style.color = 'var(--error-txt)'; }
   }
 };
 
@@ -5033,7 +5033,7 @@ async function pintarRegalosCliente() {
       html += `<div class="pedido-card" style="opacity:0.95;">
         <div class="pedido-top">
           <span class="pedido-consec">${lbl[r.tipo_interno]||'Regalo'}</span>
-          <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--amarillo);">${kgTxt}</span>
+          <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);">${kgTxt}</span>
         </div>
         <div class="pedido-fecha">${f}${r.consecutivo ? ' · ' + r.consecutivo : ''}</div>
         <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;font-weight:700;">Cortesía · no es compra</div>
@@ -5066,7 +5066,7 @@ function renderPedidos() {
     <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
       <div style="font-size:0.68rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--amarillo);">${ultimo.consec||'—'}</span>
+        <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);">${ultimo.consec||'—'}</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
       </div>
       <div style="font-size:0.75rem;color:var(--suave);font-weight:600;">${ultimo.fecha?new Date(ultimo.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
@@ -5084,7 +5084,7 @@ function renderPedidos() {
         </div>
         <div class="pedido-fecha">${fecha}</div>
         <span class="pedido-estatus ${p.estatus==='Entregado'?'entregado':''}">${p.estatus||'Pendiente'}</span>
-        ${p.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${p.id})" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px;color:var(--amarillo);font-weight:800;font-size:0.72rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(p.id)>=0?'✓ Evaluado · editar':'Evaluar'}</button>` : ''}
+        ${p.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${p.id})" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px;color:var(--acento-txt);font-weight:800;font-size:0.72rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(p.id)>=0?'✓ Evaluado · editar':'Evaluar'}</button>` : ''}
       </div>`;
     }).join('')}
   `;
@@ -5989,14 +5989,20 @@ window.addEventListener('load', () => {
         <button id="cp-ios-x" style="background:transparent;border:none;color:#000;font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
       `;
       document.body.appendChild(banner);
+      // El banner flota sobre el contenido y tapaba la ultima fila de cada
+      // pantalla -en Caja, una cifra de $56,315-. Mientras este, la pantalla
+      // reserva su alto; al cerrarse se devuelve.
+      document.body.classList.add('con-banner-instalar');
       banner.addEventListener('click', (e) => {
         if (e.target.id === 'cp-ios-x') return;
         mostrarInstruccionesInstalar();
       });
+      const _quitarHueco = () => document.body.classList.remove('con-banner-instalar');
       document.getElementById('cp-ios-x').onclick = (e) => {
         e.stopPropagation();
         sessionStorage.setItem(dismissKey, '1');
         banner.remove();
+        _quitarHueco();
       };
   }, 3000);
 });
@@ -6093,14 +6099,14 @@ window.mostrarInstruccionesInstalar = function() {
   ov.innerHTML = `
     <div style="background:var(--negro);border-top:4px solid var(--amarillo);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:18px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--amarillo);">INSTALAR LA APP</div>
+        <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);">INSTALAR LA APP</div>
         <button id="cp-instr-close" style="background:var(--gris3);border:none;border-radius:50%;width:32px;height:32px;color:var(--suave2);font-size:1.1rem;cursor:pointer;">✕</button>
       </div>
       <div style="font-size:0.82rem;color:var(--suave);margin-bottom:14px;line-height:1.4;">
         Tendrás Crunchy Paps como una app nativa: ícono en pantalla principal, pantalla completa, acceso rápido sin abrir el navegador.
       </div>
       ${pasos}
-      <button id="cp-instr-ok" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:#000;cursor:pointer;margin-top:6px;">
+      <button id="cp-instr-ok" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;margin-top:6px;">
         Entendido
       </button>
     </div>

@@ -88,7 +88,7 @@ select.inp { appearance: none; cursor: pointer; }
 .btn-primary:disabled { background: var(--gris3); color: var(--suave2); cursor: not-allowed; transform: none; }
 
 .btn-link {
-  background: none; border: none; color: var(--amarillo);
+  background: none; border: none; color: var(--acento-txt);
   font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.85rem;
   cursor: pointer; text-decoration: underline;
 }
@@ -180,7 +180,7 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .otp-d:focus { border-color:var(--amarillo); }
 .msg { font-size:0.83rem; font-weight:700; min-height:18px; }
-.msg.err { color:var(--rojo); } .msg.ok { color:#4caf50; } .msg.info { color:var(--suave); }
+.msg.err { color:var(--rojo); } .msg.ok { color:var(--ok-txt); } .msg.info { color:var(--suave); }
 
 /* ══════════════════════════
    SCREEN: PENDIENTE B2B
@@ -267,21 +267,21 @@ select.inp { appearance: none; cursor: pointer; }
 .pd-ph { display:flex; flex-direction:column; align-items:center; gap:6px; }
 .pd-ph .emoji { display:flex; color:#9a9a9a; }
 .pd-ph .emoji svg { width:56px; height:56px; }
-.pd-ph .prox { font-size:0.7rem; font-weight:800; color:#999; text-transform:uppercase; }
+.pd-ph .prox { font-size:0.7rem; font-weight:800; color:var(--suave); text-transform:uppercase; }
 .pd-body { padding:18px 18px 26px; }
 .pd-nombre { font-weight:900; font-size:1.5rem; color:var(--blanco); line-height:1.15; }
 .pd-pres { font-size:0.78rem; color:var(--suave,#999); font-weight:700; text-transform:uppercase; margin-top:3px; }
 .pd-precio { font-size:1.8rem; font-weight:900; color:var(--acento-txt); margin-top:12px; }
-.pd-precio-orig { font-size:1rem; color:#888; text-decoration:line-through; font-weight:700; }
+.pd-precio-orig { font-size:1rem; color:var(--suave); text-decoration:line-through; font-weight:700; }
 .pd-desc { font-size:0.92rem; color:var(--blanco); line-height:1.55; margin-top:14px; white-space:pre-wrap; }
 .pd-bottom { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:12px 16px; border-top:1px solid var(--gris2,#222); background:var(--negro,#0e0e0e); flex:0 0 auto; }
 .pd-bottom-row { display:flex; gap:10px; align-items:center; }
 .pd-cart-line { font-size:0.84rem; font-weight:800; color:var(--acento-txt); text-align:center; }
-.pd-cart-line.pd-cart-empty { color:#888; font-weight:700; }
+.pd-cart-line.pd-cart-empty { color:var(--suave); font-weight:700; }
 .pd-bottom .pd-qty-num { color:var(--blanco); font-size:1.15rem; min-width:30px; }
 .pd-bottom .qty-ctrl { margin:0; padding-top:0; }
 .pd-add { flex:1; background:var(--rojo,#e3000f); color:#fff; border:none; border-radius:10px; padding:13px; font-weight:900; font-size:0.95rem; cursor:pointer; }
-.pd-agotado { flex:1; text-align:center; color:#888; font-weight:700; padding:12px; }
+.pd-agotado { flex:1; text-align:center; color:var(--suave); font-weight:700; padding:12px; }
 .pd-add-sec { background:var(--gris3); color:var(--suave2); }
 .pd-cajas { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
 .pd-cajas .caja-btn { flex-direction:column; justify-content:center; gap:2px; padding:6px 4px; }
@@ -360,13 +360,13 @@ select.inp { appearance: none; cursor: pointer; }
 }
 .prod-placeholder .emoji { display:flex; color:#9a9a9a; }
 .prod-placeholder .emoji svg { width:44px; height:44px; }
-.prod-placeholder .prox { font-size:0.62rem; font-weight:800; color:#aaa; text-transform:uppercase; }
+.prod-placeholder .prox { font-size:0.62rem; font-weight:800; color:var(--suave); text-transform:uppercase; }
 .prod-info { padding:10px 12px 12px; flex:1; display:flex; flex-direction:column; gap:3px; }
 .prod-nombre { font-weight:900; font-size:0.88rem; color:#111; line-height:1.2; }
-.prod-pres { font-size:0.7rem; color:#666; font-weight:700; text-transform:uppercase; }
+.prod-pres { font-size:0.7rem; color:var(--suave); font-weight:700; text-transform:uppercase; }
 .prod-vigencia { font-size:0.68rem; color:var(--rojo); font-weight:800; }
 .prod-precio { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.5rem; color:#111; margin-top:2px; }
-.prod-precio-orig { font-size:0.78rem; color:#aaa; text-decoration:line-through; }
+.prod-precio-orig { font-size:0.78rem; color:var(--suave); text-decoration:line-through; }
 .qty-ctrl { display:flex; align-items:center; gap:8px; margin-top:auto; padding-top:6px; }
 .qty-btn {
   background:var(--gris2); border:none; border-radius:8px;
@@ -533,12 +533,12 @@ select.inp { appearance: none; cursor: pointer; }
 .gracias-card .consec-lbl { font-size:0.72rem; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
 .gracias-card .consec-val { font-family:'Archivo',sans-serif; font-weight:700; font-size:1.7rem; color:var(--acento-txt); letter-spacing:2px; }
 .gracias-card .vend-info { font-size:0.82rem; font-weight:700; color:var(--suave); margin-top:8px; }
-.gracias-card .puntos-ganados { font-size:0.82rem; font-weight:800; color:#4caf50; margin-top:6px; }
+.gracias-card .puntos-ganados { font-size:0.82rem; font-weight:800; color:var(--ok-txt); margin-top:6px; }
 .gracias-wpp-wrap {
   background:var(--ok-bg); border:1px solid var(--ok-br); border-radius:14px;
   padding:14px; margin-bottom:12px;
 }
-.gracias-wpp-wrap .wpp-hint { font-size:0.78rem; font-weight:700; color:#4caf50; margin-bottom:10px; }
+.gracias-wpp-wrap .wpp-hint { font-size:0.78rem; font-weight:700; color:var(--ok-txt); margin-bottom:10px; }
 .btn-wpp {
   background:var(--verde); border:none; border-radius:10px;
   padding:12px 16px; width:100%; font-family:'Inter',sans-serif;
@@ -729,7 +729,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-card-eq { font-size:0.72rem; font-weight:700; color:var(--suave); }
 .club-card-vence { font-size:0.72rem; font-weight:800; color:var(--acento-txt); margin-top:2px; }
 .club-canjear { background:var(--amarillo); color:var(--sobre-marca); border:none; border-radius:50px; padding:11px 16px; font-family:'Inter',sans-serif; font-weight:900; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
-.club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--amarillo); cursor:pointer; }
+.club-link { background:none; border:none; padding:12px 0 0; margin-top:10px; width:100%; text-align:left; border-top:1px solid var(--gris3); font-family:'Inter',sans-serif; font-weight:800; font-size:0.85rem; color:var(--acento-txt); cursor:pointer; }
 .club-como { background:var(--gris); border-radius:12px; padding:14px; font-size:0.8rem; font-weight:600; color:var(--suave2); line-height:1.55; }
 .club-retos { padding:0 0 14px; }
 .club-retos h3 { padding:0 16px; }
@@ -743,7 +743,7 @@ select.inp { appearance: none; cursor: pointer; }
 .club-reto-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
 .club-reto-pill { font-size:0.7rem; font-weight:800; padding:4px 9px; border-radius:999px; border:1px solid var(--gris3); color:var(--blanco); }
 .club-reto-pill.bono { border-color:var(--amarillo); color:var(--acento-txt); }
-.club-reto-pill.ok { border-color:#4caf50; color:#4caf50; }
+.club-reto-pill.ok { border-color:#4caf50; color:var(--ok-txt); }
 .club-reto-prog { font-size:0.72rem; font-weight:600; color:var(--suave); margin-bottom:5px; }
 .club-reto-prog b { color:var(--blanco); }
 .club-reto-barra { background:var(--gris3); border-radius:5px; height:6px; overflow:hidden; }
@@ -1035,7 +1035,7 @@ body:has(#s-club-canje.active) #mini-cart { display:none; }
 }
 #ticket-print .tk-powered {
   font-size: 8pt;
-  color: #666;
+  color: var(--suave);
   margin-top: 8pt;
   font-style: italic;
 }
@@ -1156,7 +1156,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .banner-cat { min-height:0; background:none; border-bottom:none; }
 .banner-cat .banner-pattern, .banner-cat .banner-accent, .banner-cat .banner-overlay, .banner-cat .banner-slogan { display:none; }
 .banner-cat .banner-content { padding:14px 16px 8px; max-width:100%; }
-.banner-cat .banner-tag { background:none; color:var(--amarillo); padding:0; margin-bottom:4px; letter-spacing:1.5px; }
+.banner-cat .banner-tag { background:none; color:var(--acento-txt); padding:0; margin-bottom:4px; letter-spacing:1.5px; }
 .banner-cat .banner-h { font-size:1.5rem; letter-spacing:1px; text-shadow:none; }
 .bn-wrap { padding:0 16px 6px; }
 .bn-wrap .bn-carousel { border-radius:12px; }
@@ -1193,7 +1193,7 @@ body.modo-interno .mini-cart .mc-total::before { content: 'Interno · '; }
 .tk-linea.tk-total { font-weight:900; }
 .tk-linea.tk-total .tk-num { color:var(--acento-txt); }
 .tk-num { font-variant-numeric:tabular-nums; white-space:nowrap; }
-.tk-btn { width:100%; min-height:44px; background:transparent; border:1px solid var(--amarillo); border-radius:10px; padding:10px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.86rem; color:var(--amarillo); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+.tk-btn { width:100%; min-height:44px; background:transparent; border:1px solid var(--amarillo); border-radius:10px; padding:10px; font-family:'Inter',sans-serif; font-weight:700; font-size:0.86rem; color:var(--acento-txt); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
 .tk-nota { font-size:0.68rem; color:var(--suave); text-align:center; margin-top:8px; }
 /* ── Paso 4 (II), carrito y checkout (13 sep 2026) ── */
 .ci-qty { display:inline-flex; align-items:center; gap:6px; margin-top:6px; }
@@ -1238,10 +1238,10 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .u-precio b { color:#111; } /* sobre la tarjeta clara el ámbar no se distingue (Abraham, Android) */
 /* Ahorro de la caja frente a las piezas sueltas: tarjeta clara y hoja de detalle oscura */
 .u-ahorro { font-size:0.76rem; color:#444; margin-top:3px; }
-.u-ahorro s { color:#777; }
+.u-ahorro s { color:var(--suave); }
 .u-ahorro b { color:#1f7a2e; font-weight:800; }
 .pd-ahorro { font-size:0.82rem; color:var(--suave); text-align:center; }
-.pd-ahorro s { color:#888; }
+.pd-ahorro s { color:var(--suave); }
 .pd-ahorro b { color:#7fd48c; font-weight:800; }
 .qty-num .u-unit { display:block; font-size:0.58rem; font-weight:700; color:var(--suave); line-height:1; }
 @media (prefers-reduced-motion: reduce) {
@@ -1269,7 +1269,7 @@ button > svg[aria-hidden]:only-child { width:22px; height:22px; }
 .ep-quitar { background:none; border:0; color:var(--suave); font-size:.74rem; font-weight:700; cursor:pointer; padding:6px; }
 .ep-quitar.deshacer { color:var(--acento-txt); }
 .ep-agregar { padding:10px 16px; border-top:1px solid var(--gris3); }
-.ep-etq { font-size:.66rem; font-weight:800; color:#777; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.ep-etq { font-size:.66rem; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
 .ep-agregar-fila { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .ep-agregar-fila select, .ep-agregar-fila input { min-height:40px; background:var(--gris); border:1px solid var(--gris3); border-radius:8px; color:var(--blanco); padding:0 8px; font:inherit; font-size:.84rem; }
 .ep-btn-agregar { grid-column:span 2; min-height:40px; background:var(--gris2); border:1px solid var(--amarillo); border-radius:999px; color:var(--acento-txt); font:inherit; font-weight:800; cursor:pointer; }
@@ -1593,3 +1593,10 @@ body.ficha-abierta { overflow: hidden; }
    linea. Va al lado, no debajo. */
 .mapa-leyenda { align-items: center; }
 .mapa-leyenda #pros-rutas-btn { min-height: 28px; padding: 0 8px; margin-left: 2px; }
+
+/* El banner «Instala Crunchy Paps» flota sobre el contenido (position:fixed,
+   bottom:80px). Tapaba la ULTIMA fila de cada pantalla: en Caja escondia
+   «Transferencias por verificar $56,315.10». Mientras esta, se reserva su
+   alto; `_quitarHueco()` lo devuelve al cerrarlo. Visto el 23 nov 2026 en una
+   captura, no leyendo el codigo (regla 30). */
+body.con-banner-instalar .screen { padding-bottom: 150px; }
