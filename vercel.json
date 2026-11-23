@@ -22,6 +22,10 @@
       "destination": "/privacidad.html"
     },
     {
+      "source": "/terminos",
+      "destination": "/terminos.html"
+    },
+    {
       "source": "/retos",
       "destination": "/retos.html"
     },
