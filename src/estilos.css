@@ -1527,3 +1527,56 @@ body.ficha-abierta { overflow: hidden; }
   pointer-events: none; user-select: none; white-space: nowrap;
 }
 .ref-etq { font-weight: 600; color: var(--suave2); margin-right: 3px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TARJETAS FLOTANDO SOBRE EL MAPA (23 nov 2026)
+
+   De la app de promotores que trajo Abraham. Lo que le gusta de ella no es el
+   color: es la ESTRUCTURA. El buscador y los filtros van SOBRE el mapa, no en
+   una barra encima, y abajo hay una tarjeta con una sola accion clara —el
+   pendiente mas cercano y a que distancia esta—.
+   ══════════════════════════════════════════════════════════════════════════ */
+.mapa-flota {
+  position: absolute; left: 24px; right: 24px; z-index: 12;
+  background: var(--gris); border: 1px solid var(--gris3);
+  border-radius: 14px; padding: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+.mapa-flota-arriba { top: 10px; }
+/* Abajo deja sitio a los botones redondos de la derecha, que son de 48px. */
+.mapa-flota-abajo { bottom: 10px; right: 84px; }
+
+.mapa-busca {
+  width: 100%; min-height: 40px; background: var(--gris2);
+  border: 1px solid var(--gris3); border-radius: 10px; padding: 8px 12px;
+  color: var(--blanco); font-family: 'Inter', sans-serif; font-size: 0.86rem;
+}
+.mapa-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/* La tarjeta del mas cercano es un BOTON entero: toda ella lleva al prospecto,
+   no solo una flecha de 12px. */
+.mapa-cerca {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: transparent; border: none; padding: 2px 2px 8px;
+  cursor: pointer; text-align: left; font-family: 'Inter', sans-serif;
+  border-bottom: 1px solid var(--gris3);
+}
+.mapa-cerca-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mapa-cerca-ttl {
+  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--suave2);
+}
+.mapa-cerca-nom {
+  font-size: 0.88rem; font-weight: 800; color: var(--blanco);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mapa-cerca-dist { font-size: 0.95rem; font-weight: 900; color: var(--rojo); white-space: nowrap; }
+.mapa-leyenda {
+  display: flex; justify-content: center; gap: 10px; margin-top: 8px;
+  font-size: 0.64rem; color: var(--suave2); font-weight: 700; flex-wrap: wrap;
+}
+
+/* El boton «Rutas» vivia dentro de la leyenda y se iba solo a una segunda
+   linea. Va al lado, no debajo. */
+.mapa-leyenda { align-items: center; }
+.mapa-leyenda #pros-rutas-btn { min-height: 28px; padding: 0 8px; margin-left: 2px; }

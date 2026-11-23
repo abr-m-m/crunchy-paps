@@ -1255,20 +1255,28 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </button>
     </div>
 
-    <!-- Filtros (solo en vista lista) -->
-    <div id="pros-filtros" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-      <button class="pros-fchip" data-est="todos"      onclick="filtrarProspectos('todos')"      style="background:var(--amarillo);border:1px solid var(--amarillo);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--negro);cursor:pointer;">Todos</button>
-      <button class="pros-fchip" data-est="pendiente"  onclick="filtrarProspectos('pendiente')"  style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est pend"></span>Pendientes</button>
-      <button class="pros-fchip" data-est="contactado" onclick="filtrarProspectos('contactado')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est cont"></span>Contactados</button>
-      <button class="pros-fchip" data-est="convertido" onclick="filtrarProspectos('convertido')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est conv"></span>Convertidos</button>
-    </div>
+
   </div>
 
   <!-- MAPA: siempre visible -->
   <div style="padding:0 16px;position:relative;">
+    <!-- Buscador y filtros FLOTANDO sobre el mapa (23 nov 2026, de la app de
+         promotores que trajo Abraham). Antes los filtros vivian arriba del
+         todo, lejos de lo que filtran, y su comentario decia «solo en vista
+         lista» cuando nada los ocultaba nunca. -->
+    <div class="mapa-flota mapa-flota-arriba">
+      <input id="pros-q" type="search" inputmode="search" placeholder="Buscar nombre, calle o colonia"
+             aria-label="Buscar prospecto" oninput="buscarProspectos(this.value)" class="mapa-busca">
+      <div id="pros-filtros" class="mapa-chips">
+<button class="pros-fchip" data-est="todos"      onclick="filtrarProspectos('todos')"      style="background:var(--sel-bg);border:1px solid var(--sel-br);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--sel-fg);cursor:pointer;">Todos</button>
+      <button class="pros-fchip" data-est="pendiente"  onclick="filtrarProspectos('pendiente')"  style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est pend"></span>Pendientes</button>
+      <button class="pros-fchip" data-est="contactado" onclick="filtrarProspectos('contactado')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est cont"></span>Contactados</button>
+      <button class="pros-fchip" data-est="convertido" onclick="filtrarProspectos('convertido')" style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;"><span class="dot-est conv"></span>Convertidos</button>
+      </div>
+    </div>
     <div id="pros-mapa-div" style="width:100%;height:50vh;border-radius:12px;overflow:hidden;border:2px solid var(--gris3);background:var(--gris);position:relative;"></div>
     <!-- Banner modo selección de ruta -->
-    <div id="pros-ruta-banner" style="display:none;position:absolute;top:8px;left:24px;right:80px;background:rgba(255,210,0,0.95);color:#000;border-radius:10px;padding:9px 12px;z-index:11;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;display:flex;align-items:center;gap:8px;">
+    <div id="pros-ruta-banner" style="display:none;position:absolute;top:8px;left:24px;right:80px;background:rgba(255,210,0,0.95);color:#000;border-radius:10px;padding:9px 12px;z-index:11;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;align-items:center;gap:8px;">
       <span class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14M5 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm14 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0zM3 12l2-6h14l2 6"/><path d="M3 12h18v5H3z"/></svg></span>
       <span id="pros-ruta-cuenta" style="flex:1;">Toca prospectos para agregar a la ruta</span>
       <button onclick="cancelarModoRuta()" style="background:#000;color:var(--amarillo);border:none;border-radius:6px;padding:4px 8px;font-weight:900;font-size:0.7rem;cursor:pointer;">✕</button>
@@ -1301,7 +1309,17 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         Selecciona al menos 2 puntos
       </button>
     </div>
-    <div id="pros-mapa-leyenda" style="display:flex;justify-content:center;gap:10px;margin-top:8px;font-size:0.66rem;color:var(--suave);font-weight:700;flex-wrap:wrap;">
+    <!-- El pendiente mas cercano: UNA accion clara, como en promotores. La
+         leyenda entra aqui en vez de colgar suelta debajo del mapa. -->
+    <div class="mapa-flota mapa-flota-abajo">
+      <button type="button" id="pros-cerca" onclick="irAlMasCercano()" class="mapa-cerca">
+        <span class="mapa-cerca-txt">
+          <span class="mapa-cerca-ttl">Tu pendiente más cercano</span>
+          <span class="mapa-cerca-nom" id="pros-cerca-nom">Toca «mi ubicación» para verlo</span>
+        </span>
+        <span class="mapa-cerca-dist" id="pros-cerca-dist"></span>
+      </button>
+    <div id="pros-mapa-leyenda" class="mapa-leyenda">
       <span class="leyenda-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20V9l6 4V9l6 4V4h6v16z"/></svg>Planta</span>
       <span class="leyenda-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>Tú</span>
       <span><span class="dot-est pend"></span>Pend</span>
@@ -1309,6 +1327,8 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <span><span class="dot-est conv"></span>Conv</span>
       <button id="pros-rutas-btn" type="button" onclick="alternarRutasMapa()" aria-pressed="true" title="Mostrar u ocultar las zonas de reparto" style="min-height:36px;padding:0 10px;border:1px solid var(--gris3);border-radius:8px;background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.66rem;cursor:pointer;">Rutas</button>
     </div>
+    </div>
+
   </div>
 
   <!-- LISTA: siempre visible debajo del mapa -->
@@ -1682,7 +1702,7 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     <!-- Filtros -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
       <button class="g-fchip" data-est="todos" onclick="filtrarGastos('todos')"
-        style="background:var(--amarillo);border:1px solid var(--amarillo);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--negro);cursor:pointer;">Todos</button>
+        style="background:var(--sel-bg);border:1px solid var(--sel-br);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--sel-fg);cursor:pointer;">Todos</button>
       <button class="g-fchip" data-est="pendiente" onclick="filtrarGastos('pendiente')"
         style="background:var(--gris);border:1px solid var(--gris3);border-radius:50px;padding:5px 10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.7rem;color:var(--suave);cursor:pointer;">Pendientes</button>
       <button class="g-fchip" data-est="aprobado" onclick="filtrarGastos('aprobado')"

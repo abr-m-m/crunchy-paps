@@ -4106,6 +4106,7 @@ window.cambiarOrdenProspectos = async function(modo) {
     if (loc) {
       _userLat = loc.lat;
       _userLng = loc.lng;
+      if (typeof pintarMasCercano === 'function') pintarMasCercano();
       if (typeof actualizarPinUsuario === 'function') actualizarPinUsuario(loc.lat, loc.lng);
     } else {
       mostrarToast('Sin GPS, usando cercanía a planta');
@@ -4202,25 +4203,85 @@ function pintarResumenProspectos() {
 }
 
 window.filtrarProspectos = function(estatus) {
+  // el mas cercano depende del filtro tanto como el mapa
   _prospectoFiltro = estatus;
   // Actualizar chips
   document.querySelectorAll('.pros-fchip').forEach(b => {
     const activo = b.getAttribute('data-est') === estatus;
-    b.style.background  = activo ? 'var(--amarillo)' : 'var(--gris)';
-    b.style.color       = activo ? 'var(--negro)' : 'var(--suave)';
-    b.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
+    // --sel-*, no --amarillo: esto va EN LINEA y ningun CSS lo corrige
+    // despues, asi que el token es el unico sitio donde se decide que
+    // significa «seleccionado» en cada piel.
+    b.style.background  = activo ? 'var(--sel-bg)' : 'var(--gris)';
+    b.style.color       = activo ? 'var(--sel-fg)' : 'var(--suave)';
+    b.style.borderColor = activo ? 'var(--sel-br)' : 'var(--gris3)';
   });
   // Repintar ambas vistas
+  pintarMapaProspectos();
+  pintarListaProspectos();
+  pintarMasCercano();
+};
+
+// Texto del buscador que flota sobre el mapa. Con 1,132 prospectos, filtrar
+// solo por estatus no alcanza para encontrar uno.
+let _prospectoQ = '';
+window.buscarProspectos = function(q) {
+  _prospectoQ = String(q || '').trim().toLowerCase();
   pintarMapaProspectos();
   pintarListaProspectos();
 };
 
 function filtrarLista() {
   return _prospectos.filter(p => {
-    if (_prospectoFiltro === 'todos') return true;
-    return p.estatus === _prospectoFiltro;
+    if (_prospectoFiltro !== 'todos' && p.estatus !== _prospectoFiltro) return false;
+    if (!_prospectoQ) return true;
+    const heno = [p.nombre, p.calle, p.colonia, p.municipio, p.codigoPostal]
+      .filter(Boolean).join(' ').toLowerCase();
+    return heno.includes(_prospectoQ);
   });
 }
+
+// ──────────────────────────────────────────
+// EL PENDIENTE MAS CERCANO
+// ──────────────────────────────────────────
+// Una sola accion clara en la tarjeta de abajo, como en la app de promotores
+// que trajo Abraham. Usa `distanciaCoords`, que YA existia: no se escribe una
+// segunda haversine (regla 63 — una herramienta que copia lo que mide, repite).
+let _masCercano = null;
+
+function pintarMasCercano() {
+  const nom  = document.getElementById('pros-cerca-nom');
+  const dist = document.getElementById('pros-cerca-dist');
+  if (!nom || !dist) return;
+  if (_userLat == null || _userLng == null) {
+    _masCercano = null;
+    nom.textContent = 'Toca «mi ubicación» para verlo';
+    dist.textContent = '';
+    return;
+  }
+  const yo = _userLat + ',' + _userLng;
+  let mejor = null, mejorD = Infinity;
+  for (const p of _prospectos) {
+    if (p.estatus !== 'pendiente') continue;
+    if (p.lat == null || p.lng == null) continue;
+    const d = distanciaCoords(yo, p.lat + ',' + p.lng);
+    if (d === null || d >= mejorD) continue;
+    mejor = p; mejorD = d;
+  }
+  _masCercano = mejor;
+  if (!mejor) {
+    nom.textContent = 'No queda ninguno pendiente con ubicación';
+    dist.textContent = '';
+    return;
+  }
+  nom.textContent = mejor.nombre || 'Sin nombre';
+  dist.textContent = mejorD < 1000 ? Math.round(mejorD) + ' m'
+                                   : (mejorD / 1000).toFixed(1) + ' km';
+}
+
+window.irAlMasCercano = function() {
+  if (!_masCercano) { centrarEnMiUbicacion(); return; }
+  verDetalleProspecto(_masCercano.id);
+};
 
 // ──────────────────────────────────────────
 // VISTA MAPA
@@ -4277,6 +4338,10 @@ async function pintarMapaProspectos() {
       _prosMapa = new google.maps.Map(mapDiv, {
         center: { lat: PLANTA_LAT, lng: PLANTA_LNG },
         zoom: 15,
+        // Un dedo, no dos. Sin esto Google usa 'auto', que dentro de una
+        // pagina con scroll EXIGE dos dedos: la friccion que reporto Abraham
+        // el 23 nov 2026 comparando con la app de promotores.
+        gestureHandling: 'greedy',
         disableDefaultUI: true,
         zoomControl: true,
         mapTypeControl: false,
@@ -4311,6 +4376,7 @@ async function pintarMapaProspectos() {
         if (loc && _prosMapa) {
           _userLat = loc.lat;
           _userLng = loc.lng;
+          if (typeof pintarMasCercano === 'function') pintarMasCercano();
           actualizarPinUsuario(loc.lat, loc.lng);
           _prosMapa.setCenter({ lat: loc.lat, lng: loc.lng });
           _prosMapa.setZoom(15);
@@ -4509,6 +4575,7 @@ window.centrarEnMiUbicacion = async function() {
   }
   _userLat = loc.lat;
   _userLng = loc.lng;
+  if (typeof pintarMasCercano === 'function') pintarMasCercano();
   actualizarPinUsuario(loc.lat, loc.lng);
   _prosMapa.setCenter({ lat: loc.lat, lng: loc.lng });
   _prosMapa.setZoom(16);
@@ -6176,9 +6243,12 @@ window.filtrarGastos = function(estatus) {
   _gastoFiltro = estatus;
   document.querySelectorAll('.g-fchip').forEach(b => {
     const activo = b.getAttribute('data-est') === estatus;
-    b.style.background  = activo ? 'var(--amarillo)' : 'var(--gris)';
-    b.style.color       = activo ? 'var(--negro)' : 'var(--suave)';
-    b.style.borderColor = activo ? 'var(--amarillo)' : 'var(--gris3)';
+    // --sel-*, no --amarillo: esto va EN LINEA y ningun CSS lo corrige
+    // despues, asi que el token es el unico sitio donde se decide que
+    // significa «seleccionado» en cada piel.
+    b.style.background  = activo ? 'var(--sel-bg)' : 'var(--gris)';
+    b.style.color       = activo ? 'var(--sel-fg)' : 'var(--suave)';
+    b.style.borderColor = activo ? 'var(--sel-br)' : 'var(--gris3)';
   });
   pintarListaGastos();
 };
