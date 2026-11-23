@@ -1620,3 +1620,46 @@ body.con-banner-instalar .screen { padding-bottom: 150px; }
   }
   .navbar.scrollable::-webkit-scrollbar-track { background: transparent; }
 }
+
+/* ══ RESULTADOS DEL NEGOCIO ══════════════════════════════════════════════
+   Abraham, 23 nov 2026, mirandolo en el celular: «necesito que esta vista sea
+   asi desde el celular; dos o tres graficos por fila». Una tarjeta por fila
+   obliga a seis desplazamientos para ver seis indicadores, y entonces no se
+   comparan: se leen de uno en uno y se olvidan.
+
+   Por eso la rejilla arranca en DOS columnas a 360 px y crece sola. Lo que
+   cambia en pequenio no es solo el ancho: el numero baja de 1.6 a 1.15 rem, el
+   relleno de 14 a 10 px y el texto del techo a 0.6 rem. Una tarjeta de 165 px
+   con la tipografia de una de 250 no cabe, se desborda y se lee peor que
+   antes. */
+.res-cab { display:flex; justify-content:space-between; align-items:center;
+           gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.res-tit { font-family:'Archivo',sans-serif; font-size:1rem; color:var(--acento-txt);
+           letter-spacing:1px; }
+.res-sel { background:var(--gris2); border:1px solid var(--gris3); color:var(--blanco);
+           border-radius:999px; padding:6px 11px; font-family:'Inter',sans-serif;
+           font-weight:600; font-size:0.74rem; cursor:pointer; min-height:36px; }
+.res-ult { font-size:0.7rem; color:var(--suave); }
+
+.res-rejilla { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+               gap:8px; align-items:start; }
+.res-card { background:var(--gris); border:1px solid var(--gris3); border-radius:14px;
+            padding:10px; min-width:0; }
+.res-card-cab { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+.res-card-tit { font-size:0.56rem; font-weight:600; letter-spacing:0.07em;
+                text-transform:uppercase; color:var(--suave); line-height:1.25; }
+.res-card-val { display:flex; align-items:baseline; gap:6px; margin-top:5px; flex-wrap:wrap; }
+.res-card-num { font-family:'Archivo',sans-serif; font-size:1.15rem; font-weight:400;
+                color:var(--blanco); line-height:1; }
+.res-card-cuando { font-size:0.62rem; color:var(--suave); margin-top:3px; line-height:1.3; }
+.res-card-techo { font-size:0.6rem; color:var(--suave); line-height:1.4; margin-top:5px; }
+
+/* Con sitio, la tarjeta respira y el numero manda, como en la computadora. */
+@media (min-width: 560px) {
+  .res-rejilla { grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+  .res-card { padding:14px; border-radius:16px; }
+  .res-card-tit { font-size:0.62rem; letter-spacing:0.08em; }
+  .res-card-num { font-size:1.6rem; }
+  .res-card-cuando { font-size:0.7rem; }
+  .res-card-techo { font-size:0.68rem; }
+}

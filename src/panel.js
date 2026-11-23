@@ -1322,7 +1322,15 @@ function pintarDashboard() {
     : '<div style="color:var(--suave);font-size:0.74rem;">Sin desglose de ingresos.</div>';
 
   cont.innerHTML =
-    card(`Ingreso neto del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
+    // EL TITULO SIGUE AL FILTRO. Estaba escrito a mano -«del mes · <mes de
+    // hoy> (MTD)»- mientras el NUMERO venia del rango filtrado: con «rango a
+    // medida» del 01/01 al 22/11, la tarjeta decia «noviembre» encima de
+    // $12,215, que es el total de toda la historia. Un numero de dinero con una
+    // etiqueta que no le corresponde se lee mal una vez y se recuerda mal para
+    // siempre. Visto por Abraham el 23 nov 2026 en una captura.
+    card(_filtroInf.desde || _filtroInf.hasta
+          ? `Ingreso neto del periodo filtrado`
+          : `Ingreso neto del mes · ${new Date().toLocaleDateString('es-MX',{month:'long'})} (MTD, ${diaMes} días)`,
       `<div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--acento-txt);line-height:1;">$${mtdAct.toLocaleString('es-MX')}</div>
        <div style="font-size:0.66rem;color:var(--suave);margin-top:4px;">Producto después de descuentos, sin envío</div>
        <div style="margin:4px 0 12px;">${deltaTxt}</div>
@@ -2053,10 +2061,17 @@ const _RES_FMT = {
   kg:    (v) => (Number(v) || 0).toFixed(1) + ' kg',
 };
 
+const _RES_MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function _resMesCorto(clave) {
-  const M = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const p = String(clave || '').split('-');
-  return p.length === 2 ? M[Number(p[1]) - 1] || clave : clave;
+  if (p.length === 3) return String(Number(p[2]));          // dia: 1, 2, 3…
+  return p.length === 2 ? _RES_MESES[Number(p[1]) - 1] || clave : clave;
+}
+// Para el titular hace falta la fecha entera, no solo el numero del dia.
+function _resCuboLargo(clave) {
+  const p = String(clave || '').split('-');
+  if (p.length === 3) return Number(p[2]) + ' ' + (_RES_MESES[Number(p[1]) - 1] || '');
+  return _resMesCorto(clave);
 }
 
 // Barras en SVG. Sin librería: son seis valores y una altura.
@@ -2074,9 +2089,17 @@ function _resBarras(valores, etiquetas, resaltado) {
     return `<rect x="${x}%" y="${80 - alto}" width="${w}%" height="${Math.max(alto, 0)}"
              rx="2" fill="${esUlt ? 'var(--amarillo)' : 'var(--gris3)'}"></rect>`;
   }).join('');
-  const textos = etiquetas.map((e) =>
-    `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:600;color:var(--suave);">${e}</span>`
-  ).join('');
+  // Con doce cubos caben las doce etiquetas; con treinta dias no caben y se
+  // vuelven una mancha. Se enseña una de cada cinco, y la ultima siempre.
+  const salto = etiquetas.length > 14 ? 5 : 1;
+  const textos = etiquetas.map((e, i) => {
+    const ver = (i % salto === 0) || i === etiquetas.length - 1;
+    // `overflow:hidden` NO: con treinta dias cada hueco mide 5 px y «16» se
+    // cortaba a «1». Como los huecos de al lado van vacios, dejar que el texto
+    // se salga del suyo no pisa nada y se lee entero.
+    return `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:600;
+             color:var(--suave);white-space:nowrap;">${ver ? e : ''}</span>`;
+  }).join('');
   return `<div style="margin-top:8px;">
             <svg viewBox="0 0 100 82" preserveAspectRatio="none" width="100%" height="58"
               role="img" aria-hidden="true" style="display:block;">
@@ -2095,21 +2118,27 @@ function _resTarjeta({ titulo, valor, cuando, delta, techo, valores, etiquetas, 
     ? `<span style="display:inline-block;background:${chip.bg};color:${chip.fg};
          border-radius:999px;padding:2px 9px;font-size:0.64rem;font-weight:600;">${chip.txt}</span>`
     : '';
+  // Las clases viven en estilos.css y no aqui: en el telefono estas tarjetas
+  // van de dos en dos, y un `style=""` en linea le gana a cualquier media
+  // query, asi que no habria forma de apretarlas.
   return `
-    <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-        <span style="font-size:0.62rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--suave);">${titulo}</span>
+    <div class="res-card">
+      <div class="res-card-cab">
+        <span class="res-card-tit">${titulo}</span>
         ${insignia}
       </div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap;">
-        <span style="font-family:'Archivo',sans-serif;font-size:1.6rem;font-weight:400;color:var(--blanco);line-height:1;">${valor}</span>
+      <div class="res-card-val">
+        <span class="res-card-num">${valor}</span>
         ${flecha}
       </div>
-      <div style="font-size:0.7rem;color:var(--suave);margin-top:3px;">${cuando}</div>
+      <div class="res-card-cuando">${cuando}</div>
       ${_resBarras(valores, etiquetas)}
-      <div style="font-size:0.68rem;color:var(--suave);line-height:1.45;margin-top:6px;">${techo}</div>
+      <div class="res-card-techo">${techo}</div>
     </div>`;
 }
+
+let _resMesElegido = '';   // '' = mes a mes · 'YYYY-MM' = dia a dia de ese mes
+window.resultadosMes = function (mes) { _resMesElegido = mes || ''; renderResultados(); };
 
 async function renderResultados() {
   const cont = document.getElementById('resultados-card');
@@ -2117,8 +2146,9 @@ async function renderResultados() {
   cont.innerHTML = '<div style="color:var(--suave);font-size:0.8rem;">Cargando resultados…</div>';
   let r;
   try {
-    r = await supabaseCall('POST', 'rpc/resultados_tendencia',
-      { p_data: { token: tokenVendedor(), meses: 12 } });
+    const _p = { token: tokenVendedor(), meses: 12 };
+    if (_resMesElegido) _p.mes = _resMesElegido;
+    r = await supabaseCall('POST', 'rpc/resultados_tendencia', { p_data: _p });
   } catch (e) { r = null; }
   // Se mira lo que VUELVE, no que la llamada no reviente (regla 56).
   if (!r || !r.ok) {
@@ -2137,7 +2167,10 @@ async function renderResultados() {
   const conVenta = serie.filter((m) => Number(m.pedidos) > 0);
   const ref = conVenta.length ? conVenta[conVenta.length - 1] : ultimo;
   const prev = conVenta.length > 1 ? conVenta[conVenta.length - 2] : null;
-  const cuando = ref === ultimo ? 'este mes' : 'último mes con venta · ' + _resMesCorto(ref.mes);
+  const porDia = r.grano === 'day';
+  const cuando = porDia
+    ? (ref === ultimo ? 'último día del mes' : 'último día con venta · ' + _resCuboLargo(ref.mes))
+    : (ref === ultimo ? 'este mes' : 'último mes con venta · ' + _resMesCorto(ref.mes));
   // Un porcentaje de cambio entre dos meses de UN pedido cada uno es
   // aritmetica, no informacion. Por debajo de tres pedidos no se compara.
   const BASE_MINIMA = 3;
@@ -2148,7 +2181,8 @@ async function renderResultados() {
     ` No se compara contra el mes anterior: hace falta al menos ${BASE_MINIMA} pedidos en los dos.`;
 
   const nMeses = Number(r.meses_con_venta) || 0;
-  const techoHistoria = `Sobre ${nMeses} ${nMeses === 1 ? 'mes' : 'meses'} con venta de ${r.meses_en_serie} en la serie.`;
+  const unidad = porDia ? (nMeses === 1 ? 'día' : 'días') : (nMeses === 1 ? 'mes' : 'meses');
+  const techoHistoria = `Sobre ${nMeses} ${unidad} con venta de ${r.meses_en_serie} en la serie.`;
 
   const tarjetas = [];
 
@@ -2170,7 +2204,7 @@ async function renderResultados() {
     tarjetas.push(_resTarjeta({
       titulo: 'Margen',
       valor: _RES_FMT.pct(pct),
-      cuando: 'último mes costeado · ' + _resMesCorto(ultMargen.mes),
+      cuando: (porDia ? 'último día costeado · ' : 'último mes costeado · ') + _resCuboLargo(ultMargen.mes),
       // El margen se compara entre meses COSTEADOS, que es su propia base.
       delta: margen.length > 1 && hayBase
         ? Math.round((pct - Number(margen[margen.length - 2].margen_pct)) /
@@ -2217,7 +2251,7 @@ async function renderResultados() {
     tarjetas.push(_resTarjeta({
       titulo: 'Del catálogo al pedido',
       valor: _RES_FMT.pct(ult.conversion_pct),
-      cuando: _resMesCorto(ult.mes) + ' · ' + _RES_FMT.num(ult.sesiones) + ' sesiones',
+      cuando: _resCuboLargo(ult.mes) + ' · ' + _RES_FMT.num(ult.sesiones) + ' sesiones',
       // El embudo se compara si el mes anterior tuvo al menos 20 sesiones:
       // con cinco, un punto de conversion sube o baja 20 % solo.
       delta: emb.length > 1 && Number(emb[emb.length - 2].sesiones) >= 20 && Number(ult.sesiones) >= 20
@@ -2231,12 +2265,24 @@ async function renderResultados() {
   const ultVenta = r.ultima_venta
     ? new Date(r.ultima_venta + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
+  // El selector ofrece SOLO los meses que tuvieron venta: con treinta y seis
+  // meses vacios delante, elegir se vuelve adivinar.
+  const conDatos = Array.isArray(r.meses_con_datos) ? r.meses_con_datos : [];
+  const opciones = ['<option value="">Mes a mes</option>'].concat(
+    conDatos.map((m) => {
+      const p = m.split('-');
+      const txt = (_RES_MESES[Number(p[1]) - 1] || m) + ' ' + p[0] + ' · por día';
+      return `<option value="${m}"${m === _resMesElegido ? ' selected' : ''}>${txt}</option>`;
+    })).join('');
+
   cont.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-      <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">RESULTADOS DEL NEGOCIO</span>
-      <span style="font-size:0.7rem;color:var(--suave);">última venta: ${ultVenta}</span>
+    <div class="res-cab">
+      <span class="res-tit">RESULTADOS DEL NEGOCIO</span>
+      <select class="res-sel" onchange="resultadosMes(this.value)"
+              aria-label="Grano de la tendencia">${opciones}</select>
+      <span class="res-ult">última venta: ${ultVenta}</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:10px;">
+    <div class="res-rejilla">
       ${tarjetas.join('')}
     </div>`;
 }
