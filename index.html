@@ -101,7 +101,22 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA4_ID;
     document.head.appendChild(s);
     gtag('js', new Date());
-    gtag('config', window.GA4_ID);
+    // `send_page_view:false` a proposito. Esto es una SPA: con el valor por
+    // defecto GA4 registra UNA vista -la de carga- y despues nada, asi que su
+    // informe de «paginas y pantallas» muestra una sola fila «/» y no dice
+    // cual de las 18 secciones se usa. La vista la manda `track()` en cada
+    // `view_section`, con una ruta virtual (/inicio, /pedidos, /caja...).
+    gtag('config', window.GA4_ID, { send_page_view: false });
+    // La vista de la LLEGADA se manda a mano. El arranque entra al catalogo
+    // con `ir('s-catalogo')`, que no pasa por `navegar()` y por tanto no
+    // dispara `view_section`: sin esta linea, una visita que no toque la barra
+    // de abajo no registraria NI UNA vista de pagina. `track()` no repite la
+    // misma ruta dos veces seguidas, asi que esto no duplica.
+    gtag('event', 'page_view', {
+      page_path: '/inicio', page_title: 'inicio',
+      page_location: location.origin + '/inicio'
+    });
+    window.__cpUltimaVista = '/inicio';
   }
 })();
 </script>

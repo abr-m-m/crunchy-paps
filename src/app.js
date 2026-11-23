@@ -121,9 +121,6 @@ try {
 
 // GA4: helper seguro para enviar eventos (no-op si gtag no está listo)
 function track(nombre, params) {
-  // GA4 no cambia: sigue disparando evento por evento. Solo se agrupa la
-  // escritura de primera parte a Supabase.
-  try { if (typeof window.gtag === 'function') window.gtag('event', nombre, params || {}); } catch (_e) {}
   // Dual-write first-party a Supabase (fire-and-forget; nunca bloquea ni rompe la app)
   try {
     var _g = function (k) { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } };
@@ -155,6 +152,41 @@ function track(nombre, params) {
         });
       }
     }
+    // GA4 SE DISPARA AQUI, NO ARRIBA. Antes salia con `params` a secas, antes
+    // de anadir `v` y `t`: la tabla propia SI sabia distinguir al equipo del
+    // cliente y GA4 NO, asi que todo embudo y toda conversion de GA4 mezclaba
+    // los dos publicos — y no en la direccion inocente, porque el equipo abre
+    // el checkout para cerrar una venta YA hecha y convierte casi al 100 %
+    // (regla 6). Se arregla moviendo dos lineas, no anadiendo codigo.
+    //
+    // A GA4 van ademas con nombre legible: en su interfaz nadie sabe que es
+    // `v`, y una dimension que hay que descifrar no se usa.
+    try {
+      if (typeof window.gtag === 'function') {
+        var _gaP = Object.assign({}, _params, {
+          es_equipo:    esVendedor ? 1 : 0,
+          tipo_cliente: tipoCliente || 'sin marcar',
+        });
+        window.gtag('event', nombre, _gaP);
+        // Una SPA no cambia de URL al cambiar de seccion, asi que GA4 ve una
+        // sola pagina para toda la app. Con esta ruta virtual su informe de
+        // «paginas y pantallas» pasa a decir que seccion se usa.
+        // No se repite la misma ruta dos veces seguidas: el arranque ya manda
+        // la vista de llegada, y varios caminos llaman a navegar('inicio')
+        // justo despues.
+        if (nombre === 'view_section' && _gaP.seccion &&
+            window.__cpUltimaVista !== '/' + _gaP.seccion) {
+          window.__cpUltimaVista = '/' + _gaP.seccion;
+          window.gtag('event', 'page_view', {
+            page_path:     '/' + _gaP.seccion,
+            page_title:    _gaP.seccion,
+            page_location: location.origin + '/' + _gaP.seccion,
+            es_equipo:     _gaP.es_equipo,
+            tipo_cliente:  _gaP.tipo_cliente,
+          });
+        }
+      }
+    } catch (_e) {}
     _evCola.push({ t: Date.now(), ev: {
       sessionId:   _g('cp_sid'),
       idCliente:   (clienteActual && clienteActual.id) ? clienteActual.id : null,
@@ -3843,7 +3875,27 @@ Sampling, Consumo, Demo, Regalo o Merma.`
 
   // GA4: evento de compra (excluye pedidos internos)
   if (rp && rp.ok && !esPedidoInterno) {
-    try { track('purchase', { transaction_id: String(consec), value: Number(totalFinal) || 0, currency: 'MXN', coupon: (_cuponEnCarrito && _cuponEnCarrito.codigo) || undefined, items: items.length }); } catch (_e) {}
+    try {
+      // `items` tiene que ser un ARRAY: GA4 descarta en silencio un numero, y
+      // sus informes de producto se quedan vacios sin decir por que.
+      var _gaItems = items.map(function (i) {
+        return {
+          item_id:       String(i.idProducto || ''),
+          item_name:     (i.sabor || '') + (i.presentacion ? ' ' + i.presentacion : ''),
+          item_category: i.presentacion || '',
+          item_variant:  i.canje ? 'canje' : (i.caja ? 'caja' : i.tipoVenta || ''),
+          price:         i.canje ? 0 : (Number(subLinea(i)) / Math.max(Number(i.qty) || 1, 1)),
+          quantity:      Number(i.qty) || 1,
+        };
+      });
+      track('purchase', {
+        transaction_id: String(consec),
+        value: Number(totalFinal) || 0,
+        currency: 'MXN',
+        coupon: (_cuponEnCarrito && _cuponEnCarrito.codigo) || undefined,
+        items: _gaItems,
+      });
+    } catch (_e) {}
   }
   const fecha      = new Date().toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'});
   const lineas     = items.map(i=>{
