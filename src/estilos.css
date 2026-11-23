@@ -1357,7 +1357,12 @@ body.piel-clara {
   /* El contenido deja de estirarse y se centra. 820 cabe una tabla del panel
      sin que una pantalla de consumidor parezca un cartel. */
   .screen { max-width: 820px; margin-inline: auto; }
-  .navbar { max-width: 820px; left: 50%; right: auto; transform: translateX(-50%); }
+  /* La barra NO se capa a 820: con 18 secciones mide 1284 px, y caparla en
+     una ventana de 1024 escondia seis items sin que se notara. Usa todo el
+     ancho y se centra sola cuando cabe. Visto por Abraham el 23 nov 2026 en
+     produccion: «la barra inferior no se puede desplazar». */
+  .navbar { max-width: none; left: 0; right: 0; transform: none; }
+  .navbar.scrollable { justify-content: safe center; }
   .mini-cart { max-width: 820px; left: 50%; right: auto; transform: translateX(-50%); }
   /* El banner, proporcionado y con techo: a lo ancho crecia sin limite. */
   .bn-slide { aspect-ratio: 21/8; max-height: 320px; }
@@ -1600,3 +1605,18 @@ body.ficha-abierta { overflow: hidden; }
    alto; `_quitarHueco()` lo devuelve al cerrarlo. Visto el 23 nov 2026 en una
    captura, no leyendo el codigo (regla 30). */
 body.con-banner-instalar .screen { padding-bottom: 150px; }
+
+/* CON RATON NO HAY DEDO. La barra se desplaza desde siempre, pero
+   `scrollbar-width:none` la dejaba sin ninguna manera de moverla en una
+   computadora: ni barra visible, ni flechas, y la rueda vertical no mueve un
+   contenedor horizontal. En un dispositivo con puntero fino se enseña una
+   barra delgada -y `app.js` pasa la rueda a horizontal-. En el telefono se
+   sigue arrastrando con el dedo y no se ve nada. */
+@media (pointer: fine) {
+  .navbar.scrollable { scrollbar-width: thin; scrollbar-color: var(--gris3) transparent; }
+  .navbar.scrollable::-webkit-scrollbar { display: block; height: 6px; }
+  .navbar.scrollable::-webkit-scrollbar-thumb {
+    background: var(--gris3); border-radius: 3px;
+  }
+  .navbar.scrollable::-webkit-scrollbar-track { background: transparent; }
+}

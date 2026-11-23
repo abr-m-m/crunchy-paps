@@ -4412,6 +4412,12 @@ window.renderCuenta = function() {
     return;
   }
   if (_inv) _inv.style.display = 'none';
+  // La puerta a las pantallas de configuracion, solo para el dueno. Quien
+  // decide de verdad sigue siendo el servidor en cada una de ellas: esto solo
+  // es el enlace (regla 35, esconder un boton no es un permiso).
+  const _cons = document.getElementById('cuenta-consola');
+  if (_cons) _cons.style.display =
+    (typeof esAdminEstricto === 'function' && esAdminEstricto()) ? '' : 'none';
   const tel = telefonoVerif.replace(/(\d{2})(\d{4})(\d{4})/, '+52 $1 $2 $3');
   document.getElementById('cuenta-tel').textContent = tel;
 
@@ -5320,6 +5326,18 @@ function ajustarNavbarScroll() {
   if (!navbar) return;
   const visibles = Array.from(navbar.querySelectorAll('.nav-item')).filter(e => e.style.display !== 'none').length;
   navbar.classList.toggle('scrollable', visibles > 5);
+  // La rueda del raton mueve en vertical, y la barra se desplaza en
+  // horizontal: sin esto, en una computadora NO HAY forma de llegar a las
+  // ultimas secciones. En el telefono no estorba (no hay evento `wheel`).
+  if (!navbar._ruedaHorizontal) {
+    navbar._ruedaHorizontal = true;
+    navbar.addEventListener('wheel', (e) => {
+      if (navbar.scrollWidth <= navbar.clientWidth) return;
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;   // ya es horizontal
+      navbar.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }, { passive: false });
+  }
 }
 if (window.MutationObserver) {
   const nb = document.getElementById('navbar');

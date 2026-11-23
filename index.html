@@ -809,6 +809,28 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
         <div style="font-weight:800;color:var(--blanco);" id="cuenta-negocio">—</div>
       </div>
 
+      <!-- LA CONSOLA, A LA VISTA. Abraham, 23 nov 2026: «me perdí en dónde
+           quedó el documento con las UTM y los accesos a las secciones de
+           configuración». Existían /consola, /productos, /retos y /planeador,
+           y no había UN SOLO enlace a ellas dentro de la app: había que
+           acordarse de la URL. Una puerta que hay que recordar no es una
+           puerta. Solo la ve el dueño. -->
+      <div id="cuenta-consola" style="display:none;background:var(--gris);border-radius:14px;padding:16px;">
+        <div style="font-size:0.68rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Configuración</div>
+        <a href="/consola" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--gris2);border:1px solid var(--gris3);border-radius:12px;padding:13px 14px;text-decoration:none;min-height:52px;">
+          <span>
+            <span style="display:block;font-family:'Archivo',sans-serif;font-weight:700;font-size:0.95rem;color:var(--blanco);">Abrir la consola</span>
+            <span style="display:block;font-size:0.74rem;color:var(--suave);margin-top:2px;">Precios y canje, retos, rutas, reportes y los enlaces con UTM</span>
+          </span>
+          <span style="font-size:1.1rem;color:var(--acento-txt);" aria-hidden="true">→</span>
+        </a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <a href="/productos" style="flex:1 1 auto;text-align:center;background:transparent;border:1px solid var(--gris3);border-radius:999px;padding:9px 14px;font-size:0.78rem;font-weight:700;color:var(--blanco);text-decoration:none;min-height:40px;">Precios</a>
+          <a href="/retos" style="flex:1 1 auto;text-align:center;background:transparent;border:1px solid var(--gris3);border-radius:999px;padding:9px 14px;font-size:0.78rem;font-weight:700;color:var(--blanco);text-decoration:none;min-height:40px;">Retos</a>
+          <a href="/planeador" style="flex:1 1 auto;text-align:center;background:transparent;border:1px solid var(--gris3);border-radius:999px;padding:9px 14px;font-size:0.78rem;font-weight:700;color:var(--blanco);text-decoration:none;min-height:40px;">Rutas</a>
+        </div>
+      </div>
+
       <!-- Resumen rápido -->
       <div style="background:var(--gris);border-radius:14px;padding:16px;">
         <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mi actividad</div>
