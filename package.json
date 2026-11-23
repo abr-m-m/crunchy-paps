@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "validar": "node tools/validar.mjs index.html && node tools/partir/comprobar-libres.mjs && node tools/contraste.mjs && vite build",
     "contraste": "node tools/contraste.mjs",
-    "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-comprobar.mjs",
+    "mapa": "node tools/mapa-permisos.mjs && node tools/mapa-fichas.mjs && node tools/mapa-comprobar.mjs",
     "mapa-trabajo": "python tools/mapa-trabajo.py",
     "precios": "python tools/precios-por-canal.py"
   },
