@@ -2030,10 +2030,226 @@ async function cargarResumenProduccion() {
   }
 }
 
+// ── RESULTADOS DEL NEGOCIO ──────────────────────────────────────────────────
+// Abraham, 23 nov 2026: «en la sección de resultados me gustaría tener gráficos
+// de indicadores importantes del negocio y no solo de ventas».
+//
+// LO QUE SE MIDIÓ ANTES DE DISEÑARLO (regla 5). En producción hay TRES meses
+// con ventas —junio 41 pedidos, julio 18, septiembre 1—, 60 pedidos en total,
+// $12,215 netos y 49.93 kg. La última venta fue en septiembre. Con eso, un
+// tablero que solo pinte los meses con datos dibuja tres barras seguidas y
+// cuenta una historia falsa de crecimiento continuo.
+//
+// Por eso la serie trae TODOS los meses desde la primera venta, y un mes sin
+// venta se pinta como lo que es: una barra en cero con su etiqueta. El hueco
+// es el dato — la app lleva dormida desde el verano, y eso tiene que verse.
+//
+// Cada indicador lleva su TECHO y su RESTRICCIÓN al lado, no en la cabeza de
+// quien lo mira: sobre cuántos meses se está midiendo y qué lo limita.
+const _RES_FMT = {
+  pesos: (v) => '$' + Math.round(Number(v) || 0).toLocaleString('es-MX'),
+  pct:   (v) => (Number(v) || 0).toFixed(1).replace(/\.0$/, '') + ' %',
+  num:   (v) => Math.round(Number(v) || 0).toLocaleString('es-MX'),
+  kg:    (v) => (Number(v) || 0).toFixed(1) + ' kg',
+};
+
+function _resMesCorto(clave) {
+  const M = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const p = String(clave || '').split('-');
+  return p.length === 2 ? M[Number(p[1]) - 1] || clave : clave;
+}
+
+// Barras en SVG. Sin librería: son seis valores y una altura.
+function _resBarras(valores, etiquetas, resaltado) {
+  const max = Math.max(...valores.map((v) => Number(v) || 0), 0);
+  const n = valores.length || 1;
+  const ancho = 100 / n;
+  const barras = valores.map((v, i) => {
+    const alto = max > 0 ? Math.max((Number(v) || 0) / max * 72, (Number(v) > 0 ? 3 : 0)) : 0;
+    const x = i * ancho + ancho * 0.18;
+    const w = ancho * 0.64;
+    const esUlt = i === (resaltado === undefined ? n - 1 : resaltado);
+    // Un mes en cero no desaparece: se queda su hueco y su etiqueta. Si se
+    // omitiera, la serie mentiría por omisión.
+    return `<rect x="${x}%" y="${80 - alto}" width="${w}%" height="${Math.max(alto, 0)}"
+             rx="2" fill="${esUlt ? 'var(--amarillo)' : 'var(--gris3)'}"></rect>`;
+  }).join('');
+  const textos = etiquetas.map((e) =>
+    `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:700;color:var(--suave);">${e}</span>`
+  ).join('');
+  return `<div style="margin-top:8px;">
+            <svg viewBox="0 0 100 82" preserveAspectRatio="none" width="100%" height="58"
+              role="img" aria-hidden="true" style="display:block;">
+              <line x1="0" y1="80" x2="100" y2="80" stroke="var(--gris3)" stroke-width="0.6"></line>
+              ${barras}
+            </svg>
+            <div style="display:flex;margin-top:3px;">${textos}</div>
+          </div>`;
+}
+
+function _resTarjeta({ titulo, valor, cuando, delta, techo, valores, etiquetas, chip }) {
+  const flecha = delta === null || delta === undefined ? ''
+    : `<span style="font-size:0.72rem;font-weight:800;color:${delta >= 0 ? 'var(--ok-txt)' : 'var(--error-txt)'};">
+         ${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)} %</span>`;
+  const insignia = chip
+    ? `<span style="display:inline-block;background:${chip.bg};color:${chip.fg};
+         border-radius:999px;padding:2px 9px;font-size:0.64rem;font-weight:800;">${chip.txt}</span>`
+    : '';
+  return `
+    <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+        <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--suave);">${titulo}</span>
+        ${insignia}
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <span style="font-family:'Archivo',sans-serif;font-size:1.6rem;font-weight:400;color:var(--blanco);line-height:1;">${valor}</span>
+        ${flecha}
+      </div>
+      <div style="font-size:0.7rem;color:var(--suave);margin-top:3px;">${cuando}</div>
+      ${_resBarras(valores, etiquetas)}
+      <div style="font-size:0.68rem;color:var(--suave);line-height:1.45;margin-top:6px;">${techo}</div>
+    </div>`;
+}
+
+async function renderResultados() {
+  const cont = document.getElementById('resultados-card');
+  if (!cont) return;
+  cont.innerHTML = '<div style="color:var(--suave);font-size:0.8rem;">Cargando resultados…</div>';
+  let r;
+  try {
+    r = await supabaseCall('POST', 'rpc/resultados_tendencia',
+      { p_data: { token: tokenVendedor(), meses: 12 } });
+  } catch (e) { r = null; }
+  // Se mira lo que VUELVE, no que la llamada no reviente (regla 56).
+  if (!r || !r.ok) {
+    cont.innerHTML = `<div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:14px;color:var(--suave);font-size:0.8rem;">
+      No se pudieron cargar los resultados${r && r.error === 'no_autorizado' ? ': tu sesión no alcanza esta sección.' : '.'}</div>`;
+    return;
+  }
+
+  const serie = r.serie || [];
+  if (!serie.length) { cont.innerHTML = ''; return; }
+  const etiquetas = serie.map((m) => _resMesCorto(m.mes));
+  const ultimo = serie[serie.length - 1];
+  // El «mes de referencia» es el último CON VENTA, no el último del calendario:
+  // en noviembre, con cero pedidos, un titular que dijera «$0» sería cierto y
+  // además inútil. Se enseña el último dato real y se dice de cuándo es.
+  const conVenta = serie.filter((m) => Number(m.pedidos) > 0);
+  const ref = conVenta.length ? conVenta[conVenta.length - 1] : ultimo;
+  const prev = conVenta.length > 1 ? conVenta[conVenta.length - 2] : null;
+  const cuando = ref === ultimo ? 'este mes' : 'último mes con venta · ' + _resMesCorto(ref.mes);
+  // Un porcentaje de cambio entre dos meses de UN pedido cada uno es
+  // aritmetica, no informacion. Por debajo de tres pedidos no se compara.
+  const BASE_MINIMA = 3;
+  const hayBase = prev && Number(prev.pedidos) >= BASE_MINIMA && Number(ref.pedidos) >= BASE_MINIMA;
+  const delta = (a, b) => (hayBase && b && Number(b) > 0)
+    ? Math.round((Number(a) - Number(b)) / Number(b) * 100) : null;
+  const notaBase = hayBase ? '' :
+    ` No se compara contra el mes anterior: hace falta al menos ${BASE_MINIMA} pedidos en los dos.`;
+
+  const nMeses = Number(r.meses_con_venta) || 0;
+  const techoHistoria = `Sobre ${nMeses} ${nMeses === 1 ? 'mes' : 'meses'} con venta de ${r.meses_en_serie} en la serie.`;
+
+  const tarjetas = [];
+
+  tarjetas.push(_resTarjeta({
+    titulo: 'Ingreso neto',
+    valor: _RES_FMT.pesos(ref.neto), cuando,
+    delta: prev ? delta(ref.neto, prev.neto) : null,
+    techo: 'Producto después de descuentos, sin envío. ' + techoHistoria + notaBase,
+    valores: serie.map((m) => m.neto), etiquetas,
+  }));
+
+  // El margen solo viaja si la sesión es del dueño: el costo no es del equipo.
+  const margen = r.margen;
+  if (Array.isArray(margen) && margen.length) {
+    const porMes = Object.fromEntries(margen.map((m) => [m.mes, m]));
+    const vals = serie.map((m) => (porMes[m.mes] ? Number(porMes[m.mes].margen_pct) : 0));
+    const ultMargen = margen[margen.length - 1];
+    const pct = Number(ultMargen.margen_pct);
+    tarjetas.push(_resTarjeta({
+      titulo: 'Margen',
+      valor: _RES_FMT.pct(pct),
+      cuando: 'último mes costeado · ' + _resMesCorto(ultMargen.mes),
+      // El margen se compara entre meses COSTEADOS, que es su propia base.
+      delta: margen.length > 1 && hayBase
+        ? Math.round((pct - Number(margen[margen.length - 2].margen_pct)) /
+                     Math.max(Number(margen[margen.length - 2].margen_pct), 0.01) * 100) : null,
+      // El color del estado lo decide la MISMA función que lo decide en Costos,
+      // para que los dos no puedan discrepar (regla 63).
+      chip: { txt: pct < 15 ? 'bajo' : (pct < 30 ? 'justo' : 'sano'),
+              bg: pct < 15 ? 'var(--error-bg)' : (pct < 30 ? 'var(--aviso-bg)' : 'var(--ok-bg)'),
+              fg: pct < 15 ? 'var(--error-txt)' : (pct < 30 ? 'var(--aviso-txt)' : 'var(--ok-txt)') },
+      techo: 'Sale del motor de costeo, línea a línea. Solo cuenta lo que tiene costo cargado.',
+      valores: vals, etiquetas,
+    }));
+  }
+
+  tarjetas.push(_resTarjeta({
+    titulo: 'Ticket promedio',
+    valor: _RES_FMT.pesos(ref.ticket), cuando,
+    delta: prev ? delta(ref.ticket, prev.ticket) : null,
+    techo: 'Neto entre pedidos del mes. Sube si se vende más por visita, no si hay más visitas.' + notaBase,
+    valores: serie.map((m) => m.ticket), etiquetas,
+  }));
+
+  tarjetas.push(_resTarjeta({
+    titulo: 'Clientes que compran',
+    valor: _RES_FMT.num(ref.clientes), cuando,
+    delta: prev ? delta(ref.clientes, prev.clientes) : null,
+    techo: `De ellos, ${_RES_FMT.num(ref.nuevos)} compraron por primera vez. «Nuevo» es la primera compra de toda su historia, no de esta ventana.`,
+    valores: serie.map((m) => m.clientes), etiquetas,
+  }));
+
+  tarjetas.push(_resTarjeta({
+    titulo: 'Kilos vendidos',
+    valor: _RES_FMT.kg(ref.kg), cuando,
+    delta: prev ? delta(ref.kg, prev.kg) : null,
+    techo: 'Granel por peso y pieza por su gramaje, con la misma regla que descuenta del lote.' + notaBase,
+    valores: serie.map((m) => m.kg), etiquetas,
+  }));
+
+  const emb = r.embudo || [];
+  if (emb.length) {
+    const porMes = Object.fromEntries(emb.map((m) => [m.mes, m]));
+    const vals = serie.map((m) => (porMes[m.mes] ? Number(porMes[m.mes].conversion_pct) : 0));
+    const ult = emb[emb.length - 1];
+    tarjetas.push(_resTarjeta({
+      titulo: 'Del catálogo al pedido',
+      valor: _RES_FMT.pct(ult.conversion_pct),
+      cuando: _resMesCorto(ult.mes) + ' · ' + _RES_FMT.num(ult.sesiones) + ' sesiones',
+      // El embudo se compara si el mes anterior tuvo al menos 20 sesiones:
+      // con cinco, un punto de conversion sube o baja 20 % solo.
+      delta: emb.length > 1 && Number(emb[emb.length - 2].sesiones) >= 20 && Number(ult.sesiones) >= 20
+        ? Math.round((Number(ult.conversion_pct) - Number(emb[emb.length - 2].conversion_pct)) /
+                     Math.max(Number(emb[emb.length - 2].conversion_pct), 0.01) * 100) : null,
+      techo: 'Solo sesiones de consumidor: las del equipo se excluyen, porque abren el checkout para cerrar una venta ya hecha y convierten casi al 100 %.',
+      valores: vals, etiquetas,
+    }));
+  }
+
+  const ultVenta = r.ultima_venta
+    ? new Date(r.ultima_venta + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '—';
+  cont.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">RESULTADOS DEL NEGOCIO</span>
+      <span style="font-size:0.7rem;color:var(--suave);">última venta: ${ultVenta}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:10px;">
+      ${tarjetas.join('')}
+    </div>`;
+}
+window.renderResultados = renderResultados;
+
 async function renderResumen() {
   const cont  = document.getElementById('resumen-cont');
   const stats = document.getElementById('resumen-stats');
   if (!cont) return;
+  // Los indicadores del negocio van ARRIBA y no esperan al listado de pedidos:
+  // es lo primero que se mira al entrar, y cargarlo detras de 200 pedidos lo
+  // dejaba en blanco medio segundo.
+  renderResultados();
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:30px 0;"><span class="loader loader-w"></span> Cargando resumen...</div>';
   if (stats) stats.innerHTML = '';
   try {

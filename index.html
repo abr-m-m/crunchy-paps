@@ -2269,6 +2269,11 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       </div>
       <div id="fi-nota" style="font-size:0.7rem;color:var(--suave);margin-top:6px;"></div>
     </div>
+    <!-- RESULTADOS DEL NEGOCIO. Abraham, 23 nov 2026: «me gustaría tener
+         gráficos de indicadores importantes del negocio y no solo de
+         ventas». Lo pinta renderResultados() desde el RPC
+         resultados_tendencia; el hueco de un mes sin venta se dibuja. -->
+    <div id="resultados-card" style="margin-bottom:14px;"></div>
     <div id="resumen-dash" style="margin-bottom:14px;"></div>
     <div id="resumen-produccion" style="margin-bottom:14px;"></div>
     <div id="resumen-stock" style="margin-bottom:14px;"></div>
