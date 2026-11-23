@@ -1537,27 +1537,35 @@ body.ficha-abierta { overflow: hidden; }
    pendiente mas cercano y a que distancia esta—.
    ══════════════════════════════════════════════════════════════════════════ */
 .mapa-flota {
-  position: absolute; left: 24px; right: 24px; z-index: 12;
+  position: absolute; left: 22px; right: 22px; z-index: 12;
   background: var(--gris); border: 1px solid var(--gris3);
-  border-radius: 14px; padding: 10px;
+  border-radius: 14px; padding: 8px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.18);
 }
-.mapa-flota-arriba { top: 10px; }
+.mapa-flota-arriba { top: 8px; }
 /* Abajo deja sitio a los botones redondos de la derecha, que son de 48px. */
 .mapa-flota-abajo { bottom: 10px; right: 84px; }
 
 .mapa-busca {
-  width: 100%; min-height: 40px; background: var(--gris2);
+  width: 100%; min-height: 36px; background: var(--gris2);
   border: 1px solid var(--gris3); border-radius: 10px; padding: 8px 12px;
   color: var(--blanco); font-family: 'Inter', sans-serif; font-size: 0.86rem;
 }
-.mapa-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+/* UNA fila que se desliza, no dos envueltas: los cuatro chips ocupaban dos
+   lineas y la tarjeta se comia el mapa. Abraham, 23 nov: «el mapa quedo
+   detras... necesita protagonismo». */
+.mapa-chips {
+  display: flex; gap: 6px; flex-wrap: nowrap; margin-top: 6px;
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.mapa-chips::-webkit-scrollbar { display: none; }
+.mapa-chips > * { flex: 0 0 auto; }
 
 /* La tarjeta del mas cercano es un BOTON entero: toda ella lleva al prospecto,
    no solo una flecha de 12px. */
 .mapa-cerca {
   width: 100%; display: flex; align-items: center; gap: 10px;
-  background: transparent; border: none; padding: 2px 2px 8px;
+  background: transparent; border: none; padding: 0 2px 6px;
   cursor: pointer; text-align: left; font-family: 'Inter', sans-serif;
   border-bottom: 1px solid var(--gris3);
 }
@@ -1571,10 +1579,15 @@ body.ficha-abierta { overflow: hidden; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .mapa-cerca-dist { font-size: 0.95rem; font-weight: 900; color: var(--rojo); white-space: nowrap; }
+/* La leyenda, en UNA linea que se desliza. Envuelta se llevaba dos lineas
+   mas y empujaba el mapa hacia atras. */
 .mapa-leyenda {
-  display: flex; justify-content: center; gap: 10px; margin-top: 8px;
-  font-size: 0.64rem; color: var(--suave2); font-weight: 700; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 9px; margin-top: 6px;
+  font-size: 0.6rem; color: var(--suave2); font-weight: 700;
+  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
 }
+.mapa-leyenda::-webkit-scrollbar { display: none; }
+.mapa-leyenda > * { flex: 0 0 auto; }
 
 /* El boton «Rutas» vivia dentro de la leyenda y se iba solo a una segunda
    linea. Va al lado, no debajo. */

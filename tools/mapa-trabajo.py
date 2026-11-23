@@ -51,6 +51,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTE = os.path.join(RAIZ, 'mapa-trabajo', 'frentes.json')
 SALIDA_XLSX = os.path.join(RAIZ, 'mapa-trabajo', 'Mapa-Crunchy.xlsx')
 SALIDA_HTML = os.path.join(RAIZ, 'docs', 'mapa-trabajo', 'index.html')
+SALIDA_INDICE = os.path.join(RAIZ, 'cambios', 'INDICE.md')
 
 PROD = 'xbyzarzyxiugrucyjwfn'
 STG = 'dkwatbsaidlfjqjnfyrk'
@@ -478,9 +479,11 @@ def main():
 
     # ── El mapa visual ──────────────────────────────────────────────────────
     escribir_html(datos, cifras, problemas)
+    escribir_indice(datos)
 
     print('\n  %s' % SALIDA_XLSX)
     print('  %s' % SALIDA_HTML)
+    print('  %s' % SALIDA_INDICE)
     total = sum(len(f['items']) for f in datos['frentes'])
     hechos = sum(1 for f in datos['frentes'] for i in f['items'] if i['estado'] == 'hecho')
     print('\n  %d frentes · %d piezas · %d hechas (%d %%)'
@@ -493,6 +496,80 @@ def main():
         return 1
     print('  Ninguna afirmación del mapa contradice a la base.\n')
     return 0
+
+
+def escribir_indice(datos):
+    """cambios/INDICE.md — la puerta a los documentos de cambios.
+
+    Abraham, 23 nov 2026: «perdimos el flujo donde registrabamos cada cambio».
+    Comprobado antes de darle la razon: `cambios/` esta VIVO, con 143 .md del
+    4 sep al 23 nov. Lo que falta no es el flujo, es la PUERTA — 116 de esos
+    143 no los cita ninguna pieza del mapa, asi que existen pero no se
+    encuentran.
+
+    El indice se GENERA. Uno de 143 entradas mantenido a mano acabaria
+    mintiendo (regla 1), que es justo lo que este proyecto lleva corrigiendo
+    toda la semana.
+
+    Y el numero de huerfanos es una MEDIDA, no un adorno: un documento sin
+    frente significa que la pieza que lo produjo no esta en el mapa, o esta y
+    no lo cita. Baja cuando se atribuye.
+    """
+    porFrente = {}
+    citados = {}
+    for f in datos['frentes']:
+        for it in f['items']:
+            doc = it.get('doc')
+            if not doc:
+                continue
+            porFrente.setdefault(f['clave'], (f['nombre'], []))[1].append((doc, it))
+            citados[doc] = f['clave']
+
+    todos = []
+    for raiz, _, archivos in os.walk(os.path.join(RAIZ, 'cambios')):
+        for a in sorted(archivos):
+            if a.endswith('.md') and a != 'INDICE.md':
+                todos.append(os.path.relpath(os.path.join(raiz, a), RAIZ).replace(os.sep, '/'))
+
+    def titulo(rel):
+        try:
+            for linea in io.open(os.path.join(RAIZ, rel), encoding='utf-8'):
+                if linea.startswith('# '):
+                    return linea[2:].strip()
+        except Exception:
+            pass
+        return os.path.basename(rel)
+
+    huerfanos = sorted((r for r in todos if r not in citados), reverse=True)
+    L = ['# Indice de `cambios/` — %s' % HOY, '',
+         '> **Generado por `npm run mapa-trabajo`. No se edita a mano.**',
+         '> Un indice de %d entradas mantenido a mano acabaria mintiendo (regla 1).' % len(todos),
+         '',
+         '**%d documentos.** A %d los cita una pieza del mapa de trabajo; '
+         '**a %d no los cita nadie.**' % (len(todos), len(todos) - len(huerfanos), len(huerfanos)),
+         '',
+         'Un documento sin frente no es basura: es una pieza del mapa a la que le falta su '
+         '`doc`, o un trabajo que nunca entro al mapa. Ese numero es deuda, y baja cuando se '
+         'atribuye.',
+         '', '---', '', '## Por frente']
+    for clave in sorted(porFrente):
+        nombre, items = porFrente[clave]
+        L += ['', '### %s · %s' % (clave, nombre), '']
+        vistos = set()
+        for doc, it in sorted(items, key=lambda x: x[0], reverse=True):
+            if doc in vistos:
+                continue
+            vistos.add(doc)
+            marca = {'hecho': 'OK', 'en curso': '~~', 'bloqueado': '!!'}.get(it['estado'], '..')
+            L.append('- `%s` [%s](../%s) — %s' % (marca, titulo(doc), doc, it['nombre']))
+    L += ['', '---', '', '## Sin frente todavia (%d)' % len(huerfanos), '',
+          'Por fecha, del mas reciente al mas viejo.', '']
+    for rel in huerfanos:
+        L.append('- [%s](../%s)' % (titulo(rel), rel))
+    L.append('')
+    os.makedirs(os.path.dirname(SALIDA_INDICE), exist_ok=True)
+    io.open(SALIDA_INDICE, 'w', encoding='utf-8', newline=chr(10)).write(chr(10).join(L))
+    return len(huerfanos)
 
 
 def escribir_html(datos, cifras, problemas):
