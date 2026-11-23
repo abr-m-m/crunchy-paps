@@ -38,7 +38,7 @@ window.buscarClienteUbicacion = async function() {
       const telSafe = String(c.telefono || '').replace(/\D/g, '').slice(-10);
       const nomSafe = (c.nombre || '(sin nombre)').replace(/'/g, '');
       return `<div onclick="elegirClienteUbicacion('${telSafe}', '${nomSafe}')" style="cursor:pointer;border:1px solid var(--gris3);border-radius:10px;padding:10px;margin-bottom:6px;">
-        <div style="font-weight:800;color:var(--blanco);">${c.nombre || '(sin nombre)'}</div>
+        <div style="font-weight:700;color:var(--blanco);">${c.nombre || '(sin nombre)'}</div>
         <div style="color:var(--suave);font-size:0.76rem;margin-top:2px;">${c.tipo || ''} · ···${telSafe.slice(-4)}</div>
         <div style="font-size:0.72rem;margin-top:4px;color:var(--suave);">${ubic} · Toca para elegir</div>
       </div>`;
@@ -51,7 +51,7 @@ window.elegirClienteUbicacion = function(tel, nombre) {
   window._auTel = tel;
   const cont = document.getElementById('au-cliente');
   const wrap = document.getElementById('au-gps-wrap');
-  if (cont) cont.innerHTML = `<div style="font-weight:800;color:var(--blanco);">${nombre}</div><div style="color:var(--suave);font-size:0.76rem;margin-top:2px;">···${String(tel).slice(-4)} · Ahora captura el GPS</div>`;
+  if (cont) cont.innerHTML = `<div style="font-weight:700;color:var(--blanco);">${nombre}</div><div style="color:var(--suave);font-size:0.76rem;margin-top:2px;">···${String(tel).slice(-4)} · Ahora captura el GPS</div>`;
   if (wrap) wrap.style.display = 'block';
 };
 window.usarGpsAjuste = function() {
@@ -325,14 +325,14 @@ function initGridInsumos() {
   if (condGrid && condGrid.children.length === 0) {
     condGrid.innerHTML = SABORES_COND.map(s => `
       <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);">${s}</div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--blanco);">${s}</div>
         <input type="number" class="inp" id="cond-${s.replace(/\s/g,'_')}-kg" placeholder="kg" min="0" step="0.1"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="cond-${s.replace(/\s/g,'_')}-min" placeholder="mín" min="0" step="0.1"
           style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
       </div>`).join('');
     condGrid.insertAdjacentHTML('beforebegin',
-      '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">KG</span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">ALERTA</span></div>');
+      '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:600;color:#555;text-align:center;">KG</span><span style="font-size:0.6rem;font-weight:600;color:#555;text-align:center;">ALERTA</span></div>');
   }
 
   // Bolsas
@@ -340,7 +340,7 @@ function initGridInsumos() {
   if (bolsasGrid && bolsasGrid.children.length === 0) {
     bolsasGrid.innerHTML = PRESENTACIONES_BOLSAS.map(p => `
       <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);">Bolsa ${p}</div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--blanco);">Bolsa ${p}</div>
         <input type="number" class="inp" id="bolsa-${p}-piezas" placeholder="pzas" min="0"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="bolsa-${p}-min" placeholder="mín" min="0"
@@ -353,7 +353,7 @@ function initGridInsumos() {
   if (etGrid && etGrid.children.length === 0) {
     etGrid.innerHTML = PRESENTACIONES_BOLSAS.map(p => `
       <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;align-items:center;">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);">Etiqueta ${p}</div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--blanco);">Etiqueta ${p}</div>
         <input type="number" class="inp" id="etiq-${p}-piezas" placeholder="pzas" min="0"
           style="padding:6px;text-align:center;font-size:0.82rem;">
         <input type="number" class="inp" id="etiq-${p}-min" placeholder="mín" min="0"
@@ -503,13 +503,13 @@ function initGridConsumibles() {
   if (!grid || grid.innerHTML.trim()) return;
   grid.innerHTML = CONSUMIBLES_LIST.map(c => `
     <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris3);">
-      <div style="font-size:0.82rem;font-weight:700;color:var(--blanco);">${c.label}</div>
+      <div style="font-size:0.82rem;font-weight:600;color:var(--blanco);">${c.label}</div>
       <input type="number" class="inp" id="cons-${c.id}-qty" placeholder="${c.unidad}" min="0"
         style="padding:6px;text-align:center;font-size:0.82rem;">
       <input type="number" class="inp" id="cons-${c.id}-min" placeholder="mín" min="0"
         style="padding:6px;text-align:center;font-size:0.75rem;background:var(--aviso-bg);">
     </div>`).join('') +
-    '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">CANT.</span><span style="font-size:0.6rem;font-weight:700;color:#555;text-align:center;">ALERTA</span></div>';
+    '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:8px;margin-bottom:4px;"><span></span><span style="font-size:0.6rem;font-weight:600;color:#555;text-align:center;">CANT.</span><span style="font-size:0.6rem;font-weight:600;color:#555;text-align:center;">ALERTA</span></div>';
 }
 
 async function cargarConsumibles() {
@@ -568,11 +568,11 @@ async function renderProduccion() {
       if (tabla) tabla.innerHTML = `
         <div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:12px;padding:18px;text-align:center;">
           <div style="font-size:2rem;margin-bottom:10px;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
-          <div style="color:var(--blanco);font-weight:800;margin-bottom:4px;">Sin producción registrada</div>
+          <div style="color:var(--blanco);font-weight:700;margin-bottom:4px;">Sin producción registrada</div>
           <div style="color:var(--suave);font-size:0.84rem;margin-bottom:12px;">
             Inicializa el inventario con los sabores actuales o registra producción para empezar.
           </div>
-          <button onclick="inicializarSaboresProduccion()" style="background:var(--amarillo);color:var(--sobre-marca);border:none;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;">
+          <button onclick="inicializarSaboresProduccion()" style="background:var(--amarillo);color:var(--sobre-marca);border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;">
             Inicializar ${SABORES_DEFAULT.length} sabores en 0kg
           </button>
         </div>`;
@@ -592,7 +592,7 @@ async function renderProduccion() {
     if (tabla) tabla.innerHTML = _inventarioActual.map((s, idx) => `
       <div style="background:var(--gris);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;${s.stockBajo?'border:1px solid var(--rojo)':''}">
         <div style="flex:1;">
-          <div style="font-weight:800;font-size:0.88rem;color:${s.stockBajo?'var(--rojo)':'var(--blanco)'};">
+          <div style="font-weight:600;font-size:0.88rem;color:${s.stockBajo?'var(--rojo)':'var(--blanco)'};">
             ${s.stockBajo?'':''}${s.sabor}
           </div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
@@ -600,7 +600,7 @@ async function renderProduccion() {
           </div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:0.65rem;font-weight:700;color:#555;margin-bottom:4px;">KG DISPONIBLES</div>
+          <div style="font-size:0.65rem;font-weight:600;color:#555;margin-bottom:4px;">KG DISPONIBLES</div>
           <input type="number" id="inv-${idx}" value="${s.kilosDisponibles.toFixed(2)}"
             min="0" step="0.1"
             style="background:var(--gris2);border:2px solid var(--gris3);border-radius:8px;padding:6px 10px;color:var(--acento-txt);font-family:'Archivo',sans-serif;font-size:1.2rem;width:80px;text-align:center;outline:none;"
@@ -643,7 +643,7 @@ async function renderProduccion() {
             <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ${esActivo?'var(--amarillo)':'#333'};">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
                 <div>
-                  <div style="font-weight:800;font-size:0.88rem;color:${esActivo?'var(--acento-txt)':'var(--suave)'};">
+                  <div style="font-weight:600;font-size:0.88rem;color:${esActivo?'var(--acento-txt)':'var(--suave)'};">
                     ${l.idLote} ${esActivo?'<span style="font-size:0.65rem;background:var(--aviso-bg);color:var(--aviso-txt);border-radius:4px;padding:2px 5px;">ACTIVO</span>':''}
                   </div>
                   <div style="font-size:0.7rem;color:#555;">
@@ -665,9 +665,9 @@ async function renderProduccion() {
               ${l.notas ? `<div style="font-size:0.72rem;color:var(--suave);font-style:italic;margin-bottom:6px;">"${l.notas}"</div>` : ''}
               ${esActivo ? `
               <div style="display:flex;gap:6px;margin-top:6px;">
-                <button onclick="editarLote('${l.idLote}', ${l.kilosTotales}, ${l.kilosDisponibles})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
-                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:var(--suave);cursor:pointer;">Comentario</button>
-                <button onclick="cerrarLote('${l.idLote}')" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.7rem;color:#555;cursor:pointer;">✕ Cerrar</button>
+                <button onclick="editarLote('${l.idLote}', ${l.kilosTotales}, ${l.kilosDisponibles})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.7rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
+                <button onclick="editarNotasLote('${l.idLote}', \`${(l.notas||'').replace(/`/g,"'")}\`)" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.7rem;color:var(--suave);cursor:pointer;">Comentario</button>
+                <button onclick="cerrarLote('${l.idLote}')" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:6px;padding:5px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.7rem;color:#555;cursor:pointer;">✕ Cerrar</button>
               </div>` : ''}
             </div>`}).join('');
         }
@@ -932,7 +932,7 @@ async function renderHoraLimiteCfg() {
         <label for="hl-normal">Días si pide antes</label>${num('hl-normal', cfg.diasNormal)}
         <label for="hl-tarde">Días si pide después</label>${num('hl-tarde', cfg.diasTarde)}
       </div>
-      <button onclick="guardarHoraLimiteCfg()" style="width:100%;min-height:44px;margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">Guardar hora límite</button>
+      <button onclick="guardarHoraLimiteCfg()" style="width:100%;min-height:44px;margin-top:12px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:600;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">Guardar hora límite</button>
     </div>`;
 }
 
@@ -999,9 +999,9 @@ async function renderMayoreoAdminCfg() {
     </div>`;
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
-      <div style="font-size:0.72rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mínimos de mayoreo (admin)</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Mínimos de mayoreo (admin)</div>
       ${presentaciones.map(fila).join('')}
-      <button onclick="guardarMayoreoCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar mínimos</button>
+      <button onclick="guardarMayoreoCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:600;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar mínimos</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">0 = sin mínimo. Aplica solo a pedidos de canal Mayorista.</div>
     </div>`;
 }
@@ -1252,7 +1252,7 @@ function pintarDashboard() {
     return `
       <div style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <span style="font-weight:800;color:var(--blanco);font-size:0.82rem;">${medalla} ${v.nombre || ('Vendedor '+id)}</span>
+          <span style="font-weight:600;color:var(--blanco);font-size:0.82rem;">${medalla} ${v.nombre || ('Vendedor '+id)}</span>
           <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);">$${ventas.toLocaleString('es-MX')}</span>
         </div>
         <div style="background:var(--gris3);border-radius:4px;height:7px;overflow:hidden;margin-bottom:4px;">
@@ -1260,22 +1260,22 @@ function pintarDashboard() {
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.66rem;margin-bottom:4px;">
           <span style="color:var(--suave);">${pedidos} pedido${pedidos===1?'':'s'} este mes</span>
-          <span style="font-weight:800;color:${pctPend>0?'var(--error-txt)':'var(--ok-txt)'};">${pctPend}% pend. de pago${pend>0?` (${pend})`:''}</span>
+          <span style="font-weight:700;color:${pctPend>0?'var(--error-txt)':'var(--ok-txt)'};">${pctPend}% pend. de pago${pend>0?` (${pend})`:''}</span>
         </div>
         ${id != null ? `
         <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--suave);">
           <span>Cuota:</span>
           <input id="cuota-${id}" type="number" inputmode="numeric" value="${cuota||''}" placeholder="0"
             style="width:90px;background:var(--gris);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--blanco);font-size:0.72rem;">
-          <button onclick="guardarCuotaDash('${id}','${(v.nombre||'').replace(/'/g,'')}')" style="background:var(--amarillo);border:none;border-radius:6px;padding:3px 8px;font-weight:800;font-size:0.66rem;color:var(--sobre-marca);cursor:pointer;">Guardar</button>
-          ${cuota>0?`<span style="margin-left:auto;font-weight:800;color:${pct>=100?'var(--ok-txt)':'var(--acento-txt)'};">${pct}%</span>`:''}
+          <button onclick="guardarCuotaDash('${id}','${(v.nombre||'').replace(/'/g,'')}')" style="background:var(--amarillo);border:none;border-radius:6px;padding:3px 8px;font-weight:600;font-size:0.66rem;color:var(--sobre-marca);cursor:pointer;">Guardar</button>
+          ${cuota>0?`<span style="margin-left:auto;font-weight:700;color:${pct>=100?'var(--ok-txt)':'var(--acento-txt)'};">${pct}%</span>`:''}
         </div>` : ''}
       </div>`;
   }).join('') : '<div style="color:var(--suave);font-size:0.78rem;">Sin ventas este mes</div>';
 
   const card = (titulo, inner) => `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin-bottom:10px;">
-      <div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">${titulo}</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">${titulo}</div>
       ${inner}
     </div>`;
   const miniStat = (lbl, val, color) => `
@@ -1287,25 +1287,25 @@ function pintarDashboard() {
   // Comparativo MTD vs MTD
   const deltaTxt = deltaPct === null
     ? '<span style="color:var(--suave);font-size:0.72rem;">sin mes anterior para comparar</span>'
-    : `<span style="font-weight:800;color:${deltaPct>=0?'var(--ok-txt)':'var(--error-txt)'};">${deltaPct>=0?'▲':'▼'} ${Math.abs(deltaPct)}%</span> <span style="color:var(--suave);font-size:0.72rem;">vs mismo periodo mes anterior ($${mtdPrev.toLocaleString('es-MX')})</span>`;
+    : `<span style="font-weight:700;color:${deltaPct>=0?'var(--ok-txt)':'var(--error-txt)'};">${deltaPct>=0?'▲':'▼'} ${Math.abs(deltaPct)}%</span> <span style="color:var(--suave);font-size:0.72rem;">vs mismo periodo mes anterior ($${mtdPrev.toLocaleString('es-MX')})</span>`;
 
   // Objetivo vs avance
   const objBloque = objetivo > 0 ? `
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
         <span style="font-size:0.74rem;color:var(--suave);">Objetivo del mes (suma de cuotas)</span>
-        <span style="font-weight:800;color:var(--blanco);">$${objetivo.toLocaleString('es-MX')}</span>
+        <span style="font-weight:700;color:var(--blanco);">$${objetivo.toLocaleString('es-MX')}</span>
       </div>
       <div style="background:var(--gris3);border-radius:5px;height:12px;overflow:hidden;margin-bottom:4px;">
         <div style="background:${avancePct>=100?'#4caf50':'var(--amarillo)'};height:100%;width:${Math.min(100,avancePct)}%;"></div>
       </div>
-      <div style="text-align:right;font-weight:800;color:${avancePct>=100?'var(--ok-txt)':'var(--acento-txt)'};font-size:0.8rem;">${avancePct}% del objetivo</div>`
+      <div style="text-align:right;font-weight:600;color:${avancePct>=100?'var(--ok-txt)':'var(--acento-txt)'};font-size:0.8rem;">${avancePct}% del objetivo</div>`
     : '<div style="color:var(--suave);font-size:0.74rem;">Define las cuotas por vendedor (abajo) para ver el objetivo del mes.</div>';
 
   // Bruto y neto (dashboard_resumen.ingresos): bruto − descuentos = neto; neto + envío cobrado = total cobrado.
   const I = D.ingresos || null;
   const dinero = (n) => '$' + (Number(n) || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const filaI = (lbl, val, signo, fuerte) => `
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:0.78rem;padding:3px 0;${fuerte ? 'border-top:1px solid var(--gris3);margin-top:4px;padding-top:7px;font-weight:800;color:var(--blanco);' : 'color:var(--suave);'}">
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:0.78rem;padding:3px 0;${fuerte ? 'border-top:1px solid var(--gris3);margin-top:4px;padding-top:7px;font-weight:600;color:var(--blanco);' : 'color:var(--suave);'}">
       <span>${lbl}</span><span>${signo || ''}${dinero(val)}</span>
     </div>`;
   const bloqueIngresos = I
@@ -1410,7 +1410,7 @@ window.descargarInformePDF = function() {
     '<style>' + css + '</style></head><body>' +
     '<div class="cp-head"><h1>Crunchy Paps — Informe</h1><span class="d">' + fecha + '</span></div>' +
     dash + prod + stock +
-    '<button class="noprint" onclick="window.print()" style="position:fixed;bottom:16px;right:16px;background:#E5B312;border:none;border-radius:10px;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);">Guardar como PDF</button>' +
+    '<button class="noprint" onclick="window.print()" style="position:fixed;bottom:16px;right:16px;background:#E5B312;border:none;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);">Guardar como PDF</button>' +
     '</body></html>'
   );
   w.document.close();
@@ -1450,12 +1450,12 @@ window.cargarRecordatoriosPago = async function() {
       <div style="background:var(--gris2);border-radius:10px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:800;color:var(--blanco);font-size:0.84rem;">${x.folio} · $${(x.total||0).toLocaleString('es-MX')}</div>
+            <div style="font-weight:600;color:var(--blanco);font-size:0.84rem;">${x.folio} · $${(x.total||0).toLocaleString('es-MX')}</div>
             <div style="font-size:0.7rem;color:var(--suave);">${x.cliente||'—'} · ${x.to||'sin teléfono'}</div>
             <div style="font-size:0.66rem;color:#555;">hace ${x.dias!=null?x.dias:'?'} días · ${x.recordatorios||0} recordatorio(s) enviado(s)</div>
           </div>
           <button onclick="enviarRecordatorioUno('${x.folio}', this)" ${sinTel?'disabled':''}
-            style="background:${sinTel?'var(--gris3)':'var(--amarillo)'};border:none;border-radius:8px;padding:8px 10px;font-weight:800;font-size:0.7rem;color:${sinTel?'#666':'var(--negro)'};cursor:${sinTel?'not-allowed':'pointer'};white-space:nowrap;">
+            style="background:${sinTel?'var(--gris3)':'var(--amarillo)'};border:none;border-radius:8px;padding:8px 10px;font-weight:600;font-size:0.7rem;color:${sinTel?'#666':'var(--negro)'};cursor:${sinTel?'not-allowed':'pointer'};white-space:nowrap;">
             ${sinTel?'sin tel':'Enviar SMS'}
           </button>
         </div>
@@ -1463,7 +1463,7 @@ window.cargarRecordatoriosPago = async function() {
     }).join('');
     const conTel = items.filter(x => x.to).length;
     cont.innerHTML = filas + (conTel > 1 ? `
-      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:800;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Enviar a todos (${conTel})</button>` : '');
+      <button onclick="enviarRecordatoriosTodos(${conTel})" style="width:100%;margin-top:4px;background:#25D366;border:none;border-radius:10px;padding:11px;font-weight:600;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Enviar a todos (${conTel})</button>` : '');
   } catch(e) {
     cont.innerHTML = `<div style="color:var(--rojo);font-size:0.8rem;">Error: ${e.message}</div>`;
   }
@@ -1588,7 +1588,7 @@ window.cargarEmbudo = async function(dias) {
         if (caida > peor) { peor = caida; peorIdx = i; }
       });
       html += '<div style="margin-bottom:14px;">' +
-        '<div style="font-weight:800;font-size:0.8rem;color:var(--blanco);margin-bottom:6px;">' +
+        '<div style="font-weight:600;font-size:0.8rem;color:var(--blanco);margin-bottom:6px;">' +
         (ETIQ[c.canal] || c.canal) + ' · <span style="color:var(--suave);font-weight:600;">' +
         base + ' sesion' + (base === 1 ? '' : 'es') + '</span></div>';
       pasos.forEach(function (p, i) {
@@ -1604,7 +1604,7 @@ window.cargarEmbudo = async function(dias) {
             '<div style="width:' + pct + '%;height:100%;background:' +
             (esPeor ? 'var(--rojo)' : 'var(--amarillo)') + ';"></div>' +
           '</div>' +
-          '<div style="flex:0 0 74px;text-align:right;color:var(--blanco);font-weight:700;">' +
+          '<div style="flex:0 0 74px;text-align:right;color:var(--blanco);font-weight:600;">' +
             n + ' <span style="color:var(--suave);font-weight:600;">(' + pct + '%)</span></div>' +
           '<div style="flex:0 0 56px;text-align:right;font-weight:700;color:' +
             (esPeor ? 'var(--rojo)' : 'var(--suave)') + ';">' +
@@ -1669,11 +1669,11 @@ window.cargarMetricaRegalo = async function(yyyymm) {
         html += `
           <div style="display:flex;justify-content:space-between;align-items:center;background:var(--gris2);border-radius:8px;padding:8px 10px;">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:0.8rem;color:var(--blanco);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nom}</div>
+              <div style="font-size:0.8rem;color:var(--blanco);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nom}</div>
               <div style="font-size:0.68rem;color:var(--suave);">${pctTxt}</div>
             </div>
             <div style="text-align:right;flex:0 0 auto;margin-left:8px;">
-              <div style="font-size:0.8rem;color:var(--acento-txt);font-weight:800;">${fmtKg(c.regalo_kg)}</div>
+              <div style="font-size:0.8rem;color:var(--acento-txt);font-weight:600;">${fmtKg(c.regalo_kg)}</div>
               <div style="font-size:0.68rem;color:var(--suave);">${fmtMx(c.regalo_mxn)}</div>
             </div>
           </div>`;
@@ -1812,11 +1812,11 @@ window.renderKardexLote = async function(idLote) {
       const estColor = cancel ? 'var(--error-txt)' : (String(r.estatus).toLowerCase() === 'entregado' ? 'var(--ok-txt)' : 'var(--suave)');
       return `<tr style="border-bottom:1px solid var(--gris3);">
         <td style="padding:7px 8px;white-space:nowrap;color:var(--suave);font-size:0.74rem;">${fmtFecha(r.fecha)}</td>
-        <td style="padding:7px 8px;white-space:nowrap;font-weight:700;font-size:0.76rem;color:var(--acento-txt);">${r.folio}</td>
+        <td style="padding:7px 8px;white-space:nowrap;font-weight:600;font-size:0.76rem;color:var(--acento-txt);">${r.folio}</td>
         <td style="padding:7px 8px;font-size:0.76rem;">${r.cliente}</td>
         <td style="padding:7px 8px;font-size:0.72rem;color:var(--suave);">${r.items.join(', ')}</td>
-        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.76rem;color:var(--error-txt);">−${fmtKg(r.kg)}</td>
-        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:800;font-size:0.78rem;">${fmtKg(saldo)}</td>
+        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:600;font-size:0.76rem;color:var(--error-txt);">−${fmtKg(r.kg)}</td>
+        <td style="padding:7px 8px;text-align:right;white-space:nowrap;font-weight:600;font-size:0.78rem;">${fmtKg(saldo)}</td>
       </tr>`;
     }).join('');
 
@@ -1829,15 +1829,15 @@ window.renderKardexLote = async function(idLote) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
         <div style="background:var(--gris2);border-radius:8px;padding:8px 10px;flex:1;min-width:90px;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;">Producido</div>
-          <div style="font-size:1rem;font-weight:800;">${fmtKg(producido)}kg</div>
+          <div style="font-size:1rem;font-weight:600;">${fmtKg(producido)}kg</div>
         </div>
         <div style="background:var(--gris2);border-radius:8px;padding:8px 10px;flex:1;min-width:90px;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;">Vendido</div>
-          <div style="font-size:1rem;font-weight:800;color:var(--error-txt);">${fmtKg(vendido)}kg</div>
+          <div style="font-size:1rem;font-weight:600;color:var(--error-txt);">${fmtKg(vendido)}kg</div>
         </div>
         <div style="background:var(--gris2);border-radius:8px;padding:8px 10px;flex:1;min-width:90px;">
           <div style="font-size:0.62rem;color:var(--suave);text-transform:uppercase;letter-spacing:0.5px;">Disponible</div>
-          <div style="font-size:1rem;font-weight:800;color:var(--ok-txt);">${fmtKg(disponible)}kg</div>
+          <div style="font-size:1rem;font-weight:600;color:var(--ok-txt);">${fmtKg(disponible)}kg</div>
         </div>
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
@@ -1853,7 +1853,7 @@ window.renderKardexLote = async function(idLote) {
             </tr>
             <tr style="border-bottom:1px solid var(--gris3);">
               <td colspan="5" style="padding:7px 8px;font-size:0.72rem;color:var(--suave);">Lote registrado ${fmtFecha(lote.fecha)} · producción inicial</td>
-              <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:0.78rem;color:var(--ok-txt);">${fmtKg(producido)}</td>
+              <td style="padding:7px 8px;text-align:right;font-weight:600;font-size:0.78rem;color:var(--ok-txt);">${fmtKg(producido)}</td>
             </tr>
           </thead>
           <tbody>${rowsHtml || '<tr><td colspan="6" style="padding:12px 8px;color:var(--suave);font-size:0.8rem;text-align:center;">Sin pedidos que consuman de este lote todavía.</td></tr>'}</tbody>
@@ -1916,20 +1916,20 @@ async function renderResumenInventario(elId, incluirLote) {
           const n = porSabor[sab][p]||0;
           return `<span style="flex:1;text-align:center;color:${n>0?'var(--acento-txt)':'#444'};font-family:'Archivo',sans-serif;font-size:1rem;">${n}</span>`;
         }).join('');
-        return `<div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--gris3);"><span style="flex:1.4;font-size:0.76rem;font-weight:700;color:var(--blanco);">${sab}</span>${celdas}</div>`;
+        return `<div style="display:flex;align-items:center;padding:4px 0;border-bottom:1px solid var(--gris3);"><span style="flex:1.4;font-size:0.76rem;font-weight:600;color:var(--blanco);">${sab}</span>${celdas}</div>`;
       }).join('');
       fisicoHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;">STOCK TERMINADO</span>
           <span style="font-size:0.64rem;">${badge}</span>
         </div>
-        <div style="display:flex;align-items:center;padding:2px 0;"><span style="flex:1.4;"></span>${PRES.map(p=>`<span style="flex:1;text-align:center;font-size:0.6rem;font-weight:800;color:#555;">${p}</span>`).join('')}</div>
+        <div style="display:flex;align-items:center;padding:2px 0;"><span style="flex:1.4;"></span>${PRES.map(p=>`<span style="flex:1;text-align:center;font-size:0.6rem;font-weight:600;color:#555;">${p}</span>`).join('')}</div>
         ${filas}
         <div style="margin-top:8px;font-size:0.72rem;color:#555;text-align:right;">Total embolsado: <strong style="color:var(--acento-txt)">${totG>=1000?(totG/1000).toFixed(2)+'kg':totG+'g'}</strong></div>
         <div style="margin-top:6px;font-size:0.62rem;color:#444;font-style:italic;">Para actualizar: pestaña Inv. Físico.</div>`;
     } else {
       fisicoHTML = `
-        <div style="font-family:'Archivo',sans-serif; font-weight:700;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:6px;">STOCK TERMINADO</div>
+        <div style="font-family:'Archivo',sans-serif; font-weight:600;font-size:1rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:6px;">STOCK TERMINADO</div>
         <div style="color:var(--rojo);font-size:0.8rem;">Sin conteo físico de este lote. Regístralo en Inv. Físico.</div>`;
     }
 
@@ -2075,7 +2075,7 @@ function _resBarras(valores, etiquetas, resaltado) {
              rx="2" fill="${esUlt ? 'var(--amarillo)' : 'var(--gris3)'}"></rect>`;
   }).join('');
   const textos = etiquetas.map((e) =>
-    `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:700;color:var(--suave);">${e}</span>`
+    `<span style="flex:1 1 0;text-align:center;font-size:0.6rem;font-weight:600;color:var(--suave);">${e}</span>`
   ).join('');
   return `<div style="margin-top:8px;">
             <svg viewBox="0 0 100 82" preserveAspectRatio="none" width="100%" height="58"
@@ -2089,16 +2089,16 @@ function _resBarras(valores, etiquetas, resaltado) {
 
 function _resTarjeta({ titulo, valor, cuando, delta, techo, valores, etiquetas, chip }) {
   const flecha = delta === null || delta === undefined ? ''
-    : `<span style="font-size:0.72rem;font-weight:800;color:${delta >= 0 ? 'var(--ok-txt)' : 'var(--error-txt)'};">
+    : `<span style="font-size:0.72rem;font-weight:600;color:${delta >= 0 ? 'var(--ok-txt)' : 'var(--error-txt)'};">
          ${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)} %</span>`;
   const insignia = chip
     ? `<span style="display:inline-block;background:${chip.bg};color:${chip.fg};
-         border-radius:999px;padding:2px 9px;font-size:0.64rem;font-weight:800;">${chip.txt}</span>`
+         border-radius:999px;padding:2px 9px;font-size:0.64rem;font-weight:600;">${chip.txt}</span>`
     : '';
   return `
     <div style="background:var(--gris);border:1px solid var(--gris3);border-radius:16px;padding:14px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-        <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--suave);">${titulo}</span>
+        <span style="font-size:0.62rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--suave);">${titulo}</span>
         ${insignia}
       </div>
       <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap;">
@@ -2366,7 +2366,7 @@ function pintarResumen() {
 
   const filasHTML = filas.map(r => `
     <tr onclick="verDetallePedido(${r.id})" style="cursor:pointer;">
-      <td style="font-weight:800;color:var(--acento-txt);">${r.consec}</td>
+      <td style="font-weight:700;color:var(--acento-txt);">${r.consec}</td>
       <td>${r.cliente}</td>
       <td style="color:var(--suave);">${r.vendedor}</td>
       <td class="num">${r.esInterno ? '—' : '$' + r.monto.toLocaleString('es-MX')}</td>
@@ -2579,12 +2579,12 @@ async function renderGridInventarioFisico(idLote) {
 
   grid.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr repeat(4,60px);gap:4px;margin-bottom:4px;">
-      <div style="font-size:0.65rem;font-weight:800;color:#555;">SABOR</div>
-      ${PRESENTACIONES.map(p=>`<div style="font-size:0.65rem;font-weight:800;color:#555;text-align:center;">${p.id}</div>`).join('')}
+      <div style="font-size:0.65rem;font-weight:600;color:#555;">SABOR</div>
+      ${PRESENTACIONES.map(p=>`<div style="font-size:0.65rem;font-weight:600;color:#555;text-align:center;">${p.id}</div>`).join('')}
     </div>
     ${SABORES_INV.map(sabor => `
       <div style="display:grid;grid-template-columns:1fr repeat(4,60px);gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--gris3);">
-        <div style="font-size:0.78rem;font-weight:700;color:var(--blanco);">${sabor}</div>
+        <div style="font-size:0.78rem;font-weight:600;color:var(--blanco);">${sabor}</div>
         ${PRESENTACIONES.map(p => `
           <input type="number" min="0" step="1" value="0"
             id="if-${sabor.replace(/\s/g,'_')}-${p.id}"
@@ -2592,7 +2592,7 @@ async function renderGridInventarioFisico(idLote) {
             onfocus="this.style.borderColor='var(--acento-txt)'" onblur="this.style.borderColor='var(--gris3)'">
         `).join('')}
       </div>`).join('')}
-    <div style="margin-top:8px;font-size:0.72rem;font-weight:700;color:#555;text-align:center;" id="inv-total-display">Total: 0g</div>
+    <div style="margin-top:8px;font-size:0.72rem;font-weight:600;color:#555;text-align:center;" id="inv-total-display">Total: 0g</div>
   `;
 
   // Listener para calcular total en tiempo real
@@ -2789,7 +2789,7 @@ window.buscarCliente = async function(q) {
           background:var(--gris2);border:1px solid var(--gris3);border-radius:8px;
           padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:border-color 0.2s;
         " onmouseover="this.style.borderColor='var(--acento-txt)'" onmouseout="this.style.borderColor='var(--gris3)'">
-          <div style="font-weight:800;font-size:0.85rem;color:var(--blanco);">${c.nombre}</div>
+          <div style="font-weight:600;font-size:0.85rem;color:var(--blanco);">${c.nombre}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
             ${c.telefono} · ${c.tipo} · ${c.colonia||''} ${c.municipio||''}
           </div>
@@ -2862,12 +2862,12 @@ window.seleccionarCliente = function(idx) {
 
   // Confirmar selección con botón para cambiar
   document.getElementById('resultados-cliente').innerHTML =
-    `<div style="background:var(--ok-bg);border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:700;color:var(--ok-txt);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    `<div style="background:var(--ok-bg);border-radius:8px;padding:8px 12px;font-size:0.78rem;font-weight:600;color:var(--ok-txt);display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="flex:1;min-width:0;">
         <div>${c.nombre}</div>
         <div style="color:var(--suave);font-size:0.7rem;font-weight:500;margin-top:2px;">${c.telefono}</div>
       </div>
-      <button onclick="limpiarBusqueda()" style="background:transparent;border:1px solid #4caf50;color:var(--ok-txt);border-radius:6px;padding:4px 10px;font-weight:800;font-size:0.7rem;cursor:pointer;">✕ Cambiar</button>
+      <button onclick="limpiarBusqueda()" style="background:transparent;border:1px solid #4caf50;color:var(--ok-txt);border-radius:6px;padding:4px 10px;font-weight:600;font-size:0.7rem;cursor:pointer;">✕ Cambiar</button>
     </div>`;
 
   mostrarToast('Cliente cargado ✓');
@@ -3040,7 +3040,7 @@ function pintarVistaPedidosVendedor() {
 
   // Desglose pagado/pendiente — siempre visible si hay ventas en el mes
   const desgloseHTML = ventas > 0 ? `
-    <div style="display:flex;gap:10px;margin-top:8px;font-size:0.75rem;font-weight:700;">
+    <div style="display:flex;gap:10px;margin-top:8px;font-size:0.75rem;font-weight:600;">
       <div style="flex:1;display:flex;align-items:center;gap:6px;">
         <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#4caf50;flex-shrink:0;"></span>
         <span style="color:var(--suave);">Cobrado</span>
@@ -3063,7 +3063,7 @@ function pintarVistaPedidosVendedor() {
       ${cuotaSet ? `
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
           <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
-          <div style="font-size:0.78rem;font-weight:700;color:var(--suave);">de $${(r.cuotaMes||0).toLocaleString('es-MX')} (${pct}%)</div>
+          <div style="font-size:0.78rem;font-weight:600;color:var(--suave);">de $${(r.cuotaMes||0).toLocaleString('es-MX')} (${pct}%)</div>
         </div>
         <div class="vend-cuota-bar">
           <div class="vend-cuota-fill ${colorPag}" style="width:${pctPag}%;"></div>
@@ -3078,10 +3078,10 @@ function pintarVistaPedidosVendedor() {
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">$${ventas.toLocaleString('es-MX')}</div>
-            <div style="font-size:0.7rem;font-weight:700;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ingreso neto del mes</div>
+            <div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;margin-top:2px;">Ingreso neto del mes</div>
           </div>
           ${esAdminUser ? `
-          <button onclick="abrirSetCuota()" style="background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--acento-txt);cursor:pointer;white-space:nowrap;">
+          <button onclick="abrirSetCuota()" style="background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px 12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.74rem;color:var(--acento-txt);cursor:pointer;white-space:nowrap;">
             Fijar cuota
           </button>` : ''}
         </div>
@@ -3104,11 +3104,11 @@ function pintarVistaPedidosVendedor() {
       ${(r.kgInternosMes||0) > 0 ? `
         <div style="margin-top:10px;background:rgba(255,210,0,0.06);border:1px dashed rgba(255,210,0,0.3);border-radius:10px;padding:10px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Volumen interno este mes</div>
+            <div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Volumen interno este mes</div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--acento-txt);line-height:1;">${(r.kgInternosMes||0).toFixed(2)} kg</div>
           </div>
           ${r.kgInternosPorTipo ? `
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:0.7rem;color:var(--suave);font-weight:700;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:0.7rem;color:var(--suave);font-weight:600;">
               ${Object.entries(r.kgInternosPorTipo)
                 .filter(([_,kg]) => kg > 0)
                 .map(([tipo, kg]) => {
@@ -3305,7 +3305,7 @@ function pedidoCardVendedorHTML(p) {
 
   // Cuando es interno, mostrar "Sin cargo" en vez de $0
   const totalDisplay = p.esInterno
-    ? `<span style="font-size:0.78rem;font-weight:800;color:var(--acento-txt);">Sin cargo</span>`
+    ? `<span style="font-size:0.78rem;font-weight:600;color:var(--acento-txt);">Sin cargo</span>`
     : `$${(p.total||0).toLocaleString('es-MX')}`;
 
   return `<div class="pedido-card clickable ${p.esInterno?'pedido-interno':''}" onclick="verDetallePedido(${p.id})"
@@ -3475,7 +3475,7 @@ function pintarDetallePedido({ orden, lineas }) {
     return `
       <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--gris3);font-size:0.86rem;">
         <div style="flex:1;">
-          <div style="font-weight:800;color:var(--blanco);">${cantStr} ${l.sabor||''}</div>
+          <div style="font-weight:700;color:var(--blanco);">${cantStr} ${l.sabor||''}</div>
           <div style="font-size:0.74rem;color:var(--suave);">${l.presentacion||''}${esInterno ? '' : ` · $${(l.precio_unitario||0).toLocaleString('es-MX')} c/u`}</div>
           ${l.notas ? `<div style="font-size:0.7rem;color:var(--suave);font-style:italic;">${l.notas}</div>` : ''}
         </div>
@@ -3492,7 +3492,7 @@ function pintarDetallePedido({ orden, lineas }) {
 
   const segPedidoHTML = puedeEditar ? `
     <div style="margin-top:14px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Estatus del pedido</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Estatus del pedido</div>
       <div style="display:flex;gap:4px;background:var(--gris2);border-radius:10px;padding:3px;">
         ${optsPedido.map(opt => {
           const sel = opt === estPedido;
@@ -3500,7 +3500,7 @@ function pintarDetallePedido({ orden, lineas }) {
           const colorBad = opt === 'Cancelado';
           return `<button onclick="marcarEstatus(${orden.id},'estatusPedido','${opt}')" style="
             flex:1;border:none;border-radius:8px;
-            padding:8px 4px;font-family:'Inter',sans-serif;font-weight:800;
+            padding:8px 4px;font-family:'Inter',sans-serif;font-weight:600;
             font-size:0.7rem;cursor:pointer;
             background:${sel ? (colorOk?'var(--ok-bg)':colorBad?'var(--error-bg)':'var(--acento-txt)') : 'transparent'};
             color:${sel ? (colorOk?'var(--ok-txt)':colorBad?'var(--rojo)':'var(--negro)') : 'var(--suave)'};
@@ -3530,14 +3530,14 @@ function pintarDetallePedido({ orden, lineas }) {
 
   const segPagoHTML = puedeEditar ? `
     <div style="margin-top:10px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Estatus del pago</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Estatus del pago</div>
       <div style="display:flex;gap:4px;background:var(--gris2);border-radius:10px;padding:3px;">
         ${optsPago.map(opt => {
           const sel = opt === estPago;
           const colorOk = opt === 'Pagado';
           return `<button onclick="marcarEstatus(${orden.id},'estatusPago','${opt}')" style="
             flex:1;border:none;border-radius:8px;
-            padding:9px;font-family:'Inter',sans-serif;font-weight:800;
+            padding:9px;font-family:'Inter',sans-serif;font-weight:600;
             font-size:0.78rem;cursor:pointer;
             background:${sel ? (colorOk?'var(--ok-bg)':'var(--aviso-bg)') : 'transparent'};
             color:${sel ? (colorOk?'var(--ok-txt)':'var(--acento-txt)') : 'var(--suave)'};">
@@ -3553,13 +3553,13 @@ function pintarDetallePedido({ orden, lineas }) {
   const motivoTxt = (N.MOTIVO_EDICION.vendedor || {})[orden.motivo] || '';
   const editarHTML = !puedeEditar || orden.editable === undefined ? '' : orden.editable ? `
     <div style="margin-top:12px;">
-      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
+      <button type="button" onclick="editarPedidoDesdeDrawer()" style="width:100%;min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;cursor:pointer;">Editar pedido</button>
       ${motivoTxt ? `<div style="font-size:0.72rem;color:var(--acento-txt);margin-top:4px;">${motivoTxt}</div>` : ''}
       ${orden.editado_en ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : orden.puedeForzar ? `
     <div style="margin-top:12px;">
       <div style="font-size:0.76rem;color:var(--suave);margin-bottom:6px;">${motivoTxt || 'Este pedido no se puede editar'}</div>
-      <button type="button" onclick="editarPedidoDesdeDrawer(true)" style="width:100%;min-height:44px;background:transparent;border:1px dashed var(--suave);border-radius:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:800;font-size:0.8rem;cursor:pointer;">Editar de todos modos (admin)</button>
+      <button type="button" onclick="editarPedidoDesdeDrawer(true)" style="width:100%;min-height:44px;background:transparent;border:1px dashed var(--suave);border-radius:10px;color:var(--suave);font-family:'Inter',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;">Editar de todos modos (admin)</button>
       ${orden.editado_en ? `<div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">Editado el ${new Date(orden.editado_en).toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${orden.editado_por ? ' por ' + rutaEsc(orden.editado_por) : ''}</div>` : ''}
     </div>` : `
     <div style="margin-top:12px;font-size:0.76rem;color:var(--suave);">${motivoTxt || 'Este pedido no se puede editar'}</div>`;
@@ -3595,48 +3595,48 @@ function pintarDetallePedido({ orden, lineas }) {
       <!-- Banner: pedido interno -->
       <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <div>
-          <div style="font-size:0.7rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
+          <div style="font-size:0.7rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;">Pedido interno</div>
           <div style="font-size:0.78rem;color:var(--suave);font-weight:600;margin-top:2px;">${tiposInternosLbl[tipoInterno] || tipoInterno || 'Sin tipo'} · No genera ingreso</div>
         </div>
         <div style="text-align:right;">
           <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">${(gramosTotalPedido/1000).toFixed(2)}</div>
-          <div style="font-size:0.65rem;color:var(--suave);font-weight:700;text-transform:uppercase;">kg del lote</div>
+          <div style="font-size:0.65rem;color:var(--suave);font-weight:600;text-transform:uppercase;">kg del lote</div>
         </div>
       </div>
     ` : ''}
 
     <!-- Cliente -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cliente</div>
-      <div style="font-weight:800;color:var(--blanco);font-size:0.92rem;">${orden.nombre_cliente||'—'}</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Cliente</div>
+      <div style="font-weight:600;color:var(--blanco);font-size:0.92rem;">${orden.nombre_cliente||'—'}</div>
       ${orden.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">${orden.direccion}</div>` : ''}
       ${(orden.colonia||orden.municipio) ? `<div style="font-size:0.74rem;color:var(--suave);">${orden.colonia||''} ${orden.municipio||''} ${orden.codigo_postal||''}</div>` : ''}
     </div>
 
     <!-- Fechas (editables si puedeEditar) -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Fechas</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Fechas</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div>
-          <label style="display:block;font-size:0.7rem;font-weight:700;color:var(--suave);margin-bottom:4px;">Entrega programada</label>
+          <label style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-bottom:4px;">Entrega programada</label>
           ${puedeEditar ? `
             <input type="date" id="dp-fecha-prog"
               value="${fechaParaInput(orden.fecha_entrega)}"
               onchange="actualizarFechaPedido(${orden.id}, 'fechaEntrega', this.value)"
               style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
           ` : `
-            <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${fEntrega}</div>
+            <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;">${fEntrega}</div>
           `}
         </div>
         <div>
-          <label style="display:block;font-size:0.7rem;font-weight:700;color:var(--suave);margin-bottom:4px;">Entrega real</label>
+          <label style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-bottom:4px;">Entrega real</label>
           ${puedeEditar ? `
             <input type="date" id="dp-fecha-real"
               value="${fechaParaInput(orden.fecha_entrega_real)}"
               onchange="actualizarFechaPedido(${orden.id}, 'fechaEntregaReal', this.value)"
               style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:600;">
           ` : `
-            <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${orden.fecha_entrega_real ? new Date(orden.fecha_entrega_real).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
+            <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;">${orden.fecha_entrega_real ? new Date(orden.fecha_entrega_real).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
           `}
         </div>
       </div>
@@ -3647,20 +3647,20 @@ function pintarDetallePedido({ orden, lineas }) {
 
     <!-- Productos -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Productos (${(lineas||[]).length})</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Productos (${(lineas||[]).length})</div>
       ${lineasHTML || '<div style="color:var(--suave);font-size:0.8rem;padding:6px 0;">Sin productos</div>'}
       ${(!esInterno && Number(orden.descuento) > 0) ? `
         <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.82rem;color:var(--suave);border-top:1px solid var(--gris3);margin-top:8px;">
           <span>Subtotal</span>
           <span>$${(Number(orden.subtotal) || (Number(orden.total)+Number(orden.descuento))).toLocaleString('es-MX')}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.82rem;color:var(--ok-txt);font-weight:700;">
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:0.82rem;color:var(--ok-txt);font-weight:600;">
           <span>Cupón ${orden.cupon_codigo || ''}</span>
           <span>-$${Number(orden.descuento).toLocaleString('es-MX')}</span>
         </div>
       ` : ''}
       <div style="display:flex;justify-content:space-between;padding:10px 0 4px;border-top:2px solid var(--amarillo);margin-top:8px;">
-        <span style="font-weight:800;color:var(--blanco);">${esInterno ? 'Total kg' : 'Total'}</span>
+        <span style="font-weight:700;color:var(--blanco);">${esInterno ? 'Total kg' : 'Total'}</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);">
           ${esInterno
             ? `${(gramosTotalPedido/1000).toFixed(3)} kg`
@@ -3671,7 +3671,7 @@ function pintarDetallePedido({ orden, lineas }) {
 
     ${orden.notas ? `
       <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:12px;">
-        <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Notas</div>
+        <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Notas</div>
         <div style="font-size:0.84rem;color:var(--blanco);">${orden.notas}</div>
       </div>` : ''}
 
@@ -3679,13 +3679,13 @@ function pintarDetallePedido({ orden, lineas }) {
 
     <!-- Imprimir / Tracking / cerrar -->
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-      <button onclick="imprimirTicket()" style="flex:1;min-width:130px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">
+      <button onclick="imprimirTicket()" style="flex:1;min-width:130px;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">
         Imprimir
       </button>
-      <button onclick="cerrarDetallePedido();abrirTracking('${orden.consecutivo}')" style="flex:1;min-width:130px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
+      <button onclick="cerrarDetallePedido();abrirTracking('${orden.consecutivo}')" style="flex:1;min-width:130px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
         Seguimiento
       </button>
-      <button onclick="cerrarDetallePedido()" style="background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:12px 16px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.85rem;color:var(--suave);cursor:pointer;">
+      <button onclick="cerrarDetallePedido()" style="background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:12px 16px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.85rem;color:var(--suave);cursor:pointer;">
         Cerrar
       </button>
     </div>
@@ -3761,7 +3761,7 @@ function preguntarMetodoPago(metodoActual) {
             return `<button data-met="${o.id}" style="background:${activo?'var(--aviso-bg)':'var(--gris2)'};border:2px solid ${activo?'var(--amarillo)':'var(--gris3)'};border-radius:10px;padding:14px;color:var(--blanco);font-size:0.95rem;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:${activo?'800':'500'};">
               <span style="font-size:1.2rem;">${o.ico}</span>
               <span style="flex:1;">${o.label}</span>
-              ${activo ? '<span style="color:var(--acento-txt);font-size:0.7rem;font-weight:800;">SUGERIDO</span>' : ''}
+              ${activo ? '<span style="color:var(--acento-txt);font-size:0.7rem;font-weight:600;">SUGERIDO</span>' : ''}
             </button>`;
           }).join('')}
           <button data-met="" style="background:transparent;border:none;color:var(--suave);font-size:0.84rem;margin-top:6px;cursor:pointer;padding:8px;">Cancelar</button>
@@ -4207,7 +4207,7 @@ function renderB2BLista() {
       ${!c.aprobadoB2B ? 'border-left:3px solid var(--amarillo)' : 'border-left:3px solid #4caf50'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;">
         <div style="flex:1;">
-          <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${c.nombre ? c.nombre : '<span style="color:var(--suave);font-style:italic;font-weight:700;">(Sin nombre — solicitud nueva)</span>'}</div>
+          <div style="font-weight:600;font-size:0.92rem;color:var(--blanco);">${c.nombre ? c.nombre : '<span style="color:var(--suave);font-style:italic;font-weight:700;">(Sin nombre — solicitud nueva)</span>'}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">
             ${c.telefono} · ${c.tipo}
           </div>
@@ -4219,7 +4219,7 @@ function renderB2BLista() {
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Vendedor:</span>
               <select onchange="reasignarVendedor(${c.id}, this.value, this.options[this.selectedIndex].text)"
-                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;flex:1;max-width:170px;">
+                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:600;font-size:0.72rem;cursor:pointer;flex:1;max-width:170px;">
                 <option value="">— Sin asignar —</option>
                 ${_vendedoresActivos.map(v => `<option value="${v.id}" ${String(v.id)===String(c.idVendedor)?'selected':''}>${v.nombre}</option>`).join('')}
               </select>
@@ -4231,7 +4231,7 @@ function renderB2BLista() {
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:0.72rem;">
               <span style="color:var(--suave);">Ruta:</span>
               <select onchange="reasignarRuta(${c.id}, this.value)" aria-label="Ruta de reparto"
-                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;min-height:32px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;">
+                style="background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:3px 6px;min-height:32px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:600;font-size:0.72rem;cursor:pointer;">
                 <option value="">— Sin ruta —</option>
                 ${(window._rutasCache || []).filter(r => r.activa !== false).map(r => `<option value="${r.id}" ${String(r.id)===String(c.idRuta)?'selected':''}>${r.nombre}</option>`).join('')}
               </select>
@@ -4241,7 +4241,7 @@ function renderB2BLista() {
             : `<div style="font-size:0.7rem;color:var(--suave);font-style:italic;">Sin ruta</div>`)}
           ${c.rfc ? `<div style="font-size:0.72rem;color:var(--suave);">RFC: ${c.rfc}</div>` : ''}
         </div>
-        <div style="font-size:0.66rem;font-weight:800;padding:3px 8px;border-radius:50px;white-space:nowrap;
+        <div style="font-size:0.66rem;font-weight:600;padding:3px 8px;border-radius:50px;white-space:nowrap;
           ${c.aprobadoB2B ? 'background:var(--ok-bg);color:var(--ok-txt)' : 'background:var(--aviso-bg);color:var(--aviso-txt)'}">
           ${c.aprobadoB2B ? 'Aprobado' : 'Pendiente'}
         </div>
@@ -4251,15 +4251,15 @@ function renderB2BLista() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--gris2);border-radius:8px;padding:8px;margin:6px 0;text-align:center;">
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">$${ventasMes.toLocaleString('es-MX')}</div>
-            <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Mes</div>
+            <div style="font-size:0.58rem;font-weight:600;color:#555;text-transform:uppercase;margin-top:2px;">Mes</div>
           </div>
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">$${totalHist.toLocaleString('es-MX')}</div>
-            <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Total</div>
+            <div style="font-size:0.58rem;font-weight:600;color:#555;text-transform:uppercase;margin-top:2px;">Total</div>
           </div>
           <div>
             <div style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);line-height:1;">${c.numPedidos||0}</div>
-            <div style="font-size:0.58rem;font-weight:700;color:#555;text-transform:uppercase;margin-top:2px;">Pedidos</div>
+            <div style="font-size:0.58rem;font-weight:600;color:#555;text-transform:uppercase;margin-top:2px;">Pedidos</div>
           </div>
         </div>
         <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">Última compra: ${ult}</div>
@@ -4267,36 +4267,36 @@ function renderB2BLista() {
 
       <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <a href="https://wa.me/52${String(c.telefono||'').replace(/\D/g,'').slice(-10)}" target="_blank"
-          style="background:var(--ok-bg);border:1px solid #25D366;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">
+          style="background:var(--ok-bg);border:1px solid #25D366;border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:600;color:var(--ok-txt);text-decoration:none;">
           Contactar
         </a>
         ${c.coordenadas
-          ? `<a href="https://www.google.com/maps?q=${c.coordenadas}" target="_blank" style="background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">Ver en Maps (entrega)</a>`
-          : `<span style="background:var(--aviso-bg);border:1px solid var(--aviso-br);border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:700;color:var(--aviso-txt);">Sin ubicación capturada</span>`}
+          ? `<a href="https://www.google.com/maps?q=${c.coordenadas}" target="_blank" style="background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:600;color:var(--ok-txt);text-decoration:none;">Ver en Maps (entrega)</a>`
+          : `<span style="background:var(--aviso-bg);border:1px solid var(--aviso-br);border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:600;color:var(--aviso-txt);">Sin ubicación capturada</span>`}
         ${c.coordenadasGps
-          ? `<a href="https://www.google.com/maps?q=${c.coordenadasGps}" target="_blank" style="background:var(--info-bg);border:1px solid var(--info-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:700;color:var(--info-txt);text-decoration:none;">GPS</a>`
+          ? `<a href="https://www.google.com/maps?q=${c.coordenadasGps}" target="_blank" style="background:var(--info-bg);border:1px solid var(--info-br);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-weight:600;color:var(--info-txt);text-decoration:none;">GPS</a>`
           : ''}
-        ${(() => { const d = distanciaCoords(c.coordenadas, c.coordenadasGps); if (d === null) return ''; const cerca = d <= 150; const col = cerca ? 'var(--ok-txt)' : (d <= 500 ? 'var(--aviso-txt)' : 'var(--error-txt)'); const bd = cerca ? 'var(--ok-br)' : (d <= 500 ? 'var(--aviso-br)' : 'var(--error-br)'); const bg = cerca ? 'var(--ok-bg)' : (d <= 500 ? 'var(--aviso-bg)' : 'var(--error-bg)'); const txt = d < 1000 ? `${Math.round(d)} m` : `${(d/1000).toFixed(1)} km`; return `<span title="Distancia entre la dirección y el GPS detectado" style="background:${bg};border:1px solid ${bd};border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:800;color:${col};">${cerca ? '✓' : ''} GPS a ${txt}</span>`; })()}
+        ${(() => { const d = distanciaCoords(c.coordenadas, c.coordenadasGps); if (d === null) return ''; const cerca = d <= 150; const col = cerca ? 'var(--ok-txt)' : (d <= 500 ? 'var(--aviso-txt)' : 'var(--error-txt)'); const bd = cerca ? 'var(--ok-br)' : (d <= 500 ? 'var(--aviso-br)' : 'var(--error-br)'); const bg = cerca ? 'var(--ok-bg)' : (d <= 500 ? 'var(--aviso-bg)' : 'var(--error-bg)'); const txt = d < 1000 ? `${Math.round(d)} m` : `${(d/1000).toFixed(1)} km`; return `<span title="Distancia entre la dirección y el GPS detectado" style="background:${bg};border:1px solid ${bd};border-radius:6px;padding:4px 8px;font-size:0.66rem;font-weight:600;color:${col};">${cerca ? '✓' : ''} GPS a ${txt}</span>`; })()}
       </div>
 
       ${!c.aprobadoB2B ? `
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button onclick="aprobarB2B(${c.id}, '${(c.tipo||'').replace(/'/g,'')}')" style="
             flex:1;background:var(--amarillo);border:none;border-radius:8px;
-            padding:8px;font-family:'Inter',sans-serif;font-weight:800;
+            padding:8px;font-family:'Inter',sans-serif;font-weight:600;
             font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">
             Aprobar
           </button>
           <button onclick="rechazarB2B(${c.id})" style="
             flex:1;background:transparent;border:1px solid var(--gris3);border-radius:8px;
-            padding:8px;font-family:'Inter',sans-serif;font-weight:800;
+            padding:8px;font-family:'Inter',sans-serif;font-weight:600;
             font-size:0.8rem;color:var(--suave);cursor:pointer;">
             ✕ Rechazar
           </button>
         </div>` : `
         <button onclick="revocarB2B(${c.id})" style="
           background:transparent;border:1px solid var(--gris3);border-radius:8px;
-          padding:6px 12px;font-family:'Inter',sans-serif;font-weight:700;
+          padding:6px 12px;font-family:'Inter',sans-serif;font-weight:600;
           font-size:0.75rem;color:#555;cursor:pointer;margin-top:6px;">
           Revocar aprobación
         </button>`}
@@ -4971,25 +4971,25 @@ function mostrarResultadoRuta() {
     <div style="display:flex;justify-content:space-around;text-align:center;">
       <div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${distKm}km</div>
-        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Distancia</div>
+        <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Distancia</div>
       </div>
       <div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${tiempoStr}</div>
-        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Tiempo total</div>
+        <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Tiempo total</div>
       </div>
       <div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.6rem;color:var(--acento-txt);line-height:1;">${r.paradas.length}</div>
-        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Paradas</div>
+        <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Paradas</div>
       </div>
     </div>
   `;
 
   // Lista de paradas en orden óptimo
-  let html = `<div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Orden óptimo</div>`;
+  let html = `<div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Orden óptimo</div>`;
   // Origen
   html += `<div style="background:var(--gris2);border-left:3px solid #4caf50;border-radius:8px;padding:9px 12px;margin-bottom:6px;">
-    <div style="font-size:0.66rem;color:var(--ok-txt);font-weight:800;">SALIDA</div>
-    <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;">${r.origen.nombre}</div>
+    <div style="font-size:0.66rem;color:var(--ok-txt);font-weight:600;">SALIDA</div>
+    <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;">${r.origen.nombre}</div>
   </div>`;
   // Paradas
   r.paradas.forEach((p, i) => {
@@ -4998,10 +4998,10 @@ function mostrarResultadoRuta() {
     const tMin = Math.round(leg.duration.value / 60);
     html += `<div style="background:var(--gris2);border-left:3px solid var(--amarillo);border-radius:8px;padding:9px 12px;margin-bottom:6px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
-        <div style="font-size:0.66rem;color:var(--acento-txt);font-weight:800;">PARADA ${i+1}</div>
+        <div style="font-size:0.66rem;color:var(--acento-txt);font-weight:600;">PARADA ${i+1}</div>
         <div style="font-size:0.7rem;color:var(--suave);">${dKm}km · ${tMin}min</div>
       </div>
-      <div style="font-size:0.84rem;color:var(--blanco);font-weight:700;margin-top:2px;">${p.nombre}</div>
+      <div style="font-size:0.84rem;color:var(--blanco);font-weight:600;margin-top:2px;">${p.nombre}</div>
       <div style="font-size:0.7rem;color:var(--suave);">${p.tipo}${p.direccion ? ' · '+p.direccion : ''}</div>
     </div>`;
   });
@@ -5245,9 +5245,9 @@ function pintarListaProspectos() {
     // Distancia destacada según modo
     let distLabel = '';
     if (_ordenProspectos === 'cerca_mi' && tengoUbicacion && p._distMi < 999999) {
-      distLabel = `<span style="background:var(--ok-bg);color:var(--ok-txt);font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p._distMi)}</span>`;
+      distLabel = `<span style="background:var(--ok-bg);color:var(--ok-txt);font-size:0.66rem;font-weight:600;padding:2px 7px;border-radius:50px;">${fmtDist(p._distMi)}</span>`;
     } else if (_ordenProspectos === 'cerca_planta' && p.distanciaMetros) {
-      distLabel = `<span style="background:var(--aviso-bg);color:var(--aviso-txt);font-size:0.66rem;font-weight:700;padding:2px 7px;border-radius:50px;">${fmtDist(p.distanciaMetros)}</span>`;
+      distLabel = `<span style="background:var(--aviso-bg);color:var(--aviso-txt);font-size:0.66rem;font-weight:600;padding:2px 7px;border-radius:50px;">${fmtDist(p.distanciaMetros)}</span>`;
     }
 
     return `<div onclick="verDetalleProspecto(${p.id})" style="
@@ -5255,7 +5255,7 @@ function pintarListaProspectos() {
       border-left:3px solid ${p.estatus==='pendiente'?'var(--rojo)':p.estatus==='contactado'?'var(--amarillo)':p.estatus==='convertido'?'#4caf50':'#666'};">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${ico[p.estatus]||''} ${p.nombre}</div>
+          <div style="font-weight:600;font-size:0.92rem;color:var(--blanco);">${ico[p.estatus]||''} ${p.nombre}</div>
           <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;">${p.tipo}${p.telefono?' · '+p.telefono:''}</div>
           <div style="font-size:0.7rem;color:var(--suave);">${p.direccion || 'Sin dirección'}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">
@@ -5263,7 +5263,7 @@ function pintarListaProspectos() {
             <span style="font-size:0.7rem;color:var(--suave);">${p.numContactos>0 ? `${p.numContactos} contacto(s) · últ ${ult}` : 'Sin contactos'}${p.nombreVendedor ? ` · ${p.nombreVendedor}` : ''}</span>
           </div>
         </div>
-        <div style="font-size:0.78rem;color:var(--acento-txt);font-weight:700;white-space:nowrap;">${estrellas}</div>
+        <div style="font-size:0.78rem;color:var(--acento-txt);font-weight:600;white-space:nowrap;">${estrellas}</div>
       </div>
     </div>`;
   }).join('');
@@ -5296,19 +5296,19 @@ window.verDetalleProspecto = function(id) {
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span class="pedido-estatus" style="background:${p.estatus==='pendiente'?'var(--error-bg)':p.estatus==='contactado'?'var(--aviso-bg)':p.estatus==='convertido'?'var(--ok-bg)':'#222'};color:${p.estatus==='pendiente'?'var(--error-txt)':p.estatus==='contactado'?'var(--aviso-txt)':p.estatus==='convertido'?'var(--ok-txt)':'var(--suave)'};">${ico[p.estatus]||p.estatus}</span>
-        <span style="font-size:0.86rem;color:var(--acento-txt);font-weight:700;">${estrellas}</span>
+        <span style="font-size:0.86rem;color:var(--acento-txt);font-weight:600;">${estrellas}</span>
       </div>
-      <div style="font-weight:800;color:var(--blanco);font-size:0.94rem;">${p.tipo}${p.tierOriginal?` · <span style="color:var(--acento-txt);font-size:0.78rem;">${p.tierOriginal}</span>`:''}</div>
+      <div style="font-weight:600;color:var(--blanco);font-size:0.94rem;">${p.tipo}${p.tierOriginal?` · <span style="color:var(--acento-txt);font-size:0.78rem;">${p.tierOriginal}</span>`:''}</div>
       ${p.direccion ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:3px;">${p.direccion}</div>` : ''}
       ${(p.colonia || p.codigoPostal) ? `<div style="font-size:0.74rem;color:var(--suave);">${p.colonia||''} ${p.codigoPostal?'· CP '+p.codigoPostal:''}</div>` : ''}
       ${p.telefono ? `<div style="font-size:0.78rem;color:var(--suave);">${p.telefono}</div>` : ''}
       ${p.distanciaMetros > 0 ? `<div style="font-size:0.72rem;color:var(--suave);margin-top:3px;">A ${Math.round(p.distanciaMetros)}m de la planta</div>` : ''}
-      ${p.lat && p.lng ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="display:inline-block;margin-top:6px;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 10px;font-size:0.7rem;font-weight:700;color:var(--ok-txt);text-decoration:none;">Abrir en Maps</a>` : ''}
+      ${p.lat && p.lng ? `<a href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank" style="display:inline-block;margin-top:6px;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:6px;padding:4px 10px;font-size:0.7rem;font-weight:600;color:var(--ok-txt);text-decoration:none;">Abrir en Maps</a>` : ''}
     </div>
 
     <!-- Info de seguimiento -->
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
-      <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Seguimiento</div>
+      <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Seguimiento</div>
       <div style="font-size:0.8rem;color:var(--blanco);">
         <strong style="color:var(--acento-txt);">${p.numContactos}</strong> contacto(s) · Último: <strong>${ult}</strong>
       </div>
@@ -5320,7 +5320,7 @@ window.verDetalleProspecto = function(id) {
     <!-- Notas -->
     ${p.notas ? `
       <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:0.66rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Notas</div>
+        <div style="font-size:0.66rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Notas</div>
         <div style="font-size:0.8rem;color:var(--blanco);white-space:pre-wrap;line-height:1.5;">${p.notas}</div>
       </div>` : ''}
 
@@ -5334,14 +5334,14 @@ window.verDetalleProspecto = function(id) {
     <!-- Acciones -->
     ${!descartado && !yaConvertido ? `
       <div id="pros-acciones" style="display:flex;flex-direction:column;gap:8px;">
-        <button onclick="accionRegistrarVisita(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">
+        <button onclick="accionRegistrarVisita(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.86rem;color:var(--sobre-marca);cursor:pointer;">
           Registrar visita
         </button>
       </div>
       <div id="pros-visita-hoja" hidden style="background:var(--gris2);border-radius:12px;padding:12px;">
-        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
+        <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          ${RESULTADOS_VISITA.map(r => `<button onclick="elegirResultadoVisita(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.descarta ? 'var(--rojo)' : (r.codigo === 'convertido' ? '#4caf50' : 'var(--gris3)')};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}${r.descarta ? '<span style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sale de la ruta</span>' : ''}</button>`).join('')}
+          ${RESULTADOS_VISITA.map(r => `<button onclick="elegirResultadoVisita(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.descarta ? 'var(--rojo)' : (r.codigo === 'convertido' ? '#4caf50' : 'var(--gris3)')};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}${r.descarta ? '<span style="display:block;font-size:0.7rem;font-weight:600;color:var(--suave);margin-top:2px;">Sale de la ruta</span>' : ''}</button>`).join('')}
         </div>
         ${!p.telefono ? `<label for="visita-telefono" style="display:block;font-size:0.72rem;color:var(--suave2);margin:10px 0 4px;">Teléfono del cliente, solo si se convierte</label>
         <input id="visita-telefono" type="tel" inputmode="numeric" maxlength="10" placeholder="10 dígitos" style="width:100%;min-height:44px;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.9rem;">` : ''}
@@ -5349,19 +5349,19 @@ window.verDetalleProspecto = function(id) {
         <textarea id="visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
         <label for="visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
         <input id="visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
-        <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
+        <button onclick="cancelarVisita()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>
       </div>
     ` : descartado ? `
-      <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
+      <button onclick="accionReactivarProspecto(${p.id})" style="width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--acento-txt);cursor:pointer;">
         ↩️ Reactivar prospecto
       </button>
     ` : `
-      <div style="background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;text-align:center;font-weight:800;color:var(--ok-txt);font-size:0.84rem;">
+      <div style="background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;text-align:center;font-weight:600;color:var(--ok-txt);font-size:0.84rem;">
         Convertido a cliente${p.idClienteConvertido ? ' #' + p.idClienteConvertido : ''}
       </div>
     `}
 
-    <button onclick="cerrarDetalleProspecto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:10px;">
+    <button onclick="cerrarDetalleProspecto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:10px;">
       Cerrar
     </button>
   `;
@@ -5451,7 +5451,7 @@ function pintarRutaDia() {
       <div style="color:var(--suave);font-size:0.78rem;margin-top:2px;">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${r.ruta.vendedor ? rutaEsc(r.ruta.vendedor) : 'sin vendedor asignado'}</div>
       <div role="progressbar" aria-label="Avance del día" aria-valuemin="0" aria-valuemax="${a.programadas || 0}" aria-valuenow="${a.visitadas || 0}" style="margin-top:10px;height:8px;background:var(--gris3);border-radius:999px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--amarillo);"></div></div>
       <div style="margin-top:6px;font-size:0.84rem;color:var(--blanco);font-variant-numeric:tabular-nums;"><b>${a.visitadas || 0} de ${a.programadas || 0}</b> visitadas · ${a.convertidas || 0} convertidas${a.fueraDelPunto ? ' · <span style="color:var(--rojo);">' + a.fueraDelPunto + ' fuera del punto</span>' : ''}</div>
-      ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:\'Inter\',sans-serif;font-weight:800;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
+      ${hayPendientes ? '<button type="button" onclick="abrirRecorridoRuta()" style="margin-top:10px;width:100%;min-height:44px;background:transparent;border:1px solid var(--amarillo);border-radius:10px;color:var(--acento-txt);font-family:\'Inter\',sans-serif;font-weight:600;font-size:0.84rem;cursor:pointer;">Abrir recorrido en Google Maps</button>' : ''}
     </div>`;
   const CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   // La prioridad de `ruta_del_dia` NO reordena el recorrido —lo reordena la geografia, y eso esta
@@ -5476,15 +5476,15 @@ function pintarRutaDia() {
                  + (p.ultimoResultado ? ' · ' + rutaEsc((RESULTADOS_VISITA.concat(RESULTADOS_VISITA_CLIENTE).find(r => r.codigo === p.ultimoResultado) || {}).etiqueta || p.ultimoResultado) : ''));
     return `
     <button type="button" onclick="${accion}" aria-label="Parada ${p.orden}: ${rutaEsc(p.nombre)}${p.visitadaHoy ? ', visitada' : ''}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;text-align:left;background:var(--gris);border:1px solid ${p.visitadaHoy ? '#2e5a34' : 'var(--gris3)'};border-radius:12px;padding:10px 12px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;cursor:pointer;">
-      <span style="flex:0 0 30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;background:${p.visitadaHoy ? '#4caf50' : 'var(--gris3)'};color:${p.visitadaHoy ? '#000' : 'var(--blanco)'};">${p.visitadaHoy ? CHECK : p.orden}</span>
+      <span style="flex:0 0 30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.8rem;background:${p.visitadaHoy ? '#4caf50' : 'var(--gris3)'};color:${p.visitadaHoy ? '#000' : 'var(--blanco)'};">${p.visitadaHoy ? CHECK : p.orden}</span>
       <span style="min-width:0;flex:1 1 auto;">
-        <span style="display:block;font-weight:700;font-size:0.88rem;overflow-wrap:anywhere;">${rutaEsc(p.nombre || 'Sin nombre')}</span>
+        <span style="display:block;font-weight:600;font-size:0.88rem;overflow-wrap:anywhere;">${rutaEsc(p.nombre || 'Sin nombre')}</span>
         <span style="display:block;color:var(--suave);font-size:0.72rem;">${rutaEsc(p.colonia || '')}${p.colonia ? ' · ' : ''}${recompra(p)}${detalle}${p.fueraDelPunto ? ' · <span style="color:var(--rojo);">fuera del punto</span>' : ''}</span>
       </span>
     </button>`;
   };
   const bloque = (titulo, arr) => arr.length
-    ? `<div style="font-size:0.72rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
+    ? `<div style="font-size:0.72rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">${titulo} (${arr.filter(x => x.visitadaHoy).length} de ${arr.length})</div>${arr.map(fila).join('')}`
     : '';
   const html = bloque('Clientes', paradas.filter(p => p.tipo === 'cliente')) + bloque('Prospectos', paradas.filter(p => p.tipo === 'prospecto'));
   lista.innerHTML = (html || '<div style="background:var(--gris);border-radius:14px;padding:16px;color:var(--suave2);font-size:0.86rem;">Esta ruta no tiene paradas para este día.</div>') + cierreDelDiaHTML(a);
@@ -5504,7 +5504,7 @@ function cierreDelDiaHTML(avance) {
   }
   return `
     <div style="margin-top:16px;background:var(--gris);border-radius:14px;padding:14px;border-left:4px solid var(--amarillo);">
-      <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Cierre del día</div>
+      <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Cierre del día</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums;">
         <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${hechas}</div><div style="font-size:0.7rem;color:var(--suave);">visitas</div></div>
         <div><div style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">${Number(c.pedidos || 0)}</div><div style="font-size:0.7rem;color:var(--suave);">pedidos</div></div>
@@ -5541,15 +5541,15 @@ window.abrirVisitaCliente = function(id) {
   hoja.innerHTML = `
     <div style="font-family:'Archivo',sans-serif;font-size:1rem;color:var(--blanco);">${rutaEsc(p.nombre)}</div>
     <div style="color:var(--suave);font-size:0.74rem;margin:2px 0 10px;">Cliente${p.colonia ? ' · ' + rutaEsc(p.colonia) : ''}${p.visitadaHoy ? ' · ya visitado hoy: ' + rutaEsc(p.etiquetaHoy || '') : ''}</div>
-    <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
+    <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">¿Qué pasó en la visita?</div>
     <div style="display:flex;flex-direction:column;gap:6px;">
-      ${RESULTADOS_VISITA_CLIENTE.map(r => `<button type="button" onclick="registrarVisitaCliente(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.codigo === 'pedido' ? '#4caf50' : 'var(--gris3)'};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}</button>`).join('')}
+      ${RESULTADOS_VISITA_CLIENTE.map(r => `<button type="button" onclick="registrarVisitaCliente(${p.id}, '${r.codigo}')" style="min-height:44px;text-align:left;background:transparent;border:1px solid ${r.codigo === 'pedido' ? '#4caf50' : 'var(--gris3)'};border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--blanco);cursor:pointer;">${r.etiqueta}</button>`).join('')}
     </div>
     <label for="ruta-visita-nota" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Nota de la visita (opcional)</label>
     <textarea id="ruta-visita-nota" rows="2" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;resize:vertical;"></textarea>
     <label for="ruta-visita-anaquel" style="display:block;font-size:0.72rem;color:var(--suave);margin:10px 0 4px;">Piezas que le quedan en el anaquel (opcional)</label>
     <input id="ruta-visita-anaquel" type="number" min="0" step="1" inputmode="numeric" placeholder="ej. 7" style="width:100%;background:var(--gris3);border:1px solid var(--gris3);border-radius:8px;padding:8px 10px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.86rem;" />
-    <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
+    <button type="button" onclick="cerrarHojaRuta()" style="margin-top:8px;width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.8rem;color:var(--suave);cursor:pointer;">Cancelar</button>`;
   hoja.hidden = false;
 };
 
@@ -5617,15 +5617,15 @@ window._reparto = null;
 
 function repartoFila(p, acciones) {
   const pagado = (p.estatusPago || '') === 'Pagado';
-  const est = p.estatusPedido === 'Entregado' ? '<span style="color:var(--ok-txt);font-weight:800;">Entregado</span>'
-    : p.estatusPedido === 'En camino' ? '<span style="color:var(--acento-txt);font-weight:800;">En camino</span>' : '';
+  const est = p.estatusPedido === 'Entregado' ? '<span style="color:var(--ok-txt);font-weight:700;">Entregado</span>'
+    : p.estatusPedido === 'En camino' ? '<span style="color:var(--acento-txt);font-weight:700;">En camino</span>' : '';
   // La marca de Armado solo importa antes de salir: en camino o entregado ya no se enseña.
   const armado = p.estatusPedido !== 'En proceso' ? '' : (p.armadoEn ? 'armado' : '<span style="color:var(--rojo);">sin armar</span>');
   const dist = p.entregaDistanciaM != null ? (p.entregaFueraDelPunto
     ? `<span style="color:var(--rojo);">fuera del punto, a ${p.entregaDistanciaM} m</span>` : `a ${p.entregaDistanciaM} m`) : '';
   return `<div style="display:flex;gap:10px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid var(--gris3);">
     <div style="flex:1;min-width:0;cursor:pointer;" onclick="verDetallePedido(${p.id})">
-      <div style="font-weight:800;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.consecutivo || '')} · ${rutaEsc(p.cliente || '')}</div>
+      <div style="font-weight:700;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.consecutivo || '')} · ${rutaEsc(p.cliente || '')}</div>
       <div style="font-size:0.76rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rutaEsc(p.colonia || p.direccion || '')} · $${Number(p.total || 0).toLocaleString('es-MX')}${pagado ? '' : ' · <b style="color:var(--acento-txt);">cobrar</b>'}${armado ? ' · ' + armado : ''}${est ? ' · ' + est : ''}${dist ? ' · ' + dist : ''}</div>
     </div>
     ${acciones || ''}
@@ -5634,16 +5634,16 @@ function repartoFila(p, acciones) {
 
 function repartoBotonEntregar(p) {
   if (p.estatusPedido === 'Entregado') return '';
-  if (p.metodoEntrega === 'paqueteria') return p.estatusPedido === 'En camino' ? '' : `<button onclick="repartoEnviado(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Enviado</button>`;
-  return `<button onclick="repartoEntregar(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 12px;color:var(--sobre-marca);font-weight:800;">Entregado</button>`;
+  if (p.metodoEntrega === 'paqueteria') return p.estatusPedido === 'En camino' ? '' : `<button onclick="repartoEnviado(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:700;">Enviado</button>`;
+  return `<button onclick="repartoEntregar(${p.id})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 12px;color:var(--sobre-marca);font-weight:700;">Entregado</button>`;
 }
 
 function repartoBloque(titulo, pedidos, clave, conSalir) {
   const pend = pedidos.filter(p => p.estatusPedido === 'En proceso').map(p => p.id);
   const sinArmar = pedidos.filter(p => !p.armadoEn && p.estatusPedido === 'En proceso').length;
   const ent = pedidos.filter(p => p.estatusPedido === 'Entregado').length;
-  const salir = conSalir && pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', ${sinArmar})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 14px;color:var(--sobre-marca);font-weight:800;">Salir a ruta</button>` : '';
-  const rec = pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('${clave}')" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:800;">Recorrido</button>` : '';
+  const salir = conSalir && pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', ${sinArmar})" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:0 14px;color:var(--sobre-marca);font-weight:700;">Salir a ruta</button>` : '';
+  const rec = pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('${clave}')" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:700;">Recorrido</button>` : '';
   return `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
       <div style="flex:1 1 170px;min-width:0;"><div style="font-family:'Archivo',sans-serif;color:var(--blanco);">${titulo}</div>
@@ -5757,8 +5757,8 @@ async function renderEntregas() {
   cab.innerHTML = `<div style="background:var(--gris);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
     <div style="font-family:'Archivo',sans-serif;color:var(--blanco);">${RUTA_DIA_NOMBRE[f.getDay()]} ${f.getDate()} · ${pedidos.length} entregas · ${ent} entregada${ent === 1 ? '' : 's'}</div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      ${pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', 0)" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;color:var(--sobre-marca);font-weight:800;">Salir</button>` : ''}
-      ${pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('entregas')" style="flex:1;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-weight:800;">Recorrido</button>` : ''}
+      ${pend.length ? `<button onclick="repartoSalir('${pend.join(',')}', 0)" style="flex:1;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;color:var(--sobre-marca);font-weight:700;">Salir</button>` : ''}
+      ${pedidos.some(p => p.estatusPedido !== 'Entregado' && p.lat != null) ? `<button onclick="repartoRecorrido('entregas')" style="flex:1;min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;color:var(--blanco);font-weight:700;">Recorrido</button>` : ''}
     </div></div>`;
   lista.innerHTML = pedidos.length ? pedidos.map(p => repartoFila(p, repartoBotonEntregar(p))).join('')
     : `<div style="background:var(--gris);border:1px dashed var(--gris3);border-radius:14px;padding:18px;text-align:center;color:var(--suave2);">No tienes entregas hoy.</div>`;
@@ -5899,7 +5899,7 @@ async function cargarHistorialVisitas(id) {
     const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     el.innerHTML = `
       <div style="background:var(--gris2);border-radius:12px;padding:12px;">
-        <div style="font-size:0.66rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Visitas (${vs.length})</div>
+        <div style="font-size:0.66rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Visitas (${vs.length})</div>
         ${vs.map(v => `
           <div style="padding:6px 0;border-top:1px solid var(--gris3);font-size:0.78rem;color:var(--blanco);">
             <div style="display:flex;justify-content:space-between;gap:8px;"><b>${esc(v.etiqueta)}</b><span style="color:var(--suave);white-space:nowrap;">${new Date(v.creadaEn).toLocaleString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></div>
@@ -6106,7 +6106,7 @@ window.procesarCSV = function(event) {
       }).join('<br>');
 
       document.getElementById('pros-csv-preview').innerHTML = `
-        <div style="font-weight:800;color:var(--acento-txt);">${prospectos.length} prospectos listos para importar</div>
+        <div style="font-weight:700;color:var(--acento-txt);">${prospectos.length} prospectos listos para importar</div>
         ${invalidos > 0 ? `<div style="color:var(--rojo);font-size:0.74rem;margin-top:4px;">${invalidos} filas inválidas (sin nombre o coordenadas)</div>` : ''}
         ${coordsSwapped > 0 ? `<div style="color:var(--acento-txt);font-size:0.74rem;margin-top:4px;">↔️ ${coordsSwapped} coordenadas detectadas invertidas y corregidas automáticamente</div>` : ''}
         <div style="margin-top:6px;font-size:0.74rem;color:var(--suave);">Primeros registros:<br>${previewLineas}${prospectos.length > 3 ? '<br>...' : ''}</div>
@@ -6439,7 +6439,7 @@ function pintarResumenGastos(r) {
     document.getElementById('g-resumen').appendChild(blockEl);
   }
 
-  let insumosHTML = '<div style="font-size:0.66rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Insumos del mes (precio promedio)</div>';
+  let insumosHTML = '<div style="font-size:0.66rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Insumos del mes (precio promedio)</div>';
   insumosKeys.forEach(s => {
     const i = insumos[s];
     let detalleLts = '';
@@ -6502,9 +6502,9 @@ function pintarListaGastos() {
       border-left:3px solid ${c.fg};">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:900;font-size:0.92rem;color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</div>
+          <div style="font-weight:600;font-size:0.92rem;color:var(--blanco);">${g.categoria}${g.subcategoria?' · '+g.subcategoria:''}</div>
           ${g.concepto ? `<div style="font-size:0.78rem;color:var(--suave);margin-top:2px;">${g.concepto}</div>` : ''}
-          ${g.cantidad > 0 ? `<div style="font-size:0.74rem;color:var(--acento-txt);margin-top:2px;font-weight:700;">${g.cantidad} ${g.unidad} · $${g.precioUnitario.toFixed(2)}/${g.unidad.replace(/^bidón\s*/,'').replace(/L$/,'L').trim()||g.unidad}</div>` : ''}
+          ${g.cantidad > 0 ? `<div style="font-size:0.74rem;color:var(--acento-txt);margin-top:2px;font-weight:600;">${g.cantidad} ${g.unidad} · $${g.precioUnitario.toFixed(2)}/${g.unidad.replace(/^bidón\s*/,'').replace(/L$/,'L').trim()||g.unidad}</div>` : ''}
           <div style="font-size:0.7rem;color:var(--suave);margin-top:4px;">
             ${fecha} · ${fuenteIco[g.fuenteDinero]||''} ${g.fuenteDinero}
             ${g.tieneTicket ? ' ·' : ''}
@@ -6513,7 +6513,7 @@ function pintarListaGastos() {
         </div>
         <div style="text-align:right;white-space:nowrap;">
           <div style="font-family:'Archivo',sans-serif;font-size:1.4rem;color:var(--acento-txt);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
-          <div style="display:inline-block;margin-top:4px;background:${c.bg};color:${c.fg};font-size:0.66rem;font-weight:800;padding:2px 8px;border-radius:50px;">${ico[g.estatusAprobacion]} ${g.estatusAprobacion}</div>
+          <div style="display:inline-block;margin-top:4px;background:${c.bg};color:${c.fg};font-size:0.66rem;font-weight:600;padding:2px 8px;border-radius:50px;">${ico[g.estatusAprobacion]} ${g.estatusAprobacion}</div>
         </div>
       </div>
     </div>`;
@@ -6748,7 +6748,7 @@ window.verDetalleGasto = function(id) {
     <!-- Encabezado: monto + estatus -->
     <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;">
       <div style="font-family:'Archivo',sans-serif;font-size:2.4rem;color:var(--acento-txt);line-height:1;">$${g.monto.toLocaleString('es-MX')}</div>
-      <div style="display:inline-block;margin-top:8px;background:${c.bg};color:${c.fg};font-size:0.78rem;font-weight:800;padding:4px 14px;border-radius:50px;">${ico[g.estatusAprobacion]||g.estatusAprobacion}</div>
+      <div style="display:inline-block;margin-top:8px;background:${c.bg};color:${c.fg};font-size:0.78rem;font-weight:600;padding:4px 14px;border-radius:50px;">${ico[g.estatusAprobacion]||g.estatusAprobacion}</div>
     </div>
 
     <!-- Datos del gasto -->
@@ -6780,7 +6780,7 @@ window.verDetalleGasto = function(id) {
 
     ${g.tieneTicket && g.ticketUrl ? `
       <div style="margin-bottom:10px;">
-        <a href="#" onclick="abrirTicket(event, ${'${g.id}'})" style="display:block;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:10px;padding:11px;text-align:center;font-weight:800;color:var(--ok-txt);text-decoration:none;font-size:0.84rem;">
+        <a href="#" onclick="abrirTicket(event, ${'${g.id}'})" style="display:block;background:var(--ok-bg);border:1px solid var(--ok-br);border-radius:10px;padding:11px;text-align:center;font-weight:600;color:var(--ok-txt);text-decoration:none;font-size:0.84rem;">
           Ver foto del ticket
         </a>
       </div>
@@ -6789,19 +6789,19 @@ window.verDetalleGasto = function(id) {
     <!-- Acciones admin -->
     ${puedeAprobar ? `
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--ok-txt);cursor:pointer;">Aprobar</button>
-        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:var(--error-bg);border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--error-txt);cursor:pointer;">Rechazar</button>
+        <button onclick="aprobarGastoUI(${g.id})" style="flex:1;background:var(--ok-bg);border:1px solid #4caf50;border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--ok-txt);cursor:pointer;">Aprobar</button>
+        <button onclick="rechazarGastoUI(${g.id})" style="flex:1;background:var(--error-bg);border:1px solid var(--rojo);border-radius:10px;padding:11px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--error-txt);cursor:pointer;">Rechazar</button>
       </div>
     ` : ''}
 
     ${puedeEditar ? `
       <div style="display:flex;gap:8px;margin-bottom:6px;">
-        <button onclick="editarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
-        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.78rem;color:var(--suave);cursor:pointer;">Eliminar</button>
+        <button onclick="editarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Editar</button>
+        <button onclick="eliminarGastoUI(${g.id})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--suave);cursor:pointer;">Eliminar</button>
       </div>
     ` : ''}
 
-    <button onclick="cerrarDetalleGasto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:6px;">
+    <button onclick="cerrarDetalleGasto()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;color:var(--suave);cursor:pointer;margin-top:6px;">
       Cerrar
     </button>
   `;
@@ -7007,7 +7007,7 @@ function armadoPintarNuevos(nuevos) {
     <div style="background:var(--gris);border:1px solid var(--amarillo);border-radius:14px;padding:12px 14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
         <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--acento-txt);letter-spacing:1px;">NUEVOS (${n})</div>
-        <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Visto</button>
+        <button onclick="armadoVisto()" style="min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:8px 14px;font-weight:600;font-size:0.8rem;color:var(--sobre-marca);cursor:pointer;">Visto</button>
       </div>
       ${nuevos.map(p => `
         <button onclick="verDetallePedido(${p.id})" style="display:block;width:100%;background:transparent;border:0;border-top:1px solid var(--gris3);padding:10px 0;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;min-height:44px;">
@@ -7061,7 +7061,7 @@ async function renderArmado(silencioso) {
         <table style="width:100%;border-collapse:collapse;font-size:0.86rem;color:var(--blanco);">
           <thead><tr style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;"><th style="text-align:left;padding:4px 6px;">Producto</th><th style="text-align:right;padding:4px 6px;">Piezas</th><th style="text-align:right;padding:4px 6px;">kg</th></tr></thead>
           <tbody>${filas}</tbody>
-          <tfoot><tr style="border-top:1px solid var(--gris3);font-weight:800;"><td style="padding:8px 6px;">${t.pedidos} pedido${Number(t.pedidos) === 1 ? '' : 's'} · ${t.armados} armado${Number(t.armados) === 1 ? '' : 's'}</td><td style="padding:8px 6px;text-align:right;">${Number(t.piezas || 0)}</td><td style="padding:8px 6px;text-align:right;">${Number(t.kg || 0).toFixed(2)}</td></tr></tfoot>
+          <tfoot><tr style="border-top:1px solid var(--gris3);font-weight:700;"><td style="padding:8px 6px;">${t.pedidos} pedido${Number(t.pedidos) === 1 ? '' : 's'} · ${t.armados} armado${Number(t.armados) === 1 ? '' : 's'}</td><td style="padding:8px 6px;text-align:right;">${Number(t.piezas || 0)}</td><td style="padding:8px 6px;text-align:right;">${Number(t.kg || 0).toFixed(2)}</td></tr></tfoot>
         </table>
       </div>`;
   }
@@ -7103,8 +7103,8 @@ async function armadoPushPintar() {
       <div style="font-family:'Archivo',sans-serif;font-size:0.95rem;color:var(--acento-txt);letter-spacing:1px;margin-bottom:4px;">${titulo}</div>
       <div style="font-size:0.8rem;color:var(--suave);margin-bottom:${boton ? '10px' : '0'};">${texto}</div>${boton || ''}
     </div>`;
-  const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">${txt}</button>`;
-  const btnGris = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:700;font-size:0.84rem;cursor:pointer;">${txt}</button>`;
+  const btn = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:600;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">${txt}</button>`;
+  const btnGris = (txt, fn) => `<button onclick="${fn}()" style="width:100%;min-height:44px;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;color:var(--blanco);font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;cursor:pointer;">${txt}</button>`;
   if (armadoEsIphoneSinInstalar()) { el.innerHTML = caja('Avisos en este dispositivo', 'En iPhone los avisos solo llegan con la app instalada. Instálala primero.', btnGris('Cómo instalar la app', 'mostrarInstruccionesInstalar')); return; }
   if (!armadoPushSoporte()) { el.innerHTML = caja('Avisos en este dispositivo', 'Este navegador no puede recibir avisos, o el servidor no tiene configurado el push.'); return; }
   if (Notification.permission === 'denied') { el.innerHTML = caja('Avisos en este dispositivo', 'Los avisos están bloqueados en los ajustes del navegador para este sitio.'); return; }
@@ -7152,7 +7152,7 @@ window._armadoFiltro = 'por-armar';
 window._armadoBusqueda = '';
 const ARMADO_ESTILO = document.createElement('style');
 ARMADO_ESTILO.textContent = `
-  .armado-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--gris3);background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer}
+  .armado-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--gris3);background:transparent;color:var(--suave);font-family:'Inter',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer}
   .armado-chip[aria-pressed="true"]{background:var(--amarillo);border-color:var(--amarillo);color:var(--sobre-marca)}
   .armado-chip:focus-visible{outline:3px solid var(--amarillo);outline-offset:2px}
   .armado-tabla{width:100%;border-collapse:collapse;font-size:0.8rem;color:var(--blanco)}
@@ -7160,8 +7160,8 @@ ARMADO_ESTILO.textContent = `
   .armado-tabla td{padding:8px 6px;border-bottom:1px solid var(--gris3);vertical-align:top}
   .armado-tabla tr.hecho td{opacity:.6}
   .armado-tabla .folio{color:var(--suave);font-size:0.7rem}
-  .armado-ruta{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:var(--negro);white-space:nowrap}
-  .armado-editado{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:800;color:#fff;background:var(--rojo);white-space:nowrap}
+  .armado-ruta{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:600;color:var(--negro);white-space:nowrap}
+  .armado-editado{display:inline-block;padding:1px 7px;border-radius:999px;font-size:0.66rem;font-weight:600;color:#fff;background:var(--rojo);white-space:nowrap}
   .armado-fila-btn{background:transparent;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px;display:block;width:100%}
 `;
 document.head.appendChild(ARMADO_ESTILO);
@@ -7207,7 +7207,7 @@ function armadoPintarPedidos() {
       <div style="background:var(--gris);border:1px solid ${hecho ? 'var(--verde, #1f7a2e)' : 'var(--gris3)'};border-radius:14px;padding:12px 14px;margin-bottom:10px;opacity:${hecho ? 0.75 : 1};">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
           <div style="min-width:0;">
-            <div style="font-weight:800;color:var(--blanco);">${quien}</div>
+            <div style="font-weight:700;color:var(--blanco);">${quien}</div>
             <div style="color:var(--suave);font-size:0.74rem;">${p.consecutivo} · ${canal}${p.vendedor ? ' · ' + p.vendedor : ''} ${armadoRutaBadge(p)}${armadoEditadoBadge(p)}</div>
           </div>
           <label style="display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:0.8rem;color:var(--blanco);white-space:nowrap;">
@@ -7223,7 +7223,7 @@ function armadoPintarPedidos() {
       ${porConfirmar.map(p => `
         <button onclick="verDetallePedido(${p.id})" style="display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:12px;padding:10px 14px;margin-bottom:8px;color:var(--blanco);font-family:'Inter',sans-serif;font-size:0.84rem;text-align:left;cursor:pointer;">
           <span style="min-width:0;flex:1 1 auto;overflow-wrap:anywhere;"><b>${p.negocio || p.cliente || 'Sin nombre'}</b><span style="color:var(--suave);"> · ${p.consecutivo} · ${ARMADO_CANAL[p.canal] || p.canal || ''}</span> ${armadoRutaBadge(p)}</span>
-          <span style="color:var(--acento-txt);font-weight:800;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
+          <span style="color:var(--acento-txt);font-weight:700;white-space:nowrap;flex-shrink:0;margin-left:10px;">Confirmar ›</span>
         </button>`).join('')}` : '';
     return;
   }
@@ -7240,7 +7240,7 @@ function armadoPintarPedidos() {
     const quien = p.negocio || p.cliente || 'Sin nombre';
     const hecho = !!p.armadoEn;
     const estado = tipo === 'pendiente'
-      ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:800;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
+      ? `<button type="button" onclick="verDetallePedido(${p.id})" style="min-height:44px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;padding:0 10px;color:var(--acento-txt);font-family:'Inter',sans-serif;font-weight:600;font-size:0.76rem;cursor:pointer;white-space:nowrap;">Confirmar ›</button>`
       : `<label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;font-size:0.76rem;color:var(--blanco);white-space:nowrap;"><input type="checkbox" ${hecho ? 'checked' : ''} onchange="armadoMarcarConLista(${p.id}, this)" style="width:22px;height:22px;accent-color:var(--amarillo);"> ${hecho ? 'Armado' : 'Armar'}</label>`;
     return `<tr class="${hecho ? 'hecho' : ''}">
       <td><button class="armado-fila-btn" onclick="verDetallePedido(${p.id})"><b>${quien}</b><div class="folio">${p.consecutivo} · ${p.tipoInterno ? 'Interno' : (ARMADO_CANAL[p.canal] || p.canal || '')}${hecho ? ' · ' + (p.armadoPor || '') : ''}</div>${armadoEditadoBadge(p) ? '<div style="margin-top:3px;">' + armadoEditadoBadge(p) + '</div>' : ''}</button></td>
@@ -7379,7 +7379,7 @@ async function verificarCajasAbiertasAnteriores() {
     }).join('');
     cont.innerHTML = `
       <div style="background:var(--aviso-bg);border-left:3px solid #ffa500;border-radius:8px;padding:10px 12px;font-size:0.84rem;color:var(--blanco);">
-        <div style="font-weight:800;color:var(--acento-txt);margin-bottom:6px;">Hay cajas abiertas de días anteriores</div>
+        <div style="font-weight:700;color:var(--acento-txt);margin-bottom:6px;">Hay cajas abiertas de días anteriores</div>
         <ul style="margin:0;padding-left:18px;color:var(--suave);font-size:0.78rem;">${lista}</ul>
         <div style="margin-top:6px;font-size:0.72rem;color:var(--suave);">Navega con ◀ a esos días para cerrarlas antes de continuar.</div>
       </div>
@@ -7408,7 +7408,7 @@ async function cargarPendientesCaja() {
     if ((tot.numEfectivoPendiente || 0) > 0 || (tot.numTransferPendiente || 0) > 0) {
       html += `
         <div style="background:var(--gris);border-radius:10px;padding:10px;margin-bottom:12px;">
-          <div style="font-size:0.7rem;color:var(--acento-txt);font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Pendientes de procesar</div>
+          <div style="font-size:0.7rem;color:var(--acento-txt);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Pendientes de procesar</div>
           ${(tot.numEfectivoPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);margin-bottom:3px;"><span>Efectivo en vendedores</span><span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);">$${Number(tot.totalEfectivoPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
           ${(tot.numTransferPendiente||0) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--blanco);"><span>Transferencias por verificar</span><span style="font-family:'Archivo',sans-serif;color:var(--acento-txt);">$${Number(tot.totalTransferPendiente).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>` : ''}
         </div>
@@ -7439,7 +7439,7 @@ async function cargarPendientesCaja() {
 
 function renderEfectivoVendedor(v) {
   const alerta = v.diasMasViejo >= 2
-    ? `<span style="font-size:0.7rem;color:var(--rojo);font-weight:800;">${v.diasMasViejo} días sin entregar</span>`
+    ? `<span style="font-size:0.7rem;color:var(--rojo);font-weight:600;">${v.diasMasViejo} días sin entregar</span>`
     : '';
 
   const pedidosHTML = (v.pedidos || []).map(p => {
@@ -7448,11 +7448,11 @@ function renderEfectivoVendedor(v) {
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;background:var(--gris2);border-radius:8px;margin-top:6px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.82rem;color:var(--blanco);">${p.consec}</div>
+          <div style="font-weight:600;font-size:0.82rem;color:var(--blanco);">${p.consec}</div>
           <div style="font-size:0.7rem;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cliente || '—'} · ${fechaFmt}</div>
         </div>
         <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.1rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-        <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'efectivo')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
+        <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'efectivo')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:600;cursor:pointer;">⋯</button>
       </div>
     `;
   }).join('');
@@ -7470,7 +7470,7 @@ function renderEfectivoVendedor(v) {
         </div>
       </div>
       <details style="margin-top:8px;">
-        <summary style="font-size:0.72rem;color:var(--acento-txt);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Ver pedidos (${v.numPedidos})</summary>
+        <summary style="font-size:0.72rem;color:var(--acento-txt);cursor:pointer;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Ver pedidos (${v.numPedidos})</summary>
         <div style="margin-top:6px;">${pedidosHTML}</div>
       </details>
     </div>
@@ -7481,13 +7481,13 @@ function renderTransferPendiente(p) {
   const f = p.fecha ? new Date(p.fecha) : null;
   const fechaFmt = f ? f.toLocaleString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
   const alerta = p.diasEspera >= 1
-    ? `<span style="font-size:0.7rem;color:var(--rojo);font-weight:800;margin-left:6px;">${p.diasEspera}d</span>`
+    ? `<span style="font-size:0.7rem;color:var(--rojo);font-weight:600;margin-left:6px;">${p.diasEspera}d</span>`
     : '';
   return `
     <div style="background:var(--gris);border-radius:12px;padding:12px;margin-bottom:8px;border-left:3px solid #ffc107;display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <span style="font-weight:800;color:var(--blanco);font-size:0.88rem;">${p.consec}</span>
+          <span style="font-weight:600;color:var(--blanco);font-size:0.88rem;">${p.consec}</span>
           ${alerta}
         </div>
         <div style="font-size:0.72rem;color:var(--suave);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.cliente || '—'} · ${fechaFmt}</div>
@@ -7496,7 +7496,7 @@ function renderTransferPendiente(p) {
       <div style="text-align:right;">
         <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
       </div>
-      <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'transferencia')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:800;cursor:pointer;">⋯</button>
+      <button onclick="abrirAccionesPendiente(${p.idOrden}, '${p.consec}', ${p.monto}, 'transferencia')" style="background:transparent;border:1px solid var(--amarillo);border-radius:6px;padding:5px 10px;color:var(--acento-txt);font-size:0.72rem;font-weight:600;cursor:pointer;">⋯</button>
     </div>
   `;
 }
@@ -7538,11 +7538,11 @@ function renderPuntoCaja(p, esHoy) {
   // Acciones
   let acciones = '';
   if (estatusDia === 'no_abierta' && esHoy) {
-    acciones = `<button onclick="abrirAperturaCaja(${p.idPunto})" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">Abrir caja</button>`;
+    acciones = `<button onclick="abrirAperturaCaja(${p.idPunto})" style="flex:1;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.88rem;color:var(--sobre-marca);cursor:pointer;">Abrir caja</button>`;
   } else if (estatusDia === 'abierta') {
     acciones = `
-      <button onclick="abrirMovCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--acento-txt);cursor:pointer;">+ Movimiento</button>
-      <button onclick="abrirCierreCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar caja</button>
+      <button onclick="abrirMovCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;color:var(--acento-txt);cursor:pointer;">+ Movimiento</button>
+      <button onclick="abrirCierreCaja(${p.idPunto})" style="flex:1;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar caja</button>
     `;
   } else if (estatusDia === 'cerrada') {
     const diferencia = Number(cajaDia.diferencia) || 0;
@@ -7588,7 +7588,7 @@ function renderPuntoCaja(p, esHoy) {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div>
           <div style="font-family:'Archivo',sans-serif;font-size:1.2rem;color:var(--blanco);letter-spacing:1px;">${tipoIco} ${p.nombre}</div>
-          <div style="font-size:0.7rem;color:${estadoColor};font-weight:700;">${estadoBadge}</div>
+          <div style="font-size:0.7rem;color:${estadoColor};font-weight:600;">${estadoBadge}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:0.66rem;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">${estatusDia==='cerrada'?'Saldo cierre':'Saldo'} </div>
@@ -7621,7 +7621,7 @@ function renderPuntoCaja(p, esHoy) {
       ${estatusDia !== 'no_abierta' ? `
       <!-- Movimientos -->
       <details style="margin-top:6px;">
-        <summary style="font-size:0.78rem;color:var(--acento-txt);cursor:pointer;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Movimientos del día (${movimientos.length})</summary>
+        <summary style="font-size:0.78rem;color:var(--acento-txt);cursor:pointer;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Movimientos del día (${movimientos.length})</summary>
         <div style="margin-top:8px;">${movHTML}</div>
       </details>
       ` : ''}
@@ -7723,7 +7723,7 @@ window.abrirCierreCaja = function(idPunto) {
     <div style="display:flex;justify-content:space-between;color:var(--suave);font-size:0.78rem;margin-bottom:3px;"><span>Apertura</span><span>$${saldoApertura.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--ok-txt);font-size:0.78rem;margin-bottom:3px;"><span>Ingresos</span><span>+$${ingresos.toLocaleString('es-MX')}</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--rojo);font-size:0.78rem;margin-bottom:6px;"><span>Egresos</span><span>$${egresos.toLocaleString('es-MX')}</span></div>
-    <div style="display:flex;justify-content:space-between;color:var(--acento-txt);font-weight:800;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
+    <div style="display:flex;justify-content:space-between;color:var(--acento-txt);font-weight:700;border-top:1px solid var(--gris3);padding-top:6px;"><span>Saldo calculado</span><span>$${calculado.toLocaleString('es-MX')}</span></div>
   `;
   document.getElementById('ci-saldo').value = calculado.toFixed(2);
   document.getElementById('ci-notas').value = '';
@@ -8047,7 +8047,7 @@ async function pintarPermisosPorRol() {
 
     cont.innerHTML = ['vendedor','consumidor'].map(rol => `
       <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-        <div style="font-weight:900;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;font-size:0.78rem;margin-bottom:8px;">${rol === 'vendedor' ? 'Vendedores' : 'Consumidores'}</div>
+        <div style="font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;font-size:0.78rem;margin-bottom:8px;">${rol === 'vendedor' ? 'Vendedores' : 'Consumidores'}</div>
         ${disp.map(sec => {
           const checked = (_configRoles[rol] || []).indexOf(sec) >= 0;
           return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:0.84rem;color:var(--blanco);cursor:pointer;">
@@ -8055,7 +8055,7 @@ async function pintarPermisosPorRol() {
             <span>${SECCIONES_LABELS[sec] || sec}</span>
           </label>`;
         }).join('')}
-        <button onclick="guardarPermisosRol('${rol}')" style="margin-top:8px;width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.78rem;color:var(--sobre-marca);cursor:pointer;">
+        <button onclick="guardarPermisosRol('${rol}')" style="margin-top:8px;width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--sobre-marca);cursor:pointer;">
           Guardar ${rol}
         </button>
       </div>
@@ -8097,7 +8097,7 @@ async function pintarPermisosPorVendedor() {
         const tieneOverride = override.length > 0;
         return `
           <div style="background:var(--gris2);border-radius:10px;padding:12px;margin-bottom:10px;">
-            <div style="font-weight:900;color:var(--acento-txt);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:700;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:var(--suave);font-weight:600;">(usa config rol)</span>'}</div>
+            <div style="font-weight:600;color:var(--acento-txt);font-size:0.84rem;margin-bottom:6px;">${v.nombre} ${tieneOverride ? '<span style="font-size:0.66rem;background:var(--ok-bg);color:var(--ok-txt);padding:1px 6px;border-radius:50px;font-weight:600;">OVERRIDE</span>' : '<span style="font-size:0.66rem;color:var(--suave);font-weight:600;">(usa config rol)</span>'}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;">
               ${disp.map(sec => {
                 const checked = override.indexOf(sec) >= 0;
@@ -8108,8 +8108,8 @@ async function pintarPermisosPorVendedor() {
               }).join('')}
             </div>
             <div style="display:flex;gap:6px;margin-top:8px;">
-              <button onclick="guardarPermisosVendedor('${v.id}')" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:7px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.74rem;color:var(--sobre-marca);cursor:pointer;">Guardar override</button>
-              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.74rem;color:var(--suave);cursor:pointer;">Quitar override</button>
+              <button onclick="guardarPermisosVendedor('${v.id}')" style="flex:1;background:var(--amarillo);border:none;border-radius:8px;padding:7px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.74rem;color:var(--sobre-marca);cursor:pointer;">Guardar override</button>
+              <button onclick="quitarOverrideVendedor('${v.id}')" style="background:transparent;border:1px solid var(--gris3);border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.74rem;color:var(--suave);cursor:pointer;">Quitar override</button>
             </div>
           </div>`;
       }).join('')}
@@ -8179,7 +8179,7 @@ async function pintarMatrizPermisos() {
 
     const th = (txt, sticky) => `<th style="${sticky
       ? 'position:sticky;left:0;z-index:2;background:var(--negro);text-align:left;min-width:120px;'
-      : 'background:var(--negro);'}padding:8px 6px;font-size:0.62rem;color:var(--suave);border-bottom:1px solid var(--gris3);white-space:nowrap;font-weight:800;">${txt}</th>`;
+      : 'background:var(--negro);'}padding:8px 6px;font-size:0.62rem;color:var(--suave);border-bottom:1px solid var(--gris3);white-space:nowrap;font-weight:600;">${txt}</th>`;
 
     const headCols = disp.map(sec => {
       const lbl = SECCIONES_LABELS[sec];
@@ -8187,7 +8187,7 @@ async function pintarMatrizPermisos() {
       const name = lbl.split(' ').slice(1).join(' ');
       return `<th title="${name}" style="background:var(--negro);padding:8px 4px;border-bottom:1px solid var(--gris3);min-width:54px;">
         <div style="font-size:1rem;">${emoji}</div>
-        <div style="font-size:0.55rem;color:var(--suave);font-weight:700;line-height:1.1;margin-top:2px;">${name}</div>
+        <div style="font-size:0.55rem;color:var(--suave);font-weight:600;line-height:1.1;margin-top:2px;">${name}</div>
       </th>`;
     }).join('');
 
@@ -8195,7 +8195,7 @@ async function pintarMatrizPermisos() {
     const admins = vendedores.filter(v => String(v.rol||'').toLowerCase().startsWith('admin'));
     const noAdmins = vendedores.filter(v => !String(v.rol||'').toLowerCase().startsWith('admin'));
 
-    const celdaFija = `<td style="position:sticky;left:0;z-index:1;background:var(--gris2);padding:8px 6px;font-weight:800;color:var(--acento-txt);font-size:0.74rem;white-space:nowrap;border-bottom:1px solid var(--gris3);">`;
+    const celdaFija = `<td style="position:sticky;left:0;z-index:1;background:var(--gris2);padding:8px 6px;font-weight:600;color:var(--acento-txt);font-size:0.74rem;white-space:nowrap;border-bottom:1px solid var(--gris3);">`;
 
     const filaAdmin = admins.map(v => `
       <tr>
@@ -8229,13 +8229,13 @@ async function pintarMatrizPermisos() {
           <tbody>${filaAdmin}${filasVend}</tbody>
         </table>
       </div>
-      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">Guardar todo</button>
+      <button onclick="guardarMatrizPermisos(this)" style="margin-top:12px;width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.85rem;color:var(--sobre-marca);cursor:pointer;">Guardar todo</button>
 
       <!-- Restablecer el PIN de otra persona. Va aparte de la matriz para no
            tocar su layout de celdas fijas, y porque es una acción de otro tipo:
            la matriz se guarda en bloque, esto es puntual y con confirmación. -->
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gris3);">
-        <div style="font-size:0.68rem;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Restablecer PIN</div>
+        <div style="font-size:0.68rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Restablecer PIN</div>
         <div style="font-size:0.74rem;color:var(--suave);margin-bottom:10px;line-height:1.4;">
           Para cuando alguien lo olvida, lo comparte o deja el equipo. Se cierran de inmediato sus sesiones abiertas.
         </div>
@@ -8246,7 +8246,7 @@ async function pintarMatrizPermisos() {
         <input class="inp" id="pmr-pin" type="password" inputmode="numeric" autocomplete="new-password"
                placeholder="PIN nuevo (mínimo 6 dígitos)" maxlength="10" style="margin-bottom:8px;">
         <div id="pmr-msg" style="font-size:0.76rem;margin-bottom:8px;min-height:1em;"></div>
-        <button onclick="restablecerPinVendedor(this)" style="width:100%;background:transparent;border:2px solid var(--gris3);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.85rem;color:var(--blanco);cursor:pointer;">
+        <button onclick="restablecerPinVendedor(this)" style="width:100%;background:transparent;border:2px solid var(--gris3);border-radius:10px;padding:12px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.85rem;color:var(--blanco);cursor:pointer;">
           Restablecer PIN
         </button>
       </div>`;
@@ -8406,24 +8406,24 @@ function pintarEstadoActual() {
 
     cont.innerHTML = `
       <div style="background:linear-gradient(135deg,var(--ok-bg),var(--ok-br));border:1px solid #4caf50;border-radius:14px;padding:14px;">
-        <div style="font-size:0.7rem;font-weight:800;color:var(--ok-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Jornada activa</div>
+        <div style="font-size:0.7rem;font-weight:600;color:var(--ok-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Jornada activa</div>
         <div style="font-family:'Archivo',sans-serif;font-size:1.8rem;color:var(--blanco);line-height:1;">${horas}h ${mins}m</div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:4px;">
           Entrada: ${ent.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})} · ${ubicacionInfo}
         </div>
         ${_jornadaAbierta.actividades.length ? `<div style="margin-top:8px;font-size:0.74rem;color:var(--blanco);">${_jornadaAbierta.actividades.join(' · ')}</div>` : ''}
         <div style="display:flex;gap:8px;margin-top:12px;">
-          <button onclick="abrirEditarActividades()" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Actividades</button>
-          <button onclick="abrirCerrarJornada()" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">Cerrar jornada</button>
+          <button onclick="abrirEditarActividades()" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Actividades</button>
+          <button onclick="abrirCerrarJornada()" style="flex:2;background:var(--amarillo);border:none;border-radius:8px;padding:9px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.84rem;color:var(--sobre-marca);cursor:pointer;">Cerrar jornada</button>
         </div>
       </div>`;
   } else {
     cont.innerHTML = `
       <div style="background:var(--gris);border-radius:14px;padding:18px;text-align:center;">
         <div style="font-size:2.2rem;margin-bottom:8px;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V3h12v18"/><path d="M16 12h4"/><circle cx="12" cy="12" r="1"/></svg></div>
-        <div style="font-weight:900;color:var(--sobre-marca);font-size:1.05rem;margin-bottom:4px;">Sin jornada activa</div>
+        <div style="font-weight:400;color:var(--sobre-marca);font-size:1.05rem;margin-bottom:4px;">Sin jornada activa</div>
         <div style="font-size:0.78rem;color:var(--suave);margin-bottom:12px;">Registra tu entrada cuando llegues a la planta o empieces tu día.</div>
-        <button onclick="abrirIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
+        <button onclick="abrirIniciarJornada()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;">
           Registrar entrada
         </button>
       </div>`;
@@ -8483,11 +8483,11 @@ async function pintarReporteAdmin() {
     const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     cont.innerHTML = `
       <div style="background:var(--gris);border-radius:12px;padding:12px;">
-        <div style="font-size:0.7rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Reporte ${meses[ahora.getMonth()]} ${ahora.getFullYear()}</div>
+        <div style="font-size:0.7rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Reporte ${meses[ahora.getMonth()]} ${ahora.getFullYear()}</div>
         ${reporte.map(v => `
           <div style="background:var(--gris2);border-radius:8px;padding:9px;margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;align-items:baseline;">
-              <div style="font-weight:800;color:var(--blanco);font-size:0.84rem;">${v.nombreVendedor}</div>
+              <div style="font-weight:600;color:var(--blanco);font-size:0.84rem;">${v.nombreVendedor}</div>
               <div style="font-family:'Archivo',sans-serif;color:var(--acento-txt);font-size:1.2rem;line-height:1;">${v.horasTotales}h</div>
             </div>
             <div style="font-size:0.7rem;color:var(--suave);margin-top:2px;">
@@ -8524,7 +8524,7 @@ function pintarHistorialJornadas() {
       border-left:3px solid ${colorBorde};">
       <div style="display:flex;justify-content:space-between;gap:8px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;color:var(--blanco);font-size:0.84rem;">${fecha}${adminViendo ? ' · ' + j.nombreVendedor : ''}</div>
+          <div style="font-weight:600;color:var(--blanco);font-size:0.84rem;">${fecha}${adminViendo ? ' · ' + j.nombreVendedor : ''}</div>
           <div style="font-size:0.74rem;color:var(--suave);margin-top:2px;">
             ${ent} → ${sal} ${j.dentroPlantaEntrada ? '· en planta' : '· fuera de planta'}
           </div>
@@ -8761,7 +8761,7 @@ window.verDetalleJornada = function(id) {
       <div style="font-family:'Archivo',sans-serif;font-size:2.2rem;color:var(--acento-txt);line-height:1;">${horas}h</div>
       <div style="font-size:0.78rem;color:var(--suave);margin-top:4px;">${fecha}</div>
       ${adminViendo ? `<div style="font-size:0.74rem;color:var(--blanco);margin-top:3px;">${j.nombreVendedor}</div>` : ''}
-      ${j.autoCerrada ? `<div style="margin-top:8px;font-size:0.72rem;color:var(--rojo);font-weight:700;">Cerrada automáticamente</div>` : ''}
+      ${j.autoCerrada ? `<div style="margin-top:8px;font-size:0.72rem;color:var(--rojo);font-weight:600;">Cerrada automáticamente</div>` : ''}
     </div>
     <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.82rem;">
       <div style="margin-bottom:4px;"><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Entrada:</strong> ${ent} ${j.dentroPlantaEntrada ? '· <span style="color:var(--ok-txt);">en planta</span>' : '· <span style="color:var(--rojo);">fuera</span>'}</div>
@@ -8769,18 +8769,18 @@ window.verDetalleJornada = function(id) {
     </div>
     ${adminViendo && (j.coordsEntrada || j.coordsSalida) ? `
       <div style="display:flex;gap:6px;margin-bottom:10px;">
-        ${j.coordsEntrada ? `<button onclick="abrirCoordsEnMapa('${j.coordsEntrada}')" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Ver entrada en mapa</button>` : ''}
-        ${j.coordsSalida ? `<button onclick="abrirCoordsEnMapa('${j.coordsSalida}')" style="flex:1;background:transparent;border:1px solid #4caf50;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;color:var(--ok-txt);cursor:pointer;">Ver salida en mapa</button>` : ''}
+        ${j.coordsEntrada ? `<button onclick="abrirCoordsEnMapa('${j.coordsEntrada}')" style="flex:1;background:transparent;border:1px solid var(--amarillo);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--acento-txt);cursor:pointer;">Ver entrada en mapa</button>` : ''}
+        ${j.coordsSalida ? `<button onclick="abrirCoordsEnMapa('${j.coordsSalida}')" style="flex:1;background:transparent;border:1px solid #4caf50;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;color:var(--ok-txt);cursor:pointer;">Ver salida en mapa</button>` : ''}
       </div>` : ''}
     ${j.actividades.length ? `
       <div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;">
-        <div style="font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Actividades</div>
+        <div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Actividades</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${j.actividades.map(a => `<span style="background:var(--amarillo);color:var(--sobre-marca);font-size:0.74rem;font-weight:700;padding:3px 10px;border-radius:50px;">${a}</span>`).join('')}
+          ${j.actividades.map(a => `<span style="background:var(--amarillo);color:var(--sobre-marca);font-size:0.74rem;font-weight:600;padding:3px 10px;border-radius:50px;">${a}</span>`).join('')}
         </div>
       </div>` : ''}
     ${j.notas ? `<div style="background:var(--gris2);border-radius:12px;padding:12px;margin-bottom:10px;font-size:0.78rem;color:var(--blanco);"><strong style="color:var(--suave);font-size:0.7rem;text-transform:uppercase;">Notas:</strong><br>${j.notas}</div>` : ''}
-    <button onclick="cerrarDetalleJornada()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:700;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar</button>
+    <button onclick="cerrarDetalleJornada()" style="width:100%;background:transparent;border:1px solid var(--gris3);border-radius:10px;padding:10px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;color:var(--suave);cursor:pointer;">Cerrar</button>
   `;
 };
 
@@ -8864,7 +8864,7 @@ function pintarListaProductos() {
 
   // Sección de papas con switches on/off (solo control de disponibilidad)
   if (_papasLista.length > 0) {
-    html += `<div style="font-size:0.74rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
+    html += `<div style="font-size:0.74rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px;">Papas (disponibilidad)</div>`;
     html += `<div style="font-size:0.7rem;color:var(--suave);margin-bottom:10px;">Apaga el switch cuando un sabor esté agotado.</div>`;
     _papasLista.forEach(p => {
       const activo = p.activo !== false;
@@ -8873,7 +8873,7 @@ function pintarListaProductos() {
       html += `<div style="background:var(--gris2);border-radius:10px;padding:11px;margin-bottom:6px;display:flex;gap:10px;align-items:center;${activo?'':'opacity:0.55;'}">
         <div style="display:flex;align-items:center;">${ico}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;color:var(--blanco);font-size:0.86rem;">${p.sabor} <span style="color:var(--suave);font-weight:500;">${p.presentacion}</span></div>
+          <div style="font-weight:600;color:var(--blanco);font-size:0.86rem;">${p.sabor} <span style="color:var(--suave);font-weight:500;">${p.presentacion}</span></div>
           <div style="font-size:0.7rem;color:var(--suave);">${activo ? 'Disponible' : 'Agotado'} · $${p.precio_consumidor||0}</div>
         </div>
         <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;flex-shrink:0;">
@@ -8887,7 +8887,7 @@ function pintarListaProductos() {
   }
 
   // Sección de bebidas (gestión completa con tarjetas que abren modal)
-  html += `<div style="font-size:0.74rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;">Bebidas</div>`;
+  html += `<div style="font-size:0.74rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;">Bebidas</div>`;
   if (_productosLista.length === 0) {
     html += '<div style="text-align:center;color:var(--suave);padding:18px 8px;font-size:0.82rem;">Sin bebidas. Toca "+ Nuevo producto" o "Escanear código" para empezar.</div>';
   } else {
@@ -8941,7 +8941,7 @@ function cardProducto(p) {
     ? `<div style="font-size:0.72rem;color:var(--acento-txt);font-weight:600;margin-top:1px;">${[p.sabor, p.presentacion].filter(Boolean).join(' · ')}</div>`
     : '';
   const badge = inactivo
-    ? `<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.6rem;font-weight:800;letter-spacing:0.5px;">AGOTADO</span>`
+    ? `<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.6rem;font-weight:600;letter-spacing:0.5px;">AGOTADO</span>`
     : '';
   return `<div onclick="editarProducto('${p.id}')" style="
     background:var(--gris2);border-radius:10px;padding:11px;margin-bottom:6px;cursor:pointer;
@@ -8949,7 +8949,7 @@ function cardProducto(p) {
     <div style="font-size:1.7rem;">${ico}</div>
     <div style="flex:1;min-width:0;">
       <div style="display:flex;gap:6px;align-items:center;">
-        <div style="font-weight:800;color:var(--blanco);font-size:0.88rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.nombre || ''}</div>
+        <div style="font-weight:600;color:var(--blanco);font-size:0.88rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.nombre || ''}</div>
         ${badge}
       </div>
       ${detalle}
@@ -9281,10 +9281,10 @@ function pintarListaCupones() {
     const agotado = c.usos_maximos > 0 && c.usos_actuales >= c.usos_maximos;
 
     let estado = '';
-    if (inactivo) estado = '<span style="background:var(--gris3);color:var(--suave2);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">DESACTIVADO</span>';
-    else if (expirado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">EXPIRADO</span>';
-    else if (agotado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">AGOTADO</span>';
-    else estado = '<span style="background:var(--ok-bg);color:var(--ok-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:700;">ACTIVO</span>';
+    if (inactivo) estado = '<span style="background:var(--gris3);color:var(--suave2);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:600;">DESACTIVADO</span>';
+    else if (expirado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:600;">EXPIRADO</span>';
+    else if (agotado) estado = '<span style="background:var(--error-br);color:var(--error-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:600;">AGOTADO</span>';
+    else estado = '<span style="background:var(--ok-bg);color:var(--ok-txt);padding:2px 8px;border-radius:50px;font-size:0.66rem;font-weight:600;">ACTIVO</span>';
 
     let valorStr = '';
     if (c.tipo === 'descuento_pct') valorStr = `-${c.valor}%`;

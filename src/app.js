@@ -1491,7 +1491,7 @@ window.renderCatalogo = function() {
          <div class="prod-pres">${p.presentacion}</div>`;
 
     // Si está agotado: badge + sin botón agregar
-    const agotadoBadge = agotado ? `<div style="position:absolute;top:8px;right:8px;background:var(--error-br);color:var(--error-txt);padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:900;letter-spacing:0.5px;z-index:3;">AGOTADO</div>` : '';
+    const agotadoBadge = agotado ? `<div style="position:absolute;top:8px;right:8px;background:var(--error-br);color:var(--error-txt);padding:3px 9px;border-radius:50px;font-size:0.62rem;font-weight:600;letter-spacing:0.5px;z-index:3;">AGOTADO</div>` : '';
     // Venta por caja (tienda/mayorista, papas de 50/100/250 g): se ELIGE cómo se
     // lleva (pieza o caja de 3/6/12) y un solo control agrega esa unidad. Antes
     // había tres botones que agregaban al instante y parecían una selección.
@@ -1508,7 +1508,7 @@ window.renderCatalogo = function() {
       </div>
       ${u > 1 ? `<div class="u-precio">Caja de ${u} piezas · <b>$${precioCaja(p, u)}</b></div>${ahorroCajaHTML(p, u, 'u-ahorro')}` : ''}` : '';
     const ctrlHTML = agotado ? `
-      <div style="margin-top:6px;font-size:0.74rem;color:var(--suave2);font-weight:700;text-align:center;padding:6px;background:var(--gris);border-radius:6px;">No disponible</div>
+      <div style="margin-top:6px;font-size:0.74rem;color:var(--suave2);font-weight:600;text-align:center;padding:6px;background:var(--gris);border-radius:6px;">No disponible</div>
     ` : `
       ${nU===0
         ? `<div class="qty-ctrl"><button class="add-btn" onclick="agregarUnidad('${key}',1)" aria-label="${u > 1 ? 'Agregar una caja' : 'Agregar'}">+</button></div>`
@@ -2016,7 +2016,7 @@ function renderDrawer() {
     ];
     const selectorHTML = `
       <div style="background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px dashed rgba(255,210,0,0.4);border-radius:12px;padding:12px;margin:6px 0 10px;">
-        <div style="font-size:0.7rem;font-weight:900;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
+        <div style="font-size:0.7rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del pedido interno *</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           ${TIPOS.map(t => {
             const sel = t.id === tipoActual;
@@ -2024,13 +2024,13 @@ function renderDrawer() {
               background:${sel?'var(--amarillo)':'var(--gris2)'};
               border:1px solid ${sel?'var(--amarillo)':'var(--gris3)'};
               border-radius:8px;padding:9px 6px;
-              font-family:'Inter',sans-serif;font-weight:800;font-size:0.78rem;
+              font-family:'Inter',sans-serif;font-weight:600;font-size:0.78rem;
               color:${sel?'var(--negro)':'var(--blanco)'};cursor:pointer;text-align:left;">
               ${t.label}
             </button>`;
           }).join('')}
         </div>
-        ${!tipoActual ? '<div style="font-size:0.7rem;color:var(--rojo);margin-top:6px;font-weight:700;">Selecciona un motivo antes de confirmar</div>' : ''}
+        ${!tipoActual ? '<div style="font-size:0.7rem;color:var(--rojo);margin-top:6px;font-weight:600;">Selecciona un motivo antes de confirmar</div>' : ''}
       </div>
     `;
     ci.insertAdjacentHTML('afterend', `<div id="selector-tipo-interno-wrap">${selectorHTML}</div>`);
@@ -2333,7 +2333,7 @@ window.actualizarChecklistFaltantes = function() {
   } else {
     cont.style.display = 'block';
     cont.innerHTML = `
-      <div style="font-weight:800;color:var(--acento-txt);margin-bottom:6px;font-size:0.86rem;">Falta poco para confirmar tu pedido:</div>
+      <div style="font-weight:600;color:var(--acento-txt);margin-bottom:6px;font-size:0.86rem;">Falta poco para confirmar tu pedido:</div>
       <ul style="margin:0;padding-left:20px;color:#ffd699;">
         ${faltantes.map(f => `<li style="margin:3px 0;">${f.msg}</li>`).join('')}
       </ul>
@@ -2595,7 +2595,7 @@ function pintarResultadosVendedor(vendedores, query) {
         onmouseover="this.style.background='var(--gris3)'" onmouseout="this.style.background='var(--gris2)'">
         
         <div style="flex:1;min-width:0;">
-          <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">${v.nombre}</div>
+          <div style="color:var(--blanco);font-weight:600;font-size:0.86rem;">${v.nombre}</div>
           ${subtituloHtml}
         </div>
         <span style="color:var(--acento-txt);">→</span>
@@ -2617,7 +2617,7 @@ function botonCualquiera() {
       style="display:flex;align-items:center;gap:10px;padding:10px;background:transparent;border:1px dashed var(--gris3);border-radius:8px;cursor:pointer;margin-top:4px;"
       onmouseover="this.style.borderColor='var(--acento-txt)'" onmouseout="this.style.borderColor='var(--gris3)'">
       <div style="flex:1;">
-        <div style="color:var(--blanco);font-weight:700;font-size:0.86rem;">No conozco a nadie</div>
+        <div style="color:var(--blanco);font-weight:600;font-size:0.86rem;">No conozco a nadie</div>
         <div style="color:var(--suave);font-size:0.7rem;">Que cualquiera me contacte</div>
       </div>
     </div>
@@ -2731,16 +2731,16 @@ function pintarHintUltimoContacto(vend) {
 
   cont.innerHTML = `
     <div style="background:var(--aviso-bg);border:1px dashed #ffa500;border-radius:8px;padding:12px;margin-bottom:10px;">
-      <div style="color:var(--acento-txt);font-size:0.74rem;font-weight:700;margin-bottom:6px;">LA ÚLTIMA VEZ ELEGISTE</div>
+      <div style="color:var(--acento-txt);font-size:0.74rem;font-weight:600;margin-bottom:6px;">LA ÚLTIMA VEZ ELEGISTE</div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <span style="font-size:1.4rem;">${ico}</span>
         <div style="flex:1;min-width:0;">
-          <div style="color:var(--blanco);font-weight:700;font-size:0.95rem;">${vend.nombre}</div>
+          <div style="color:var(--blanco);font-weight:600;font-size:0.95rem;">${vend.nombre}</div>
           ${subtitulo ? `<div style="color:var(--suave);font-size:0.74rem;">${subtitulo}</div>` : ''}
         </div>
       </div>
       <button onclick='seleccionarVendedor(${JSON.stringify(vend).replace(/'/g, "&apos;")})'
-        style="width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:10px;color:var(--sobre-marca);font-weight:800;font-size:0.86rem;cursor:pointer;">
+        style="width:100%;background:var(--amarillo);border:none;border-radius:8px;padding:10px;color:var(--sobre-marca);font-weight:600;font-size:0.86rem;cursor:pointer;">
         ✓ Usar este contacto otra vez
       </button>
     </div>
@@ -5008,12 +5008,12 @@ async function renderClubAdminCfg() {
     </div>`;
   cont.innerHTML = `
     <div style="background:var(--gris);border-radius:14px;padding:14px;margin:12px 16px;">
-      <div style="font-size:0.72rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Reglas del Club (admin)</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Reglas del Club (admin)</div>
       ${fila('Puntos por peso', '0.1 = 1 punto por cada $10 de producto, sin envío', inp('cfg-ppp', g.puntos_por_peso, '0.01'))}
       ${fila('Valor del punto al canjear ($)', 'cuánto descuenta 1 punto', inp('cfg-vpm', r.valor_punto_mxn, '0.01'))}
       ${fila('% máx. del pedido con puntos', 'nunca llega a 100%', inp('cfg-pct', r.pct_max_pedido, '1'))}
       ${fila('Pago mínimo en $', 'siempre debe quedar un cobro real', inp('cfg-pmin', r.pago_minimo_mxn, '1'))}
-      <button onclick="guardarLealtadCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:800;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar reglas</button>
+      <button onclick="guardarLealtadCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:600;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar reglas</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">La generación aplica al confirmar pago + entrega. La redención usa estos topes.</div>
     </div>`;
 }
@@ -5031,7 +5031,7 @@ async function pintarRegalosCliente() {
     const regs = (_rg && _rg.ok && Array.isArray(_rg.regalos)) ? _rg.regalos : [];
     if (!Array.isArray(regs) || regs.length === 0) return;
     const lbl = { sampling:'Sampling', regalo:'Regalo', bonificacion:'Bonificación' };
-    let html = `<div style="margin-top:18px;margin-bottom:8px;font-size:0.7rem;font-weight:800;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Regalos recibidos</div>`;
+    let html = `<div style="margin-top:18px;margin-bottom:8px;font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;">Regalos recibidos</div>`;
     regs.forEach(r => {
       const f = r.fecha_orden ? new Date(r.fecha_orden).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'}) : '—';
       const kg = (Array.isArray(r.ordenes_detalle) ? r.ordenes_detalle.reduce((s,d)=>s+(Number(d.kg_descontado_lote)||0),0) : 0);
@@ -5042,7 +5042,7 @@ async function pintarRegalosCliente() {
           <span style="font-family:'Archivo',sans-serif;font-size:1.05rem;color:var(--acento-txt);">${kgTxt}</span>
         </div>
         <div class="pedido-fecha">${f}${r.consecutivo ? ' · ' + r.consecutivo : ''}</div>
-        <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;font-weight:700;">Cortesía · no es compra</div>
+        <div style="font-size:0.68rem;color:var(--suave);margin-top:4px;font-weight:600;">Cortesía · no es compra</div>
       </div>`;
     });
     lista.insertAdjacentHTML('beforeend', html);
@@ -5070,15 +5070,15 @@ function renderPedidos() {
   lista.innerHTML = `
     <!-- Último pedido destacado -->
     <div onclick="verDetallePedido(${ultimo.id})" style="cursor:pointer;background:linear-gradient(135deg,var(--aviso-bg),var(--aviso-bg));border:1px solid rgba(255,210,0,0.3);border-radius:16px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:0.68rem;font-weight:800;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
+      <div style="font-size:0.68rem;font-weight:600;color:var(--acento-txt);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Último pedido</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span style="font-family:'Archivo',sans-serif;font-size:1.1rem;color:var(--acento-txt);">${ultimo.consec||'—'}</span>
         <span style="font-family:'Archivo',sans-serif;font-size:1.3rem;color:var(--blanco);">$${ultimo.total||0}</span>
       </div>
       <div style="font-size:0.75rem;color:var(--suave);font-weight:600;">${ultimo.fecha?new Date(ultimo.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}):'—'}</div>
       <span class="pedido-estatus ${ultimo.estatus==='Entregado'?'entregado':''}" style="margin-top:8px;">${ultimo.estatus||'Pendiente'}</span>
-      ${ultimo.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${ultimo.id})" style="margin-top:10px;width:100%;background:var(--amarillo);color:#222;border:none;border-radius:10px;padding:9px;font-weight:800;font-size:0.78rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(ultimo.id)>=0?'✓ Ya evaluado · editar':'Evaluar este pedido'}</button>` : ''}
-      <div style="font-size:0.7rem;color:var(--acento-txt);margin-top:8px;font-weight:700;">Ver seguimiento</div>
+      ${ultimo.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${ultimo.id})" style="margin-top:10px;width:100%;background:var(--amarillo);color:#222;border:none;border-radius:10px;padding:9px;font-weight:600;font-size:0.78rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(ultimo.id)>=0?'✓ Ya evaluado · editar':'Evaluar este pedido'}</button>` : ''}
+      <div style="font-size:0.7rem;color:var(--acento-txt);margin-top:8px;font-weight:600;">Ver seguimiento</div>
     </div>
     <!-- Resto de pedidos -->
     ${pedidos.slice(1).map(p => {
@@ -5090,7 +5090,7 @@ function renderPedidos() {
         </div>
         <div class="pedido-fecha">${fecha}</div>
         <span class="pedido-estatus ${p.estatus==='Entregado'?'entregado':''}">${p.estatus||'Pendiente'}</span>
-        ${p.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${p.id})" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px;color:var(--acento-txt);font-weight:800;font-size:0.72rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(p.id)>=0?'✓ Evaluado · editar':'Evaluar'}</button>` : ''}
+        ${p.estatus==='Entregado' ? `<button onclick="event.stopPropagation(); window.crunchyEncuesta.abrirParaOrden(${p.id})" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--amarillo);border-radius:8px;padding:7px;color:var(--acento-txt);font-weight:600;font-size:0.72rem;cursor:pointer;">${(window._encuestadas||[]).indexOf(p.id)>=0?'✓ Evaluado · editar':'Evaluar'}</button>` : ''}
       </div>`;
     }).join('')}
   `;
@@ -5757,7 +5757,7 @@ window.editarMiPedidoWpp = function () {
     b.setAttribute('role', 'status');
     b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:300;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:14px;background:var(--gris2);color:var(--blanco);border:1px solid var(--amarillo);box-shadow:0 8px 24px rgba(0,0,0,.4);font-family:Inter,sans-serif;font-size:.85rem;';
     b.innerHTML = '<span style="flex:1">Hay una versión nueva de la app</span>' +
-      '<button type="button" id="cp-version-actualizar" style="background:var(--amarillo);color:var(--sobre-marca);border:0;border-radius:50px;padding:8px 14px;font-weight:800;font-family:inherit;font-size:.82rem;cursor:pointer">Actualizar</button>' +
+      '<button type="button" id="cp-version-actualizar" style="background:var(--amarillo);color:var(--sobre-marca);border:0;border-radius:50px;padding:8px 14px;font-weight:600;font-family:inherit;font-size:.82rem;cursor:pointer">Actualizar</button>' +
       '<button type="button" id="cp-version-cerrar" aria-label="Después" style="background:none;border:0;color:var(--suave);font-size:1.3rem;line-height:1;padding:4px 6px;cursor:pointer">×</button>';
     document.body.appendChild(b);
     document.getElementById('cp-version-actualizar').onclick = () => location.reload();
@@ -5946,10 +5946,10 @@ function mostrarBannerInstalar() {
   banner.innerHTML = `
     <span style="font-size:1.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M11 18h2"/></svg></span>
     <div style="flex:1;min-width:0;">
-      <div style="font-weight:900;font-size:0.86rem;line-height:1.1;">Instalar Crunchy Paps</div>
+      <div style="font-weight:600;font-size:0.86rem;line-height:1.1;">Instalar Crunchy Paps</div>
       <div style="font-size:0.7rem;font-weight:600;opacity:0.85;">Acceso directo desde tu pantalla</div>
     </div>
-    <button id="cp-install-btn" style="background:#000;color:var(--amarillo);border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:900;font-size:0.78rem;cursor:pointer;">Instalar</button>
+    <button id="cp-install-btn" style="background:#000;color:var(--amarillo);border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-weight:600;font-size:0.78rem;cursor:pointer;">Instalar</button>
     <button id="cp-install-x" style="background:transparent;border:none;color:#000;font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
   `;
   document.body.appendChild(banner);
@@ -6001,7 +6001,7 @@ window.addEventListener('load', () => {
       banner.innerHTML = `
         <span style="font-size:1.6rem;" class="ico-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M11 18h2"/></svg></span>
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:900;font-size:0.84rem;line-height:1.1;">Instala Crunchy Paps</div>
+          <div style="font-weight:600;font-size:0.84rem;line-height:1.1;">Instala Crunchy Paps</div>
           <div style="font-size:0.7rem;font-weight:600;opacity:0.85;">Toca para ver cómo →</div>
         </div>
         <button id="cp-ios-x" style="background:transparent;border:none;color:#000;font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
@@ -6052,22 +6052,22 @@ window.mostrarInstruccionesInstalar = function() {
     pasos = `
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca el botón <span style="display:inline-block;background:#fff;color:#0A5FC2;border-radius:4px;padding:1px 6px;font-weight:900;">⬆️</span> de Compartir</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Toca el botón <span style="display:inline-block;background:#fff;color:#0A5FC2;border-radius:4px;padding:1px 6px;font-weight:700;">⬆️</span> de Compartir</div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">Está en la barra inferior del navegador (Safari) o arriba a la derecha (Chrome)</div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Desliza y elige <strong style="color:var(--acento-txt);">"Añadir a inicio"</strong></div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Desliza y elige <strong style="color:var(--acento-txt);">"Añadir a inicio"</strong></div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">Aparece en el menú entre las opciones</div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Añadir"</strong> arriba a la derecha</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">3</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Toca <strong style="color:var(--acento-txt);">"Añadir"</strong> arriba a la derecha</div>
         </div>
         <div style="font-size:0.74rem;color:var(--suave);margin-top:6px;margin-left:38px;">El ícono aparecerá en tu pantalla principal</div>
       </div>
@@ -6079,20 +6079,20 @@ window.mostrarInstruccionesInstalar = function() {
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Abre el menú <span style="background:#fff;color:#000;padding:1px 6px;border-radius:4px;font-weight:900;">⋮</span> arriba a la derecha</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Abre el menú <span style="background:#fff;color:#000;padding:1px 6px;border-radius:4px;font-weight:700;">⋮</span> arriba a la derecha</div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Instalar app"</strong> o <strong style="color:var(--acento-txt);">"Agregar a pantalla de inicio"</strong></div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Toca <strong style="color:var(--acento-txt);">"Instalar app"</strong> o <strong style="color:var(--acento-txt);">"Agregar a pantalla de inicio"</strong></div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">3</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Confirma <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">3</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Confirma <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
         </div>
       </div>
     `;
@@ -6101,14 +6101,14 @@ window.mostrarInstruccionesInstalar = function() {
     pasos = `
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">1</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Busca el ícono <strong style="color:var(--acento-txt);">⊕</strong> en la barra de direcciones</div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">1</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Busca el ícono <strong style="color:var(--acento-txt);">⊕</strong> en la barra de direcciones</div>
         </div>
       </div>
       <div style="background:var(--gris2);border-radius:12px;padding:14px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.86rem;flex-shrink:0;">2</div>
-          <div style="font-size:0.86rem;color:var(--blanco);font-weight:700;">Toca <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
+          <div style="background:var(--amarillo);color:var(--sobre-marca);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:0.86rem;flex-shrink:0;">2</div>
+          <div style="font-size:0.86rem;color:var(--blanco);font-weight:600;">Toca <strong style="color:var(--acento-txt);">"Instalar"</strong></div>
         </div>
       </div>
     `;
@@ -6124,7 +6124,7 @@ window.mostrarInstruccionesInstalar = function() {
         Tendrás Crunchy Paps como una app nativa: ícono en pantalla principal, pantalla completa, acceso rápido sin abrir el navegador.
       </div>
       ${pasos}
-      <button id="cp-instr-ok" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:900;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;margin-top:6px;">
+      <button id="cp-instr-ok" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:13px;font-family:'Inter',sans-serif;font-weight:600;font-size:0.9rem;color:var(--sobre-marca);cursor:pointer;margin-top:6px;">
         Entendido
       </button>
     </div>
@@ -6255,9 +6255,9 @@ function mostrarPagoConfirmado(ok) {
     : 'Tu pago se canceló o no se completó. Tu pedido quedó guardado como pendiente; puedes intentar pagar de nuevo.';
   ov.innerHTML = '<div style="background:var(--negro);border:1px solid var(--gris2);border-radius:16px;max-width:360px;width:100%;padding:28px 22px;text-align:center;">'
     + '<div style="font-size:3rem;line-height:1;margin-bottom:10px;">' + icon + '</div>'
-    + '<div style="font-weight:900;font-size:1.3rem;color:var(--blanco);margin-bottom:8px;">' + titulo + '</div>'
+    + '<div style="font-weight:600;font-size:1.3rem;color:var(--blanco);margin-bottom:8px;">' + titulo + '</div>'
     + '<div style="font-size:0.92rem;color:var(--blanco);line-height:1.5;margin-bottom:20px;">' + msg + '</div>'
-    + '<button id="pago-ok-btn" style="background:#E5B312;color:#111;border:none;border-radius:10px;padding:13px 20px;font-weight:900;font-size:0.95rem;cursor:pointer;width:100%;">Entendido</button>'
+    + '<button id="pago-ok-btn" style="background:#E5B312;color:#111;border:none;border-radius:10px;padding:13px 20px;font-weight:600;font-size:0.95rem;cursor:pointer;width:100%;">Entendido</button>'
     + '</div>';
   document.body.appendChild(ov);
   const b = ov.querySelector('#pago-ok-btn');
@@ -6274,7 +6274,7 @@ function mostrarPagoConfirmado(ok) {
       const cover = document.createElement('div');
       cover.id = 'pago-cover';
       cover.style.cssText = 'position:fixed;inset:0;z-index:10000;background:var(--negro);display:flex;align-items:center;justify-content:center;';
-      cover.innerHTML = '<div style="text-align:center;color:var(--blanco);"><div class="loader loader-w" style="margin:0 auto 14px;"></div><div style="font-weight:800;">Confirmando tu pago…</div></div>';
+      cover.innerHTML = '<div style="text-align:center;color:var(--blanco);"><div class="loader loader-w" style="margin:0 auto 14px;"></div><div style="font-weight:700;">Confirmando tu pago…</div></div>';
       document.body.appendChild(cover);
     }
     let graciasRaw = null;
