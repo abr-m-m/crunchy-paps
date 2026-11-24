@@ -1283,7 +1283,9 @@ async function cargarPromociones() {
     const r = await supabaseCall('POST', 'rpc/catalogo_promociones', { p_data: { nivel: canal } });
     const m = {};
     if (r && r.ok && Array.isArray(r.promos)) {
-      r.promos.forEach(p => { m[String(p.idProducto)] = { idPromocion: p.idPromocion, precio: Number(p.precio) }; });
+      r.promos.forEach(p => { m[String(p.idProducto)] = {
+        idPromocion: p.idPromocion, precio: Number(p.precio),
+        pct: p.pct == null ? null : Number(p.pct), nombre: p.nombre }; });
     }
     _promoPorProducto = m;
   } catch (e) { _promoPorProducto = {}; }   // sin promos se vende al precio de lista
@@ -1297,9 +1299,15 @@ function getPrecioConDescuento(prod) {
   // La promocion NO se suma al descuento de lista: compite, y gana la que deje
   // el precio mas bajo (decision D2 del diseño). Misma regla que el servidor.
   const pr = _promoPorProducto[String(prod.id)];
-  if (pr && pr.precio > 0 && pr.precio < precio) precio = pr.precio;
+  let pctPromo = null;
+  if (pr && pr.precio > 0 && pr.precio < precio) { precio = pr.precio; pctPromo = pr.pct; }
   if (!(precio < base)) return { precio: base, precioOriginal: base, descuento: 0 };
-  return { precio, precioOriginal: base, descuento: Math.round((1 - precio / base) * 100) };
+  // Si gano una promocion de porcentaje, se enseña EL QUE SE CONFIGURO. Antes
+  // se recalculaba desde el precio ya redondeado a pesos, y una promocion del
+  // 5 % sobre $32 salia como 6 % ($30 son 6.25 % menos). El redondeo cae
+  // siempre a favor del cliente, asi que nadie paga de mas por ver el 5.
+  const descuento = pctPromo != null ? pctPromo : Math.round((1 - precio / base) * 100);
+  return { precio, precioOriginal: base, descuento };
 }
 
 window.renderTabs = function() {
@@ -1587,8 +1595,12 @@ window.renderCatalogo = function() {
       ? `<img class="prod-img" src="${p.imagen_url}" alt="${altText}" loading="lazy"${agotado?' style="filter:grayscale(1);"':''}>`
       : `<div class="prod-placeholder"${agotado?' style="filter:grayscale(1);"':''}><span class="emoji">${iconoFallback}</span><span class="prox">Foto pronto</span></div>`;
 
+    // Una sola cinta: «PROMO ——— 5 %». Abraham, 24 nov 2026: el numero era de
+    // 1.8rem y se comia la foto; que mida lo mismo que la etiqueta, con una
+    // linea del mismo tono que los una.
     const promoHTML = (descuento > 0 && !agotado)
-      ? `<div class="promo-badge">Promo</div><div class="promo-pct">${descuento}%</div>` : '';
+      ? `<div class="promo-cinta"><span class="promo-badge">Promo</span>`
+        + `<span class="promo-linea"></span><span class="promo-pct">${descuento}%</span></div>` : '';
 
     // Para bebidas mostrar nombre completo, para papas el sabor + presentacion
     const nombreHTML = esBebida
