@@ -1160,6 +1160,10 @@ function cacheClear(key) {
 window.cacheClear = cacheClear; // exponer para invalidación manual
 
 async function cargarCatalogo(forzarFresh) {
+  // Las promociones van en paralelo y repintan cuando llegan: esperar a que
+  // contesten retrasaria la primera pantalla por un descuento que casi nunca
+  // hay. Mientras no llegan se ve el precio de lista, que es el correcto.
+  cargarPromociones().then(() => { if (window.renderCatalogo) renderCatalogo(); });
   // Siempre arrancar con catálogo local para mostrar algo de inmediato
   catalogo = generarCatalogoLocal();
   if (!saborActivo) saborActivo = SABORES_ORDER[0];
@@ -1265,12 +1269,37 @@ function getPrecio(prod) {
   return precio;
 }
 
+// PROMOCIONES (24 nov 2026). Lo que el servidor va a cobrar por cada SKU,
+// pedido tal cual a `catalogo_promociones`. La app NO calcula el precio de una
+// promocion, y no por elegancia: `crear_pedido` compara su total con el que
+// manda la app y rechaza el pedido si difieren en mas de un peso. Dos formulas
+// iguales se separan al primer redondeo, y entonces NINGUN pedido de un
+// producto en promocion podria cerrarse.
+let _promoPorProducto = {};   // id de producto -> { idPromocion, precio }
+
+async function cargarPromociones() {
+  const canal = esVendedor ? (canalVenta || 'consumidor') : (tipoCliente || 'consumidor');
+  try {
+    const r = await supabaseCall('POST', 'rpc/catalogo_promociones', { p_data: { nivel: canal } });
+    const m = {};
+    if (r && r.ok && Array.isArray(r.promos)) {
+      r.promos.forEach(p => { m[String(p.idProducto)] = { idPromocion: p.idPromocion, precio: Number(p.precio) }; });
+    }
+    _promoPorProducto = m;
+  } catch (e) { _promoPorProducto = {}; }   // sin promos se vende al precio de lista
+}
+window.cargarPromociones = cargarPromociones;
+
 function getPrecioConDescuento(prod) {
   const base = getPrecio(prod);
   const pct  = prod.descuento_pct || 0;
-  if (!pct) return { precio: base, precioOriginal: base, descuento: 0 };
-  const precioFinal = Math.round(base * (1 - pct/100));
-  return { precio: precioFinal, precioOriginal: base, descuento: pct };
+  let precio = pct ? Math.round(base * (1 - pct/100)) : base;
+  // La promocion NO se suma al descuento de lista: compite, y gana la que deje
+  // el precio mas bajo (decision D2 del diseño). Misma regla que el servidor.
+  const pr = _promoPorProducto[String(prod.id)];
+  if (pr && pr.precio > 0 && pr.precio < precio) precio = pr.precio;
+  if (!(precio < base)) return { precio: base, precioOriginal: base, descuento: 0 };
+  return { precio, precioOriginal: base, descuento: Math.round((1 - precio / base) * 100) };
 }
 
 window.renderTabs = function() {
@@ -1410,6 +1439,9 @@ window.setCanalVenta = function(canal) {
   canalVenta = canal;
   // Guardar en sesión
   guardarSesion();
+  // Una promocion es de un publico -consumidores o tiendas- y su precio sale
+  // del precio de ESE canal: al cambiar de canal hay que volver a pedirlas.
+  cargarPromociones().then(() => { if (window.renderCatalogo) renderCatalogo(); });
 
   // Actualizar botones
   ['consumidor','tienda','restaurante','mayorista'].forEach(c => {
