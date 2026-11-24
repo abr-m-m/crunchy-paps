@@ -4659,17 +4659,13 @@ async function pintarMapaProspectos() {
   // PASO 1: Inicializar mapa SIEMPRE en planta primero (sin esperar GPS)
   if (!_prosMapa) {
     try {
+      // Las opciones son las MISMAS que las de los otros dos mapas: viven en
+      // `window.OPCIONES_MAPA` (src/app.js). Este fue el primero que llevó un
+      // dedo; ahora no es el único por casualidad.
       _prosMapa = new google.maps.Map(mapDiv, {
+        ...window.OPCIONES_MAPA,
         center: { lat: PLANTA_LAT, lng: PLANTA_LNG },
         zoom: 15,
-        // Un dedo, no dos. Sin esto Google usa 'auto', que dentro de una
-        // pagina con scroll EXIGE dos dedos: la friccion que reporto Abraham
-        // el 23 nov 2026 comparando con la app de promotores.
-        gestureHandling: 'greedy',
-        disableDefaultUI: true,
-        zoomControl: true,
-        mapTypeControl: false,
-        streetViewControl: false,
         styles: [{ featureType:'all', elementType:'labels.text.fill', stylers:[{color:'#444'}] }]
       });
 

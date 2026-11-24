@@ -663,8 +663,7 @@ function mostrarMapaTienda(lat, lng) {
   const center = { lat, lng };
   if (!window._dtMap) {
     window._dtMap = new google.maps.Map(div, {
-      center, zoom: 17, disableDefaultUI: true, zoomControl: true,
-      mapTypeControl: false, streetViewControl: false,
+      ...window.OPCIONES_MAPA, center, zoom: 17,
     });
     window._dtMarker = new google.maps.Marker({
       position: center, map: window._dtMap, draggable: true,
@@ -1021,8 +1020,10 @@ async function intentarRestaurarSesion() {
     ? (vendedorInfo?.nombre || 'Vendedor')
     : (TIPO_LABELS[tipoCliente] || tipoCliente);
 
-  // Aplicar permisos de secciones (config admin) — async pero no bloquea render
-  aplicarPermisosNavbar();
+  // Aplicar permisos de secciones (config admin) — async pero no bloquea render.
+  // Se guarda la promesa porque restaurar la sección de la URL SÍ tiene que
+  // esperarla: sin ella no se sabe si esta persona puede ver esa sección.
+  const _permisosListos = aplicarPermisosNavbar();
   // Botón de permisos en Mi cuenta solo para admin
   const btnPerm = document.getElementById('btn-permisos-cuenta');
   if (btnPerm) btnPerm.style.display = (esAdmin && esAdmin()) ? '' : 'none';
@@ -1059,8 +1060,50 @@ async function intentarRestaurarSesion() {
   if (esVendedor && window.mostrarCanalVenta) window.mostrarCanalVenta();
   actualizarBadge();
 
+  // Volver a donde estabas. Va AQUÍ, al final, y no en el arranque, porque
+  // aquí ya pasaron todas las puertas: sin sesión esta función se salió en la
+  // primera línea, y una tienda sin aprobar se salió en la puerta B2B. El
+  // destino se pide por las mismas funciones de siempre (`ir`, `navegar`), así
+  // que ninguna comprobación se salta por venir de la URL.
+  _restaurarDesdeURL(_permisosListos);
+
   // Cargar historial en background
   cargarDatosCliente();
+}
+
+// Pantallas del camino de entrada: se restauran NUNCA. Son estados de paso
+// -verificar un número, elegir tipo, esperar aprobación- y volver a ellas con
+// una sesión ya válida deja al usuario en una pantalla sin salida.
+const _NO_SE_RESTAURAN = ['s-welcome', 's-otp', 's-pin', 's-tipo', 's-pendiente',
+  's-datos-tienda', 's-alta-negocio', 's-ajustar-ubicacion'];
+
+async function _restaurarDesdeURL(permisosListos) {
+  const m = /^#\/(ir|nav)\/([a-zA-Z0-9_-]+)$/.exec(location.hash || '');
+  if (!m) return;
+  // `?ir=armado` lo manda la notificación push y `?track=` un enlace de
+  // seguimiento: son destinos que pide OTRO, y mandan sobre el hash, que es
+  // solo el recuerdo de dónde estaba esta persona la última vez.
+  const q = new URL(location.href).searchParams;
+  if (q.get('ir') || q.get('track')) return;
+  const t = m[1], id = m[2];
+  // El catálogo queda DEBAJO en la pila: sin esto, el botón «atrás» desde la
+  // sección restaurada se sale de la app en vez de volver al catálogo.
+  if (Array.isArray(window._navStack) && window._navStack.length === 0) {
+    window._navStack.push({ t: 'ir', id: 's-catalogo' });
+  }
+  if (t === 'ir') {
+    if (_NO_SE_RESTAURAN.indexOf(id) >= 0) return;
+    const el = document.getElementById(id);
+    if (!el || !el.classList.contains('screen')) return;   // hash viejo o inventado
+    window.ir(id);
+    return;
+  }
+  try { await permisosListos; } catch (_e) {}
+  // Cosmético, igual que la barra: el servidor sigue negando los RPC que no
+  // tocan (`sesion_exige_seccion`). Pero no se abre una sección que esta
+  // persona no tiene, aunque el hash lo pida.
+  if (!Array.isArray(_seccionesPermitidas) || _seccionesPermitidas.indexOf(id) < 0) return;
+  window.navegar(id);
 }
 
 // Ejecutar restauración cuando el módulo esté listo
@@ -3056,11 +3099,7 @@ function mostrarMapaInteractivo(lat, lng) {
 
   if (!mapInstance) {
     mapInstance = new google.maps.Map(mapDiv, {
-      center, zoom: 17,
-      disableDefaultUI: true,
-      zoomControl: true,
-      mapTypeControl: false,
-      streetViewControl: false,
+      ...window.OPCIONES_MAPA, center, zoom: 17,
       styles: [{ featureType:'all', elementType:'labels.text.fill', stylers:[{color:'#444'}] }]
     });
     markerInstance = new google.maps.Marker({
@@ -4690,12 +4729,19 @@ window.navegar = function(seccion) {
   window._navPop = false;
   const _irOrig = window.ir;
   const _navOrig = window.navegar;
+  // La URL dice DONDE estas. Va en el hash y no en la ruta ni en la query a
+  // proposito: el hash no viaja al servidor, asi que no hace falta un rewrite
+  // en Vercel, y el service worker -que sirve index.html desde cache- lo ignora
+  // al buscar la entrada. Tampoco pisa `?ir=` ni `?track=`, que ya se usan.
+  window._urlDe = function(t, id) {
+    return location.pathname + location.search + (id ? '#/' + t + '/' + id : '');
+  };
   function _navPush(t, id) {
     if (window._navPop) return;
     const top = window._navStack[window._navStack.length - 1];
     if (top && top.t === t && top.id === id) return;  // no duplicar la misma pantalla
     window._navStack.push({ t, id });
-    try { history.pushState({ cp: true }, '', location.pathname + location.search); } catch(_e) {}
+    try { history.pushState({ cp: true }, '', window._urlDe(t, id)); } catch(_e) {}
   }
   window.ir = function(id) { _irOrig(id); _navPush('ir', id); };
   // `navegar` devuelve `false` cuando se quedó esperando al panel sin pintar nada: esa navegación
@@ -4707,7 +4753,8 @@ window.navegar = function(seccion) {
     const dw = document.getElementById('drawer');
     if (dw && dw.classList.contains('open')) {
       if (typeof cerrarCarrito === 'function') cerrarCarrito();
-      try { history.pushState({ cp: true }, '', location.pathname + location.search); } catch(_e) {}
+      const _aqui = window._navStack[window._navStack.length - 1];
+      try { history.pushState({ cp: true }, '', _aqui ? window._urlDe(_aqui.t, _aqui.id) : location.href); } catch(_e) {}
       return;
     }
     if (window._navStack.length > 1) {
@@ -4716,7 +4763,7 @@ window.navegar = function(seccion) {
       window._navPop = true;
       try { prev.t === 'ir' ? _irOrig(prev.id) : _navOrig(prev.id); } finally { window._navPop = false; }
       // reponer el colchón para que el siguiente back siga dentro de la app
-      try { history.pushState({ cp: true }, '', location.pathname + location.search); } catch(_e) {}
+      try { history.pushState({ cp: true }, '', window._urlDe(prev.t, prev.id)); } catch(_e) {}
     }
     // pila en raíz: dejar que el back nativo actúe (salir de la app)
   });
@@ -5786,6 +5833,28 @@ window.editarMiPedidoWpp = function () {
   const msg = 'Hola, quiero cambiar mi pedido ' + (p.consecutivo || '');
   irAWhatsApp(null, `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`);
   return false;
+};
+
+// ── CÓMO SE COMPORTA UN MAPA, EN UN SOLO SITIO ──────────────────────────────
+// Abraham, 24 nov 2026: «el mapa del checkout debe ser igual que el de
+// prospección, un dedo y no dos; los mapas de CUALQUIERA de las secciones deben
+// tener un mismo funcionamiento».
+//
+// `gestureHandling` por omisión es 'auto', y 'auto' dentro de una página con
+// scroll significa DOS dedos en el móvil: el primer dedo hace scroll de la
+// página, no mueve el mapa. 'greedy' le da el gesto al mapa siempre. En
+// prospección se puso el 23 nov 2026 y la diferencia se notó enseguida; los
+// otros dos mapas —el de ajustar la entrega y el del alta de tienda— se
+// quedaron atrás, y son justo los que toca un cliente.
+//
+// Va como objeto compartido y no como tres copias para que el próximo mapa
+// nazca igual: tres copias ya produjeron dos comportamientos distintos.
+window.OPCIONES_MAPA = {
+  gestureHandling: 'greedy',
+  disableDefaultUI: true,
+  zoomControl: true,
+  mapTypeControl: false,
+  streetViewControl: false,
 };
 
 // Detectar parámetro ?track=XXX al cargar y abrir tracking directo
