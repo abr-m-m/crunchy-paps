@@ -1182,12 +1182,12 @@ async function cargarCatalogo(forzarFresh) {
       catalogo = cached;
       renderTabs();
       renderCatalogo();
-      perfPush(`cache hit: catalogo (${cached.length} items)`, '#4caf50');
+      perfPush(`cache hit: catalogo (${cached.length} items)`, 'ok');
       // Refresh silencioso en background después de 1s para mantener fresh
       setTimeout(() => refrescarCatalogoEnBackground_(), 1000);
       return;
     }
-    perfPush(`cache miss: catalogo`, '#E5B312');
+    perfPush(`cache miss: catalogo`);
   }
 
   // 2) Sin cache (o fresh forzado): cargar todo desde Supabase
@@ -4182,9 +4182,12 @@ const PERF = {
   pendientes: {},  // por accion: { ts }
 };
 
-function perfPush(line, color) {
+// `clase` dice QUE ES la linea —'ok', 'error' o nada—, no de que color va:
+// el color lo decide la piel. Guardar un color aqui es lo que dejo el monitor
+// atado a la piel oscura.
+function perfPush(line, clase) {
   if (!PERF.enabled) return;
-  PERF.log.unshift({ t: new Date(), line, color: color || '#ddd' });
+  PERF.log.unshift({ t: new Date(), line, clase: clase || '' });
   if (PERF.log.length > 60) PERF.log = PERF.log.slice(0, 60);
   perfRender();
 }
@@ -4196,7 +4199,7 @@ function perfRender() {
     const hh = String(e.t.getHours()).padStart(2,'0');
     const mm = String(e.t.getMinutes()).padStart(2,'0');
     const ss = String(e.t.getSeconds()).padStart(2,'0');
-    return `<div style="color:${e.color};"><span style="color:var(--suave);">${hh}:${mm}:${ss}</span> ${e.line}</div>`;
+    return `<div class="perf-linea ${e.clase}"><span class="perf-hora">${hh}:${mm}:${ss}</span> ${e.line}</div>`;
   }).join('');
 }
 
@@ -4208,7 +4211,7 @@ window.perfClear = function() {
 window.perfShow = function() {
   PERF.enabled = true;
   document.getElementById('perf-monitor').style.display = 'block';
-  perfPush('Monitor activado', '#E5B312');
+  perfPush('Monitor activado', 'ok');
 };
 
 window.perfHide = function() {
@@ -4223,6 +4226,14 @@ function activarPerfSiAdmin() {
   }
 }
 
+// Los tres tramos viven AQUI y no en cada sitio que mide: estaban copiados en
+// tres funciones con los mismos numeros, y una copia es una que se puede
+// quedar atras.
+function perfMs(ms) {
+  const clase = ms < 200 ? 'ok' : ms < 700 ? 'aviso' : 'error';
+  return `<b class="perf-ms ${clase}">${ms}ms</b>`;
+}
+
 // Helpers de medición
 function perfStartNav(seccion) {
   if (!PERF.enabled) return null;
@@ -4231,8 +4242,7 @@ function perfStartNav(seccion) {
 function perfEndNav(handle) {
   if (!handle || !PERF.enabled) return;
   const ms = Math.round(performance.now() - handle.t0);
-  const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
-  perfPush(`📺 nav→${handle.label}: <b style="color:${color};">${ms}ms</b>`, '#bbb');
+  perfPush(`📺 nav→${handle.label}: ${perfMs(ms)}`);
 }
 
 
@@ -4257,14 +4267,13 @@ async function sheetsCall(payload) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
-      perfPush(`🌐 ${accion}: <b style="color:${color};">${ms}ms</b>`, '#999');
+      perfPush(`🌐 ${accion}: ${perfMs(ms)}`);
     }
     return data;
   } catch(e) {
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      perfPush(`🌐 ${accion}: <b style="color:#ff8888;">ERROR ${ms}ms</b>`, '#ff8888');
+      perfPush(`🌐 ${accion}: <b class="perf-ms error">ERROR ${ms}ms</b>`, 'error');
     }
     throw e;
   }
@@ -4334,15 +4343,14 @@ async function supabaseCall(method, path, body, opciones) {
     const data = await res.json();
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      const color = ms < 200 ? 'var(--ok-txt)' : ms < 700 ? '#E5B312' : '#ff8888';
       const shortPath = path.split('?')[0];
-      perfPush(`⚡ supabase ${method} ${shortPath}: <b style="color:${color};">${ms}ms</b>`, 'var(--ok-txt)');
+      perfPush(`⚡ supabase ${method} ${shortPath}: ${perfMs(ms)}`);
     }
     return data;
   } catch(e) {
     if (t0) {
       const ms = Math.round(performance.now() - t0);
-      perfPush(`⚡ supabase ERROR: ${e.message} (${ms}ms)`, '#ff8888');
+      perfPush(`⚡ supabase ERROR: ${e.message} (${ms}ms)`, 'error');
     }
     throw e;
   }

@@ -2820,15 +2820,17 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
 </div>
 
 <!-- v2.7.3: PERFORMANCE MONITOR (admin only) -->
-<div id="perf-monitor" style="display:none;position:fixed;top:8px;right:8px;z-index:9999;background:rgba(0,0,0,0.92);border:1px solid var(--amarillo);border-radius:10px;padding:8px 10px;min-width:240px;max-width:300px;font-family:monospace;font-size:0.7rem;color:#ddd;box-shadow:0 4px 16px rgba(0,0,0,0.6);">
-  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gris3);padding-bottom:4px;margin-bottom:6px;">
-    <span style="color:var(--acento-txt);font-weight:700;">Performance</span>
+<!-- El estilo vive en estilos.css: un `style=""` aqui le gana a la piel, y
+     por eso este recuadro se quedo negro cuando la app se puso clara. -->
+<div id="perf-monitor">
+  <div class="perf-cab">
+    <span class="perf-tit">Velocidad</span>
     <div>
-      <button onclick="perfClear()" style="background:transparent;border:1px solid var(--gris3);border-radius:4px;color:var(--suave);padding:2px 6px;font-size:0.66rem;cursor:pointer;font-family:monospace;">limpiar</button>
-      <button onclick="perfHide()" style="background:transparent;border:none;color:var(--suave);font-size:1rem;cursor:pointer;line-height:0.8;">×</button>
+      <button onclick="perfClear()" class="perf-btn">limpiar</button>
+      <button onclick="perfHide()" class="perf-btn cerrar" aria-label="Cerrar">×</button>
     </div>
   </div>
-  <div id="perf-log" style="max-height:240px;overflow-y:auto;line-height:1.5;"></div>
+  <div id="perf-log"></div>
 </div>
 
 <!-- Script no-module para funciones críticas que deben funcionar SIEMPRE -->

@@ -1689,6 +1689,59 @@ body.con-banner-instalar .screen { padding-bottom: 150px; }
   .res-card-techo { font-size:0.68rem; }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   EL MONITOR DE VELOCIDAD (24 nov 2026)
+
+   Abraham: «las estadisticas de velocidad en las consultas se pierden con el
+   ajuste a piel clara». Se pierden literalmente: el recuadro tenia el fondo
+   CLAVADO en `rgba(0,0,0,0.92)` mientras su texto usaba tokens que SI se dan
+   la vuelta con la piel. En claro, `--acento-txt` es tinta (#1A1714), asi que
+   el titulo «Performance» quedaba negro sobre negro, y la hora, en `--suave`
+   (#56524C), a 2.3:1 sobre ese mismo negro.
+   Es la regla 25 otra vez: un token que sirve para dos papeles solo funciona
+   mientras el fondo no cambie. Aqui el fondo se quedo quieto y los tokens se
+   movieron.
+
+   Y hay una trampa encima: el monitor sirve para ver DE UN VISTAZO que
+   consulta va lenta, y eso lo decia el COLOR del numero —verde, amarillo,
+   rojo—. En la piel clara `--ok-txt`, `--aviso-txt` y `--error-txt` son los
+   tres la misma tinta a proposito («el estado lo dice el fondo y el borde;
+   el texto va en tinta»), asi que teñir el texto habria borrado justo lo
+   unico que el monitor aporta. Por eso el numero es una PASTILLA: fondo y
+   borde de la familia, que existen en las dos pieles.
+   ══════════════════════════════════════════════════════════════════════════ */
+#perf-monitor {
+  display:none; position:fixed; top:calc(8px + var(--safe-top)); right:8px; z-index:9999;
+  background:var(--gris); border:1px solid var(--gris3); border-radius:10px;
+  padding:8px 10px; min-width:240px; max-width:300px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:0.7rem;
+  color:var(--blanco); box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
+.perf-cab { display:flex; justify-content:space-between; align-items:center;
+            border-bottom:1px solid var(--gris3); padding-bottom:4px; margin-bottom:6px; }
+.perf-tit { color:var(--blanco); font-weight:600; letter-spacing:0.04em; }
+.perf-btn { background:transparent; border:1px solid var(--gris3); border-radius:4px;
+            color:var(--suave2); padding:2px 6px; font-size:0.66rem; cursor:pointer;
+            font-family:inherit; }
+.perf-btn.cerrar { border:none; font-size:1rem; line-height:0.8; padding:2px 4px; }
+#perf-log { max-height:240px; overflow-y:auto; line-height:1.6; }
+.perf-linea { color:var(--suave2); }
+.perf-linea.ok    { color:var(--blanco); }
+/* Un error tiene que distinguirse SIN depender del color del texto: en la
+   piel clara `--error-txt` es la misma tinta que el resto a proposito, asi que
+   una linea de error se leia igual que una normal. Lo dice el fondo y el
+   borde, como el resto de la piel. */
+.perf-linea.error { color:var(--error-txt); background:var(--error-bg);
+                    border-left:2px solid var(--error-br); border-radius:4px;
+                    padding:1px 4px 1px 5px; margin:2px 0; }
+.perf-hora { color:var(--suave2); }
+/* La pastilla del numero: lo unico que hay que poder leer de un vistazo. */
+.perf-ms { display:inline-block; border-radius:999px; padding:0 6px;
+           border:1px solid var(--gris3); font-weight:600; }
+.perf-ms.ok    { background:var(--ok-bg);    border-color:var(--ok-br);    color:var(--ok-txt); }
+.perf-ms.aviso { background:var(--aviso-bg); border-color:var(--aviso-br); color:var(--aviso-txt); }
+.perf-ms.error { background:var(--error-bg); border-color:var(--error-br); color:var(--error-txt); }
+
 /* La tendencia: linea suavizada con sus dos extremos marcados. Los puntos NO
    van dentro del SVG porque ese SVG se estira a lo ancho de la tarjeta y un
    circulo saldria como elipse; van encima, colocados por porcentaje. */
