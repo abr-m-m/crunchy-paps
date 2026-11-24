@@ -351,26 +351,21 @@ select.inp { appearance: none; cursor: pointer; }
 .prod-card::before { display:none; }
 .prod-card:hover { transform:translateY(-3px); box-shadow:0 6px 16px rgba(0,0,0,0.25); }
 .prod-card.en-carrito { outline:2px solid var(--amarillo); outline-offset:-2px; }
-/* LA CINTA DE PROMOCION. Antes eran dos cosas sueltas en dos esquinas y el
-   porcentaje media 1.8rem, que sobre una foto de producto es un cartel.
-   Abraham, 24 nov 2026: «disminuir un poco el tamaño del numero, algo como el
-   de la etiqueta PROMO, y una linea del mismo tono que los conecte».
-   Ahora es UNA pieza: etiqueta, linea y porcentaje se leen juntos. */
+/* LA PROMOCION EN LA TARJETA. El porcentaje media 1.8rem y se comia la foto;
+   ahora mide lo mismo que la etiqueta. Hubo una linea unindolos durante una
+   version: Abraham la vio y la quito — «me parece mejor como se ve la etiqueta
+   de promo y descuento, quitemos la linea que une a ambos, estaba equivocado»
+   (24 nov 2026). Quedan las dos marcas, en sus esquinas, del mismo tamaño. */
 .promo-cinta {
   position:absolute; top:8px; left:8px; right:8px; z-index:2;
-  display:flex; align-items:center; pointer-events:none;
+  display:flex; align-items:center; justify-content:space-between; pointer-events:none;
 }
-.promo-badge {
-  background:var(--rojo); color:white; border-radius:6px 0 0 6px;
-  padding:3px 7px; font-size:0.66rem; font-weight:700; text-transform:uppercase;
-  letter-spacing:0.04em; line-height:1.25;
+.promo-badge, .promo-pct {
+  background:var(--rojo); color:white; border-radius:6px;
+  padding:3px 7px; line-height:1.25;
 }
-.promo-linea { flex:1 1 auto; height:2px; background:var(--rojo); opacity:0.5; min-width:6px; }
-.promo-pct {
-  background:var(--rojo); color:white; border-radius:0 6px 6px 0;
-  padding:3px 7px; font-size:0.72rem; font-weight:800; line-height:1.25;
-  font-variant-numeric:tabular-nums;
-}
+.promo-badge { font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+.promo-pct   { font-size:0.72rem; font-weight:800; font-variant-numeric:tabular-nums; }
 .prod-img-wrap {
   width:100%; aspect-ratio:1/1; background:#e8e8e8;
   display:flex; align-items:center; justify-content:center; overflow:hidden;

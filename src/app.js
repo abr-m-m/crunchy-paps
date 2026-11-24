@@ -1595,12 +1595,13 @@ window.renderCatalogo = function() {
       ? `<img class="prod-img" src="${p.imagen_url}" alt="${altText}" loading="lazy"${agotado?' style="filter:grayscale(1);"':''}>`
       : `<div class="prod-placeholder"${agotado?' style="filter:grayscale(1);"':''}><span class="emoji">${iconoFallback}</span><span class="prox">Foto pronto</span></div>`;
 
-    // Una sola cinta: «PROMO ——— 5 %». Abraham, 24 nov 2026: el numero era de
-    // 1.8rem y se comia la foto; que mida lo mismo que la etiqueta, con una
-    // linea del mismo tono que los una.
+    // «PROMO» a la izquierda y el porcentaje a la derecha, los dos del mismo
+    // tamaño. Hubo una linea unindolos y Abraham la quito al verla: «me parece
+    // mejor como se ve la etiqueta de promo y descuento, quitemos la linea que
+    // une a ambos, estaba equivocado» (24 nov 2026).
     const promoHTML = (descuento > 0 && !agotado)
       ? `<div class="promo-cinta"><span class="promo-badge">Promo</span>`
-        + `<span class="promo-linea"></span><span class="promo-pct">${descuento}%</span></div>` : '';
+        + `<span class="promo-pct">${descuento}%</span></div>` : '';
 
     // Para bebidas mostrar nombre completo, para papas el sabor + presentacion
     const nombreHTML = esBebida
