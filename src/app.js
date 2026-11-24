@@ -1280,7 +1280,12 @@ let _promoPorProducto = {};   // id de producto -> { idPromocion, precio }
 async function cargarPromociones() {
   const canal = esVendedor ? (canalVenta || 'consumidor') : (tipoCliente || 'consumidor');
   try {
-    const r = await supabaseCall('POST', 'rpc/catalogo_promociones', { p_data: { nivel: canal } });
+    // Va la sesion del cliente porque uno de los topes es POR CLIENTE: sin
+    // saber quien mira, el servidor no puede descontar lo que esa persona ya
+    // uso, y la tarjeta ofreceria un precio que al pedir ya no existe —que
+    // acaba en `precio_cambiado` y en un pedido que no se puede cerrar.
+    const r = await supabaseCall('POST', 'rpc/catalogo_promociones',
+      { p_data: { nivel: canal, tokenCliente: clienteToken || null } });
     const m = {};
     if (r && r.ok && Array.isArray(r.promos)) {
       r.promos.forEach(p => { m[String(p.idProducto)] = {

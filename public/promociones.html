@@ -101,10 +101,13 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
   <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
 </div>
 
+<!-- Este recuadro decia «las promociones todavia no cobran». Dejo de ser
+     cierto el 24 nov 2026, cuando se enchufaron al precio. Un aviso que
+     envejece sin que nadie lo cierre es justo lo que este proyecto repite. -->
 <div class="caja" id="todavia-no" hidden>
-  <p class="aviso"><b>Las promociones todavía no cobran.</b> Puedes crearlas y
-  ver qué margen dejan, pero el precio que paga un cliente aún no las mira:
-  eso es la pieza siguiente, y va aparte porque toca dinero.</p>
+  <p class="aviso"><b>Esto cobra de verdad.</b> Una promoción activa y vigente
+  cambia lo que paga el cliente en cuanto la guardas, y el catálogo la enseña.
+  Al llegar a un tope deja de aplicarse sola.</p>
 </div>
 
 <div id="app" hidden>
@@ -248,6 +251,31 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
     rej.appendChild(sel('Al tocarla, lleva', p.aterrizaEn, ATERRIZA, function (v) { p.aterrizaEn = v; pintar(); }));
     caja.appendChild(rej);
 
+    // LOS TRES TOPES. Vacio = sin tope. El de presupuesto es el que protege
+    // de verdad: con «50 usos» una promocion cuesta muy distinto segun quien
+    // la use; con un presupuesto, no.
+    var bt = document.createElement('div'); bt.className = 'bloque';
+    var ht = document.createElement('h3'); ht.textContent = 'Hasta dónde llega (vacío = sin tope)';
+    bt.appendChild(ht);
+    var rt = document.createElement('div'); rt.className = 'rejilla';
+    rt.appendChild(inp('Pedidos por cliente', p.limitePorCliente, 'number',
+      function (v) { p.limitePorCliente = v === '' ? null : Number(v); pintar(); }));
+    rt.appendChild(inp('Pedidos en total', p.limiteTotal, 'number',
+      function (v) { p.limiteTotal = v === '' ? null : Number(v); pintar(); }));
+    rt.appendChild(inp('Presupuesto ($)', p.presupuesto, 'number',
+      function (v) { p.presupuesto = v === '' ? null : Number(v); pintar(); }));
+    bt.appendChild(rt);
+    var c = p.consumo || {};
+    var gast = Number(c.gastado || 0), usos = Number(c.usos || 0);
+    var resto = document.createElement('div');
+    resto.style.cssText = 'margin-top:9px;font-size:.8rem;color:var(--tinta2)';
+    resto.innerHTML = 'Lleva <b>' + usos + '</b> ' + (usos === 1 ? 'pedido' : 'pedidos') +
+      ' de <b>' + Number(c.clientes || 0) + '</b> ' + (Number(c.clientes) === 1 ? 'cliente' : 'clientes') +
+      ' y <b>' + pesos(gast) + '</b> regalados' +
+      (p.presupuesto ? ' · quedan <b>' + pesos(Math.max(0, Number(p.presupuesto) - gast)) + '</b>' : '') + '.';
+    bt.appendChild(resto);
+    caja.appendChild(bt);
+
     var bl = document.createElement('div'); bl.className = 'bloque';
     bl.appendChild(check('Activa', p.activa !== false, function (v) { p.activa = v; pintar(); }));
     bl.appendChild(check('Se puede acumular con un cupón', !!p.acumulableConCupon,
@@ -365,6 +393,17 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
       b.className = 'marca-estado ' + claseMargen(pm);
       b.textContent = pm == null ? 'sin costo' : ('peor margen ' + pm + ' %');
       top.appendChild(b);
+      // Una promocion con el tope agotado sigue «activa» pero ya no aplica:
+      // si no se dice, se queda esperando ventas que no van a llegar.
+      var cc = p.consumo || {};
+      var fin = (p.limiteTotal && Number(cc.usos || 0) >= p.limiteTotal)
+             || (p.presupuesto && Number(cc.gastado || 0) >= Number(p.presupuesto));
+      if (fin) {
+        var e = document.createElement('span');
+        e.className = 'marca-estado m-mal'; e.style.marginLeft = '6px';
+        e.textContent = 'se agotó';
+        top.appendChild(e);
+      }
       c.appendChild(top);
       if (esta) c.appendChild(editor(editando));
       else {
