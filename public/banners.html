@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Banners · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25;
+  --bien-bg:#E0F0E5; --bien-tx:#13512A;
+  --ojo-bg:#FDF1D2;  --ojo-tx:#6B4E00;
+  --mal-bg:#FBE3E3;  --mal-tx:#8C1114;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);font-size:.4rem;
+      font-weight:800;line-height:1.2;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+.sub{font-size:.78rem;color:var(--tinta2);margin-top:2px}
+.nota{font-size:.82rem;color:var(--tinta2);line-height:1.5;margin:10px 0 14px;max-width:62ch}
+.nota b{color:var(--tinta)}
+
+.caja{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+
+/* La tarjeta de un banner. La foto se enseña con la MISMA proporcion con la
+   que la vera el cliente (16/7, la de `.bn-slide` en estilos.css): una
+   vista previa con otra forma enseña un banner que no existe. */
+.ban{background:var(--panel);border:1px solid var(--linea);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.ban.roto{border-color:var(--mal-tx);box-shadow:0 0 0 2px rgba(140,17,20,.18)}
+.ban.toc{border-color:var(--marca);box-shadow:0 0 0 2px rgba(229,179,18,.25)}
+.ban-foto{position:relative;aspect-ratio:16/7;background:var(--papel);border-bottom:1px solid var(--linea)}
+.ban-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.ban-foto .orden{position:absolute;left:8px;top:8px;background:var(--tinta);color:var(--papel);
+                 border-radius:999px;min-width:26px;height:26px;display:flex;align-items:center;
+                 justify-content:center;font-size:.76rem;font-weight:800;padding:0 8px}
+.ban-cuerpo{padding:12px 14px 14px}
+.ban-acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);
+      background:transparent;color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.mini:disabled{opacity:.35;cursor:default}
+.mini.quitar{color:var(--mal-tx);border-color:var(--mal-bg)}
+
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px}
+.campo label{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+             color:var(--tinta2);margin-bottom:4px}
+.campo select{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+      padding:9px 10px;color:var(--tinta);font-family:inherit;font-size:.95rem;font-weight:600;min-height:42px}
+.campo select:focus{outline:2px solid var(--tinta);outline-offset:-1px}
+
+.marca-estado{display:inline-block;margin-top:9px;padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:800}
+.e-bien{background:var(--bien-bg);color:var(--bien-tx)}
+.e-mal{background:var(--mal-bg);color:var(--mal-tx)}
+
+.guardar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--linea);
+         padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;
+         justify-content:center;z-index:9}
+.guardar .cuenta{font-size:.82rem;color:var(--tinta2);font-weight:600}
+.btn{min-height:48px;padding:0 20px;background:var(--rojo);color:#fff;border:none;border-radius:12px;
+     font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer}
+.btn:disabled{background:var(--linea);color:var(--tinta2);cursor:default}
+.btn.ghost{background:transparent;color:var(--tinta);border:1px solid var(--linea);font-weight:700}
+.aviso{font-size:.84rem;line-height:1.5}
+.aviso.mal{color:var(--mal-tx);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:var(--tinta);color:var(--papel);
+       padding:11px 16px;border-radius:12px;font-size:.86rem;font-weight:700;z-index:20;max-width:92vw}
+.vacio{font-size:.86rem;color:var(--tinta2);text-align:center;padding:26px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>BANNERS</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<p class="nota">
+  El carrusel de la portada. El orden de aquí es el orden en que giran, cada
+  5&nbsp;segundos. La imagen se ve a lo ancho en proporción <b>16:7</b>
+  (1200&nbsp;×&nbsp;525 va bien). Nada se guarda hasta que lo mandes, y el
+  servidor <b>no acepta un destino que no exista</b>.
+  <a href="/consola">Volver a la consola</a>
+</p>
+
+<div class="caja" id="sin-sesion" hidden>
+  <p class="aviso">Esta pantalla es solo para el dueño.
+  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+</div>
+
+<div id="app" hidden>
+  <div id="lista"></div>
+  <button class="btn ghost" id="anadir" style="width:100%">+ Añadir banner</button>
+</div>
+
+<div class="guardar" id="pie" hidden>
+  <span class="cuenta" id="cuenta">Sin cambios</span>
+  <button class="btn ghost" id="deshacer" hidden>Deshacer</button>
+  <button class="btn" id="mandar" disabled>Guardar</button>
+</div>
+
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var REST = (CFG.SUPABASE_URL || '') + '/rest/v1/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var PUB = (CFG.SUPABASE_URL || '') + '/storage/v1/object/public/contenido/';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // Las secciones que un banner puede abrir. Son las que entiende `navegar`
+  // en el lado del consumidor; el servidor tiene la MISMA lista y es el que
+  // manda (api/banners.js).
+  var SECCIONES = [
+    ['', 'No lleva a ningún sitio'],
+    ['catalogo', 'Al catálogo, filtrado'],
+    ['producto', 'A un producto'],
+    ['premia', 'Al Crunchy Club'],
+    ['pedidos', 'A sus pedidos'],
+    ['cuenta', 'A su cuenta']
+  ];
+
+  var original = [];   // lo que hay guardado ahora
+  var lista = [];      // lo que se está editando
+  var sabores = [], presentaciones = [], productos = [];
+  var token = '';
+
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  function toast(t) {
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 4200);
+  }
+
+  function hayCambios() { return JSON.stringify(lista) !== JSON.stringify(original); }
+
+  // ── Lo que esta pantalla sabe decir de un banner ANTES de mandarlo ───────
+  // No es la garantía —esa vive en el servidor—, es el aviso: el banner de
+  // producción pedía el sabor «Natural» desde junio y nadie lo veía porque
+  // la app se cura sola y te deja en otro sabor, sin decir nada.
+  function queLeFalta(b) {
+    if (!b.img) return 'Sin imagen.';
+    if (!b.destino) return null;
+    if (b.destino === 'producto') {
+      if (!b.productoId) return 'Falta elegir el producto.';
+      var hay = productos.some(function (p) { return Number(p.id) === Number(b.productoId); });
+      return hay ? null : 'Ese producto ya no existe o está dado de baja.';
+    }
+    if (b.destino === 'catalogo') {
+      if (!b.sabor && !b.presentacion) return 'Elige un sabor, una presentación o las dos.';
+      if (b.sabor && sabores.indexOf(b.sabor) === -1) return 'El sabor «' + b.sabor + '» no existe en el catálogo.';
+      if (b.presentacion && presentaciones.indexOf(b.presentacion) === -1) return 'La presentación «' + b.presentacion + '» no existe.';
+    }
+    return null;
+  }
+
+  function selector(etq, valor, opciones, alCambiar) {
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.textContent = etq; d.appendChild(l);
+    var s = document.createElement('select');
+    opciones.forEach(function (o) {
+      var op = document.createElement('option');
+      op.value = o[0]; op.textContent = o[1];
+      if (String(o[0]) === String(valor === undefined || valor === null ? '' : valor)) op.selected = true;
+      s.appendChild(op);
+    });
+    // Un valor guardado que ya no existe NO se tira en silencio: se añade al
+    // desplegable marcado, para que se vea que estaba ahí y qué pasó.
+    var existe = opciones.some(function (o) { return String(o[0]) === String(valor); });
+    if (valor && !existe) {
+      var op = document.createElement('option');
+      op.value = valor; op.textContent = valor + ' — ya no existe';
+      op.selected = true; s.appendChild(op);
+    }
+    s.addEventListener('change', function () { alCambiar(s.value); });
+    d.appendChild(s);
+    return d;
+  }
+
+  function pintar() {
+    var cont = $('lista'); cont.innerHTML = '';
+    if (!lista.length) {
+      cont.innerHTML = '<div class="caja vacio">Todavía no hay banners. Añade el primero.</div>';
+      pintarPie(); return;
+    }
+    lista.forEach(function (b, i) {
+      var falta = queLeFalta(b);
+      var card = document.createElement('div');
+      card.className = 'ban' + (falta ? ' roto' : '');
+
+      var foto = document.createElement('div'); foto.className = 'ban-foto';
+      var im = document.createElement('img');
+      im.src = PUB + 'banner/' + b.img; im.alt = '';
+      im.addEventListener('error', function () { foto.classList.add('sin'); im.style.display = 'none'; });
+      foto.appendChild(im);
+      var or = document.createElement('div'); or.className = 'orden'; or.textContent = (i + 1);
+      foto.appendChild(or);
+      card.appendChild(foto);
+
+      var cuerpo = document.createElement('div'); cuerpo.className = 'ban-cuerpo';
+      var rej = document.createElement('div'); rej.className = 'rejilla';
+
+      rej.appendChild(selector('A dónde lleva', b.destino || '', SECCIONES, function (v) {
+        b.destino = v;
+        delete b.sabor; delete b.presentacion; delete b.productoId;
+        pintar();
+      }));
+
+      if (b.destino === 'catalogo') {
+        rej.appendChild(selector('Sabor', b.sabor || '',
+          [['', 'Cualquiera']].concat(sabores.map(function (s) { return [s, s]; })),
+          function (v) { if (v) b.sabor = v; else delete b.sabor; pintar(); }));
+        rej.appendChild(selector('Presentación', b.presentacion || '',
+          [['', 'Cualquiera']].concat(presentaciones.map(function (p) { return [p, p]; })),
+          function (v) { if (v) b.presentacion = v; else delete b.presentacion; pintar(); }));
+      } else if (b.destino === 'producto') {
+        rej.appendChild(selector('Producto', b.productoId || '',
+          [['', 'Elige uno']].concat(productos.map(function (p) {
+            return [p.id, p.sabor + ' · ' + p.presentacion];
+          })),
+          function (v) { if (v) b.productoId = Number(v); else delete b.productoId; pintar(); }));
+      }
+      cuerpo.appendChild(rej);
+
+      var m = document.createElement('span');
+      m.className = 'marca-estado ' + (falta ? 'e-mal' : 'e-bien');
+      m.textContent = falta ? falta : (b.destino ? 'El destino existe' : 'Solo se mira');
+      cuerpo.appendChild(m);
+
+      var acc = document.createElement('div'); acc.className = 'ban-acc';
+      acc.appendChild(boton('↑ Subir', i === 0, function () { mover(i, -1); }));
+      acc.appendChild(boton('↓ Bajar', i === lista.length - 1, function () { mover(i, 1); }));
+      acc.appendChild(boton('Cambiar imagen', false, function () { pedirImagen(b); }));
+      var q = boton('Quitar', false, function () { lista.splice(i, 1); pintar(); });
+      q.className += ' quitar';
+      acc.appendChild(q);
+      cuerpo.appendChild(acc);
+
+      card.appendChild(cuerpo);
+      cont.appendChild(card);
+    });
+    pintarPie();
+  }
+
+  function boton(txt, off, fn) {
+    var b = document.createElement('button');
+    b.className = 'mini'; b.textContent = txt; b.disabled = !!off;
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  function mover(i, d) {
+    var j = i + d;
+    if (j < 0 || j >= lista.length) return;
+    var t = lista[i]; lista[i] = lista[j]; lista[j] = t;
+    pintar();
+  }
+
+  function pintarPie() {
+    var n = hayCambios();
+    var malos = lista.filter(function (b) { return queLeFalta(b); }).length;
+    $('cuenta').textContent = malos
+      ? (malos === 1 ? '1 banner con un problema' : malos + ' banners con un problema')
+      : (n ? 'Hay cambios por guardar' : 'Sin cambios');
+    $('mandar').disabled = !n || !!malos;
+    $('deshacer').hidden = !n;
+  }
+
+  // ── La imagen. La ruta la arma /api/imagen con lista blanca de carpetas ──
+  function pedirImagen(b) {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp';
+    inp.addEventListener('change', async function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) { toast('La imagen pesa más de 5 MB.'); return; }
+      toast('Subiendo…');
+      var r = await fetch('/api/imagen', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: token, mimeType: f.type, carpeta: 'banner' })
+      }).then(function (x) { return x.json(); }).catch(function () { return null; });
+      if (!r || !r.ok) { toast((r && r.error) || 'No se pudo preparar la subida.'); return; }
+      var put = await fetch(r.url, { method: 'PUT', headers: { 'content-type': f.type }, body: f })
+        .catch(function () { return null; });
+      if (!put || !put.ok) { toast('No se pudo subir la imagen.'); return; }
+      // `ruta` viene como 'banner/<uuid>.jpg'; el JSON guarda solo el nombre.
+      b.img = String(r.ruta).replace(/^banner\//, '');
+      if (lista.indexOf(b) === -1) lista.push(b);
+      pintar();
+      toast('Imagen lista. Falta guardar.');
+    });
+    inp.click();
+  }
+
+  // ── Guardar ─────────────────────────────────────────────────────────────
+  async function mandar() {
+    $('mandar').disabled = true; $('mandar').textContent = 'Guardando…';
+    var r = await fetch('/api/banners', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ token: token, banners: lista })
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+    $('mandar').textContent = 'Guardar';
+    // Se mira lo que VUELVE (regla 56): el servidor puede rechazar lo que la
+    // pantalla dejó escribir, y lo dice con el banner y el motivo.
+    if (!r || !r.ok) { toast((r && r.error) || 'No se pudo guardar.'); pintarPie(); return; }
+    original = JSON.parse(JSON.stringify(r.banners || lista));
+    lista = JSON.parse(JSON.stringify(original));
+    pintar();
+    toast('Guardado. El carrusel ya lo trae.');
+  }
+
+  async function cargar() {
+    // El catálogo, para que los desplegables ofrezcan lo que EXISTE.
+    var prods = await fetch(REST + 'productos?select=id,sabor,presentacion,gramos&activo=is.true&descontinuado=is.false&order=sabor,gramos', {
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE }
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+    if (!Array.isArray(prods)) { toast('No se pudo leer el catálogo.'); return; }
+    productos = prods;
+    sabores = []; presentaciones = [];
+    prods.forEach(function (p) {
+      if (p.sabor && sabores.indexOf(p.sabor) === -1) sabores.push(p.sabor);
+      if (p.presentacion && presentaciones.indexOf(p.presentacion) === -1) presentaciones.push(p.presentacion);
+    });
+
+    // Lo que hay publicado ahora mismo, leído del MISMO sitio que lee el
+    // carrusel del cliente: si aquí se viera otra cosa, esta pantalla
+    // mentiría (regla 58).
+    var arr = await fetch(PUB + 'banner/banners.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (x) { return x.ok ? x.json() : []; }).catch(function () { return []; });
+    original = (Array.isArray(arr) ? arr : []).filter(function (b) { return b && b.img; });
+    lista = JSON.parse(JSON.stringify(original));
+
+    $('app').hidden = false; $('pie').hidden = false;
+    pintar();
+  }
+
+  var ses = sesion();
+  if (!ses) {
+    $('sin-sesion').hidden = false;
+    $('quien').textContent = 'Sin sesión';
+    return;
+  }
+  token = ses.token;
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+  $('mandar').addEventListener('click', mandar);
+  $('deshacer').addEventListener('click', function () {
+    lista = JSON.parse(JSON.stringify(original)); pintar();
+  });
+  $('anadir').addEventListener('click', function () { pedirImagen({ img: '', destino: '' }); });
+  cargar();
+})();
+</script>
+</body>
+</html>

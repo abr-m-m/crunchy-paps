@@ -46,6 +46,10 @@
       "destination": "/productos.html"
     },
     {
+      "source": "/banners",
+      "destination": "/banners.html"
+    },
+    {
       "source": "/consola",
       "destination": "/consola.html"
     }

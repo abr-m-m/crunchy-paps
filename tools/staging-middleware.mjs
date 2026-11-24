@@ -123,11 +123,19 @@ export async function manejarStaging(req, res) {
     }).catch((e) => { res.writeHead(502); res.end('staging no responde: ' + (e && e.name)); });
     return true;
   }
-  // /api/imagen-reto: la función de Vercel, en proceso, con la llave secreta de staging (solo para probar /retos).
-  if (ruta === '/api/imagen-reto') {
+  // Las funciones de Vercel que esta carpeta necesita, EN PROCESO y contra
+  // staging, con su llave secreta. Es la unica forma de probar en local una
+  // pantalla que escribe (/retos, /productos, /banners).
+  //
+  // Aqui habia una rama para `/api/imagen-reto`, que el 23 nov 2026 paso a
+  // llamarse `api/imagen.js`. El `require` quedo apuntando a un archivo que
+  // ya no existe: la rama estaba muerta y reventaba al tocarla. No se vio
+  // porque desde el renombrado nadie subio una imagen en local.
+  const EN_PROCESO = { '/api/imagen': '../api/imagen.js', '/api/banners': '../api/banners.js' };
+  if (EN_PROCESO[ruta]) {
     if (!LLAVE_SECRETA) { res.writeHead(503); res.end('sin llave secreta de staging'); return true; }
     process.env.SUPABASE_URL = STAGING; process.env.SUPABASE_SERVICE_ROLE_KEY = LLAVE_SECRETA;
-    const handler = require('../api/imagen-reto.js');
+    const handler = require(EN_PROCESO[ruta]);
     const shim = { setHeader: (k, v) => res.setHeader(k, v), status(s) { res.statusCode = s; return this; }, json(o) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(o)); } };
     handler(req, shim).catch((e) => { res.writeHead(500); res.end(String(e && e.message)); });
     return true;
