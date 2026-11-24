@@ -50,6 +50,10 @@
       "destination": "/banners.html"
     },
     {
+      "source": "/promociones",
+      "destination": "/promociones.html"
+    },
+    {
       "source": "/consola",
       "destination": "/consola.html"
     }

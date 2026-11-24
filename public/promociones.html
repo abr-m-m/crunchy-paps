@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Promociones · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25;
+  --bien-bg:#E0F0E5; --bien-tx:#13512A;
+  --ojo-bg:#FDF1D2;  --ojo-tx:#6B4E00;
+  --mal-bg:#FBE3E3;  --mal-tx:#8C1114;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);font-size:.4rem;
+      font-weight:800;line-height:1.2;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+.sub{font-size:.78rem;color:var(--tinta2);margin-top:2px}
+.nota{font-size:.82rem;color:var(--tinta2);line-height:1.5;margin:10px 0 14px;max-width:62ch}
+.nota b{color:var(--tinta)}
+
+.caja{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+.promo{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin-bottom:12px}
+.promo.apagada{opacity:.62}
+.promo-top{display:flex;gap:12px;align-items:flex-start}
+.promo-id{flex:1;min-width:0}
+.promo-id h2{font-family:Archivo,sans-serif;font-size:1rem;font-weight:700;line-height:1.2}
+.promo-id .meta{font-size:.76rem;color:var(--tinta2);margin-top:3px}
+.mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);
+      background:transparent;color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.mini.quitar{color:var(--mal-tx);border-color:var(--mal-bg)}
+.acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+.marca-estado{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:800;white-space:nowrap}
+.m-bien{background:var(--bien-bg);color:var(--bien-tx)}
+.m-ojo{background:var(--ojo-bg);color:var(--ojo-tx)}
+.m-mal{background:var(--mal-bg);color:var(--mal-tx)}
+
+.rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:12px}
+.campo label{display:block;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+             color:var(--tinta2);margin-bottom:4px}
+.campo input,.campo select{width:100%;background:var(--papel);border:1px solid var(--linea);border-radius:10px;
+      padding:9px 10px;color:var(--tinta);font-family:inherit;font-size:.95rem;font-weight:600;min-height:42px}
+.campo input:focus,.campo select:focus{outline:2px solid var(--tinta);outline-offset:-1px}
+.pill{display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:600;min-height:40px}
+.pill input[type=checkbox]{width:22px;height:22px;accent-color:var(--rojo);flex-shrink:0}
+
+.bloque{margin-top:12px;padding-top:12px;border-top:1px solid var(--linea)}
+.bloque h3{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);margin-bottom:7px}
+.item{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-bottom:1px dashed var(--linea)}
+.item:last-child{border-bottom:none}
+.item .que{flex:1;min-width:120px;font-size:.86rem;font-weight:600}
+
+table.margen{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:6px}
+table.margen th{text-align:left;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
+                color:var(--tinta2);font-weight:800;padding:4px 6px;border-bottom:1px solid var(--linea)}
+table.margen td{padding:5px 6px;border-bottom:1px solid var(--linea)}
+table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
+
+.guardar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--linea);
+         padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;
+         justify-content:center;z-index:9}
+.guardar .cuenta{font-size:.82rem;color:var(--tinta2);font-weight:600}
+.btn{min-height:48px;padding:0 20px;background:var(--rojo);color:#fff;border:none;border-radius:12px;
+     font-family:inherit;font-weight:800;font-size:.95rem;cursor:pointer}
+.btn:disabled{background:var(--linea);color:var(--tinta2);cursor:default}
+.btn.ghost{background:transparent;color:var(--tinta);border:1px solid var(--linea);font-weight:700}
+.aviso{font-size:.84rem;line-height:1.5}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;background:var(--tinta);color:var(--papel);
+       padding:11px 16px;border-radius:12px;font-size:.86rem;font-weight:700;z-index:20;max-width:92vw}
+.vacio{font-size:.86rem;color:var(--tinta2);text-align:center;padding:26px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>PROMOCIONES</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<p class="nota">
+  Una promoción es una <b>regla</b>, no un precio: el servidor la aplica al
+  cotizar. Cada una enseña el <b>margen que deja</b>, SKU por SKU, y no se
+  guarda por debajo del piso salvo que la marques como gancho a propósito.
+  <a href="/consola">Volver a la consola</a>
+</p>
+
+<div class="caja" id="sin-sesion" hidden>
+  <p class="aviso">Esta pantalla es solo para el dueño.
+  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+</div>
+
+<div class="caja" id="todavia-no" hidden>
+  <p class="aviso"><b>Las promociones todavía no cobran.</b> Puedes crearlas y
+  ver qué margen dejan, pero el precio que paga un cliente aún no las mira:
+  eso es la pieza siguiente, y va aparte porque toca dinero.</p>
+</div>
+
+<div id="app" hidden>
+  <div id="lista"></div>
+  <button class="btn ghost" id="nueva" style="width:100%">+ Nueva promoción</button>
+</div>
+
+<div class="guardar" id="pie" hidden>
+  <span class="cuenta" id="cuenta">Sin cambios</span>
+  <button class="btn ghost" id="deshacer" hidden>Deshacer</button>
+  <button class="btn" id="mandar" disabled>Guardar</button>
+</div>
+
+</div>
+
+<script src="/api/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var RPC = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  var REST = (CFG.SUPABASE_URL || '') + '/rest/v1/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var $ = function (id) { return document.getElementById(id); };
+
+  var TIPOS = [
+    ['porcentaje', '% de descuento'],
+    ['precio_fijo', 'Precio fijo'],
+    ['paquete', 'Paquete de varios']
+  ];
+  var PUBLICOS = [['todos', 'Todos'], ['consumidores', 'Consumidores'], ['tiendas', 'Tiendas']];
+  var ATERRIZA = [
+    ['promocion', 'A la promoción'],
+    ['catalogo', 'Al catálogo filtrado'],
+    ['producto', 'A un producto']
+  ];
+
+  var promos = [];       // lo que trajo el servidor
+  var editando = null;   // copia de la que se está tocando
+  var abierta = null;    // id abierto (o 'nueva')
+  var productos = [], sabores = [], presentaciones = [];
+  var piso = 15;
+  var token = '';
+
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  // Todos los RPC del proyecto reciben UN parametro, `p_data jsonb`: PostgREST
+  // busca la funcion por los nombres de los parametros, asi que mandar las
+  // claves sueltas devuelve 404 y la pantalla lo lee como «sin permiso».
+  function rpc(fn, cuerpo) {
+    return fetch(RPC + fn, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify({ p_data: cuerpo })
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+  }
+
+  function toast(t) {
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 5000);
+  }
+
+  var pesos = function (n) { return '$' + Number(n || 0).toFixed(2).replace(/\.00$/, ''); };
+  function claseMargen(m) {
+    if (m === null || m === undefined) return 'm-ojo';
+    return m < piso ? 'm-mal' : (m < 30 ? 'm-ojo' : 'm-bien');
+  }
+  function peorMargen(p) {
+    var ms = (p.margen || []).map(function (m) { return m.margenPct; })
+      .filter(function (m) { return m !== null && m !== undefined; });
+    return ms.length ? Math.min.apply(null, ms) : null;
+  }
+
+  function sel(etq, valor, opciones, alCambiar) {
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.textContent = etq; d.appendChild(l);
+    var s = document.createElement('select');
+    opciones.forEach(function (o) {
+      var op = document.createElement('option');
+      op.value = o[0]; op.textContent = o[1];
+      if (String(o[0]) === String(valor == null ? '' : valor)) op.selected = true;
+      s.appendChild(op);
+    });
+    s.addEventListener('change', function () { alCambiar(s.value); });
+    d.appendChild(s); return d;
+  }
+  function inp(etq, valor, tipo, alCambiar) {
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.textContent = etq; d.appendChild(l);
+    var i = document.createElement('input');
+    i.type = tipo || 'text'; i.value = valor == null ? '' : valor;
+    if (tipo === 'number') { i.min = '0'; i.step = '0.01'; }
+    i.addEventListener('change', function () { alCambiar(i.value); });
+    d.appendChild(i); return d;
+  }
+  function check(etq, valor, alCambiar) {
+    var d = document.createElement('label'); d.className = 'pill';
+    var c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!valor;
+    c.addEventListener('change', function () { alCambiar(c.checked); });
+    d.appendChild(c);
+    var s = document.createElement('span'); s.textContent = etq; d.appendChild(s);
+    return d;
+  }
+  function boton(txt, fn, clase) {
+    var b = document.createElement('button');
+    b.className = 'mini' + (clase ? ' ' + clase : ''); b.textContent = txt;
+    b.addEventListener('click', fn); return b;
+  }
+
+  function resumen(p) {
+    var v = p.tipo === 'precio_fijo' ? pesos(p.valor) : (p.valor + ' %');
+    var t = (TIPOS.filter(function (x) { return x[0] === p.tipo; })[0] || ['', p.tipo])[1];
+    var pu = (PUBLICOS.filter(function (x) { return x[0] === p.publico; })[0] || ['', p.publico])[1];
+    return t + ' · ' + v + ' · ' + pu + ' · ' + (p.desde || '') + ' → ' + (p.hasta || '');
+  }
+
+  // ── El editor ───────────────────────────────────────────────────────────
+  function editor(p) {
+    var caja = document.createElement('div');
+    var rej = document.createElement('div'); rej.className = 'rejilla';
+    rej.appendChild(inp('Nombre', p.nombre, 'text', function (v) { p.nombre = v; pintar(); }));
+    rej.appendChild(sel('Tipo', p.tipo, TIPOS, function (v) {
+      p.tipo = v; if (v === 'paquete') p.items = (p.items || []).filter(function (i) { return i.idProducto; });
+      pintar();
+    }));
+    rej.appendChild(inp(p.tipo === 'precio_fijo' ? 'Precio ($)' : 'Descuento (%)', p.valor, 'number',
+      function (v) { p.valor = v; pintar(); }));
+    rej.appendChild(sel('Quién la ve', p.publico, PUBLICOS, function (v) { p.publico = v; pintar(); }));
+    rej.appendChild(inp('Desde', p.desde, 'date', function (v) { p.desde = v; pintar(); }));
+    rej.appendChild(inp('Hasta', p.hasta, 'date', function (v) { p.hasta = v; pintar(); }));
+    rej.appendChild(sel('Al tocarla, lleva', p.aterrizaEn, ATERRIZA, function (v) { p.aterrizaEn = v; pintar(); }));
+    caja.appendChild(rej);
+
+    var bl = document.createElement('div'); bl.className = 'bloque';
+    bl.appendChild(check('Activa', p.activa !== false, function (v) { p.activa = v; pintar(); }));
+    bl.appendChild(check('Se puede acumular con un cupón', !!p.acumulableConCupon,
+      function (v) { p.acumulableConCupon = v; pintar(); }));
+    bl.appendChild(check('Es promoción de gancho (acepto margen bajo)', !!p.esGancho,
+      function (v) { p.esGancho = v; pintar(); }));
+    caja.appendChild(bl);
+
+    // ── A qué aplica ──────────────────────────────────────────────────────
+    var bi = document.createElement('div'); bi.className = 'bloque';
+    var h = document.createElement('h3');
+    h.textContent = p.tipo === 'paquete' ? 'Qué lleva el paquete' : 'A qué productos aplica';
+    bi.appendChild(h);
+
+    (p.items || []).forEach(function (it, i) {
+      var fila = document.createElement('div'); fila.className = 'item';
+      var que = document.createElement('span'); que.className = 'que';
+      if (it.idProducto) {
+        var pr = productos.filter(function (x) { return Number(x.id) === Number(it.idProducto); })[0];
+        que.textContent = pr ? (pr.sabor + ' · ' + pr.presentacion) : ('Producto ' + it.idProducto + ' — ya no existe');
+        if (!pr) que.style.color = 'var(--mal-tx)';
+      } else {
+        que.textContent = (it.sabor || 'Cualquier sabor') + ' · ' + (it.presentacion || 'cualquier presentación');
+      }
+      fila.appendChild(que);
+      if (p.tipo === 'paquete') {
+        var c = document.createElement('input');
+        c.type = 'number'; c.min = '1'; c.value = it.cantidad || 1;
+        c.style.cssText = 'width:72px;min-height:36px;border:1px solid var(--linea);border-radius:9px;padding:6px 8px;font-family:inherit;font-weight:700';
+        c.addEventListener('change', function () { it.cantidad = Math.max(1, Number(c.value) || 1); pintar(); });
+        fila.appendChild(c);
+      }
+      fila.appendChild(boton('Quitar', function () { p.items.splice(i, 1); pintar(); }, 'quitar'));
+      bi.appendChild(fila);
+    });
+    if (!(p.items || []).length) {
+      var v = document.createElement('div'); v.className = 'vacio';
+      v.textContent = p.tipo === 'paquete' ? 'Añade al menos dos productos.' : 'Añade a qué aplica.';
+      bi.appendChild(v);
+    }
+
+    var anadir = document.createElement('div'); anadir.className = 'rejilla';
+    if (p.tipo === 'paquete') {
+      anadir.appendChild(sel('Añadir producto', '', [['', 'Elige uno']].concat(productos.map(function (x) {
+        return [x.id, x.sabor + ' · ' + x.presentacion];
+      })), function (v) {
+        if (!v) return;
+        p.items = (p.items || []).concat([{ idProducto: Number(v), cantidad: 1 }]); pintar();
+      }));
+    } else {
+      anadir.appendChild(sel('Añadir un sabor', '', [['', 'Elige uno']].concat(sabores.map(function (s) { return [s, s]; })),
+        function (v) { if (!v) return; p.items = (p.items || []).concat([{ sabor: v }]); pintar(); }));
+      anadir.appendChild(sel('Añadir una presentación', '', [['', 'Elige una']].concat(presentaciones.map(function (s) { return [s, s]; })),
+        function (v) { if (!v) return; p.items = (p.items || []).concat([{ presentacion: v }]); pintar(); }));
+      anadir.appendChild(sel('Añadir un producto', '', [['', 'Elige uno']].concat(productos.map(function (x) {
+        return [x.id, x.sabor + ' · ' + x.presentacion];
+      })), function (v) { if (!v) return; p.items = (p.items || []).concat([{ idProducto: Number(v) }]); pintar(); }));
+    }
+    bi.appendChild(anadir);
+    caja.appendChild(bi);
+
+    // ── El margen, que es el punto de la pantalla ─────────────────────────
+    if ((p.margen || []).length) {
+      var bm = document.createElement('div'); bm.className = 'bloque';
+      var hm = document.createElement('h3'); hm.textContent = 'Lo que deja, SKU por SKU'; bm.appendChild(hm);
+      var t = document.createElement('table'); t.className = 'margen';
+      t.innerHTML = '<tr><th>Producto</th><th>Canal</th><th style="text-align:right">Lista</th>' +
+                    '<th style="text-align:right">Promo</th><th style="text-align:right">Costo</th>' +
+                    '<th style="text-align:right">Margen</th></tr>';
+      p.margen.forEach(function (m) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + m.sabor + ' · ' + m.presentacion + '</td><td>' + m.canal + '</td>' +
+          '<td class="num">' + pesos(m.precioLista) + '</td>' +
+          '<td class="num"><b>' + pesos(m.precioPromo) + '</b></td>' +
+          '<td class="num">' + (m.costo == null ? '—' : pesos(m.costo)) + '</td>' +
+          '<td class="num"><span class="marca-estado ' + claseMargen(m.margenPct) + '">' +
+            (m.margenPct == null ? 'sin costo' : m.margenPct + ' %') + '</span></td>';
+        t.appendChild(tr);
+      });
+      bm.appendChild(t);
+      caja.appendChild(bm);
+    }
+
+    var acc = document.createElement('div'); acc.className = 'acc';
+    acc.appendChild(boton('Cerrar', function () { abierta = null; editando = null; pintar(); }));
+    if (p.id) acc.appendChild(boton(p.usada ? 'Apagar' : 'Borrar', function () { borrar(p); }, 'quitar'));
+    caja.appendChild(acc);
+    return caja;
+  }
+
+  function pintar() {
+    var cont = $('lista'); cont.innerHTML = '';
+    if (abierta === 'nueva' && editando) {
+      var c = document.createElement('div'); c.className = 'promo';
+      var t = document.createElement('h2'); t.textContent = 'Nueva promoción';
+      t.style.cssText = 'font-family:Archivo,sans-serif;font-size:1rem;font-weight:700';
+      c.appendChild(t); c.appendChild(editor(editando)); cont.appendChild(c);
+    }
+    if (!promos.length && abierta !== 'nueva') {
+      cont.innerHTML = '<div class="caja vacio">Todavía no hay promociones.</div>';
+    }
+    promos.forEach(function (p) {
+      var esta = (abierta === p.id);
+      var datos = esta && editando ? editando : p;
+      var c = document.createElement('div');
+      c.className = 'promo' + (p.activa === false ? ' apagada' : '');
+      var top = document.createElement('div'); top.className = 'promo-top';
+      var id = document.createElement('div'); id.className = 'promo-id';
+      var h2 = document.createElement('h2'); h2.textContent = datos.nombre || '(sin nombre)';
+      var me = document.createElement('div'); me.className = 'meta'; me.textContent = resumen(datos);
+      id.appendChild(h2); id.appendChild(me);
+      top.appendChild(id);
+      var pm = peorMargen(p);
+      var b = document.createElement('span');
+      b.className = 'marca-estado ' + claseMargen(pm);
+      b.textContent = pm == null ? 'sin costo' : ('peor margen ' + pm + ' %');
+      top.appendChild(b);
+      c.appendChild(top);
+      if (esta) c.appendChild(editor(editando));
+      else {
+        var acc = document.createElement('div'); acc.className = 'acc';
+        acc.appendChild(boton('Editar', function () {
+          abierta = p.id; editando = JSON.parse(JSON.stringify(p)); pintar();
+        }));
+        c.appendChild(acc);
+      }
+      cont.appendChild(c);
+    });
+    pintarPie();
+  }
+
+  function pintarPie() {
+    var hay = !!editando;
+    $('cuenta').textContent = hay ? 'Hay una promoción abierta' : 'Sin cambios';
+    $('mandar').disabled = !hay;
+    $('deshacer').hidden = !hay;
+  }
+
+  async function mandar() {
+    if (!editando) return;
+    $('mandar').disabled = true; $('mandar').textContent = 'Guardando…';
+    var r = await rpc('guardar_promocion', { token: token, promocion: editando });
+    $('mandar').textContent = 'Guardar';
+    // Se mira lo que VUELVE (regla 56): el servidor rechaza por margen, por
+    // fechas o por un nombre que no existe, y lo dice con el motivo.
+    if (!r || !r.ok) { toast((r && r.mensaje) || (r && r.error) || 'No se pudo guardar.'); pintarPie(); return; }
+    abierta = null; editando = null;
+    await cargar();
+    toast('Guardada. Peor margen: ' + (r.peorMargen == null ? 'sin costo' : r.peorMargen + ' %') + '.');
+  }
+
+  async function borrar(p) {
+    if (!p.id) { abierta = null; editando = null; pintar(); return; }
+    var r = await rpc('borrar_promocion', { token: token, id: p.id });
+    if (!r || !r.ok) { toast('No se pudo.'); return; }
+    abierta = null; editando = null;
+    await cargar();
+    toast(r.pausada ? r.mensaje : 'Borrada.');
+  }
+
+  async function cargar() {
+    var prods = await fetch(REST + 'productos?select=id,sabor,presentacion,gramos&activo=is.true&descontinuado=is.false&order=sabor,gramos', {
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE }
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+    productos = Array.isArray(prods) ? prods : [];
+    sabores = []; presentaciones = [];
+    productos.forEach(function (p) {
+      if (p.sabor && sabores.indexOf(p.sabor) === -1) sabores.push(p.sabor);
+      if (p.presentacion && presentaciones.indexOf(p.presentacion) === -1) presentaciones.push(p.presentacion);
+    });
+
+    var r = await rpc('promociones_admin', { token: token });
+    if (!r || !r.ok) {
+      $('app').hidden = true; $('pie').hidden = true;
+      $('sin-sesion').hidden = false; $('quien').textContent = 'Sin permiso';
+      return;
+    }
+    promos = r.promociones || [];
+    piso = Number(r.piso_margen) || 15;
+    $('app').hidden = false; $('pie').hidden = false; $('todavia-no').hidden = false;
+    pintar();
+  }
+
+  function hoy(d) {
+    var x = new Date(); x.setDate(x.getDate() + (d || 0));
+    return x.toISOString().slice(0, 10);
+  }
+
+  var ses = sesion();
+  if (!ses) {
+    $('sin-sesion').hidden = false; $('quien').textContent = 'Sin sesión';
+    return;
+  }
+  token = ses.token;
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+  $('mandar').addEventListener('click', mandar);
+  $('deshacer').addEventListener('click', function () { abierta = null; editando = null; pintar(); });
+  $('nueva').addEventListener('click', function () {
+    abierta = 'nueva';
+    editando = { nombre: '', tipo: 'porcentaje', valor: 10, publico: 'todos',
+                 desde: hoy(0), hasta: hoy(30), activa: true, aterrizaEn: 'promocion', items: [] };
+    pintar();
+    window.scrollTo(0, 0);
+  });
+  cargar();
+})();
+</script>
+</body>
+</html>
