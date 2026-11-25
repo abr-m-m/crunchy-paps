@@ -27,6 +27,10 @@
 #   archivo:<ruta>    -> ¿existe ese archivo en el repo?
 #   externo:<texto>   -> no se comprueba, y la hoja lo dice.
 #
+# Cualquier otro prefijo -o ninguno- sale como MAL DECLARADO y tumba la corrida,
+# este la pieza hecha o pendiente: una pieza que el comprobador no sabe leer
+# pasaria en verde, que es justo lo que este comprobador existe para evitar.
+#
 # Si un item dice «hecho» y lo que declara no existe, sale en ROJO en la hoja
 # «Comprobado» y el script termina con codigo 1. El mapa no puede afirmar algo
 # que la base desmiente.
@@ -228,13 +232,22 @@ def medir_pendientes(datos):
     return veredictos
 
 
+CLASES = ('seccion', 'rpc', 'tabla', 'cron', 'archivo', 'externo')
+
+
 def comprobar(item, hay):
     """Devuelve (veredicto, detalle). El veredicto es lo que decide el color."""
     vive = (item.get('vive_en') or '').strip()
+    # Un `vive_en` que no se puede leer NO es «sin declarar»: es una pieza que
+    # el comprobador no puede comprobar, y pasa en verde. El 24 nov 2026 se
+    # escribio `funcion:promociones_importar` -el prefijo bueno es `rpc:`- y el
+    # mapa dijo «ninguna afirmacion contradice a la base» de una pieza que no
+    # existe en produccion. Un comprobador que no sabe que no comprobo algo es
+    # peor que no tenerlo, porque da la tranquilidad sin el respaldo.
     if not vive:
-        return 'sin declarar', 'El item no dice dónde vive'
+        return 'MAL DECLARADO', 'el item no dice dónde vive'
     if ':' not in vive:
-        return 'sin declarar', vive
+        return 'MAL DECLARADO', '«%s» no lleva prefijo: %s' % (vive, ', '.join(CLASES))
     clase, valor = vive.split(':', 1)
     valor = valor.strip()
     if clase == 'externo':
@@ -245,7 +258,7 @@ def comprobar(item, hay):
     if clase in ('rpc', 'tabla', 'cron', 'seccion'):
         existe = valor in hay.get(clase, set())
         return ('existe' if existe else 'NO EXISTE'), '%s %s' % (clase, valor)
-    return 'sin declarar', vive
+    return 'MAL DECLARADO', 'prefijo «%s» desconocido: %s' % (clase, ', '.join(CLASES))
 
 
 def cab(ws, titulo, subtitulo, anchos):
@@ -454,7 +467,8 @@ def main():
     for f in datos['frentes']:
         for i in f['items']:
             veredicto, detalle = comprobar(i, hay)
-            mal = (veredicto == 'NO EXISTE' and i['estado'] in ('hecho', 'en curso'))
+            mal = ((veredicto == 'NO EXISTE' and i['estado'] in ('hecho', 'en curso'))
+                   or veredicto == 'MAL DECLARADO')
             if mal:
                 problemas.append('%s · %s · dice «%s» y %s'
                                  % (f['clave'], i['nombre'], i['estado'], detalle))
