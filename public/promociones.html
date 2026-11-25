@@ -63,6 +63,11 @@ table.margen th{text-align:left;font-size:.6rem;letter-spacing:.06em;text-transf
                 color:var(--tinta2);font-weight:800;padding:4px 6px;border-bottom:1px solid var(--linea)}
 table.margen td{padding:5px 6px;border-bottom:1px solid var(--linea)}
 table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
+td.mal,span.mal{color:var(--mal-tx);font-weight:700}
+td.bien{color:var(--bien-tx);font-weight:700}
+.caja h3{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);margin-bottom:7px}
+.barra-x{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.barra-x .mini{min-height:40px}
 
 .guardar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--linea);
          padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;
@@ -110,6 +115,37 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
   Al llegar a un tope deja de aplicarse sola.</p>
 </div>
 
+<!-- El plan del mes. Abraham: «la consola me sirve para promociones basicas y
+     sencillas, por lo mismo planteaba excel». La hoja la interpreta el
+     SERVIDOR; aqui solo se convierte el .xlsx en filas y se mandan tal cual. -->
+<div class="caja" id="excel" hidden>
+  <h3>El plan del mes</h3>
+  <p class="nota" style="margin:0 0 10px">
+    Una hoja con <b>una fila por SKU</b>: vigencias, sku, % de descuento, canal,
+    segmentación, presupuesto, límite por cliente y límite total. Las filas que
+    comparten <b>nombre</b> son la misma promoción. Al cargarla se
+    <b>ensaya en el servidor</b> —piso de margen incluido— y <b>no se escribe
+    nada</b> hasta que toques Aplicar. Es <b>todo o nada</b>: si una fila falla,
+    no entra ninguna. Un nombre que ya existe se <b>actualiza</b> y vuelve a
+    quedar activa, así que puedes corregir el archivo y volver a subirlo.
+  </p>
+  <div class="barra-x">
+    <button class="mini" type="button" id="x-plantilla">Descargar plantilla</button>
+    <label class="mini" style="display:inline-flex;align-items:center;cursor:pointer">
+      Cargar archivo<input type="file" id="x-archivo" accept=".xlsx,.xls,.csv" hidden>
+    </label>
+    <span class="nota" id="x-nombre" style="margin:0"></span>
+  </div>
+  <div id="x-informe" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--linea)">
+    <p class="aviso" id="x-resumen"></p>
+    <div id="x-tabla"></div>
+    <div class="barra-x" style="margin-top:10px">
+      <button class="btn" type="button" id="x-aplicar" hidden>Aplicar</button>
+      <button class="mini" type="button" id="x-cerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="app" hidden>
   <div id="lista"></div>
   <button class="btn ghost" id="nueva" style="width:100%">+ Nueva promoción</button>
@@ -123,6 +159,7 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="/api/config.js"></script>
 <script>
 (function () {
@@ -467,12 +504,150 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
     promos = r.promociones || [];
     piso = Number(r.piso_margen) || 15;
     $('app').hidden = false; $('pie').hidden = false; $('todavia-no').hidden = false;
+    $('excel').hidden = false;
     pintar();
   }
 
   function hoy(d) {
     var x = new Date(); x.setDate(x.getDate() + (d || 0));
     return x.toISOString().slice(0, 10);
+  }
+
+  // ── El Excel del mes ────────────────────────────────────────────────────
+  // Las cabeceras se mandan como las escribio la persona: el servidor las
+  // normaliza y decide que columna es cada cosa. Elegir cual es el descuento
+  // es decidir un precio, y eso no lo decide el navegador (regla 10).
+  var CABECERAS = ['Nombre', 'Vigencia desde', 'Vigencia hasta', 'SKU', '% Descuento',
+                   'Canal', 'Segmentación', 'Presupuesto', 'Límite por cliente',
+                   'Límite total', 'Gancho'];
+  var filasX = null;   // lo ultimo que se leyo del archivo
+
+  function plantilla() {
+    var hoy = new Date(), yyyy = hoy.getFullYear(), mm = hoy.getMonth() + 1;
+    var ini = yyyy + '-' + String(mm).padStart(2, '0') + '-01';
+    var fin = yyyy + '-' + String(mm).padStart(2, '0') + '-28';
+    var uno = productos[0] || { sabor: 'Naturales', presentacion: 'Bolsa 50g' };
+    var ejemplo = [
+      { 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini, 'Vigencia hasta': fin,
+        'SKU': uno.sabor + ' ' + uno.presentacion, '% Descuento': 10, 'Canal': 'consumidor',
+        'Segmentación': 'todos', 'Presupuesto': 500, 'Límite por cliente': 2,
+        'Límite total': 50, 'Gancho': '' },
+      { 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini, 'Vigencia hasta': fin,
+        'SKU': uno.sabor, '% Descuento': 10, 'Canal': 'consumidor', 'Segmentación': 'todos',
+        'Presupuesto': 500, 'Límite por cliente': 2, 'Límite total': 50, 'Gancho': '' }
+    ];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ejemplo, { header: CABECERAS }), 'Promociones');
+
+    var notas = [
+      { 'columna': 'Nombre', 'que vale': 'el texto que quieras', 'notas': 'las filas con el MISMO nombre son una sola promocion; un nombre que ya existe se actualiza' },
+      { 'columna': 'Vigencia desde / hasta', 'que vale': 'AAAA-MM-DD', 'notas': 'o una fecha de Excel; evita DD/MM/AAAA' },
+      { 'columna': 'SKU', 'que vale': 'id, «Sabor Presentacion», un sabor o una presentacion', 'notas': 'un sabor solo = todas sus presentaciones' },
+      { 'columna': '% Descuento', 'que vale': '1 a 100', 'notas': 'el mismo en todas las filas de la promocion' },
+      { 'columna': 'Canal', 'que vale': 'consumidor | tienda | todos', 'notas': 'el mayorista nunca entra en promociones' },
+      { 'columna': 'Segmentación', 'que vale': 'todos', 'notas': 'por cliente todavia no existe: se rechaza cualquier otra cosa' },
+      { 'columna': 'Presupuesto', 'que vale': 'pesos de descuento', 'notas': 'vacio = sin tope' },
+      { 'columna': 'Límite por cliente', 'que vale': 'numero de PEDIDOS', 'notas': 'vacio = sin tope' },
+      { 'columna': 'Límite total', 'que vale': 'numero de PEDIDOS', 'notas': 'vacio = sin tope' },
+      { 'columna': 'Gancho', 'que vale': 'si / vacio', 'notas': 'solo con «si» se admite bajar del piso de margen (' + piso + ' %)' }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(notas), 'Como se llena');
+
+    var cat = productos.map(function (p) {
+      return { 'id': p.id, 'sku': p.sabor + ' ' + p.presentacion, 'sabor': p.sabor, 'presentacion': p.presentacion };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cat.length ? cat : [{ id: '', sku: '', sabor: '', presentacion: '' }]), 'Catalogo');
+    XLSX.writeFile(wb, 'promociones-' + yyyy + '-' + String(mm).padStart(2, '0') + '.xlsx');
+  }
+
+  async function leerArchivo(archivo) {
+    $('x-nombre').textContent = archivo.name;
+    var buf = await archivo.arrayBuffer();
+    var wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: false });
+    var nom = wb.SheetNames.indexOf('Promociones') >= 0 ? 'Promociones' : wb.SheetNames[0];
+    filasX = XLSX.utils.sheet_to_json(wb.Sheets[nom], { defval: '' });
+    if (!filasX.length) { toast('La hoja «' + nom + '» no trae filas.'); return; }
+    await mandarX(true);
+  }
+
+  // probar=true ensaya en el servidor y no escribe; false aplica.
+  async function mandarX(probar) {
+    if (!filasX || !filasX.length) return;
+    $('x-aplicar').disabled = true;
+    $('x-resumen').textContent = probar ? 'Ensayando en el servidor…' : 'Aplicando…';
+    $('x-informe').hidden = false;
+    var r = await rpc('promociones_importar', { token: token, filas: filasX, probar: !!probar });
+    $('x-aplicar').disabled = false;
+    pintarX(r, probar);
+    if (r && r.ok && !probar) { filasX = null; $('x-archivo').value = ''; await cargar(); }
+  }
+
+  function pintarX(r, probar) {
+    var tabla = $('x-tabla'); tabla.replaceChildren();
+    if (!r) { $('x-resumen').textContent = 'No hubo respuesta del servidor.'; $('x-aplicar').hidden = true; return; }
+    if (r.error === 'solo_dueno') { $('x-resumen').textContent = 'Esta pantalla es solo para el dueño.'; $('x-aplicar').hidden = true; return; }
+
+    var res = r.resumen || {};
+    // En orden de FILA. El servidor manda primero los errores de forma y
+    // despues los de coherencia, asi que sin esto salen 2, 5, 3 y quien esta
+    // corrigiendo la hoja va saltando de una linea a otra.
+    var errs = (r.errores || []).slice().sort(function (a, b) { return (a.fila || 0) - (b.fila || 0); });
+    // Se mira lo que VUELVE (regla 56): el servidor dice si escribio o no.
+    if (errs.length) {
+      $('x-resumen').innerHTML = '<b>No se escribió nada.</b> ' + errs.length +
+        ' problema(s) en ' + (res.filas || 0) + ' fila(s). Corrige el archivo y vuelve a cargarlo.';
+      $('x-aplicar').hidden = true;
+    } else if (r.ensayo) {
+      $('x-resumen').innerHTML = '<b>Ensayo.</b> ' + (res.promociones || 0) + ' promoción(es) de ' +
+        (res.filas || 0) + ' fila(s): ' + (res.nuevas || 0) + ' nueva(s) y ' +
+        (res.actualizadas || 0) + ' actualizada(s). <b>Todavía no se escribió nada.</b>';
+      $('x-aplicar').hidden = false;
+      $('x-aplicar').textContent = 'Aplicar ' + (res.promociones || 0) + ' promoción(es)';
+    } else {
+      $('x-resumen').innerHTML = '<b>Aplicado.</b> ' + (res.nuevas || 0) + ' nueva(s) y ' +
+        (res.actualizadas || 0) + ' actualizada(s). Ya cobran.';
+      $('x-aplicar').hidden = true;
+    }
+
+    var t = document.createElement('table'); t.className = 'margen';
+    var thead = document.createElement('thead'), htr = document.createElement('tr');
+    var cols = errs.length ? ['Fila', 'Nombre', 'Qué pasa']
+                           : ['Fila', 'Nombre', 'SKU', '%', 'Canal', 'Vigencia', 'Topes', 'Peor margen', ''];
+    cols.forEach(function (c) { var th = document.createElement('th'); th.textContent = c; htr.appendChild(th); });
+    thead.appendChild(htr); t.appendChild(thead);
+    var tb = document.createElement('tbody');
+
+    function celda(tr, txt, clase) {
+      var td = document.createElement('td'); td.textContent = txt;
+      if (clase) td.className = clase; tr.appendChild(td); return td;
+    }
+    if (errs.length) {
+      errs.forEach(function (e) {
+        var tr = document.createElement('tr');
+        celda(tr, e.fila); celda(tr, e.nombre || '—'); celda(tr, e.mensaje, 'mal');
+        tb.appendChild(tr);
+      });
+    } else {
+      (r.promociones || []).forEach(function (x) {
+        var tr = document.createElement('tr');
+        var topes = [];
+        if (x.limitePorCliente) topes.push(x.limitePorCliente + '/cliente');
+        if (x.limiteTotal) topes.push(x.limiteTotal + ' total');
+        if (x.presupuesto) topes.push(pesos(x.presupuesto));
+        celda(tr, x.fila);
+        celda(tr, x.nombre);
+        celda(tr, x.skus + (x.skus === 1 ? ' sku' : ' skus'));
+        celda(tr, x.pct + ' %', 'num');
+        celda(tr, x.canal === 'consumidores' ? 'consumidor' : (x.canal === 'tiendas' ? 'tienda' : 'todos'));
+        celda(tr, x.desde + ' → ' + x.hasta);
+        celda(tr, topes.length ? topes.join(' · ') : 'sin tope');
+        var m = x.peorMargen;
+        celda(tr, m == null ? '—' : m + ' %', 'num ' + (m != null && m < piso ? 'mal' : 'bien'));
+        celda(tr, x.accion === 'nueva' ? 'nueva' : 'actualiza' + (x.gancho ? ' · gancho' : ''));
+        tb.appendChild(tr);
+      });
+    }
+    t.appendChild(tb); tabla.appendChild(t);
   }
 
   var ses = sesion();
@@ -483,6 +658,15 @@ table.margen td.num{text-align:right;font-variant-numeric:tabular-nums}
   token = ses.token;
   $('quien').textContent = 'Hola, ' + ses.nombre;
   $('mandar').addEventListener('click', mandar);
+  $('x-plantilla').addEventListener('click', plantilla);
+  $('x-archivo').addEventListener('change', function (e) {
+    if (e.target.files[0]) leerArchivo(e.target.files[0]).catch(function () { toast('No se pudo leer el archivo.'); });
+  });
+  $('x-aplicar').addEventListener('click', function () { mandarX(false); });
+  $('x-cerrar').addEventListener('click', function () {
+    $('x-informe').hidden = true; $('x-nombre').textContent = '';
+    filasX = null; $('x-archivo').value = '';
+  });
   $('deshacer').addEventListener('click', function () { abierta = null; editando = null; pintar(); });
   $('nueva').addEventListener('click', function () {
     abierta = 'nueva';
