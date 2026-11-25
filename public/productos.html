@@ -54,6 +54,9 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
       padding:9px 10px;color:var(--tinta);font-family:inherit;font-size:.95rem;font-weight:600;min-height:42px}
 .campo input:focus,.campo select:focus{outline:2px solid var(--tinta);outline-offset:-1px}
 .margen{display:inline-block;margin-top:5px;padding:2px 7px;border-radius:999px;font-size:.68rem;font-weight:800}
+.bloque-caja{margin-top:11px;padding-top:11px;border-top:1px solid var(--linea)}
+.bloque-caja h3{font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+                color:var(--tinta2);margin-bottom:7px}
 .m-bien{background:var(--bien-bg);color:var(--bien-tx)}
 .m-ojo{background:var(--ojo-bg);color:var(--ojo-tx)}
 .m-mal{background:var(--mal-bg);color:var(--mal-tx)}
@@ -91,6 +94,9 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 <p class="nota" id="intro">
   El <b>margen</b> de cada precio sale del motor de costeo, no de un número
   escrito a mano. Nada se guarda hasta que lo mandes.
+  La <b>caja</b> lleva un solo precio para tienda y mayorista; vacía significa
+  que la caja cuesta <b>piezas × precio del canal</b>, o sea sin descuento por
+  comprar caja.
   <a href="/consola">Volver a la consola</a>
 </p>
 
@@ -224,6 +230,53 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
     return d;
   }
 
+  // Un campo de caja: el precio, y debajo lo que de verdad se mira.
+  function campoCaja(p, piezas) {
+    var clave = 'caja_' + piezas;
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.textContent = 'Caja de ' + piezas; d.appendChild(l);
+    var i = document.createElement('input');
+    i.type = 'number'; i.inputMode = 'decimal'; i.min = '0'; i.step = '1';
+    var v = valorDe(p, clave);
+    i.value = (v === null || v === undefined) ? '' : v;
+    i.setAttribute('aria-label', 'Precio de la caja de ' + piezas + ' de ' + p.sabor + ' ' + (p.presentacion || ''));
+    d.appendChild(i);
+
+    var b1 = document.createElement('span'); b1.className = 'margen';
+    var b2 = document.createElement('span'); b2.className = 'margen';
+    b2.style.marginLeft = '4px';
+    d.appendChild(b1); d.appendChild(b2);
+
+    var pinta = function () {
+      var total = Number(i.value);
+      if (!(total > 0)) {
+        b1.textContent = 'sin precio de caja'; b1.className = 'margen m-ojo';
+        b2.textContent = ''; b2.className = 'margen'; return;
+      }
+      var unit = total / piezas;
+      var m = margen(unit, p.costo);
+      b1.textContent = pesos(unit) + '/pza' + (m === null ? '' : ' · ' + m.toFixed(0) + ' % margen');
+      b1.className = 'margen ' + (m === null ? 'm-ojo' : claseMargen(m));
+
+      // Contra lo que pagaria comprando sueltas, en los dos canales que
+      // compran por caja.
+      var partes = [], caro = false;
+      [['tienda', 'tienda'], ['mayorista', 'mayorista']].forEach(function (par) {
+        var lista = Number(valorDe(p, par[0]));
+        if (!(lista > 0)) return;
+        var dif = Math.round((unit / lista - 1) * 100);
+        if (dif > 0) caro = true;
+        partes.push(par[1] + ' ' + (dif > 0 ? '+' : '') + dif + ' %');
+      });
+      if (!partes.length) { b2.textContent = ''; b2.className = 'margen'; return; }
+      b2.textContent = (caro ? 'más cara que suelta · ' : 'vs suelta: ') + partes.join(' · ');
+      b2.className = 'margen ' + (caro ? 'm-mal' : 'm-bien');
+    };
+    pinta();
+    i.addEventListener('input', function () { tocar(p, clave, i.value); pinta(); });
+    return d;
+  }
+
   function tarjeta(p) {
     var c = document.createElement('div');
     c.className = 'sku' + (cambios[p.id] ? ' toc' : '');
@@ -265,6 +318,31 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
     rd.style.marginTop = '9px';
     rd.appendChild(campo('Descuento de lista %', p, 'descuento', { max: '100', step: '1' }));
     c.appendChild(rd);
+
+    // ── La caja ───────────────────────────────────────────────────────────
+    // Un precio de caja suelto no dice nada: $300 por 12 piezas puede ser un
+    // regalo o un robo segun lo que cueste la pieza. Lo que decide son otras
+    // tres cosas, y son las que van al lado:
+    //   · lo que acaba pagando POR PIEZA
+    //   · el margen a ese precio
+    //   · cuanto baja respecto a comprar sueltas, que es el unico motivo de
+    //     vender por caja
+    // Y la trampa: hay UN solo precio de caja para tienda y mayorista
+    // (decision del 13 sep), asi que una caja que es rebaja para la tienda
+    // puede salir MAS CARA que las piezas sueltas del mayorista. Eso sale en
+    // rojo, porque es el error que nadie ve hasta que un mayorista lo nota.
+    if (p.presentacion !== 'Granel' && p.gramos !== null) {
+      var caja = document.createElement('div'); caja.className = 'bloque-caja';
+      var ct = document.createElement('h3');
+      ct.textContent = 'Precio por caja — vacío = la caja cuesta piezas × precio del canal';
+      caja.appendChild(ct);
+      var rcj = document.createElement('div'); rcj.className = 'rejilla';
+      [3, 6, 12].forEach(function (n) {
+        rcj.appendChild(campoCaja(p, n));
+      });
+      caja.appendChild(rcj);
+      c.appendChild(caja);
+    }
 
     var club = document.createElement('div'); club.className = 'linea-club';
     var lab = document.createElement('label'); lab.className = 'pill';
