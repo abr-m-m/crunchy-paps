@@ -27,6 +27,15 @@ const PRODUCTOS = [];
 let id = 1;
 for (const s of SABORES) for (const p of PRESENTACIONES) PRODUCTOS.push({ id: id++, sabor: s, presentacion: p });
 
+// Promociones, tal como las devolveria la tabla. Una viva, una pausada y una
+// que todavia no empieza: las tres EXISTEN, y por eso las tres se pueden
+// guardar en un banner -uno de diciembre se prepara en noviembre-.
+const PROMOCIONES = [
+  { id: 7,  nombre: 'Diciembre Habanero', activa: true,  desde: '2026-12-01', hasta: '2026-12-31' },
+  { id: 8,  nombre: 'Pausada',            activa: false, desde: '2026-11-01', hasta: '2026-11-30' },
+  { id: 9,  nombre: 'La que viene',       activa: true,  desde: '2027-01-01', hasta: '2027-01-31' },
+];
+
 const ARCHIVOS = ['banner/promo1.jpg', 'banner/promo2.jpg', 'banner/promo3.jpg', 'banner/promo4.jpg', 'banner/banners.json']
   .map((n) => ({ name: n.replace('banner/', '') }));
 
@@ -38,6 +47,7 @@ global.fetch = async (url, opc) => {
   const resp = (cuerpo, ok = true) => ({ ok, status: ok ? 200 : 500, text: async () => JSON.stringify(cuerpo) });
   if (u.includes('/rpc/sesion_es_dueno')) return resp(esDueno);
   if (u.includes('/rest/v1/productos')) return resp(PRODUCTOS);
+  if (u.includes('/rest/v1/promociones')) return resp(PROMOCIONES);
   if (u.includes('/storage/v1/object/list/')) return resp(ARCHIVOS);
   if (u.includes('/storage/v1/object/contenido/banner/banners.json')) {
     escrito = opc && opc.body;
@@ -80,6 +90,13 @@ const CASOS = [
   ['salirse de la carpeta con ../', [{ img: '../productos/x.jpg' }], false, 'imagen'],
   ['sin imagen', [{ destino: 'premia' }], false, 'imagen'],
   ['un banner que solo se mira', [{ img: 'promo2.jpg' }], true, null],
+  // El destino que nace hoy: por ID, como `producto`. Un id no se escribe mal
+  // ni se renombra, que es exactamente como se rompio el banner de junio.
+  ['una promocion que existe', [{ img: 'promo1.jpg', destino: 'promocion', promocionId: 7 }], true, null],
+  ['una promocion PAUSADA (se prepara antes de encenderla)', [{ img: 'promo1.jpg', destino: 'promocion', promocionId: 8 }], true, null],
+  ['una promocion que todavia no empieza', [{ img: 'promo1.jpg', destino: 'promocion', promocionId: 9 }], true, null],
+  ['una promocion que no existe', [{ img: 'promo1.jpg', destino: 'promocion', promocionId: 4242 }], false, 'promoción'],
+  ['promocion sin id', [{ img: 'promo1.jpg', destino: 'promocion' }], false, 'promoción'],
 ];
 
 let fallos = 0;
@@ -119,6 +136,15 @@ const guardado = JSON.parse(escrito || '[]');
 const bien = guardado.length === 1 && guardado[0].img === 'promo3.jpg' && guardado[0].basura === undefined;
 if (!bien) { fallos++; console.log('  FALLA  lo guardado no es lo esperado: ' + escrito); }
 else console.log('  ok     guarda el nombre sin la carpeta y tira los campos de mas');
+
+// Un banner de promocion guarda el ID Y NADA MAS: ni sabor ni presentacion.
+// Si un dia volviera a guardar un nombre, esto lo canta.
+escrito = null;
+await llamar({ token: 't', banners: [{ img: 'promo1.jpg', destino: 'promocion', promocionId: 7, sabor: 'Naturales' }] });
+const g2 = JSON.parse(escrito || '[]')[0] || {};
+const soloId = g2.destino === 'promocion' && g2.promocionId === 7 && g2.sabor === undefined && g2.presentacion === undefined;
+if (!soloId) { fallos++; console.log('  FALLA  el banner de promocion no guarda solo el id: ' + escrito); }
+else console.log('  ok     el banner de promocion guarda el ID y ningun texto');
 
 console.log('\n  ' + (fallos ? fallos + ' FALLO(S)' : 'Todo bien') + '\n');
 process.exit(fallos ? 1 : 0);

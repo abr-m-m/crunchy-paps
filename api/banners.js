@@ -29,7 +29,7 @@ const MAX = 8;
 
 // Cerrado por omisión (regla 37). 'catalogo' y 'producto' los interpreta
 // `aplicarDestinoBanner`; el resto son secciones que entiende `navegar`.
-const DESTINOS = ['', 'catalogo', 'producto', 'premia', 'pedidos', 'cuenta'];
+const DESTINOS = ['', 'catalogo', 'producto', 'promocion', 'premia', 'pedidos', 'cuenta'];
 
 async function supa(ruta, metodo, cuerpo, extra) {
   const r = await fetch(SUPA_URL + ruta, {
@@ -87,6 +87,17 @@ module.exports = async function (req, res) {
       console.error('[banners.js] no se pudo leer productos:', prods.estado, prods.datos);
       return res.status(500).json({ ok: false, error: 'No se pudo comprobar el catálogo' });
     }
+    // Las promociones, para el destino `promocion`. Se piden TODAS -activas o
+    // no, vigentes o no-: un banner de diciembre se prepara en noviembre, y
+    // exigir que la promoción esté viva al guardarlo sería impedir justo el
+    // uso normal. Lo que NO se admite es apuntar a una que no existe.
+    const promos = await supa('/rest/v1/promociones?select=id,nombre,activa,desde,hasta', 'GET');
+    if (!promos.ok || !Array.isArray(promos.datos)) {
+      console.error('[banners.js] no se pudo leer promociones:', promos.estado, promos.datos);
+      return res.status(500).json({ ok: false, error: 'No se pudo comprobar las promociones' });
+    }
+    const promoIds = new Set(promos.datos.map((p) => Number(p.id)));
+
     const sabores = new Set(prods.datos.map((p) => p.sabor).filter(Boolean));
     const presentaciones = new Set(prods.datos.map((p) => p.presentacion).filter(Boolean));
     const ids = new Set(prods.datos.map((p) => Number(p.id)));
@@ -122,6 +133,14 @@ module.exports = async function (req, res) {
         const id = Number(b.productoId);
         if (!ids.has(id)) return res.status(400).json({ ok: false, error: `${donde}: ese producto ya no existe o está dado de baja.` });
         salida.productoId = id;
+      } else if (destino === 'promocion') {
+        // Por ID, como `producto`. Ese destino nunca se rompió en cinco meses
+        // y medio justamente por esto: un id no se escribe mal ni se renombra.
+        const idp = Number(b.promocionId);
+        if (!promoIds.has(idp)) {
+          return res.status(400).json({ ok: false, error: `${donde}: esa promoción no existe.` });
+        }
+        salida.promocionId = idp;
       } else if (destino === 'catalogo') {
         const sabor = typeof b.sabor === 'string' ? b.sabor.trim() : '';
         const pres  = typeof b.presentacion === 'string' ? b.presentacion.trim() : '';

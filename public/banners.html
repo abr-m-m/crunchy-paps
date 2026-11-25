@@ -56,6 +56,7 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 .marca-estado{display:inline-block;margin-top:9px;padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:800}
 .e-bien{background:var(--bien-bg);color:var(--bien-tx)}
 .e-mal{background:var(--mal-bg);color:var(--mal-tx)}
+.e-ojo{background:var(--ojo-bg);color:var(--ojo-tx)}
 
 .guardar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--linea);
          padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;
@@ -115,6 +116,7 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
   'use strict';
   var CFG = window.__CP_CONFIG__ || {};
   var REST = (CFG.SUPABASE_URL || '') + '/rest/v1/';
+  var RPC = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
   var LLAVE = CFG.SUPABASE_ANON_KEY || '';
   var PUB = (CFG.SUPABASE_URL || '') + '/storage/v1/object/public/contenido/';
   var $ = function (id) { return document.getElementById(id); };
@@ -126,6 +128,7 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
     ['', 'No lleva a ningún sitio'],
     ['catalogo', 'Al catálogo, filtrado'],
     ['producto', 'A un producto'],
+    ['promocion', 'A una promoción'],
     ['premia', 'Al Crunchy Club'],
     ['pedidos', 'A sus pedidos'],
     ['cuenta', 'A su cuenta']
@@ -133,7 +136,7 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 
   var original = [];   // lo que hay guardado ahora
   var lista = [];      // lo que se está editando
-  var sabores = [], presentaciones = [], productos = [];
+  var sabores = [], presentaciones = [], productos = [], promociones = [];
   var token = '';
 
   function sesion() {
@@ -166,6 +169,11 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
       if (!b.productoId) return 'Falta elegir el producto.';
       var hay = productos.some(function (p) { return Number(p.id) === Number(b.productoId); });
       return hay ? null : 'Ese producto ya no existe o está dado de baja.';
+    }
+    if (b.destino === 'promocion') {
+      if (!b.promocionId) return 'Falta elegir la promoción.';
+      var pr = promociones.filter(function (x) { return Number(x.id) === Number(b.promocionId); })[0];
+      return pr ? null : 'Esa promoción ya no existe.';
     }
     if (b.destino === 'catalogo') {
       if (!b.sabor && !b.presentacion) return 'Elige un sabor, una presentación o las dos.';
@@ -223,7 +231,7 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 
       rej.appendChild(selector('A dónde lleva', b.destino || '', SECCIONES, function (v) {
         b.destino = v;
-        delete b.sabor; delete b.presentacion; delete b.productoId;
+        delete b.sabor; delete b.presentacion; delete b.productoId; delete b.promocionId;
         pintar();
       }));
 
@@ -234,6 +242,12 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
         rej.appendChild(selector('Presentación', b.presentacion || '',
           [['', 'Cualquiera']].concat(presentaciones.map(function (p) { return [p, p]; })),
           function (v) { if (v) b.presentacion = v; else delete b.presentacion; pintar(); }));
+      } else if (b.destino === 'promocion') {
+        rej.appendChild(selector('Promoción', b.promocionId || '',
+          [['', 'Elige una']].concat(promociones.map(function (pr) {
+            return [pr.id, pr.nombre + (pr.viva ? '' : ' · ' + pr.porque)];
+          })),
+          function (v) { if (v) b.promocionId = Number(v); else delete b.promocionId; pintar(); }));
       } else if (b.destino === 'producto') {
         rej.appendChild(selector('Producto', b.productoId || '',
           [['', 'Elige uno']].concat(productos.map(function (p) {
@@ -247,6 +261,20 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
       m.className = 'marca-estado ' + (falta ? 'e-mal' : 'e-bien');
       m.textContent = falta ? falta : (b.destino ? 'El destino existe' : 'Solo se mira');
       cuerpo.appendChild(m);
+
+      // Una promoción que existe pero no está viva HOY no es un error -se
+      // prepara antes de que empiece-, pero sí es algo que hay que decir:
+      // mientras no lo esté, el banner lleva al catálogo sin filtrar.
+      if (!falta && b.destino === 'promocion') {
+        var pr2 = promociones.filter(function (x) { return Number(x.id) === Number(b.promocionId); })[0];
+        if (pr2 && !pr2.viva) {
+          var av = document.createElement('span');
+          av.className = 'marca-estado e-ojo';
+          av.style.marginLeft = '6px';
+          av.textContent = pr2.porque + ': hasta entonces lleva al catálogo';
+          cuerpo.appendChild(av);
+        }
+      }
 
       var acc = document.createElement('div'); acc.className = 'ban-acc';
       acc.appendChild(boton('↑ Subir', i === 0, function () { mover(i, -1); }));
@@ -336,6 +364,19 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
       headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE }
     }).then(function (x) { return x.json(); }).catch(function () { return null; });
     if (!Array.isArray(prods)) { toast('No se pudo leer el catálogo.'); return; }
+
+    // Las promociones, por el RPC del dueño: la tabla está cerrada por RLS.
+    var pr = await fetch(RPC + 'promociones_admin', {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify({ p_data: { token: token } })
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+    promociones = (pr && pr.ok && Array.isArray(pr.promociones) ? pr.promociones : []).map(function (p) {
+      var hoy = new Date().toISOString().slice(0, 10);
+      var viva = !!p.activa && String(p.desde) <= hoy && hoy <= String(p.hasta);
+      return { id: p.id, nombre: p.nombre, viva: viva,
+               porque: !p.activa ? 'pausada' : (hoy < String(p.desde) ? 'empieza el ' + p.desde : 'terminó el ' + p.hasta) };
+    });
     productos = prods;
     sabores = []; presentaciones = [];
     prods.forEach(function (p) {

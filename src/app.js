@@ -1276,6 +1276,7 @@ function getPrecio(prod) {
 // iguales se separan al primer redondeo, y entonces NINGUN pedido de un
 // producto en promocion podria cerrarse.
 let _promoPorProducto = {};   // id de producto -> { idPromocion, precio }
+let _promocionesVivas = [];   // [{ id, nombre, aterriza }] — las que hoy ganan en algún producto
 
 async function cargarPromociones() {
   const canal = esVendedor ? (canalVenta || 'consumidor') : (tipoCliente || 'consumidor');
@@ -1293,7 +1294,8 @@ async function cargarPromociones() {
         pct: p.pct == null ? null : Number(p.pct), nombre: p.nombre }; });
     }
     _promoPorProducto = m;
-  } catch (e) { _promoPorProducto = {}; }   // sin promos se vende al precio de lista
+    _promocionesVivas = (r && r.ok && Array.isArray(r.promociones)) ? r.promociones : [];
+  } catch (e) { _promoPorProducto = {}; _promocionesVivas = []; }   // sin promos se vende al precio de lista
 }
 window.cargarPromociones = cargarPromociones;
 
@@ -6339,11 +6341,40 @@ window.mostrarInstruccionesInstalar = function() {
     setTimeout(fn, 250);
   }
   function aplicarDestinoBanner(b) {
-    try { track('banner_click', { img: b.img, destino: b.destino || 'none', sabor: b.sabor || '', presentacion: b.presentacion || '' }); } catch(e) {}
+    try { track('banner_click', { img: b.img, destino: b.destino || 'none', sabor: b.sabor || '', presentacion: b.presentacion || '', promocion: b.promocionId || '' }); } catch(e) {}
     var dest = b.destino;
     if (!dest) return;
     if (dest === 'producto' && b.productoId != null) {
       irAInicioLuego(function () { if (window.verProducto) window.verProducto(b.productoId); });
+      return;
+    }
+    // PROMOCION (24 nov 2026): el banner guarda el ID y la promocion decide
+    // donde cae el clic. Asi el banner no nombra ningun sabor, que es como se
+    // rompio el de junio. Si la promocion no esta viva hoy -o ya no gana en
+    // ningun producto- el clic lleva al catalogo sin filtrar, que es lo
+    // honesto: no hay nada que ensenar.
+    if (dest === 'promocion' && b.promocionId != null) {
+      var idp = Number(b.promocionId);
+      var info = _promocionesVivas.filter(function (p) { return Number(p.id) === idp; })[0];
+      var cubiertos = Object.keys(_promoPorProducto)
+        .filter(function (k) { return Number(_promoPorProducto[k].idPromocion) === idp; });
+      irAInicioLuego(function () {
+        if (!info || !cubiertos.length) return;   // al catalogo, sin filtro
+        if (info.aterriza === 'producto' && cubiertos.length === 1 && window.verProducto) {
+          window.verProducto(cubiertos[0]); return;
+        }
+        // El filtro sale de lo que la promocion cubre DE VERDAD, no de un
+        // texto guardado: si manana aplica a otro sabor, el banner la sigue.
+        var prods = cubiertos.map(function (k) {
+          return (typeof catalogo !== 'undefined' ? catalogo : []).filter(function (p) { return String(p.id) === String(k); })[0];
+        }).filter(Boolean);
+        var sab = prods.length ? prods[0].sabor : null;
+        var pres = prods.length ? prods[0].presentacion : null;
+        var unSabor = sab && prods.every(function (p) { return p.sabor === sab; });
+        var unaPres = pres && prods.every(function (p) { return p.presentacion === pres; });
+        if (window.cambiarSabor) window.cambiarSabor(unSabor ? sab : '__todos');
+        if (unaPres && window.cambiarPresentacion) window.cambiarPresentacion(pres);
+      });
       return;
     }
     if (dest === 'catalogo') {
