@@ -185,7 +185,8 @@ def medir():
 
 
 def medir_pendientes(datos):
-    """La OTRA direccion, y es la que fallo primero.
+    """Las OTRAS dos direcciones: lo pendiente que ya se hizo, y lo hecho que
+    dejo de estarlo.
 
     `comprobar()` solo atrapa un sentido: el mapa dice «hecho» y no existe. El
     22 nov 2026 fallo el sentido contrario -el que este proyecto repite-: el
@@ -207,6 +208,34 @@ def medir_pendientes(datos):
     veredictos = {}
     for f in datos['frentes']:
         for it in f['items']:
+            # ── La TERCERA direccion (24 nov 2026) ───────────────────────────
+            # Hasta hoy, una pieza marcada «hecha» no se volvia a mirar nunca:
+            # se comprobaba que su `vive_en` EXISTIERA, nada mas. Una tabla
+            # sigue existiendo aunque alguien tire su trigger, y un cron sigue
+            # listado aunque lleve tres meses fallando. Asi que una pieza hecha
+            # puede declarar el HECHO que la sostiene, y el mapa falla si deja
+            # de ser cierto:
+            #
+            #     "sigue_hecho": "<SQL que devuelve una fila, columna `hecho`>"
+            #
+            # Mismo criterio que la otra direccion: un hecho suelto, nunca una
+            # copia de la logica (regla 63), y si no contesta se declara ROTA y
+            # no «sigue hecho» (regla 31).
+            if it['estado'] == 'hecho':
+                consulta = it.get('sigue_hecho')
+                if not consulta:
+                    continue
+                filas = sql(consulta)
+                if not filas or 'hecho' not in filas[0]:
+                    veredictos[(f['clave'], it['nombre'])] = (
+                        'COMPROBACIÓN ROTA',
+                        'la consulta no devolvió una columna `hecho`')
+                    continue
+                sigue = filas[0]['hecho'] in (True, 't', 'true', 'True')
+                veredictos[(f['clave'], it['nombre'])] = (
+                    ('sigue hecho' if sigue else 'YA NO ESTÁ HECHO'),
+                    'el hecho que lo sostiene %s' % ('se cumple' if sigue else 'DEJÓ DE CUMPLIRSE'))
+                continue
             if it['estado'] not in ('pendiente', 'en curso', 'bloqueado'):
                 continue
             ruta = it.get('sigue_pendiente_sin_archivo')
@@ -479,7 +508,7 @@ def main():
             atras = pendientes.get((f['clave'], i['nombre']))
             if atras:
                 veredicto, detalle = atras
-                if veredicto != 'sigue pendiente':
+                if veredicto not in ('sigue pendiente', 'sigue hecho'):
                     mal = True
                     problemas.append('%s · %s · dice «%s» y %s'
                                      % (f['clave'], i['nombre'], i['estado'], detalle))
