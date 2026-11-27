@@ -356,6 +356,19 @@ select.inp { appearance: none; cursor: pointer; }
    version: Abraham la vio y la quito — «me parece mejor como se ve la etiqueta
    de promo y descuento, quitemos la linea que une a ambos, estaba equivocado»
    (24 nov 2026). Quedan las dos marcas, en sus esquinas, del mismo tamaño. */
+/* «En promoción»: la pestaña y la banda que dice qué hay y hasta cuándo.
+   El acento rojo se usa con avaricia (DIRECCION-DE-DISENO): aquí se lo gana
+   porque es lo único de la fila que cambia el precio. */
+.tab-promo{border-color:var(--rojo);color:var(--rojo);font-weight:800}
+.tab-promo.active{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+.promo-banda{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.promo-banda-fila{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:var(--panel,#fff);border:1px solid var(--linea,#e2ddd4);
+  border-left:3px solid var(--rojo);border-radius:10px;padding:9px 12px}
+.promo-banda-pct{font-weight:800;color:var(--rojo);font-variant-numeric:tabular-nums;white-space:nowrap}
+.promo-banda-nom{flex:1;min-width:0;font-weight:700;font-size:.9rem}
+.promo-banda-hasta{font-size:.76rem;opacity:.7;white-space:nowrap}
+
 .promo-cinta {
   position:absolute; top:8px; left:8px; right:8px; z-index:2;
   display:flex; align-items:center; justify-content:space-between; pointer-events:none;

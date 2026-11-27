@@ -1163,7 +1163,15 @@ async function cargarCatalogo(forzarFresh) {
   // Las promociones van en paralelo y repintan cuando llegan: esperar a que
   // contesten retrasaria la primera pantalla por un descuento que casi nunca
   // hay. Mientras no llegan se ve el precio de lista, que es el correcto.
-  cargarPromociones().then(() => { if (window.renderCatalogo) renderCatalogo(); });
+  cargarPromociones().then(() => {
+    // Las promociones llegan DESPUES de la primera pintada y, desde el 26 nov
+    // 2026, tambien deciden una pestaña -«En promocion»-, no solo el precio de
+    // las tarjetas. Repintando solo el catalogo, la pestaña no aparecia en la
+    // primera carga: salia al cambiar de filtro, que es justo lo que nadie hace
+    // para descubrirla.
+    if (window.renderTabs) renderTabs();
+    if (window.renderCatalogo) renderCatalogo();
+  });
   // Siempre arrancar con catálogo local para mostrar algo de inmediato
   catalogo = generarCatalogoLocal();
   if (!saborActivo) saborActivo = SABORES_ORDER[0];
@@ -1322,10 +1330,17 @@ window.renderTabs = function() {
   const tieneBebidas = hayBebidasVisibles();
   // Si saborActivo es '__bebidas' pero ya no hay bebidas, resetear
   if (saborActivo === '__bebidas' && !tieneBebidas) saborActivo = '';
-  if (!saborActivo || (saborActivo !== '__bebidas' && saborActivo !== '__todos' && !sabores.includes(saborActivo))) {
+  // Si ya no hay promociones vivas, la pestaña desaparece y con ella el filtro.
+  const hayPromos = Array.isArray(_promocionesVivas) && _promocionesVivas.length > 0;
+  if (saborActivo === '__promo' && !hayPromos) saborActivo = '';
+  if (!saborActivo || (saborActivo !== '__bebidas' && saborActivo !== '__promo' && saborActivo !== '__todos' && !sabores.includes(saborActivo))) {
     saborActivo = sabores[0] || '';
   }
-  let html = `<button class="tab ${saborActivo==='__todos'?'active':''}" onclick="cambiarSabor('__todos')">Todos</button>`;
+  let html = '';
+  if (hayPromos) {
+    html += `<button class="tab tab-promo ${saborActivo==='__promo'?'active':''}" onclick="cambiarSabor('__promo')">En promoción</button>`;
+  }
+  html += `<button class="tab ${saborActivo==='__todos'?'active':''}" onclick="cambiarSabor('__todos')">Todos</button>`;
   html += sabores.map(s => `
     <button class="tab ${s===saborActivo?'active':''}" onclick="cambiarSabor('${s}')">
       ${saborDot(s)}${s}
@@ -1340,6 +1355,39 @@ window.renderTabs = function() {
 }
 
 window.cambiarSabor = function(s) { saborActivo=s; renderTabs(); renderCatalogo(); try{ track('filter_sabor', { sabor: s }); }catch(e){} };
+
+// La banda de «En promoción»: una linea por promocion viva, con lo que baja y
+// hasta cuando. La fecha viene del SERVIDOR; aqui solo se escribe, porque si
+// la calculara el navegador habria dos relojes que no siempre coinciden.
+function bandaPromociones() {
+  const vivas = Array.isArray(_promocionesVivas) ? _promocionesVivas : [];
+  if (!vivas.length) return '';
+  const hoy = new Date().toISOString().slice(0, 10);
+  const lineas = vivas.map(pr => {
+    const cuanto = pr.pct != null ? `−${pr.pct}%` : 'precio especial';
+    let cuando = '';
+    if (pr.hasta) {
+      const d = new Date(pr.hasta + 'T12:00:00-06:00');
+      cuando = (String(pr.hasta) === hoy)
+        ? 'solo hoy'
+        : 'hasta el ' + d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', timeZone: 'America/Mexico_City' });
+    }
+    return `<div class="promo-banda-fila">
+        <span class="promo-banda-pct">${cuanto}</span>
+        <span class="promo-banda-nom">${escaparHTML(pr.nombre || 'Promoción')}</span>
+        ${cuando ? `<span class="promo-banda-hasta">${cuando}</span>` : ''}
+      </div>`;
+  }).join('');
+  return `<div class="promo-banda">${lineas}</div>`;
+}
+
+// El nombre de una promocion lo escribe el dueño, asi que se escapa antes de
+// pintarlo: es texto, no HTML (ataque 11 de la lista de seguridad).
+function escaparHTML(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 // Filtro por presentación (100g, 1kg…) — solo papas; se cruza con el sabor
 function getPresentaciones() {
@@ -1456,7 +1504,11 @@ window.setCanalVenta = function(canal) {
   guardarSesion();
   // Una promocion es de un publico -consumidores o tiendas- y su precio sale
   // del precio de ESE canal: al cambiar de canal hay que volver a pedirlas.
-  cargarPromociones().then(() => { if (window.renderCatalogo) renderCatalogo(); });
+  cargarPromociones().then(() => {
+    // Mismo motivo que arriba: la pestaña depende de lo que conteste el servidor.
+    if (window.renderTabs) renderTabs();
+    if (window.renderCatalogo) renderCatalogo();
+  });
 
   // Actualizar botones
   ['consumidor','tienda','restaurante','mayorista'].forEach(c => {
@@ -1557,7 +1609,11 @@ function ordenarProductos(arr) {
 window.renderCatalogo = function() {
   // v2.7: si tab activo es bebidas, mostrar bebidas; si es sabor de papa, filtrar por sabor
   let prods;
-  if (saborActivo === '__bebidas') {
+  if (saborActivo === '__promo') {
+    // Lo que el servidor dice que tiene promocion hoy, no una lista aparte.
+    prods = catalogo.filter(p => _promoPorProducto[String(p.id)]
+            && (presentacionActiva==='' || (p.presentacion||'').trim()===presentacionActiva));
+  } else if (saborActivo === '__bebidas') {
     prods = catalogo.filter(p => (p.categoria || '') === 'bebida');
   } else if (saborActivo === '__todos') {
     prods = catalogo.filter(p => p.tipo_venta===1 && (p.categoria||'papa')==='papa'
@@ -1570,7 +1626,8 @@ window.renderCatalogo = function() {
   prods = ordenarProductos(prods);
   // Preservar modo de venta actual
   if (esVendedor) setTimeout(aplicarModoVenta, 0);
-  document.getElementById('catalogo').innerHTML = prods.map(p => {
+  const bandaPromo = (saborActivo === '__promo') ? bandaPromociones() : '';
+  document.getElementById('catalogo').innerHTML = bandaPromo + prods.map(p => {
     const key  = `${p.id}`;
     const it   = carrito[key];
     const qty  = it ? it.qty : 0;
@@ -1668,6 +1725,8 @@ window.renderCatalogo = function() {
   if (prods.length === 0) {
     const msg = saborActivo === '__bebidas'
       ? 'Aún no hay bebidas registradas. Da de alta una en la sección Productos.'
+      : saborActivo === '__promo'
+      ? 'Ahora mismo no hay nada en promoción.'
       : 'No hay productos para mostrar.';
     document.getElementById('catalogo').innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--suave);padding:30px 20px;font-size:0.85rem;">${msg}</div>`;
   }
@@ -6363,6 +6422,12 @@ window.mostrarInstruccionesInstalar = function() {
         if (info.aterriza === 'producto' && cubiertos.length === 1 && window.verProducto) {
           window.verProducto(cubiertos[0]); return;
         }
+        // Desde el 26 nov 2026 «aterriza en la promocion» ya tiene sitio: la
+        // pestaña «En promocion». Antes caia en el catalogo filtrado por
+        // sabor, que era la degradacion que quedaba dicha en voz alta.
+        if (info.aterriza === 'promocion' && window.cambiarSabor) {
+          window.cambiarSabor('__promo'); return;
+        }
         // El filtro sale de lo que la promocion cubre DE VERDAD, no de un
         // texto guardado: si manana aplica a otro sabor, el banner la sigue.
         var prods = cubiertos.map(function (k) {
@@ -6443,7 +6508,14 @@ window.mostrarInstruccionesInstalar = function() {
   }
 
   try {
-    fetch(BASE + 'banner/banners.json', { cache: 'no-store' })
+    // `cache: 'no-store'` manda sobre el navegador, pero NO sobre el CDN de
+    // Storage, que sirve su propia copia. Medido el 26 nov 2026 en staging:
+    // tras guardar banners nuevos, esta misma URL devolvia los VIEJOS mientras
+    // que con `?t=` devolvia los nuevos. La consola de banners siempre uso
+    // cache-buster, asi que ensenaba la verdad mientras la app mostraba otra
+    // cosa: cambias un banner, lo ves bien, y el cliente sigue viendo el de
+    // antes sin que nadie se entere.
+    fetch(BASE + 'banner/banners.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (arr) {
         var ban = (Array.isArray(arr) ? arr : []).filter(function (b) { return b && b.img; });
