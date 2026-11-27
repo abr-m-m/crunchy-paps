@@ -27,7 +27,7 @@ window.buscarClienteUbicacion = async function() {
   if (q.length < 3) { if (cont) { cont.style.display = 'block'; cont.innerHTML = '<span style="color:var(--error-txt);">Escribe al menos 3 letras del nombre o el teléfono.</span>'; } return; }
   if (cont) { cont.style.display = 'block'; cont.innerHTML = 'Buscando…'; }
   try {
-    const r = await supabaseCall('POST', 'rpc/buscar_clientes_ubicacion', { p_q: q });
+    const r = await supabaseCall('POST', 'rpc/buscar_clientes_ubicacion', { p_q: q, p_token: tokenVendedor() });
     const lista = (r && r.ok && Array.isArray(r.clientes)) ? r.clientes : [];
     if (!lista.length) {
       cont.innerHTML = '<span style="color:var(--error-txt);">Sin resultados. Prueba con otra parte del nombre o el teléfono.</span>';
@@ -75,7 +75,7 @@ window.guardarAjusteUbicacion = async function() {
   const btn = document.getElementById('au-guardar'); const orig = btn.textContent; btn.disabled = true; btn.textContent = 'Guardando…';
   try {
     const coordStr = `${window._auGps.lat},${window._auGps.lng}`;
-    const r = await supabaseCall('POST', 'rpc/set_ubicacion_cliente', { p_telefono: window._auTel, p_coordenadas: coordStr });
+    const r = await supabaseCall('POST', 'rpc/set_ubicacion_cliente', { p_telefono: window._auTel, p_coordenadas: coordStr, p_token: tokenVendedor() });
     btn.disabled = false; btn.textContent = orig;
     if (r && r.ok) {
       mostrarToast(`Ubicación actualizada para ${r.nombre || 'el cliente'}.`);
@@ -7410,7 +7410,7 @@ async function renderCaja() {
   cont.innerHTML = '<div style="text-align:center;color:var(--suave);padding:30px 0;"><span class="loader loader-w"></span> Cargando...</div>';
 
   try {
-    const res = await supabaseCall('POST', 'rpc/obtener_caja_dia', { p_fecha: _cajaFecha });
+    const res = await supabaseCall('POST', 'rpc/obtener_caja_dia', { p_fecha: _cajaFecha, p_token: tokenVendedor() });
     if (!res || !res.ok) {
       cont.innerHTML = '<div style="color:var(--rojo);padding:14px;">Error al cargar caja</div>';
       return;
