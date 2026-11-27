@@ -109,6 +109,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.45}
 </div>
 
 <script src="/api/config.js"></script>
+<!-- La entrada (telefono + PIN) de TODAS las consolas, escrita una vez.
+     Tiene que cargar antes que el script de abajo, que la usa. -->
+<script src="/entrar.js"></script>
 <script>
 (function () {
   'use strict';
@@ -133,8 +136,10 @@ textarea{min-height:110px;resize:vertical;line-height:1.45}
 
   var ses = sesion();
   if (!ses) {
+    // Ver `promociones.html`: la entrada vive aqui, no en la app.
     $('sin-sesion').style.display = '';
     $('quien').textContent = 'Sin sesión';
+    if (window.CPEntrar) CPEntrar.montar('sin-sesion', function () { location.reload(); });
     return;
   }
   $('formulario').style.display = '';

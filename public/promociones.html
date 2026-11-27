@@ -170,6 +170,9 @@ td.bien{color:var(--bien-tx);font-weight:700}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="/api/config.js"></script>
+<!-- La entrada (telefono + PIN) de TODAS las consolas, escrita una vez.
+     Tiene que cargar antes que el script de abajo, que la usa. -->
+<script src="/entrar.js"></script>
 <script>
 (function () {
   'use strict';
@@ -661,7 +664,14 @@ td.bien{color:var(--bien-tx);font-weight:700}
 
   var ses = sesion();
   if (!ses) {
-    $('sin-sesion').hidden = false; $('quien').textContent = 'Sin sesión';
+    // La entrada vive AQUI desde el 27 nov 2026: antes esto mandaba a abrir
+    // la app y volver, que en la computadora era un callejon sin salida.
+    // `CPEntrar` la pinta dentro de #sin-sesion y recarga al entrar, asi que el
+    // arranque de abajo no cambia. Si /entrar.js no cargara, se queda el aviso
+    // de siempre con su enlace: degradar no es quedarse en blanco.
+    $('quien').textContent = 'Sin sesión';
+    $('sin-sesion').hidden = false;
+    if (window.CPEntrar) CPEntrar.montar('sin-sesion', function () { location.reload(); });
     return;
   }
   token = ses.token;
