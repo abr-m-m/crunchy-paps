@@ -187,7 +187,10 @@ td.bien{color:var(--bien-tx);font-weight:700}
     ['precio_fijo', 'Precio fijo'],
     ['paquete', 'Paquete de varios']
   ];
-  var PUBLICOS = [['todos', 'Todos'], ['consumidores', 'Consumidores'], ['tiendas', 'Tiendas']];
+  // 27 nov 2026: el restaurante es suyo. «Cada uno es independiente» -Abraham-:
+  // otro precio de lista y otro margen. El mayorista no esta y no estara.
+  var PUBLICOS = [['todos', 'Todos menos mayoristas'], ['consumidores', 'Consumidores'],
+                  ['tiendas', 'Tiendas'], ['restaurantes', 'Restaurantes']];
   var ATERRIZA = [
     ['promocion', 'A la promoción'],
     ['catalogo', 'Al catálogo filtrado'],
@@ -280,7 +283,10 @@ td.bien{color:var(--bien-tx);font-weight:700}
     var v = p.tipo === 'precio_fijo' ? pesos(p.valor) : (p.valor + ' %');
     var t = (TIPOS.filter(function (x) { return x[0] === p.tipo; })[0] || ['', p.tipo])[1];
     var pu = (PUBLICOS.filter(function (x) { return x[0] === p.publico; })[0] || ['', p.publico])[1];
-    return t + ' · ' + v + ' · ' + pu + ' · ' + (p.desde || '') + ' → ' + (p.hasta || '');
+    // La clave va delante: es lo que se copia a la hoja del mes siguiente
+    // para corregir ESTA promocion en vez de crear otra.
+    return (p.clave ? p.clave + ' · ' : '') +
+           t + ' · ' + v + ' · ' + pu + ' · ' + (p.desde || '') + ' → ' + (p.hasta || '');
   }
 
   // ── El editor ───────────────────────────────────────────────────────────
@@ -529,8 +535,11 @@ td.bien{color:var(--bien-tx);font-weight:700}
   // Las cabeceras se mandan como las escribio la persona: el servidor las
   // normaliza y decide que columna es cada cosa. Elegir cual es el descuento
   // es decidir un precio, y eso no lo decide el navegador (regla 10).
-  var CABECERAS = ['Nombre', 'Vigencia desde', 'Vigencia hasta', 'SKU', '% Descuento',
-                   'Canal', 'Segmentación', 'Presupuesto', 'Límite por cliente',
+  // «Clave» va PRIMERA porque es la identidad; dejarla vacia esta bien, la pone
+  // el servidor y vuelve en el informe. «id producto» es opcional: una regla por
+  // SABOR no tiene id, asi que no puede ser obligatoria.
+  var CABECERAS = ['Clave', 'Nombre', 'Vigencia desde', 'Vigencia hasta', 'id producto', 'SKU',
+                   '% Descuento', 'Canal', 'Segmentación', 'Presupuesto', 'Límite por cliente',
                    'Límite total', 'Gancho'];
   var filasX = null;   // lo ultimo que se leyo del archivo
 
@@ -540,11 +549,15 @@ td.bien{color:var(--bien-tx);font-weight:700}
     var fin = yyyy + '-' + String(mm).padStart(2, '0') + '-28';
     var uno = productos[0] || { sabor: 'Naturales', presentacion: 'Bolsa 50g' };
     var ejemplo = [
-      { 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini, 'Vigencia hasta': fin,
+      // Dos filas de la MISMA promocion: una por SKU exacto (con id) y otra por
+      // sabor entero (sin id, que no lo tiene).
+      { 'Clave': '', 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini,
+        'Vigencia hasta': fin, 'id producto': uno.id,
         'SKU': uno.sabor + ' ' + uno.presentacion, '% Descuento': 10, 'Canal': 'consumidor',
         'Segmentación': 'todos', 'Presupuesto': 500, 'Límite por cliente': 2,
         'Límite total': 50, 'Gancho': '' },
-      { 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini, 'Vigencia hasta': fin,
+      { 'Clave': '', 'Nombre': 'Ejemplo: ' + uno.sabor + ' del mes', 'Vigencia desde': ini,
+        'Vigencia hasta': fin, 'id producto': '',
         'SKU': uno.sabor, '% Descuento': 10, 'Canal': 'consumidor', 'Segmentación': 'todos',
         'Presupuesto': 500, 'Límite por cliente': 2, 'Límite total': 50, 'Gancho': '' }
     ];
@@ -552,11 +565,13 @@ td.bien{color:var(--bien-tx);font-weight:700}
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ejemplo, { header: CABECERAS }), 'Promociones');
 
     var notas = [
-      { 'columna': 'Nombre', 'que vale': 'el texto que quieras', 'notas': 'las filas con el MISMO nombre son una sola promocion; un nombre que ya existe se actualiza' },
+      { 'columna': 'Clave', 'que vale': 'vacio, o una clave que ya exista', 'notas': 'la IDENTIDAD de la promocion (CP2612-C01). Vacia: la pone el servidor y te la dice. Escrita: actualiza ESA, aunque le cambies el nombre' },
+      { 'columna': 'Nombre', 'que vale': 'el texto que quieras', 'notas': 'el titulo que ve el cliente; las filas de una misma promocion comparten clave (o nombre, si no hay clave)' },
+      { 'columna': 'id producto', 'que vale': 'el id del catalogo, o vacio', 'notas': 'si lo pones MANDA EL ID y el SKU se usa para comprobar: si no concuerdan, la fila se para. Una regla por SABOR no lleva id' },
       { 'columna': 'Vigencia desde / hasta', 'que vale': 'AAAA-MM-DD', 'notas': 'o una fecha de Excel; evita DD/MM/AAAA' },
       { 'columna': 'SKU', 'que vale': 'id, «Sabor Presentacion», un sabor o una presentacion', 'notas': 'un sabor solo = todas sus presentaciones' },
       { 'columna': '% Descuento', 'que vale': '1 a 100', 'notas': 'el mismo en todas las filas de la promocion' },
-      { 'columna': 'Canal', 'que vale': 'consumidor | tienda | todos', 'notas': 'el mayorista nunca entra en promociones' },
+      { 'columna': 'Canal', 'que vale': 'consumidor | tienda | restaurante | todos', 'notas': 'son CUATRO y no mas; el mayorista nunca entra (ya compra al precio mas bajo). «todos» = los tres primeros' },
       { 'columna': 'Segmentación', 'que vale': 'todos', 'notas': 'por cliente todavia no existe: se rechaza cualquier otra cosa' },
       { 'columna': 'Presupuesto', 'que vale': 'pesos de descuento', 'notas': 'vacio = sin tope' },
       { 'columna': 'Límite por cliente', 'que vale': 'numero de PEDIDOS', 'notas': 'vacio = sin tope' },
@@ -624,7 +639,7 @@ td.bien{color:var(--bien-tx);font-weight:700}
     var t = document.createElement('table'); t.className = 'margen';
     var thead = document.createElement('thead'), htr = document.createElement('tr');
     var cols = errs.length ? ['Fila', 'Nombre', 'Qué pasa']
-                           : ['Fila', 'Nombre', 'SKU', '%', 'Canal', 'Vigencia', 'Topes', 'Peor margen', ''];
+                           : ['Fila', 'Clave', 'Nombre', 'Alcance', '%', 'Canal', 'Vigencia', 'Topes', 'Peor margen', ''];
     cols.forEach(function (c) { var th = document.createElement('th'); th.textContent = c; htr.appendChild(th); });
     thead.appendChild(htr); t.appendChild(thead);
     var tb = document.createElement('tbody');
@@ -647,10 +662,17 @@ td.bien{color:var(--bien-tx);font-weight:700}
         if (x.limiteTotal) topes.push(x.limiteTotal + ' total');
         if (x.presupuesto) topes.push(pesos(x.presupuesto));
         celda(tr, x.fila);
+        celda(tr, x.clave || '—');
         celda(tr, x.nombre);
-        celda(tr, x.skus + (x.skus === 1 ? ' sku' : ' skus'));
+        // Dos numeros, no uno. Antes aqui salia el de REGLAS con el nombre
+        // «skus», y una promo por sabor decia «1 sku» moviendo cinco precios.
+        var reglas = x.reglas == null ? x.skus : x.reglas;
+        var cuantos = x.skus == null ? reglas : x.skus;
+        celda(tr, cuantos + (cuantos === 1 ? ' SKU' : ' SKU') +
+                  (reglas !== cuantos ? ' (' + reglas + (reglas === 1 ? ' regla)' : ' reglas)') : ''));
         celda(tr, x.pct + ' %', 'num');
-        celda(tr, x.canal === 'consumidores' ? 'consumidor' : (x.canal === 'tiendas' ? 'tienda' : 'todos'));
+        celda(tr, ({ consumidores: 'consumidor', tiendas: 'tienda',
+                     restaurantes: 'restaurante' })[x.canal] || 'todos');
         celda(tr, x.desde + ' → ' + x.hasta);
         celda(tr, topes.length ? topes.join(' · ') : 'sin tope');
         var m = x.peorMargen;
