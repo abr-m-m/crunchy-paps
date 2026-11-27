@@ -44,6 +44,8 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 .sku-id{flex:1;min-width:0}
 .sku-id h2{font-family:Archivo,sans-serif;font-size:1rem;font-weight:700;line-height:1.2}
 .sku-id .meta{font-size:.76rem;color:var(--tinta2);margin-top:3px}
+a.mini{display:inline-flex;align-items:center;text-decoration:none}
+.acc-ss{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .mini{min-height:32px;padding:5px 10px;border-radius:8px;border:1px solid var(--linea);
       background:transparent;color:var(--tinta);font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer}
 
@@ -102,7 +104,14 @@ h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spaci
 
 <div class="caja" id="sin-sesion" hidden>
   <p class="aviso">Esta pantalla es solo para el dueño.
-  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+  <b>Entra en Crunchy Paps con tu teléfono y vuelve aquí.</b></p>
+  <!-- El enlace abre OTRA pestaña: esta se queda abierta y «Ya entré» la
+       relee. El privilegio de vendedor dura 12 h, asi que esto pasa a
+       diario y mandar a alguien a un sitio sin puerta cuesta cada vez. -->
+  <div class="acc-ss">
+    <a class="mini" href="/" target="_blank" rel="noopener">Abrir Crunchy Paps</a>
+    <button class="mini" type="button" onclick="location.reload()">Ya entré · reintentar</button>
+  </div>
 </div>
 
 <div id="app" hidden>

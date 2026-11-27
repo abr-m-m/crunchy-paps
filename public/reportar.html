@@ -55,7 +55,15 @@ textarea{min-height:110px;resize:vertical;line-height:1.45}
 
 <div class="tarjeta" id="sin-sesion" style="display:none">
   <p class="aviso">Para reportar hace falta tu sesión de la app.
-  <b>Abre Crunchy Paps, entra con tu teléfono y vuelve aquí.</b></p>
+  <b>Entra en Crunchy Paps con tu teléfono y vuelve aquí.</b></p>
+  <!-- Igual que en las consolas del dueño: el enlace abre OTRA pestaña y
+       «Ya entré» relee esta, para no perder lo escrito. -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+    <a href="/" target="_blank" rel="noopener"
+       style="display:inline-flex;align-items:center;min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);color:inherit;text-decoration:none;font-weight:700;font-size:.78rem">Abrir Crunchy Paps</a>
+    <button type="button" onclick="location.reload()"
+       style="min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);background:transparent;color:inherit;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer">Ya entré · reintentar</button>
+  </div>
   <p class="aviso" style="margin-top:10px">Se usa para saber quién lo reporta: nada más.</p>
 </div>
 
