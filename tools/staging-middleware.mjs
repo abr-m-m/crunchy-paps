@@ -145,6 +145,10 @@ export async function manejarStaging(req, res) {
     res.writeHead(200, { 'content-type': 'application/javascript' });
     res.end(`window.__CP_CONFIG__ = ${JSON.stringify({
       SUPABASE_URL: STAGING, SUPABASE_ANON_KEY: LLAVE, ENTORNO: 'staging',
+      // Igual que /api/config.js: esto habla con staging, asi que lleva la
+      // marca de agua. Sin esta linea el servidor local seria el unico
+      // sitio con datos de mentira y sin aviso.
+      ES_PRUEBAS: true,
       // Push (entrega 4): la pública sale de .env.push si está cargada; sin
       // ella la pantalla Armado no ofrece avisos, que es lo correcto.
       VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || deEnvPush('VAPID_PUBLIC_KEY'),

@@ -55,7 +55,16 @@ module.exports = async (req, res) => {
     // Llave de Google Maps por entorno. Vacía = la app usa la que trae
     // index.html. Viaja al navegador por diseño; lo que la protege son sus
     // restricciones de sitio web.
-    GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY || ''
+    GOOGLE_MAPS_KEY: process.env.GOOGLE_MAPS_KEY || '',
+    // true cuando la app NO habla con la base de produccion. Es lo que decide
+    // la marca de agua de «PRUEBAS». Lo importante no es en que servidor vive
+    // la pagina -el despliegue de produccion del proyecto de pruebas tambien
+    // se llama «production» para Vercel-, sino DE QUE BASE salen los datos.
+    // Se calcula negando el ref de produccion: asi una app nueva nace marcada
+    // y hay que apuntar a la base buena para que la marca desaparezca.
+    ES_PRUEBAS: !String(
+      process.env.PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+    ).includes('xbyzarzyxiugrucyjwfn')
   };
 
   const faltantes = [];

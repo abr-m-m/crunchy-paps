@@ -8,27 +8,15 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
 :root{
-  --papel:#f7f6f2; --panel:#fffffe; --tinta:#14150f; --tinta2:#5d6055; --linea:#dedbd0;
-  --amarillo:#ffd200; --sombra:0 1px 2px rgba(20,21,15,.06);
+  /* Los mismos tokens que `promociones.html`: las siete consolas se ven igual.
+     Y SIN modo oscuro: lo tenian estas dos y ninguna otra, asi que en una
+     computadora en modo oscuro la consola cambiaba de piel ella sola. */
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312;
+  --amarillo:#E5B312; --sombra:0 1px 2px rgba(26,23,20,.06);
   --r1:#e8a91d; --r2:#4f9d69; --r3:#4a86c5;
-  --r1s:#fdf1d2; --r2s:#e0f0e5; --r3s:#dfeaf6;
-  --aviso:#b3261e;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
-    --sombra:0 1px 2px rgba(0,0,0,.4);
-    --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
-    --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
-    --aviso:#ff6b6b;
-  }
-}
-:root[data-theme="dark"]{
-  --papel:#131410; --panel:#1c1e18; --tinta:#eeece2; --tinta2:#a0a496; --linea:#33362c;
-  --sombra:0 1px 2px rgba(0,0,0,.4);
-  --r1:#ffca3a; --r2:#7fd48c; --r3:#8fc2ef;
-  --r1s:#3a2f00; --r2s:#16351a; --r3s:#102a40;
-  --aviso:#ff6b6b;
+  --r1s:#FDF1D2; --r2s:#E0F0E5; --r3s:#dfeaf6;
+  --aviso:#8C1114;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
@@ -56,12 +44,12 @@ section{margin-top:26px}
 .ruta input[type=text]{width:100%;font-family:Archivo,sans-serif;font-weight:700;font-size:1rem;background:transparent;border:0;border-bottom:1px dashed var(--linea);color:var(--tinta);padding:4px 0;min-width:0}
 .dias{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
 .dias label{display:flex;align-items:center;gap:3px;font-size:.74rem;border:1px solid var(--linea);border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--tinta2)}
-.dias label.on{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
-.dias input{margin:0;width:12px;height:12px;accent-color:#14150f}
+.dias label.on{background:var(--amarillo);border-color:var(--amarillo);color:#1A1714;font-weight:700}
+.dias input{margin:0;width:12px;height:12px;accent-color:#1A1714}
 .rcount{margin-top:10px;font-size:.78rem;color:var(--tinta2);font-variant-numeric:tabular-nums}
 .barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 8px}
 button{font-family:Inter,sans-serif;font-size:.82rem;font-weight:600;border-radius:8px;border:1px solid var(--linea);background:var(--panel);color:var(--tinta);padding:8px 12px;cursor:pointer;min-height:38px}
-button.primario{background:var(--amarillo);border-color:var(--amarillo);color:#14150f;font-weight:700}
+button.primario{background:var(--amarillo);border-color:var(--amarillo);color:#1A1714;font-weight:700}
 button:hover{border-color:var(--tinta2)}
 input[type=search]{flex:1 1 180px;min-width:0;background:var(--panel);border:1px solid var(--linea);border-radius:8px;padding:8px 10px;color:var(--tinta);font-size:.85rem;min-height:38px}
 .tabla-caja{overflow-x:auto;background:var(--panel);border:1px solid var(--linea);border-radius:12px;box-shadow:var(--sombra)}
@@ -78,7 +66,7 @@ tr.a3{background:var(--r3s)}
 .seg{display:inline-flex;border:1px solid var(--linea);border-radius:8px;overflow:hidden}
 .seg button{border:0;border-radius:0;min-height:32px;padding:4px 9px;font-size:.76rem;background:transparent;color:var(--tinta2)}
 .seg button+button{border-left:1px solid var(--linea)}
-.seg button[aria-pressed=true]{font-weight:700;color:#14150f}
+.seg button[aria-pressed=true]{font-weight:700;color:#1A1714}
 .seg button.b1[aria-pressed=true]{background:var(--r1)}
 .seg button.b2[aria-pressed=true]{background:var(--r2)}
 .seg button.b3[aria-pressed=true]{background:var(--r3)}
@@ -168,6 +156,8 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
 <div class="toast" id="toast"></div>
 
 <script src="/api/config.js"></script>
+<!-- La marca de agua de la app de pruebas. No hace nada en produccion. -->
+<script src="/pruebas.js"></script>
 <!-- Donde se guarda la sesion, compartido con las demas consolas. -->
 <script src="/entrar.js"></script>
 <script>
@@ -308,7 +298,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
     const vis = datos.cps.filter(x => !q || x.cp.includes(q) || (x.colonias || []).some(c => normalizar(c).includes(q)));
     $('filas').innerHTML = vis.map(x => {
       const k = estado.asignado[x.cp] || null;
-      const seg = estado.rutas.map(r => `<button type="button" data-cp="${x.cp}" data-set="${r.clave}" aria-pressed="${k === r.clave}" title="${esc(r.nombre)}" style="${k === r.clave ? 'background:' + esc(r.color) + ';font-weight:700;color:#14150f' : ''}">${esc((r.nombre || '?').slice(0, 3))}</button>`).join('')
+      const seg = estado.rutas.map(r => `<button type="button" data-cp="${x.cp}" data-set="${r.clave}" aria-pressed="${k === r.clave}" title="${esc(r.nombre)}" style="${k === r.clave ? 'background:' + esc(r.color) + ';font-weight:700;color:#1A1714' : ''}">${esc((r.nombre || '?').slice(0, 3))}</button>`).join('')
         + `<button type="button" class="b0" data-cp="${x.cp}" data-set="" aria-pressed="${!k}">—</button>`;
       // Filas del CP que se van a otra ruta por colonia.
       const desvios = filas(x).filter(f => { const c = estado.colonias[normalizar(f.colonia)]; return c && c.clave !== k && (f.prospectos + f.tiendas + f.consumidores) > 0; })
@@ -341,7 +331,7 @@ pre{margin:0;padding:12px;background:var(--panel);border:1px solid var(--linea);
       const activo = !!x || !!propia;
       out += `<path class="${activo ? 'cp' : 'fondo'}" data-cp="${cp}" d="${d(zona[cp])}" fill="${r ? r.color : (x ? '#bdbdbd' : '')}"${porColonia ? ' fill-opacity="0.45"' : ''}><title>${cp}${x ? ' · ' + num(x.prospectos) + ' prospectos' : ''}${propia ? ' · ' + esc(propia.nombre) : (porColonia ? ' · ' + esc(porColonia.nombre) + ' (por colonia)' : '')}</title></path>`;
     }
-    out += `<circle cx="${proy.x(PLANTA.lng).toFixed(1)}" cy="${proy.y(PLANTA.lat).toFixed(1)}" r="6" fill="#14150f" stroke="#ffd200" stroke-width="2"><title>Planta</title></circle>`;
+    out += `<circle cx="${proy.x(PLANTA.lng).toFixed(1)}" cy="${proy.y(PLANTA.lat).toFixed(1)}" r="6" fill="#1A1714" stroke="#E5B312" stroke-width="2"><title>Planta</title></circle>`;
     svg.innerHTML = out;
     $('leyenda').innerHTML = estado.rutas.map(r => `<span><i style="background:${esc(r.color)}"></i>${esc(r.nombre)}</span>`).join('') + '<span><i style="background:#bdbdbd"></i>Sin ruta</span>';
   }

@@ -182,6 +182,25 @@ function generarOTP() {
   return String(crypto.randomInt(100000, 1000000));
 }
 
+// El proyecto de PRODUCCION. Escrito aqui para poder negarlo, no para usarlo.
+const REF_PRODUCCION = 'xbyzarzyxiugrucyjwfn';
+
+// Codigo fijo para la app de pruebas (27 nov 2026). Devuelve '' si no aplica.
+//
+// DOS CERRADURAS, NO UNA (regla 41). No basta con que exista la variable: la
+// base tiene que NO ser la de produccion. Con una sola condicion, un
+// `OTP_FIJO` copiado por error al proyecto bueno apagaria la verificacion por
+// SMS de todos los clientes reales, en silencio y sin que nada fallara.
+function codigoDePruebas() {
+  const v = String(process.env.OTP_FIJO || '').trim();
+  if (!/^[0-9]{6}$/.test(v)) return '';
+  if (String(process.env.SUPABASE_URL || '').includes(REF_PRODUCCION)) {
+    console.error('[CP] OTP_FIJO esta puesto en el entorno de PRODUCCION: se ignora.');
+    return '';
+  }
+  return v;
+}
+
 // Helper REST con service_role, igual que el de api/otp-email.js.
 async function supa(path, method, body) {
   const r = await fetch(SUPA_URL + '/rest/v1/' + path, {
@@ -305,7 +324,8 @@ module.exports = async function(req, res) {
         return res.status(200).json({ ok: false, error: _limite.error || 'Demasiados intentos.' });
       }
 
-      const codigo = generarOTP();
+      const dePruebas = codigoDePruebas();
+      const codigo = dePruebas || generarOTP();
 
       // Invalidar códigos previos no usados: pedir uno nuevo debe anular el
       // anterior, o convivirían dos válidos a la vez.
@@ -325,6 +345,14 @@ module.exports = async function(req, res) {
       // esperando un código que no va a servir.
       if (!ins.ok) {
         return res.status(500).json({ ok: false, error: 'No se pudo registrar el código' });
+      }
+
+      // En pruebas no se manda nada: el codigo ya se sabe. Se dice en la
+      // respuesta para que la pantalla lo pueda enseñar y nadie se quede
+      // esperando un SMS que no va a llegar.
+      if (dePruebas) {
+        return res.status(200).json({ ok: true, msg: 'App de pruebas: el codigo es ' + dePruebas,
+                                      pruebas: true, codigo: dePruebas });
       }
 
       const numero  = `+52${telefono}`;
