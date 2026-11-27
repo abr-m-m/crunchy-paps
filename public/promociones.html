@@ -155,6 +155,14 @@ td.bien{color:var(--bien-tx);font-weight:700}
   </div>
 </div>
 
+<!-- Lo que pidio Abraham: «identificar como va una misma promo sobre
+     diferentes tipos de canal». Una campaña arriba y sus canales debajo. -->
+<div class="caja" id="pm" hidden>
+  <h2 style="font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);margin-bottom:8px">Cómo les fue</h2>
+  <p class="nota" style="margin:0 0 10px">Se mide <b>desde los pedidos</b>, no de un contador: un pedido cancelado deja de contar solo. Los internos no entran.</p>
+  <div id="pm-tabla"></div>
+</div>
+
 <div id="app" hidden>
   <div id="lista"></div>
   <button class="btn ghost" id="nueva" style="width:100%">+ Nueva promoción</button>
@@ -524,6 +532,67 @@ td.bien{color:var(--bien-tx);font-weight:700}
     $('app').hidden = false; $('pie').hidden = false; $('todavia-no').hidden = false;
     $('excel').hidden = false;
     pintar();
+    pintarPostmortem();
+  }
+
+  // ── Como le fue a cada campaña ─────────────────────────────────────────
+  async function pintarPostmortem() {
+    var r = await rpc('promocion_postmortem', { token: token });
+    var caja = $('pm-tabla');
+    caja.replaceChildren();
+    if (!r || !r.ok) { $('pm').hidden = true; return; }
+    $('pm').hidden = false;
+    var cs = r.campanas || [];
+    if (!cs.length) {
+      caja.appendChild(nota('Todavía no hay promociones en este periodo.'));
+      return;
+    }
+    var t = document.createElement('table'); t.className = 'margen';
+    var thead = document.createElement('thead'), htr = document.createElement('tr');
+    ['Campaña', 'Canal', 'Dcto', 'Pedidos', 'Clientes', 'Descuento', 'Ingreso', 'Margen']
+      .forEach(function (c) { var th = document.createElement('th'); th.textContent = c; htr.appendChild(th); });
+    thead.appendChild(htr); t.appendChild(thead);
+    var tb = document.createElement('tbody');
+    cs.forEach(function (c) {
+      c.filas.forEach(function (f, i) {
+        var tr = document.createElement('tr');
+        // La campaña solo se escribe en su primera fila: asi se ve de un golpe
+        // cuales son hermanas.
+        celda(tr, i === 0 ? c.campana : '');
+        celda(tr, ({ consumidores: 'consumidor', tiendas: 'tienda',
+                     restaurantes: 'restaurante' })[f.publico] || 'todos');
+        celda(tr, f.tipo === 'precio_fijo' ? pesos(f.valor) : (Math.round(f.valor) + ' %'), 'num');
+        celda(tr, f.pedidos, 'num');
+        // Un pedido sin cliente es un pedido de mostrador o uno huerfano: se
+        // dice, en vez de enseñar un 0 que parece «no compro nadie».
+        celda(tr, f.pedidos && !f.clientes ? 'sin id' : f.clientes, 'num');
+        celda(tr, pesos(f.descuento), 'num');
+        celda(tr, pesos(f.ingreso), 'num');
+        var m = f.peorMargen;
+        celda(tr, m == null ? '—' : m + ' %', 'num ' + (m != null && m < piso ? (f.gancho ? 'ojo' : 'mal') : 'bien'));
+        tb.appendChild(tr);
+      });
+      if (c.filas.length > 1) {
+        var tr = document.createElement('tr');
+        celda(tr, ''); celda(tr, c.canales + ' canales', 'num'); celda(tr, '');
+        celda(tr, c.pedidos, 'num'); celda(tr, c.clientes, 'num');
+        celda(tr, pesos(c.descuento), 'num'); celda(tr, pesos(c.ingreso), 'num'); celda(tr, '');
+        tr.style.fontWeight = '800';
+        tb.appendChild(tr);
+      }
+    });
+    t.appendChild(tb);
+    caja.appendChild(t);
+  }
+
+  function nota(txt) {
+    var p = document.createElement('p'); p.className = 'nota';
+    p.style.margin = '0'; p.textContent = txt; return p;
+  }
+
+  function celda(tr, txt, clase) {
+    var td = document.createElement('td'); td.textContent = txt;
+    if (clase) td.className = clase; tr.appendChild(td); return td;
   }
 
   function hoy(d) {
@@ -565,7 +634,7 @@ td.bien{color:var(--bien-tx);font-weight:700}
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ejemplo, { header: CABECERAS }), 'Promociones');
 
     var notas = [
-      { 'columna': 'Clave', 'que vale': 'vacio, o una clave que ya exista', 'notas': 'la IDENTIDAD de la promocion (CP2612-C01). Vacia: la pone el servidor y te la dice. Escrita: actualiza ESA, aunque le cambies el nombre' },
+      { 'columna': 'Clave', 'que vale': 'vacio, o la CAMPAÑA (CP2612-01)', 'notas': 'la clave es campaña + canal: CP2612-01C, 01T, 01R. Escribes la campaña y el servidor pone la letra. La MISMA campaña en dos canales = dos promociones hermanas, que se comparan en «Como les fue». Vacia: campaña nueva' },
       { 'columna': 'Nombre', 'que vale': 'el texto que quieras', 'notas': 'el titulo que ve el cliente; las filas de una misma promocion comparten clave (o nombre, si no hay clave)' },
       { 'columna': 'id producto', 'que vale': 'el id del catalogo, o vacio', 'notas': 'si lo pones MANDA EL ID y el SKU se usa para comprobar: si no concuerdan, la fila se para. Una regla por SABOR no lleva id' },
       { 'columna': 'Vigencia desde / hasta', 'que vale': 'AAAA-MM-DD', 'notas': 'o una fecha de Excel; evita DD/MM/AAAA' },
@@ -644,10 +713,6 @@ td.bien{color:var(--bien-tx);font-weight:700}
     thead.appendChild(htr); t.appendChild(thead);
     var tb = document.createElement('tbody');
 
-    function celda(tr, txt, clase) {
-      var td = document.createElement('td'); td.textContent = txt;
-      if (clase) td.className = clase; tr.appendChild(td); return td;
-    }
     if (errs.length) {
       errs.forEach(function (e) {
         var tr = document.createElement('tr');
