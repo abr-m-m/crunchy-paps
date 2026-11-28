@@ -2547,6 +2547,9 @@ window.setPago = function(id, nom) {
   document.querySelectorAll('.pago-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector(`.pago-btn[data-id="${id}"]`)?.classList.add('active');
   document.getElementById('stripe-wrap').classList.toggle('visible', id===5);
+  const _ot = document.getElementById('pago-otro-txt');
+  if (_ot) _ot.textContent = (tipoCliente === 'tienda' || tipoCliente === 'restaurante')
+    ? 'Soy el ayudante, no lo pago yo.' : 'No lo pago yo.';
   document.getElementById('transfer-wrap')?.classList.toggle('visible', id===3);
   try { track('select_payment', { metodo: nom, id: id }); } catch(e) {}
 };
