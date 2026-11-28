@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aparatos · Crunchy Paps</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --papel:#F4F1EC; --panel:#FFFFFF; --tinta:#1A1714; --tinta2:#56524C;
+  --linea:#E2DDD4; --marca:#E5B312; --rojo:#E01F25;
+  --mal-tx:#8C1114;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:860px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:40px;height:40px;border-radius:50%;background:var(--marca);color:var(--tinta);font-size:.4rem;
+      font-weight:800;line-height:1.2;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;flex-shrink:0}
+h1{font-family:Archivo,sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+.sub{font-size:.78rem;color:var(--tinta2);margin-top:2px}
+.nota{font-size:.84rem;color:var(--tinta2);line-height:1.55;max-width:62ch;margin:10px 0 0}
+.nota b{color:var(--tinta)}
+.volver{display:inline-block;margin-bottom:12px;font-size:.78rem;font-weight:700;
+        color:var(--tinta2);text-decoration:none}
+.caja{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:14px;margin:14px 0 10px}
+.tabla-ses{width:100%;border-collapse:collapse;font-size:.82rem}
+.tabla-ses th{text-align:left;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);padding:4px 8px 6px;border-bottom:1px solid var(--linea)}
+.tabla-ses td{padding:8px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla-ses tr:last-child td{border-bottom:none}
+.nombre-ap{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--tinta);cursor:pointer;text-align:left;border-bottom:1px dashed var(--linea)}
+.nombre-ap.sin-nombre{font-weight:600;color:var(--tinta2);font-style:italic}
+.nombre-ap:disabled{cursor:default;border-bottom:none;color:var(--tinta2);font-weight:600}
+.mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);background:transparent;
+      color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:var(--tinta);color:var(--papel);
+       padding:11px 16px;border-radius:12px;font-size:.86rem;font-weight:700;z-index:20;max-width:92vw}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="volver" href="/consola">&larr; Consola</a>
+
+<header>
+  <div class="logo">CRUNCHY<br>PAPS</div>
+  <div>
+    <h1>APARATOS</h1>
+    <div class="sub" id="quien">…</div>
+  </div>
+</header>
+
+<p class="nota">Lo que está en riesgo si un teléfono no vuelve no es el dinero
+—los cobros entran a la cuenta de Crunchy Paps— sino <b>la libreta</b>:
+teléfonos, direcciones y coordenadas de clientes y prospectos. Esta pantalla
+dice quién tiene la puerta abierta, y la cierra.</p>
+
+<div class="caja" id="sin-sesion" hidden></div>
+
+<div class="caja" id="ses">
+  <p class="nota" style="margin:0 0 10px">Cada teléfono o computadora donde alguien entró con su PIN.
+  <b>Cerrar quita el acceso al instante</b>, sin esperar a que caduque. El aparato no se borra desde aquí:
+  eso se hace desde la cuenta de Google del equipo.</p>
+  <div id="ses-tabla">Cargando…</div>
+</div>
+
+</div>
+
+<script src="/api/config.js"></script>
+<script src="/aparato.js"></script>
+<!-- La marca de agua de la app de pruebas. No hace nada en produccion. -->
+<script src="/pruebas.js"></script>
+<!-- La entrada (telefono + PIN) de TODAS las consolas, escrita una vez.
+     Tiene que cargar antes que el script de abajo, que la usa. -->
+<script src="/entrar.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.__CP_CONFIG__ || {};
+  var RPC = (CFG.SUPABASE_URL || '') + '/rest/v1/rpc/';
+  var LLAVE = CFG.SUPABASE_ANON_KEY || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = '';
+
+  // Los tres ayudantes de siempre, iguales que en las otras consolas. `rpc` NO
+  // envuelve en `p_data`: lo hace cada llamada.
+  function rpc(fn, cuerpo) {
+    return fetch(RPC + fn, {
+      method: 'POST',
+      headers: { apikey: LLAVE, authorization: 'Bearer ' + LLAVE, 'content-type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    }).then(function (x) { return x.json(); }).catch(function () { return null; });
+  }
+  function toast(t) {
+    var d = document.createElement('div');
+    d.className = 'toast'; d.textContent = t; document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 3000);
+  }
+  function sesion() {
+    try {
+      var s = JSON.parse(localStorage.getItem('cp_session') || 'null');
+      if (!s) return null;
+      if (s.expira && Date.now() > s.expira) return null;
+      var v = s.vendedorInfo || s.vendedor || null;
+      if (!v || !v.token) return null;
+      return { token: v.token, nombre: v.nombre || 'tú' };
+    } catch (e) { return null; }
+  }
+
+  // ── Aparatos con sesión abierta ───────────────────────────────────────
+  // Lo que está en riesgo si un teléfono no vuelve no es el dinero -los cobros
+  // entran a la cuenta de Crunchy Paps- sino la libreta: teléfonos,
+  // direcciones y coordenadas. Hasta hoy la única protección era que el
+  // permiso caduca a las 12 h: un teléfono perdido a las 9 de la mañana daba
+  // acceso hasta las 9 de la noche.
+
+  // Esta página no traía estos ayudantes -los tienen las otras consolas-, así
+  // que se declaran aquí en vez de darlos por hechos.
+  function nota(txt) {
+    var e = document.createElement('p'); e.className = 'nota';
+    e.style.margin = '0'; e.textContent = txt; return e;
+  }
+  function celda(tr, txt) {
+    var td = document.createElement('td'); td.textContent = txt;
+    tr.appendChild(td); return td;
+  }
+  function cuando(iso) {
+    if (!iso) return 'nunca';
+    var d = new Date(iso), m = Math.round((Date.now() - d.getTime()) / 60000);
+    if (m < 1) return 'ahora';
+    if (m < 60) return 'hace ' + m + ' min';
+    if (m < 1440) return 'hace ' + Math.round(m / 60) + ' h';
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  }
+  function enCuanto(iso) {
+    if (!iso) return '—';
+    var m = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+    if (m <= 0) return 'ya';
+    if (m < 60) return 'en ' + m + ' min';
+    return 'en ' + Math.round(m / 60) + ' h';
+  }
+
+  async function pintarSesiones() {
+    var caja = document.getElementById('ses-tabla');
+    if (!caja) return;
+    var r = await rpc('sesiones_abiertas', { p_data: { token: token } });
+    caja.replaceChildren();
+    if (!r || !r.ok) {
+      // `solo_dueno` dice dos cosas a la vez -no eres el dueño, o tu sesión ya
+      // no vale- y el servidor no las distingue. El mensaje las dice las dos y
+      // pone la entrada aquí mismo: «No se pudo leer: solo_dueno» era cierto y
+      // no servía de nada.
+      if (r && r.error === 'solo_dueno') { volverAEntrar(
+        'Tu sesión caducó, o esta pantalla no es para ti. Es solo del dueño.'); return; }
+      caja.appendChild(nota('No se pudo leer: ' + ((r && r.error) || 'sin respuesta')));
+      return;
+    }
+    var ss = r.sesiones || [];
+    if (!ss.length) { caja.appendChild(nota('Nadie tiene sesión abierta ahora mismo.')); return; }
+
+    var t = document.createElement('table'); t.className = 'tabla-ses';
+    var th = document.createElement('thead'), htr = document.createElement('tr');
+    ['Quién', 'Aparato', 'Último uso', 'Caduca', ''].forEach(function (c) {
+      var e = document.createElement('th'); e.textContent = c; htr.appendChild(e);
+    });
+    th.appendChild(htr); t.appendChild(th);
+
+    var tb = document.createElement('tbody');
+    ss.forEach(function (x) {
+      var tr = document.createElement('tr');
+      celda(tr, x.vendedor + (x.esLaMia ? ' · esta pantalla' : ''));
+      // La celda del aparato: arriba el nombre que le puso Abraham, abajo lo
+      // que el navegador dice de sí mismo. «sin registrar» (sin user-agent) y
+      // «Sin nombre» (sin bautizar) son dos cosas distintas y se ven distintas:
+      // un aparato sin nombre es justo el que hay que mirar.
+      var tdA = document.createElement('td');
+      var nom = document.createElement('button');
+      nom.type = 'button'; nom.className = 'nombre-ap';
+      nom.textContent = x.nombre || 'Sin nombre';
+      if (!x.nombre) nom.classList.add('sin-nombre');
+      if (x.aparatoId) {
+        nom.title = 'Ponerle nombre a este aparato';
+        nom.onclick = function () { bautizar(x.aparatoId, x.nombre); };
+      } else {
+        // Sesión abierta antes de que la app mandara el código: no hay nada
+        // que bautizar. Se dice, y se cierra para que vuelva a entrar.
+        nom.disabled = true; nom.textContent = 'Sin código';
+        nom.title = 'Esta sesión empezó antes de que la app registrara el aparato. Ciérrala y al volver a entrar aparecerá.';
+      }
+      tdA.appendChild(nom);
+      tdA.appendChild(nota(x.aparato));
+      tr.appendChild(tdA);
+      celda(tr, cuando(x.ultimoUso));
+      celda(tr, enCuanto(x.expira));
+      var td = document.createElement('td');
+      if (!x.esLaMia) {
+        var b = document.createElement('button');
+        b.className = 'mini'; b.type = 'button'; b.textContent = 'Cerrar';
+        b.style.color = 'var(--mal-tx, #8C1114)';
+        // `tambienLaMia`: cerrar cierra TODAS las de esa persona, asi que si la
+        // fila es de quien esta mirando, tambien cae esta pantalla. Se compara
+        // por nombre porque el servidor no manda el id del vendedor; con dos
+        // homonimos el aviso saldria de mas, nunca de menos, y el servidor hace
+        // lo mismo en los dos casos.
+        var mia = (r.sesiones || []).find(function (y) { return y.esLaMia; });
+        var tambienLaMia = !!mia && mia.vendedor === x.vendedor;
+        b.onclick = function () { cerrarSesionDe(x.hash, x.vendedor, tambienLaMia); };
+        td.appendChild(b);
+      }
+      tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    caja.appendChild(t);
+  }
+
+  async function bautizar(id, actual) {
+    // `prompt` y no un formulario: es una sola palabra, la escribe el dueño en
+    // su computadora y pasa una vez por teléfono. Un formulario propio aquí
+    // seria mas código del que vale la pena mantener.
+    var nom = prompt('Nombre de este aparato' + String.fromCharCode(10) +
+                     '(por ejemplo «Teléfono de Ana» o «Mi computadora»)', actual || '');
+    if (nom === null) return;
+    var r = await rpc('nombrar_aparato', { p_data: { token: token, id: id, nombre: nom } });
+    if (!r || !r.ok) { toast('No se pudo: ' + ((r && r.error) || 'sin respuesta')); return; }
+    pintarSesiones();
+  }
+
+  async function cerrarSesionDe(hash, quien, tambienLaMia) {
+    // Se cierran TODAS las de esa persona: si el teléfono se perdió, cerrar
+    // una sola no sirve de nada, y acordarse de volver a entrar aquí tampoco.
+    var ok = confirm('Cerrar la sesión de ' + quien + '.' +
+      String.fromCharCode(10, 10) +
+      'Se cierran TODAS las suyas, que es lo correcto si se perdió el aparato.' +
+      String.fromCharCode(10) + 'Podrá volver a entrar con su PIN.' +
+      (tambienLaMia
+        ? String.fromCharCode(10, 10) +
+          'OJO: esa persona eres tú, así que TAMBIÉN se cierra esta pantalla y ' +
+          'tendrás que volver a entrar.'
+        : ''));
+    if (!ok) return;
+    var r = await rpc('cerrar_sesion_de', { p_data: { token: token, hash: hash, todasDelVendedor: true } });
+    if (!r || !r.ok) { toast('No se pudo cerrar: ' + ((r && r.error) || 'sin respuesta')); return; }
+    toast(r.cerradas + ' sesión(es) cerrada(s)');
+    if (tambienLaMia) { volverAEntrar(); return; }
+    pintarSesiones();
+  }
+
+  // Te cerraste a ti mismo. Decirlo, y poner la entrada ahí mismo: el mensaje
+  // que salía antes era «No se pudo leer: solo_dueno», que es cierto y no
+  // explica nada.
+  function volverAEntrar(porque) {
+    token = '';
+    // SOLTAR el token muerto ANTES de montar la entrada. `CPEntrar.montar`
+    // llama a su callback EN EL ACTO si encuentra un token guardado, y el que
+    // hay está revocado pero no caducado por fecha: sin esto, montar llamaba
+    // al callback, el callback recargaba, y la página se quedaba recargándose
+    // sola para siempre. Visto en pantalla, no deducido.
+    if (window.CPEntrar) CPEntrar.salir();
+    var caja = document.getElementById('ses-tabla');
+    caja.replaceChildren(nota(porque ||
+      'Cerraste también tu propia sesión. Vuelve a entrar con tu PIN.'));
+    document.getElementById('quien').textContent = 'Sin sesión';
+    var sin = document.getElementById('sin-sesion');
+    sin.hidden = false;
+    if (window.CPEntrar) CPEntrar.montar('sin-sesion', function () { location.reload(); });
+  }
+
+  var ses = sesion();
+  if (!ses) {
+    $('quien').textContent = 'Sin sesión';
+    $('ses-tabla').textContent = 'Entra para ver los aparatos.';
+    if (window.CPEntrar) CPEntrar.montar('sin-sesion', function () { location.reload(); });
+    return;
+  }
+  token = ses.token;
+  $('quien').textContent = 'Hola, ' + ses.nombre;
+  pintarSesiones();
+})();
+</script>
+</body>
+</html>

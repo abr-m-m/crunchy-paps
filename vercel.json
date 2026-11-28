@@ -54,6 +54,10 @@
       "destination": "/promociones.html"
     },
     {
+      "source": "/aparatos",
+      "destination": "/aparatos.html"
+    },
+    {
       "source": "/consola",
       "destination": "/consola.html"
     }
