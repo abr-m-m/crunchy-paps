@@ -268,7 +268,11 @@ window.verificarPIN = async function() {
       // existia y nadie la llenaba: en la lista de sesiones abiertas todas
       // salian «sin registrar», que es inservible el dia que se pierde un
       // telefono y hay que decidir cual cerrar.
-      p_data: { telefono: window._telVendedor, pin, userAgent: navigator.userAgent }
+      // `aparatoId` es el codigo del aparato (`/aparato.js`). Si ese archivo
+      // no cargo, se manda null y la sesion sale «sin registrar»: entrar
+      // importa mas que etiquetar.
+      p_data: { telefono: window._telVendedor, pin, userAgent: navigator.userAgent,
+                aparatoId: window.cpAparato ? window.cpAparato() : null }
     });
     if (res && res.ok) {
       // PIN correcto

@@ -54,6 +54,9 @@ textarea{min-height:64px;resize:vertical}
 .tabla-ses th{text-align:left;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);padding:4px 8px 6px;border-bottom:1px solid var(--linea)}
 .tabla-ses td{padding:8px;border-bottom:1px solid var(--linea);vertical-align:middle}
 .tabla-ses tr:last-child td{border-bottom:none}
+.nombre-ap{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--tinta);cursor:pointer;text-align:left;border-bottom:1px dashed var(--linea)}
+.nombre-ap.sin-nombre{font-weight:600;color:var(--tinta2);font-style:italic}
+.nombre-ap:disabled{cursor:default;border-bottom:none;color:var(--tinta2);font-weight:600}
 .mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);background:transparent;
       color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
 .salida{margin-top:12px;background:var(--papel);border:1px dashed var(--linea);border-radius:10px;
@@ -157,6 +160,7 @@ textarea{min-height:64px;resize:vertical}
 </div>
 
 <script src="/api/config.js"></script>
+<script src="/aparato.js"></script>
 <!-- La marca de agua de la app de pruebas. No hace nada en produccion. -->
 <script src="/pruebas.js"></script>
 <!-- La entrada (telefono + PIN) de TODAS las consolas, escrita una vez.
@@ -396,9 +400,27 @@ textarea{min-height:64px;resize:vertical}
     ss.forEach(function (x) {
       var tr = document.createElement('tr');
       celda(tr, x.vendedor + (x.esLaMia ? ' · esta pantalla' : ''));
-      // «sin registrar» es una sesión que empezó antes de que la app dijera
-      // desde qué aparato. Se dice, en vez de dejar el hueco en blanco.
-      celda(tr, x.aparato);
+      // La celda del aparato: arriba el nombre que le puso Abraham, abajo lo
+      // que el navegador dice de sí mismo. «sin registrar» (sin user-agent) y
+      // «Sin nombre» (sin bautizar) son dos cosas distintas y se ven distintas:
+      // un aparato sin nombre es justo el que hay que mirar.
+      var tdA = document.createElement('td');
+      var nom = document.createElement('button');
+      nom.type = 'button'; nom.className = 'nombre-ap';
+      nom.textContent = x.nombre || 'Sin nombre';
+      if (!x.nombre) nom.classList.add('sin-nombre');
+      if (x.aparatoId) {
+        nom.title = 'Ponerle nombre a este aparato';
+        nom.onclick = function () { bautizar(x.aparatoId, x.nombre); };
+      } else {
+        // Sesión abierta antes de que la app mandara el código: no hay nada
+        // que bautizar. Se dice, y se cierra para que vuelva a entrar.
+        nom.disabled = true; nom.textContent = 'Sin código';
+        nom.title = 'Esta sesión empezó antes de que la app registrara el aparato. Ciérrala y al volver a entrar aparecerá.';
+      }
+      tdA.appendChild(nom);
+      tdA.appendChild(nota(x.aparato));
+      tr.appendChild(tdA);
       celda(tr, cuando(x.ultimoUso));
       celda(tr, enCuanto(x.expira));
       var td = document.createElement('td');
@@ -414,6 +436,18 @@ textarea{min-height:64px;resize:vertical}
     });
     t.appendChild(tb);
     caja.appendChild(t);
+  }
+
+  async function bautizar(id, actual) {
+    // `prompt` y no un formulario: es una sola palabra, la escribe el dueño en
+    // su computadora y pasa una vez por teléfono. Un formulario propio aquí
+    // seria mas código del que vale la pena mantener.
+    var nom = prompt('Nombre de este aparato' + String.fromCharCode(10) +
+                     '(por ejemplo «Teléfono de Ana» o «Mi computadora»)', actual || '');
+    if (nom === null) return;
+    var r = await rpc('nombrar_aparato', { p_data: { token: token, id: id, nombre: nom } });
+    if (!r || !r.ok) { toast('No se pudo: ' + ((r && r.error) || 'sin respuesta')); return; }
+    pintarSesiones();
   }
 
   async function cerrarSesionDe(hash, quien) {

@@ -164,7 +164,8 @@
         var resp = await fetch(c.url + '/rest/v1/rpc/validar_vendedor_pin', {
           method: 'POST',
           headers: { apikey: c.key, authorization: 'Bearer ' + c.key, 'content-type': 'application/json' },
-          body: JSON.stringify({ p_data: { telefono: t10, pin: pin.value, userAgent: navigator.userAgent } })
+          body: JSON.stringify({ p_data: { telefono: t10, pin: pin.value,
+            userAgent: navigator.userAgent, aparatoId: window.cpAparato ? window.cpAparato() : null } })
         });
         r = await resp.json();
         if (Array.isArray(r)) r = r[0];

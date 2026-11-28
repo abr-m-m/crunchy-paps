@@ -189,6 +189,7 @@ td.txt{min-width:16rem}
 <div class="toast" id="toast"></div>
 
 <script src="/api/config.js"></script>
+<script src="/aparato.js"></script>
 <script>
 (function () {
   'use strict';
@@ -242,7 +243,8 @@ td.txt{min-width:16rem}
   async function entrar() {
     $('l-err').textContent = '';
     const r = await rpc('validar_vendedor_pin', {
-      p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value } });
+      p_data: { telefono: $('l-tel').value.replace(/\D/g, ''), pin: $('l-pin').value,
+                userAgent: navigator.userAgent, aparatoId: window.cpAparato ? window.cpAparato() : null } });
     if (!r || !r.token) { $('l-err').textContent = (r && r.error) || 'Teléfono o PIN incorrectos.'; return; }
     token = r.token; sessionStorage.setItem('cp-agente-token', token);
     await cargar();
