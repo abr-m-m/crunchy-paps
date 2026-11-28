@@ -264,7 +264,11 @@ window.verificarPIN = async function() {
 
   try {
     const res = await supabaseCall('POST', 'rpc/validar_vendedor_pin', {
-      p_data: { telefono: window._telVendedor, pin }
+      // `userAgent` va para que la sesion diga EN QUE APARATO esta. La columna
+      // existia y nadie la llenaba: en la lista de sesiones abiertas todas
+      // salian «sin registrar», que es inservible el dia que se pierde un
+      // telefono y hay que decidir cual cerrar.
+      p_data: { telefono: window._telVendedor, pin, userAgent: navigator.userAgent }
     });
     if (res && res.ok) {
       // PIN correcto

@@ -50,6 +50,10 @@ textarea{min-height:64px;resize:vertical}
 .btn{min-height:46px;padding:0 16px;background:var(--rojo);color:#fff;border:none;border-radius:12px;
      font-family:inherit;font-weight:800;font-size:.9rem;cursor:pointer;margin-top:10px}
 .btn.ghost{background:transparent;color:var(--tinta);border:1px solid var(--linea);font-weight:700}
+.tabla-ses{width:100%;border-collapse:collapse;font-size:.82rem}
+.tabla-ses th{text-align:left;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta2);padding:4px 8px 6px;border-bottom:1px solid var(--linea)}
+.tabla-ses td{padding:8px;border-bottom:1px solid var(--linea);vertical-align:middle}
+.tabla-ses tr:last-child td{border-bottom:none}
 .mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--linea);background:transparent;
       color:var(--tinta);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
 .salida{margin-top:12px;background:var(--papel);border:1px dashed var(--linea);border-radius:10px;
@@ -83,6 +87,14 @@ textarea{min-height:64px;resize:vertical}
 <h2>Bandeja</h2>
 <div class="caja" id="bandeja">
   <p class="nota" style="margin:0" id="bandeja-estado">Cargando…</p>
+</div>
+
+<h2>Aparatos con sesión abierta</h2>
+<div class="caja" id="ses">
+  <p class="nota" style="margin:0 0 10px">Cada teléfono o computadora donde alguien entró con su PIN.
+  <b>Cerrar quita el acceso al instante</b>, sin esperar a que caduque. El aparato no se borra desde aquí:
+  eso se hace desde la cuenta de Google del equipo.</p>
+  <div id="ses-tabla">Cargando…</div>
 </div>
 
 <h2>Pantallas</h2>
@@ -328,6 +340,96 @@ textarea{min-height:64px;resize:vertical}
     at.appendChild(d);
   });
 
+  // ── Aparatos con sesión abierta ───────────────────────────────────────
+  // Lo que está en riesgo si un teléfono no vuelve no es el dinero -los cobros
+  // entran a la cuenta de Crunchy Paps- sino la libreta: teléfonos,
+  // direcciones y coordenadas. Hasta hoy la única protección era que el
+  // permiso caduca a las 12 h: un teléfono perdido a las 9 de la mañana daba
+  // acceso hasta las 9 de la noche.
+
+  // Esta página no traía estos ayudantes -los tienen las otras consolas-, así
+  // que se declaran aquí en vez de darlos por hechos.
+  function nota(txt) {
+    var e = document.createElement('p'); e.className = 'nota';
+    e.style.margin = '0'; e.textContent = txt; return e;
+  }
+  function celda(tr, txt) {
+    var td = document.createElement('td'); td.textContent = txt;
+    tr.appendChild(td); return td;
+  }
+  function cuando(iso) {
+    if (!iso) return 'nunca';
+    var d = new Date(iso), m = Math.round((Date.now() - d.getTime()) / 60000);
+    if (m < 1) return 'ahora';
+    if (m < 60) return 'hace ' + m + ' min';
+    if (m < 1440) return 'hace ' + Math.round(m / 60) + ' h';
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  }
+  function enCuanto(iso) {
+    if (!iso) return '—';
+    var m = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+    if (m <= 0) return 'ya';
+    if (m < 60) return 'en ' + m + ' min';
+    return 'en ' + Math.round(m / 60) + ' h';
+  }
+
+  async function pintarSesiones() {
+    var caja = document.getElementById('ses-tabla');
+    if (!caja) return;
+    var r = await rpc('sesiones_abiertas', { p_data: { token: token } });
+    caja.replaceChildren();
+    if (!r || !r.ok) {
+      caja.appendChild(nota('No se pudo leer: ' + ((r && r.error) || 'sin respuesta')));
+      return;
+    }
+    var ss = r.sesiones || [];
+    if (!ss.length) { caja.appendChild(nota('Nadie tiene sesión abierta ahora mismo.')); return; }
+
+    var t = document.createElement('table'); t.className = 'tabla-ses';
+    var th = document.createElement('thead'), htr = document.createElement('tr');
+    ['Quién', 'Aparato', 'Último uso', 'Caduca', ''].forEach(function (c) {
+      var e = document.createElement('th'); e.textContent = c; htr.appendChild(e);
+    });
+    th.appendChild(htr); t.appendChild(th);
+
+    var tb = document.createElement('tbody');
+    ss.forEach(function (x) {
+      var tr = document.createElement('tr');
+      celda(tr, x.vendedor + (x.esLaMia ? ' · esta pantalla' : ''));
+      // «sin registrar» es una sesión que empezó antes de que la app dijera
+      // desde qué aparato. Se dice, en vez de dejar el hueco en blanco.
+      celda(tr, x.aparato);
+      celda(tr, cuando(x.ultimoUso));
+      celda(tr, enCuanto(x.expira));
+      var td = document.createElement('td');
+      if (!x.esLaMia) {
+        var b = document.createElement('button');
+        b.className = 'mini'; b.type = 'button'; b.textContent = 'Cerrar';
+        b.style.color = 'var(--mal-tx, #8C1114)';
+        b.onclick = function () { cerrarSesionDe(x.hash, x.vendedor); };
+        td.appendChild(b);
+      }
+      tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    caja.appendChild(t);
+  }
+
+  async function cerrarSesionDe(hash, quien) {
+    // Se cierran TODAS las de esa persona: si el teléfono se perdió, cerrar
+    // una sola no sirve de nada, y acordarse de volver a entrar aquí tampoco.
+    var ok = confirm('Cerrar la sesión de ' + quien + '.' +
+      String.fromCharCode(10, 10) +
+      'Se cierran TODAS las suyas, que es lo correcto si se perdió el aparato.' +
+      String.fromCharCode(10) + 'Podrá volver a entrar con su PIN.');
+    if (!ok) return;
+    var r = await rpc('cerrar_sesion_de', { p_data: { token: token, hash: hash, todasDelVendedor: true } });
+    if (!r || !r.ok) { toast('No se pudo cerrar: ' + ((r && r.error) || 'sin respuesta')); return; }
+    toast(r.cerradas + ' sesión(es) cerrada(s)');
+    pintarSesiones();
+  }
+
   var ses = sesion();
   if (!ses) {
     // Ver `promociones.html`: la entrada vive aqui, no en la app. Los enlaces
@@ -341,6 +443,7 @@ textarea{min-height:64px;resize:vertical}
   }
   token = ses.token;
   $('quien').textContent = 'Hola, ' + ses.nombre;
+  pintarSesiones();
   bandeja();
 })();
 </script>
