@@ -264,6 +264,46 @@ def medir_pendientes(datos):
 CLASES = ('seccion', 'rpc', 'tabla', 'cron', 'archivo', 'externo')
 
 
+def medir_uso(datos):
+    """Cuantas veces se USO de verdad cada pieza terminada.
+
+    Abraham, el 27 nov 2026: «¿como hago para que no se quede en solo creer que
+    ya esta funcionando?».
+
+    Las tres direcciones de antes comprueban que el codigo EXISTE y que el
+    hecho que lo sostiene SIGUE siendo cierto. Ninguna contesta la pregunta que
+    de verdad importa: *¿alguien lo uso?* Una promocion impecable que nadie
+    cobro, un canje que nadie canjeo y un reto que nadie cumplio pasan las tres
+    comprobaciones y estan igual de sin probar que el dia que se escribieron.
+
+    Asi que una pieza terminada puede declarar como se cuenta su uso:
+
+        "uso": "<SQL que devuelve una fila, columna `usos`>"
+        "uso_que": "<que son esos usos: pedidos, canjes, visitas...>"
+
+    ESTO NO TUMBA LA CORRIDA. Cero usos no es una contradiccion -puede que el
+    negocio aun no llegue ahi- y si rompiera el build, nadie volveria a poner
+    la clave. Es un numero que se enseña al lado de «hecho» para que «hecho»
+    deje de leerse como «probado»."""
+    usos = {}
+    for f in datos['frentes']:
+        for it in f['items']:
+            consulta = it.get('uso')
+            if not consulta:
+                continue
+            filas = sql(consulta)
+            if not filas or 'usos' not in filas[0]:
+                usos[(f['clave'], it['nombre'])] = (None, 'la consulta no devolvió `usos`')
+                continue
+            try:
+                n = int(filas[0]['usos'])
+            except (TypeError, ValueError):
+                usos[(f['clave'], it['nombre'])] = (None, 'el valor de `usos` no es un número')
+                continue
+            usos[(f['clave'], it['nombre'])] = (n, it.get('uso_que', 'usos'))
+    return usos
+
+
 def comprobar(item, hay):
     """Devuelve (veredicto, detalle). El veredicto es lo que decide el color."""
     vive = (item.get('vive_en') or '').strip()
@@ -332,6 +372,7 @@ def main():
     datos = json.load(io.open(FUENTE, encoding='utf-8'))
     hay, cifras = medir()
     pendientes = medir_pendientes(datos)
+    usos = medir_uso(datos)
     wb = Workbook()
     problemas = []
 
@@ -512,6 +553,11 @@ def main():
                     mal = True
                     problemas.append('%s · %s · dice «%s» y %s'
                                      % (f['clave'], i['nombre'], i['estado'], detalle))
+            u = usos.get((f['clave'], i['nombre']))
+            if u is not None:
+                n, que = u
+                detalle += (' · USO: ' + ('no se pudo contar (%s)' % que if n is None
+                            else ('%d %s' % (n, que)) if n else 'NADIE LO HA USADO TODAVÍA'))
             r = escribir(ws, r, [f['clave'], i['nombre'], i['estado'],
                                  i.get('vive_en', ''), veredicto, detalle],
                          R_MAL if mal else (R_OK if veredicto == 'existe' else R_PEND),
@@ -531,6 +577,24 @@ def main():
     hechos = sum(1 for f in datos['frentes'] for i in f['items'] if i['estado'] == 'hecho')
     print('\n  %d frentes · %d piezas · %d hechas (%d %%)'
           % (len(datos['frentes']), total, hechos, round(hechos * 100 / total)))
+
+    # ── «Hecho» no es «probado» ─────────────────────────────────────────────
+    if usos:
+        sin   = [(c, n) for (c, n), v in usos.items() if v[0] == 0]
+        con   = [(c, n, v[0], v[1]) for (c, n), v in usos.items() if v[0]]
+        rotas = [(c, n) for (c, n), v in usos.items() if v[0] is None]
+        print('')
+        print('  USO REAL de %d pieza(s) terminada(s):' % len(usos))
+        for c, n, k, que in sorted(con, key=lambda x: -x[2]):
+            print('    %-4s %-50s %6d %s' % (c, n[:50], k, que))
+        for c, n in sin:
+            print('    %-4s %-50s   SIN USAR' % (c, n[:50]))
+        for c, n in rotas:
+            print('    %-4s %-50s   no se pudo contar' % (c, n[:50]))
+        if sin:
+            print('')
+            print('  %d estan HECHAS y nadie las ha usado todavia. No es un fallo:' % len(sin))
+            print('  es lo que falta por comprobar en la calle, no en la base.')
     if problemas:
         print('\n  %d AFIRMACIONES QUE LA BASE DESMIENTE:' % len(problemas))
         for p in problemas:
