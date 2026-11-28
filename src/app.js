@@ -2578,7 +2578,9 @@ window.copiarDato = function(txt, label) {
 };
 
 // Stripe Checkout: pide la sesión de pago a la Edge Function y devuelve la URL segura
-async function crearCheckoutStripe(idOrden) {
+// Desde el 27 nov 2026 la Edge Function exige la sesion de quien pide: sin
+// token contesta 403. `origen` es solo para la bitacora de enlaces.
+async function crearCheckoutStripe(idOrden, origen) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/crear-checkout`, {
     method: 'POST',
     headers: {
@@ -2586,10 +2588,17 @@ async function crearCheckoutStripe(idOrden) {
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       'apikey': SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify({ orden_id: idOrden }),
+    body: JSON.stringify({
+      orden_id: idOrden,
+      token: (esVendedor && vendedorInfo?.token) ? vendedorInfo.token : (clienteToken || null),
+      origen: origen || 'checkout',
+    }),
   });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok || !data.url) throw new Error(data.error || ('HTTP ' + r.status));
+  // El servidor manda el motivo en `mensaje` cuando hay uno que se entiende
+  // («ese pedido ya esta pagado», «llegaste al tope de hoy»): se enseña ese y
+  // no el codigo interno.
+  if (!r.ok || !data.url) throw new Error(data.mensaje || data.error || ('HTTP ' + r.status));
   return data.url;
 }
 
