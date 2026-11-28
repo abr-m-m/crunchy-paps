@@ -784,7 +784,10 @@ window.guardarDatosTienda = async function() {
     if (gps) {
       try {
         await supabaseCall('POST', 'rpc/set_coordenadas_gps', {
-          p_telefono: telefonoVerif, p_gps: `${gps.lat},${gps.lng}`
+          // Desde el 27 nov 2026 pide sesion: sin token, el servidor contesta
+          // `sin_permiso`. Es la del propio cliente, y solo vale para SU telefono.
+          p_telefono: telefonoVerif, p_gps: `${gps.lat},${gps.lng}`,
+          p_token: clienteToken || null
         });
       } catch(_e) {}
     }

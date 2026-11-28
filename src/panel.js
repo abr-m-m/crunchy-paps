@@ -158,7 +158,9 @@ window.guardarAltaNegocio = async function() {
       coordenadas: coordStr, aprobadoB2B: false,
       idVendedor: N.vendedorInfo?.id || null, nombreVendedor: N.vendedorInfo?.nombre || '',
     }});
-    if (gps) { try { await supabaseCall('POST', 'rpc/set_coordenadas_gps', { p_telefono: tel, p_gps: coordStr }); } catch(_e) {} }
+    // Con el token del VENDEDOR: el alta la hace el de la ruta, no el dueño del
+  // telefono, asi que la sesion de cliente no serviria aqui.
+  if (gps) { try { await supabaseCall('POST', 'rpc/set_coordenadas_gps', { p_telefono: tel, p_gps: coordStr, p_token: tokenVendedor() }); } catch(_e) {} }
     btn.disabled = false; btn.textContent = orig;
     if (rc && (rc.ok || rc.idCliente)) {
       try {
