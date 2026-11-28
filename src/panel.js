@@ -902,6 +902,9 @@ window.guardarLealtadCfg = async function() {
     // sin decir nada.
     generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp'),
                   generosidad: { web: num('cfg-gen-web') ?? 1,
+                                 // `whatsapp` es el canal que estampa
+                                 // `wa_crear_pedido` en el servidor.
+                                 whatsapp: num('cfg-gen-wa') ?? 1,
                                  vendedor: num('cfg-gen-vend') ?? 1,
                                  mostrador: num('cfg-gen-most') ?? 1 } },
     redencion:  { activo: true, valor_punto_mxn: num('cfg-vpm'), pct_max_pedido: num('cfg-pct'), pago_minimo_mxn: num('cfg-pmin') }

@@ -5308,9 +5308,9 @@ async function renderClubAdminCfg() {
         <div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Generosidad por canal</div>
         <div style="font-size:0.66rem;color:var(--suave);line-height:1.5;margin-bottom:10px;">
           Multiplica los puntos según por dónde entró la venta. <b>1 = normal.</b>
-          Hoy los pedidos que arma el agente entran como «app», así que comparten multiplicador.
         </div>
         ${fila('Compra sola por la app', 'el cliente pide sin que nadie pase', inp('cfg-gen-web', gz.web ?? 1, '0.1'))}
+        ${fila('Por el agente de WhatsApp', 'lo pide por mensaje y lo arma el agente', inp('cfg-gen-wa', gz.whatsapp ?? 1, '0.1'))}
         ${fila('La registra el vendedor', 'visita, ruta o pedido levantado', inp('cfg-gen-vend', gz.vendedor ?? 1, '0.1'))}
         ${fila('Mostrador', 'venta en el punto', inp('cfg-gen-most', gz.mostrador ?? 1, '0.1'))}
       </div>

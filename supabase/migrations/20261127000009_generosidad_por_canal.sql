@@ -22,10 +22,13 @@
 -- solo-INSERT y dentro de un año nadie se va a acordar de que generosidad
 -- regia ese dia; si no se escribe, el saldo no se puede explicar.
 --
--- OJO CON «EL AGENTE»: hoy no es un canal propio. Los pedidos que arma el
--- agente de WhatsApp entran como `web`, asi que por ahora «app» y «agente»
--- comparten multiplicador. El dia que el agente ponga su propio canal, basta
--- con añadir su clave aqui.
+-- EL AGENTE SI TIENE CANAL PROPIO. Lo dije al reves primero y Abraham lo
+-- cazo: `wa_crear_pedido` estampa `canal = 'whatsapp'` en el SERVIDOR -ni
+-- siquiera deja que el agente lo mande-, asi que su generosidad se ajusta por
+-- separado desde el primer dia. No aparecia en los datos porque todavia no ha
+-- creado ningun pedido: cuatro canales usados (web, vendedor, mostrador,
+-- interno) y `whatsapp` esperando su primera venta. Mirar los datos no basta
+-- cuando lo que buscas aun no ha pasado.
 
 begin;
 
