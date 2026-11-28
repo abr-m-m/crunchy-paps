@@ -2689,6 +2689,18 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div style="background:var(--gris2);border-radius:10px;padding:12px 14px;font-size:0.82rem;color:var(--suave2);line-height:1.5;">
         Al confirmar te llevaremos a la <strong style="color:var(--blanco);">página segura de Stripe</strong> para pagar con tarjeta. Tu pedido se registra y, al completar el pago, queda confirmado.
       </div>
+      <!-- 27 nov 2026. El caso de Abraham: «esta el ayudante de la tienda y
+           pide por la aplicacion, pero no tiene los datos bancarios del
+           dueño». No hacen falta: se manda el enlace y el dueño teclea SU
+           tarjeta en Stripe. Aqui no se guarda nada suyo. -->
+      <label id="pago-otro-wrap" style="display:flex;align-items:center;gap:10px;margin-top:10px;
+             background:var(--gris2);border-radius:10px;padding:12px 14px;cursor:pointer;">
+        <input type="checkbox" id="pago-otro" style="width:20px;height:20px;accent-color:var(--amarillo);flex-shrink:0;">
+        <span style="font-size:0.82rem;color:var(--blanco);line-height:1.4;">
+          <strong>No lo pago yo.</strong>
+          <span style="color:var(--suave2);">Mándame el enlace para pasárselo a quien paga.</span>
+        </span>
+      </label>
     </div>
 
     <!-- Transferencia -->
@@ -2764,6 +2776,22 @@ function fechaDeValorCDMX(v) { return (typeof v === 'string' && /^\d{4}-\d{2}-\d
       <div class="consec-val" id="g-consec">—</div>
       <div class="vend-info" id="g-vendedor"></div>
       <div class="puntos-ganados" id="g-puntos"></div>
+      <!-- Falta pagar: sale solo cuando el pedido se dejo para que lo pague
+           otra persona. Tres formas de hacer llegar el mismo enlace. -->
+      <div id="g-pago-enlace" style="display:none;background:var(--gris);border:1px solid var(--amarillo);
+           border-radius:12px;padding:14px;margin:10px auto 0;max-width:340px;text-align:left;">
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acento-txt);margin-bottom:6px;">Falta pagar</div>
+        <div style="font-size:0.82rem;color:var(--blanco);line-height:1.5;margin-bottom:10px;">
+          Pásale este enlace a quien va a pagar. Vale <strong>24 horas</strong>; si se vence, se genera otro desde «Mis pedidos».
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" onclick="mandarEnlacePagoWpp()" style="flex:1;min-width:130px;min-height:44px;border:0;border-radius:10px;
+                  background:#25D366;color:#0b2e18;font-family:inherit;font-weight:800;font-size:0.84rem;cursor:pointer;">Mandar por WhatsApp</button>
+          <button type="button" onclick="copiarEnlacePago()" style="flex:1;min-width:110px;min-height:44px;border:1px solid var(--gris3);border-radius:10px;
+                  background:transparent;color:var(--blanco);font-family:inherit;font-weight:700;font-size:0.84rem;cursor:pointer;">Copiar enlace</button>
+        </div>
+      </div>
+
       <div id="g-entrega-b2b" style="display:none;background:var(--gris);border:1px solid var(--gris3);border-radius:12px;padding:12px 14px;margin:10px auto 0;max-width:340px;font-size:0.84rem;color:var(--blanco);line-height:1.5;"><strong style="color:var(--acento-txt);" id="g-b2b-txt">Te contactamos</strong> para coordinar la entrega.</div>
     </div>
     <div class="gracias-wpp-wrap">

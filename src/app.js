@@ -2577,6 +2577,41 @@ window.copiarDato = function(txt, label) {
   }
 };
 
+// El enlace de pago que está esperando a que alguien lo pague. Vive en memoria
+// y en `cp_gracias_pendiente`, para sobrevivir a una recarga de la pantalla.
+let _enlacePago = null;
+
+// Lo pinta la pantalla de ¡Gracias! cuando el pedido se dejó para que lo pague
+// otra persona. Si no hay enlace, el bloque ni aparece.
+window.mostrarEnlacePago = function() {
+  const caja = document.getElementById('g-pago-enlace');
+  if (!caja) return;
+  if (!_enlacePago) {
+    try {
+      const g = JSON.parse(localStorage.getItem('cp_gracias_pendiente') || '{}');
+      if (g.enlacePago) _enlacePago = { url: g.enlacePago, consec: g.consec };
+    } catch (_e) {}
+  }
+  caja.style.display = _enlacePago ? '' : 'none';
+};
+
+window.copiarEnlacePago = function() {
+  if (!_enlacePago) return;
+  copiarDato(_enlacePago.url, 'Enlace de pago');
+};
+
+window.mandarEnlacePagoWpp = function() {
+  if (!_enlacePago) return;
+  // Sin emoji, con negritas y la línea de separación: la convención de los
+  // mensajes del proyecto.
+  const txt = '*CRUNCHY PAPS - PEDIDO ' + (_enlacePago.consec || '') + '*' + SALTO +
+    '━━━━━━━━━━━━━━━' + SALTO +
+    'Te paso el enlace para pagar con tarjeta:' + SALTO + SALTO +
+    _enlacePago.url + SALTO + SALTO +
+    'Vence en 24 horas. Al pagar, el pedido queda confirmado solo.';
+  irAWhatsApp(null, 'https://wa.me/?text=' + encodeURIComponent(txt));
+};
+
 // Stripe Checkout: pide la sesión de pago a la Edge Function y devuelve la URL segura
 // Desde el 27 nov 2026 la Edge Function exige la sesion de quien pide: sin
 // token contesta 403. `origen` es solo para la bitacora de enlaces.
@@ -4158,9 +4193,26 @@ _Pedido registrado #${consec}_`;
         puntos: ptosGanados,
         wppVendedor, wppBodega,
       }));
-      const urlPago = await crearCheckoutStripe(rp.idOrden);
-      window.location.href = urlPago;
-      return;
+      // «No lo pago yo»: el pedido es de quien lo hace, pero la tarjeta es de
+      // otro. Mismo enlace; lo unico que cambia es que en vez de llevarte a
+      // Stripe, te lo da para que se lo pases.
+      const loPagaOtro = !!document.getElementById('pago-otro')?.checked;
+      const urlPago = await crearCheckoutStripe(rp.idOrden, loPagaOtro ? 'otro_pagador' : 'checkout');
+      if (loPagaOtro) {
+        _enlacePago = { url: urlPago, consec };
+        try {
+          const g = JSON.parse(localStorage.getItem('cp_gracias_pendiente') || '{}');
+          g.enlacePago = urlPago;
+          localStorage.setItem('cp_gracias_pendiente', JSON.stringify(g));
+        } catch (_e) {}
+        btn.textContent = 'Confirmar pedido';
+        // Sigue el camino normal de ¡Gracias!: el bloque del enlace lo pinta
+        // `mostrarEnlacePago()` al final de esta misma funcion.
+      } else {
+        btn.textContent = 'Redirigiendo a pago seguro…';
+        window.location.href = urlPago;
+        return;
+      }
     } catch (err) {
       btn.disabled = false; btn.textContent = 'Confirmar pedido';
       await avisar({ titulo: 'No se pudo iniciar el pago con tarjeta', cuerpo: (err.message || '') + SALTO + SALTO +
@@ -4181,6 +4233,8 @@ _Pedido registrado #${consec}_`;
   document.getElementById('g-puntos').textContent = ptosGanados>0 ? `+${ptosGanados} puntos al confirmar tu pago` : '';
   pintarGraciasB2B(esB2BPedido && !esPedidoInterno, asesorActivo);
   document.getElementById('gracias-overlay').classList.add('visible');
+  // Si el pedido se dejo para que lo pague otra persona, aqui sale el enlace.
+  try { mostrarEnlacePago(); } catch (_e) {}
   // El pedido ya está registrado: el carrito se vacía aquí, no solo al cerrar «¡Gracias!». Si el
   // cliente cerraba la app en esta pantalla, al volver le reaparecía el pedido completo (y con el
   // canje, piezas «canjeadas» con puntos que ya no tiene). El resumen de WhatsApp ya va armado.
