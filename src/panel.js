@@ -896,7 +896,14 @@ window.guardarLealtadCfg = async function() {
   const num = (id) => { const v = parseFloat(document.getElementById(id)?.value); return isNaN(v) ? null : v; };
   const payload = {
     // 'neto' = producto menos descuentos, sin envío (Club fase 1). Con 'total' contaba el envío.
-    generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp') },
+    // La generosidad VIAJA SIEMPRE en el payload. El servidor reconstruye el
+    // objeto entero al guardar, asi que una clave que no se manda se BORRA:
+    // sin esto, cambiar los puntos por peso habria borrado los multiplicadores
+    // sin decir nada.
+    generacion: { activo: true, base: 'neto', puntos_por_peso: num('cfg-ppp'),
+                  generosidad: { web: num('cfg-gen-web') ?? 1,
+                                 vendedor: num('cfg-gen-vend') ?? 1,
+                                 mostrador: num('cfg-gen-most') ?? 1 } },
     redencion:  { activo: true, valor_punto_mxn: num('cfg-vpm'), pct_max_pedido: num('cfg-pct'), pago_minimo_mxn: num('cfg-pmin') }
   };
   try {

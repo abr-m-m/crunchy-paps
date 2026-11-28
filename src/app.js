@@ -5287,6 +5287,9 @@ async function renderClubAdminCfg() {
   }
   const g = (cfg && cfg.generacion) || {};
   const r = (cfg && cfg.redencion) || {};
+  // Los multiplicadores por canal. Lo que no esta guardado vale 1, que es
+  // como lo lee el servidor: ausente y 1 son lo mismo.
+  const gz = (g && g.generosidad) || {};
   const inp = (id, val, step) => `<input id="${id}" type="number" inputmode="decimal" step="${step || '0.01'}" value="${val ?? ''}" style="width:100px;background:var(--gris2);border:1px solid var(--gris3);border-radius:6px;padding:5px 8px;color:var(--blanco);font-size:0.8rem;text-align:right;">`;
   const fila = (label, sub, control) => `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-size:0.8rem;color:var(--blanco);">
@@ -5300,6 +5303,17 @@ async function renderClubAdminCfg() {
       ${fila('Valor del punto al canjear ($)', 'cuánto descuenta 1 punto', inp('cfg-vpm', r.valor_punto_mxn, '0.01'))}
       ${fila('% máx. del pedido con puntos', 'nunca llega a 100%', inp('cfg-pct', r.pct_max_pedido, '1'))}
       ${fila('Pago mínimo en $', 'siempre debe quedar un cobro real', inp('cfg-pmin', r.pago_minimo_mxn, '1'))}
+
+      <div style="border-top:1px solid var(--gris3);margin:12px 0 10px;padding-top:10px;">
+        <div style="font-size:0.7rem;font-weight:600;color:var(--suave);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Generosidad por canal</div>
+        <div style="font-size:0.66rem;color:var(--suave);line-height:1.5;margin-bottom:10px;">
+          Multiplica los puntos según por dónde entró la venta. <b>1 = normal.</b>
+          Hoy los pedidos que arma el agente entran como «app», así que comparten multiplicador.
+        </div>
+        ${fila('Compra sola por la app', 'el cliente pide sin que nadie pase', inp('cfg-gen-web', gz.web ?? 1, '0.1'))}
+        ${fila('La registra el vendedor', 'visita, ruta o pedido levantado', inp('cfg-gen-vend', gz.vendedor ?? 1, '0.1'))}
+        ${fila('Mostrador', 'venta en el punto', inp('cfg-gen-most', gz.mostrador ?? 1, '0.1'))}
+      </div>
       <button onclick="guardarLealtadCfg()" style="width:100%;background:var(--amarillo);border:none;border-radius:10px;padding:10px;font-weight:600;font-size:0.82rem;color:var(--sobre-marca);cursor:pointer;">Guardar reglas</button>
       <div style="font-size:0.64rem;color:var(--suave);margin-top:8px;text-align:center;">La generación aplica al confirmar pago + entrega. La redención usa estos topes.</div>
     </div>`;
