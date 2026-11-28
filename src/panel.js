@@ -1,4 +1,6 @@
 import { N } from './app.js';
+import qrcode from 'qrcode-generator';
+
 const { abrirEditorPedido, abrirVentanaPendiente, actualizarBadge, bloquearCamposCliente, cacheClear, cantidadConCajas, cerrarVentanaPendiente, esAdmin, esAdminEstricto, guardarSesion, initMaps, irAWhatsApp, irAlCatalogo, mostrarToast, renderClubAdminCfg, renderDrawer, saborDot, sesionExpirada, sheetsCall, supabaseCall, tokenVendedor, totalItems } = N;
 
 
@@ -5738,6 +5740,15 @@ function repartoFila(p, acciones) {
   </div>`;
 }
 
+// «Cobrar» sale solo cuando falta pagar y el cobro es posible: en paqueteria
+// el pago ya va por fuerza en linea, y por debajo de $10 Stripe no cobra.
+function repartoBotonCobrar(p) {
+  if ((p.estatusPago || '') === 'Pagado') return '';
+  if (p.metodoEntrega === 'paqueteria') return '';
+  if (Number(p.total || 0) < 10) return '';
+  return `<button onclick="repartoCobrar(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--amarillo);border-radius:10px;padding:0 12px;color:var(--acento-txt);font-weight:700;">Cobrar</button>`;
+}
+
 function repartoBotonEntregar(p) {
   if (p.estatusPedido === 'Entregado') return '';
   if (p.metodoEntrega === 'paqueteria') return p.estatusPedido === 'En camino' ? '' : `<button onclick="repartoEnviado(${p.id})" style="min-height:44px;background:var(--gris2);border:1px solid var(--gris3);border-radius:10px;padding:0 12px;color:var(--blanco);font-weight:700;">Enviado</button>`;
@@ -5756,7 +5767,7 @@ function repartoBloque(titulo, pedidos, clave, conSalir) {
         <div style="font-size:0.76rem;color:var(--suave);">${pedidos.length} pedidos · ${ent} entregados${sinArmar ? ` · <span style="color:var(--rojo);">${sinArmar} sin armar</span>` : ''}</div></div>
       ${rec}${salir}
     </div>
-    ${pedidos.map(p => repartoFila(p, repartoBotonEntregar(p))).join('')}
+    ${pedidos.map(p => repartoFila(p, repartoBotonCobrar(p) + repartoBotonEntregar(p))).join('')}
   </div>`;
 }
 
@@ -5818,6 +5829,115 @@ window.repartoSalir = async function(idsCsv, sinArmar) {
   if (!r || !r.ok) { await avisar({ titulo: 'No se pudo salir a ruta', cuerpo: (r && r.error) || 'Sin respuesta' }); return; }
   mostrarToast(`${r.cambiados} en camino${r.rechazados.length ? ` · ${r.rechazados.length} sin cambiar` : ''}`);
   repartoRefrescar();
+};
+
+// ── Cobrar con tarjeta en la puerta ──────────────────────────────────────
+// El repartidor NO toca la tarjeta de nadie: enseña un QR y el tendero paga en
+// su propio telefono, en la pagina de Stripe. Aqui no se teclea una tarjeta.
+//
+// LO QUE DECIDE SI SIRVE: que el repartidor sepa que el pago entro ANTES de
+// irse. Por eso la pantalla se queda preguntando por el pedido y cambia sola a
+// «Pagado». Sin eso se queda mirando un codigo sin saber que paso, y vuelve a
+// pedir efectivo.
+let _cobroTimer = null;
+
+function cerrarCobro() {
+  if (_cobroTimer) { clearInterval(_cobroTimer); _cobroTimer = null; }
+  document.getElementById('cobro-qr')?.remove();
+  repartoRefrescar();
+}
+window.cerrarCobro = cerrarCobro;
+
+window.repartoCobrar = async function(id) {
+  const pedido = (window._reparto ? Object.values(window._reparto).flatMap(
+    v => Array.isArray(v) ? v.flatMap(x => x.pedidos || [x]) : []) : []).find(x => x && x.id === id) || {};
+
+  const caja = document.createElement('div');
+  caja.id = 'cobro-qr';
+  // Colores a mano y no `var(--negro)`: desde la piel clara ese token vale
+  // CREMA, y el fondo salia claro. Aqui se quiere oscuro de verdad, para que
+  // el QR tenga el contraste que necesita una camara.
+  caja.setAttribute('style', 'position:fixed;inset:0;z-index:9999;background:#14120F;' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;color:#F4F1EC;');
+  caja.innerHTML = '<div style="color:var(--suave);"><span class="loader"></span> Pidiendo el cobro…</div>';
+  document.body.appendChild(caja);
+
+  let url = null;
+  try {
+    // `N` no trae la URL de Supabase; el bloque module la deja en window.
+    // Con `N.SUPABASE_URL` salia «undefined/functions/...» y un 404 limpio.
+    const r = await fetch(window.SUPABASE_URL + '/functions/v1/crear-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY,
+                 'apikey': window.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ orden_id: id, token: tokenVendedor(), origen: 'reparto' }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.url) throw new Error(data.mensaje || data.error || ('HTTP ' + r.status));
+    url = data.url;
+  } catch (e) {
+    caja.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.setAttribute('style', 'color:#F4F1EC;font-size:1rem;max-width:320px;line-height:1.5;');
+    msg.textContent = 'No se pudo generar el cobro: ' + (e.message || '');
+    const b = document.createElement('button');
+    b.textContent = 'Cerrar';
+    b.setAttribute('style', 'min-height:48px;padding:0 22px;border:1px solid #56524C;border-radius:12px;background:transparent;color:#F4F1EC;font-weight:700;');
+    b.onclick = cerrarCobro;
+    caja.append(msg, b);
+    return;
+  }
+
+  // Nivel M: aguanta una pantalla con huellas mejor que el nivel L, y la URL
+  // de Stripe cabe de sobra (77 modulos para 407 caracteres).
+  const q = qrcode(0, 'M');
+  q.addData(url);
+  q.make();
+
+  caja.innerHTML = '';
+  const tit = document.createElement('div');
+  tit.setAttribute('style', 'color:#A8A49C;font-size:0.8rem;letter-spacing:.08em;text-transform:uppercase;');
+  tit.textContent = (pedido.consecutivo || 'Pedido') + ' · ' + (pedido.cliente || '');
+  const monto = document.createElement('div');
+  monto.setAttribute('style', "font-family:'Archivo',sans-serif;font-size:2.2rem;color:#E5B312;");
+  monto.textContent = '$' + Number(pedido.total || 0).toLocaleString('es-MX');
+  // El QR, lo mas grande que quepa: se escanea desde el telefono de enfrente.
+  const marco = document.createElement('div');
+  marco.setAttribute('style', 'background:#fff;padding:12px;border-radius:14px;width:min(86vw,360px);');
+  marco.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  const pie = document.createElement('div');
+  pie.setAttribute('style', 'color:#F4F1EC;font-size:0.9rem;max-width:300px;line-height:1.5;');
+  pie.textContent = 'Que lo escanee con la cámara y pague en su teléfono. Aquí se avisa cuando entre.';
+  const estado = document.createElement('div');
+  estado.id = 'cobro-estado';
+  estado.setAttribute('style', 'color:#A8A49C;font-size:0.86rem;min-height:1.4em;');
+  estado.textContent = 'Esperando el pago…';
+  const cerrar = document.createElement('button');
+  cerrar.textContent = 'Cerrar';
+  cerrar.setAttribute('style', 'min-height:48px;padding:0 22px;border:1px solid #56524C;border-radius:12px;background:transparent;color:#F4F1EC;font-weight:700;');
+  cerrar.onclick = cerrarCobro;
+  caja.append(tit, monto, marco, pie, estado, cerrar);
+
+  // Se pregunta cada 4 s, y se deja de preguntar a los 5 minutos: un
+  // temporizador que no para es una pestaña que sigue hablando sola.
+  let vueltas = 0;
+  _cobroTimer = setInterval(async () => {
+    vueltas++;
+    if (vueltas > 75) { clearInterval(_cobroTimer); _cobroTimer = null; estado.textContent = 'Dejé de preguntar. Cierra y vuelve a abrir si hace falta.'; return; }
+    let d = null;
+    try { d = await supabaseCall('POST', 'rpc/obtener_pedido', { p_data: { id, token: tokenVendedor() } }); } catch (_e) { return; }
+    const pg = d && d.pedido && (d.pedido.estatusPago || d.pedido.estatus_pago);
+    if (pg === 'Pagado') {
+      clearInterval(_cobroTimer); _cobroTimer = null;
+      estado.textContent = '';
+      monto.textContent = 'PAGADO';
+      monto.style.color = '#7FD48C';
+      marco.remove();
+      pie.textContent = 'Ya entró. Puedes entregar.';
+      try { mostrarToast('Pagado con tarjeta'); } catch (_e) {}
+    }
+  }, 4000);
 };
 
 window.repartoEntregar = async function(id) {
